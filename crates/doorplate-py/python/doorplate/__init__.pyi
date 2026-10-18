@@ -160,6 +160,14 @@ class Parser:
         zip: str | None = None,
     ) -> ParsedAddress: ...
     def parse_many(self, texts: Sequence[str]) -> list[ParsedAddress | None]: ...
+    def parse_fields_many(
+        self,
+        line1: Sequence[str | None] | None = None,
+        line2: Sequence[str | None] | None = None,
+        city: Sequence[str | None] | None = None,
+        state: Sequence[str | None] | None = None,
+        zip: Sequence[str | None] | None = None,
+    ) -> list[ParsedAddress | None]: ...
 
 def parse(text: str, default_state: str | None = None) -> ParsedAddress: ...
 def parse_fields(
@@ -172,6 +180,14 @@ def parse_fields(
 ) -> ParsedAddress: ...
 def parse_many(
     texts: Sequence[str], default_state: str | None = None
+) -> list[ParsedAddress | None]: ...
+def parse_fields_many(
+    line1: Sequence[str | None] | None = None,
+    line2: Sequence[str | None] | None = None,
+    city: Sequence[str | None] | None = None,
+    state: Sequence[str | None] | None = None,
+    zip: Sequence[str | None] | None = None,
+    default_state: str | None = None,
 ) -> list[ParsedAddress | None]: ...
 def tag(text: str, default_state: str | None = None) -> tuple[dict[str, str], str]: ...
 def parse_tokens(

@@ -47,6 +47,7 @@ a.to_dict()            # everything above as plain Python values
 dp.parse_fields(line1="THE COVE", line2="1111 ASBURY WAY",
                 city="Orlando", state="FL", zip="32801")
 dp.parse_many(["1 Main St, Miami FL", "PO Box 5, Tampa FL"])  # GIL released
+dp.parse_fields_many(line1=["1 Main St", "PO Box 5"], city=["Miami", "Tampa"])
 dp.parse("281 EVELYN DR DOTHAN", default_state="AL").city     # "DOTHAN"
 ```
 
@@ -81,6 +82,7 @@ pytest tests
 |---|---|
 | `parse(text, default_state=None)` | a `ParsedAddress` |
 | `parse_fields(line1=, line2=, city=, state=, zip=, default_state=None)` | a `ParsedAddress` from pre-split fields |
+| `parse_fields_many(line1=, line2=, city=, state=, zip=, default_state=None)` | the same as a batch of pre-split rows, given as columns (lists or tuples; an element may be `None`). Give any of the columns; they must have the same length |
 | `parse_many(texts, default_state=None)` | a list of `ParsedAddress` (or `None` for an element with no address text), in order; parses in parallel with the GIL released |
 | `Parser(default_state=None)` | an object with the same `parse`, `parse_fields` and `parse_many` |
 | `tag(text)` | `(dict, type)` with usaddress's labels and `"Street Address"` / `"PO Box"` / `"Ambiguous"` |
@@ -191,8 +193,7 @@ For every field with pandas, use `to_dict()` and
 Calling `to_dict()` on every row costs about as much as parsing again (a loop with
 `to_dict` ran at 24,000 per second), and reading attributes from 100,000 Python
 objects is now most of the time, so pick columns when you can. Pre-split columns
-(`line1`, `city`, ...) have no batch call: loop over `parse_fields`, or join the
-columns with commas and use `parse_many`.
+(`line1`, `city`, ...): call `parse_fields_many(line1=df["line1"].tolist(), city=...)`.
 
 ## Coming from usaddress
 

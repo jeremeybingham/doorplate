@@ -47,7 +47,8 @@ a.diagnostics.warnings;           // e.g. MissingZip, UnparsedRemainder
 ```
 
 - `Parser::parse_fields` takes pre-split fields (`Fields`).
-- `Parser::parse_many` parses a batch, in parallel with the `rayon` feature.
+- `Parser::parse_many` and `Parser::parse_fields_many` parse a batch, in parallel
+  with the `rayon` feature.
 - `Parser::with_options(ParseOptions { default_state: Some("FL".into()) })?` sets a
   state hint. It is a lookup hint, never a fill: `state` stays empty and
   `missing_state` still fires.
@@ -61,7 +62,7 @@ a.diagnostics.warnings;           // e.g. MissingZip, UnparsedRemainder
 |---|---|---|
 | `places-us` | yes | the national place and ZIP list, used to find and name the city |
 | `state-fl` | yes | the curated Florida pack |
-| `rayon` | no | parallel `Parser::parse_many` |
+| `rayon` | no | parallel `Parser::parse_many` and `parse_fields_many` |
 | `corpus` | no | the golden-corpus loader and runner (`doorplate::corpus`); pulls in serde |
 
 ## The match key
