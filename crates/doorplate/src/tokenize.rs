@@ -33,7 +33,7 @@
 //!   the segment or comes before a state or ZIP:
 //!   `WILSON STREETDADE CITY FL` -> `STREET` `DADE` `CITY`.
 
-use crate::classify::{is_ordinal, zip_parts, ORDINAL_SUFFIXES};
+use crate::classify::{house_number, is_ordinal, zip_parts, ORDINAL_SUFFIXES};
 use crate::clean::Cleaned;
 use crate::lexicon::{Lexicons, MatchKind, Special, MAX_PLACE_WORDS};
 use crate::types::{FieldName, Span};
@@ -140,7 +140,34 @@ pub(crate) fn tokenize(
         }
         p.piece(a, b, paren, next_starts_numeric, lex);
     }
+    join_directional_comma(&mut out, lex);
     out
+}
+
+/// `3324 N, ANDREWS AVE`: a comma right after a lone directional that follows
+/// the house number, with a street ending in a suffix after it, is stray
+/// punctuation. The directional and the street share a segment, so the
+/// directional is read as the predirectional. `123 N, MIAMI BEACH` (no suffix
+/// word ends the next segment) is untouched.
+fn join_directional_comma(out: &mut [Token], lex: &Lexicons) {
+    if out.len() < 4
+        || house_number(&out[0].text).is_none()
+        || lex.directional(&out[1].text).is_none()
+        || out[1].seg != out[0].seg
+        || out[2].seg != out[1].seg + 1
+    {
+        return;
+    }
+    let next = out[2].seg;
+    let street = out.iter().filter(|t| t.seg == next).count();
+    let last = out.iter().rev().find(|t| t.seg == next);
+    if street < 2 || !last.is_some_and(|t| lex.suffix(&t.text).is_some()) {
+        return;
+    }
+    let joined = out[1].seg;
+    for t in out.iter_mut().skip(2) {
+        t.seg = if t.seg == next { joined } else { t.seg - 1 };
+    }
 }
 
 struct Piece<'a> {
