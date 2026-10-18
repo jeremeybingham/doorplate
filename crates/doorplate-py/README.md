@@ -1,6 +1,9 @@
 # doorplate
 
 [![CI](https://github.com/jeremeybingham/doorplate/actions/workflows/ci.yml/badge.svg)](https://github.com/jeremeybingham/doorplate/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/doorplate.svg)](https://pypi.org/project/doorplate/)
+[![Python versions](https://img.shields.io/pypi/pyversions/doorplate.svg)](https://pypi.org/project/doorplate/)
+[![PyPI downloads](https://img.shields.io/pypi/dm/doorplate.svg)](https://pypi.org/project/doorplate/)
 [![License: MIT OR Apache-2.0](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue.svg)](https://github.com/jeremeybingham/doorplate#license)
 
 Parse US addresses into components, with USPS Publication 28 and RESO output, a
