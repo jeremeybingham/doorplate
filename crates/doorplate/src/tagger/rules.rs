@@ -733,6 +733,12 @@ impl Tagger<'_> {
             self.set(lo..lo + 1, Tag::Skip);
             lo += 1;
         }
+        // "NULL MAIN ST": a no-data marker where the house number goes is
+        // dropped, and the street keeps its own words.
+        if hi - lo > 1 && self.lex.is_number_marker(self.text(lo)) {
+            self.set(lo..lo + 1, Tag::Skip);
+            lo += 1;
+        }
         // "N/A - MAGNOLIA AVE": a placeholder prefix before a dash.
         if let Some(d) = (lo..hi).find(|&k| self.toks[k].is_dash()) {
             if d > lo && self.lex.is_placeholder(&join(&self.toks[lo..d])) {

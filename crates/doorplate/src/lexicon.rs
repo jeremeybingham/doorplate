@@ -423,6 +423,38 @@ impl Lexicons {
         }
     }
 
+    /// A line of no-data markers (issue #51): `NONE`, `PA NONE`, `NULL`,
+    /// `999999999 999999999`. Every token is a marker (a one-word
+    /// placeholder phrase, or a run of nine or more nines) or, once, a code
+    /// of up to two letters, and at least one is a marker. Only whole lines match,
+    /// so `NONE SUCH RD` is not one.
+    pub fn is_no_data_line(&self, s: &str) -> bool {
+        let key = normalize_key(s);
+        let (mut marker, mut codes) = (false, 0);
+        for t in key.split(' ').filter(|t| !t.is_empty()) {
+            if self.is_no_data_token(t) {
+                marker = true;
+            } else if t.len() > 2 || !t.bytes().all(|b| b.is_ascii_alphabetic()) {
+                return false;
+            } else {
+                codes += 1;
+            }
+        }
+        marker && codes <= 1
+    }
+
+    /// A single no-data marker: `NULL`, `NONE` and the other one-word
+    /// placeholder phrases, or a run of nine or more nines.
+    fn is_no_data_token(&self, t: &str) -> bool {
+        (t.len() >= 9 && t.bytes().all(|b| b == b'9')) || find_str(tables::PLACEHOLDERS, t)
+    }
+
+    /// A marker that stands for a missing house number when it opens the
+    /// street line: `NULL`, or a run of nine or more nines.
+    pub fn is_number_marker(&self, t: &str) -> bool {
+        t == "NULL" || (t.len() >= 9 && t.bytes().all(|b| b == b'9'))
+    }
+
     /// The place-name comparison key: case, punctuation, spacing and
     /// abbreviations do not count (`W. Palm Bch` and `WEST PALM BEACH`
     /// share one). `ST`, `FT`, `MT` stand for SAINT, FORT, MOUNT; other

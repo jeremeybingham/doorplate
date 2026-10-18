@@ -167,7 +167,7 @@ impl<'a> Tagger<'a> {
         }
     }
 
-    fn warn(&mut self, w: Warning) {
+    pub(super) fn warn(&mut self, w: Warning) {
         if !self.warnings.contains(&w) {
             self.warnings.push(w);
         }
@@ -294,6 +294,15 @@ pub(crate) fn tag_fields(
             t.set(l2.clone(), Tag::Skip);
             line = l1.clone();
         }
+    }
+    // A line 2 of no-data markers (`PA NONE`, `999999999 999999999`) is
+    // dropped as a placeholder instead of being read as a unit or leftover.
+    if !l2.is_empty()
+        && !l1.is_empty()
+        && lex.is_no_data_line(&crate::classify::join(&toks[l2.clone()]))
+    {
+        t.set(l2.clone(), Tag::Skip);
+        line = l1.clone();
     }
     // `123 MAIN ST` / `1/2`: a line 2 that is only a fraction is the fraction
     // of the house number, so line 1 is read alone and the fraction joins the
