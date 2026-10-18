@@ -634,7 +634,9 @@ impl Tagger<'_> {
     /// A state ending the address line that repeats the state already
     /// tagged from its field (`4486 W OAKLAWN ST LECANTO FL` with state
     /// `FL`). The copy is skipped, so the city copy before it can be too.
-    /// Returns the new end of the line.
+    /// Not when the code is also the street's own suffix or directional:
+    /// `DEBBIE CT` with state `CT` keeps its Court, and `MAIN ST NE` with
+    /// state `NE` keeps its postdirectional. Returns the new end of the line.
     pub(super) fn drop_repeated_state(&mut self, lo: usize, hi: usize) -> usize {
         let code = |s: &str| self.lex.state(s).map(|l| l.value.code());
         let field: Vec<_> = (0..self.toks.len())
@@ -646,11 +648,33 @@ impl Tagger<'_> {
         };
         match longest_ending(self.toks, lo + 1, hi, |s| self.state_ok(s, false)) {
             Some((_, w)) if code(&join(&self.toks[hi - w..hi])) == Some(tagged) => {
+                if w == 1 && self.completes_street(lo, hi) {
+                    return hi;
+                }
                 self.set(hi - w..hi, Tag::Skip);
                 hi - w
             }
             _ => hi,
         }
+    }
+
+    /// The last token (`hi - 1`) is a street suffix or directional, not just a
+    /// copy of the state: a directional always (`MAIN ST NE`); a suffix written
+    /// as a Pub 28 spelling (CT, KY, MT, PR, WY; not an observed spelling
+    /// such as LA) when the street has no suffix yet (`DEBBIE CT`, but
+    /// `OAK ST NORWICH CT` ends in a state copy).
+    fn completes_street(&self, lo: usize, hi: usize) -> bool {
+        let last = self.text(hi - 1);
+        if hi - 1 <= lo {
+            return false;
+        }
+        if self.lex.directional(last).is_some() {
+            return true;
+        }
+        self.lex
+            .suffix(last)
+            .is_some_and(|l| l.kind != MatchKind::Observed)
+            && !(lo..hi - 1).any(|k| self.lex.suffix(self.text(k)).is_some())
     }
 
     // ---- delivery line -----------------------------------------------------
