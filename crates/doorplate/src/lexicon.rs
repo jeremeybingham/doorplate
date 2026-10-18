@@ -13,6 +13,7 @@ mod key;
 mod place_key;
 
 pub use key::normalize_key;
+use key::normalize_key_cow;
 
 use crate::types::{
     Directional, MilitaryKind, MilitaryPostOffice, Place, PlaceKind, StateCode, StateKind,
@@ -273,7 +274,7 @@ impl Lexicons {
 
     /// Street suffix: `"AVENUE"`, `"Ave."`, `"AVNUE"` -> AVE.
     pub fn suffix(&self, s: &str) -> Option<Lookup<StreetSuffix>> {
-        let (i, kind) = *find(tables::SUFFIX_INDEX, &normalize_key(s))?;
+        let (i, kind) = *find(tables::SUFFIX_INDEX, &normalize_key_cow(s))?;
         let row = tables::SUFFIXES.get(usize::from(i))?;
         Some(Lookup {
             value: StreetSuffix {
@@ -305,14 +306,14 @@ impl Lexicons {
 
     /// Directional: `"NORTH EAST"`, `"N.E."`, `"ne"` -> NE.
     pub fn directional(&self, s: &str) -> Option<Lookup<Directional>> {
-        let (value, kind) = *find(tables::DIRECTIONAL_INDEX, &normalize_key(s))?;
+        let (value, kind) = *find(tables::DIRECTIONAL_INDEX, &normalize_key_cow(s))?;
         Some(Lookup { value, kind })
     }
 
     /// Secondary unit designator: `"Suite"` -> STE. Does not match `"#"`,
     /// which stands in for an unknown designator and is handled by the tagger.
     pub fn unit(&self, s: &str) -> Option<Lookup<UnitType>> {
-        let (i, kind) = *find(tables::UNIT_INDEX, &normalize_key(s))?;
+        let (i, kind) = *find(tables::UNIT_INDEX, &normalize_key_cow(s))?;
         let row = tables::UNITS.get(usize::from(i))?;
         Some(Lookup {
             value: UnitType {
@@ -327,7 +328,7 @@ impl Lexicons {
     /// State or possession, by code, full name or traditional abbreviation:
     /// `"fl"`, `"Florida"`, `"Fla."` -> FL.
     pub fn state(&self, s: &str) -> Option<Lookup<StateCode>> {
-        let (i, kind) = *find(tables::STATE_INDEX, &normalize_key(s))?;
+        let (i, kind) = *find(tables::STATE_INDEX, &normalize_key_cow(s))?;
         let row = tables::STATES.get(usize::from(i))?;
         Some(Lookup {
             value: StateCode {
@@ -341,13 +342,13 @@ impl Lexicons {
 
     /// Special address word: `"P.O. Box"` -> PO BOX, `"Rural Route"` -> RR.
     pub fn special(&self, s: &str) -> Option<Lookup<Special>> {
-        let (value, kind) = *find(tables::SPECIAL_INDEX, &normalize_key(s))?;
+        let (value, kind) = *find(tables::SPECIAL_INDEX, &normalize_key_cow(s))?;
         Some(Lookup { value, kind })
     }
 
     /// Highway prefix: `"County Rd"` -> COUNTY ROAD, `"HWY"` -> HIGHWAY.
     pub fn highway(&self, s: &str) -> Option<Lookup<HighwayPrefix>> {
-        let (i, kind) = *find(tables::HIGHWAY_INDEX, &normalize_key(s))?;
+        let (i, kind) = *find(tables::HIGHWAY_INDEX, &normalize_key_cow(s))?;
         let standard = *tables::HIGHWAYS.get(usize::from(i))?;
         Some(Lookup {
             value: HighwayPrefix { standard },
@@ -373,13 +374,13 @@ impl Lexicons {
 
     /// Military delivery-line type: `"PSC"`, `"Postal Service Center"` -> PSC.
     pub fn military(&self, s: &str) -> Option<Lookup<MilitaryKind>> {
-        let (value, kind) = *find(tables::MILITARY_INDEX, &normalize_key(s))?;
+        let (value, kind) = *find(tables::MILITARY_INDEX, &normalize_key_cow(s))?;
         Some(Lookup { value, kind })
     }
 
     /// Military post office: `"APO"`, `"FPO"`, `"DPO"`.
     pub fn military_post_office(&self, s: &str) -> Option<Lookup<MilitaryPostOffice>> {
-        let (value, kind) = *find(tables::MILITARY_PO_INDEX, &normalize_key(s))?;
+        let (value, kind) = *find(tables::MILITARY_PO_INDEX, &normalize_key_cow(s))?;
         Some(Lookup { value, kind })
     }
 
@@ -390,13 +391,13 @@ impl Lexicons {
     /// Whether `s` is a name of the United States (`USA`, `UNITED STATES`).
     /// Source: `data/special.toml` `[country]`.
     pub fn is_country(&self, s: &str) -> bool {
-        find_str(tables::COUNTRIES, &normalize_key(s))
+        find_str(tables::COUNTRIES, &normalize_key_cow(s))
     }
 
     /// A word that ends a building name (`TOWER` in `EAST TOWER`).
     /// Source: `data/special.toml` `[building]`.
     pub fn is_building_word(&self, s: &str) -> bool {
-        find_str(tables::BUILDING_WORDS, &normalize_key(s))
+        find_str(tables::BUILDING_WORDS, &normalize_key_cow(s))
     }
 
     pub fn is_placeholder(&self, s: &str) -> bool {
@@ -926,6 +927,20 @@ mod tests {
         for p in LEX.places() {
             assert_eq!(LEX.place(p.state(), p.name()).unwrap().value, p);
         }
+    }
+
+    #[test]
+    fn normalize_key_cow_matches_normalize_key() {
+        for s in [
+            "", " ", "MAIN", "PO BOX", "PO  BOX", " PO BOX", "PO BOX ", "N.E.", "north", "a\u{b}b",
+            "A\tB", "straße", "\u{a0}X", "A-B", "#4", "..",
+        ] {
+            assert_eq!(super::key::normalize_key_cow(s), normalize_key(s), "{s:?}");
+        }
+        assert!(matches!(
+            super::key::normalize_key_cow("PO BOX"),
+            std::borrow::Cow::Borrowed(_)
+        ));
     }
 
     #[test]
