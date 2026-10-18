@@ -27,7 +27,7 @@ with everything but letters and digits removed.
 | Code | Raised when |
 |---|---|
 | `no_result` | `parse_fields_many` gave no result for the row |
-| `number` | `compact(number)` differs from `compact(street_number)` |
+| `number` | `compact(number)` differs from `compact(street_number)`; a `street2` that is only a fraction (`1/2`) counts as part of the source number |
 | `state` | `norm(state)` differs from the parsed `state` |
 | `zip5` | the first five characters of `zipcode` differ from the parsed `zip5` |
 | `zip4` | the source has a `plus4` and it differs from the parsed `zip4` |

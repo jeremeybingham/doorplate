@@ -158,6 +158,7 @@ def _load_forms():
     return canon
 
 
+FRACTION = re.compile(r"\d+/\d+")
 CANON = _load_forms()
 SYNONYMS = {"HWY": "HIGHWAY", "RTE": "ROUTE", "CO": "COUNTY", "CTY": "COUNTY"}
 
@@ -217,7 +218,9 @@ def process_chunk(con, args, lo, hi, fields_many):
             mism.append("no_result")
         else:
             codes = list(a.warnings)
-            if compact(number) != compact(a.street_number):
+            # A fraction alone in street2 belongs to the house number (`123` + `1/2`).
+            src_number = f"{number} {street2}" if FRACTION.fullmatch((street2 or "").strip()) else number
+            if compact(src_number) != compact(a.street_number):
                 mism.append("number")
             if norm(rstate) != (a.state or ""):
                 mism.append("state")
