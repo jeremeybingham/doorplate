@@ -238,8 +238,8 @@ what the input said; the place found is reported beside it. Sources and licenses
 | | doorplate | usaddress |
 |---|---|---|
 | Whole address right, geocode benchmark (30,622 one-line addresses) | 96.4% | 88.2% |
-| One address from Python | 21 µs | 82 µs |
-| 100,000 addresses (`parse_many` / a loop of `usaddress.parse`) | 0.32 s | 8.2 s |
+| One address from Python | 17 µs | 83 µs |
+| 100,000 addresses (`parse_many` / a loop of `usaddress.parse`) | 0.26 s | 8.3 s |
 | Installed size | 1.7 MB wheel | 4.8 MB with dependencies |
 
 The rules and the place list were developed while reading this benchmark's errors,
