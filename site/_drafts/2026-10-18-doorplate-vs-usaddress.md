@@ -49,8 +49,7 @@ state packs. The last line (ZIP, state, city) is read right to left, then the de
 line from both ends, and the place list tells a city from street words when there are
 no commas.
 
-That has practical effects. The same input gives the same output on every platform and
-every release of the data. A bad address is fixed by adding a rule or a line of data,
+That has practical effects. The same input gives the same output on every platform. A bad address is fixed by adding a rule or a line of data,
 not by retraining. And there is no model file to download: the wheel is 1.7 MB against
 4.8 MB for usaddress and its dependencies.
 
