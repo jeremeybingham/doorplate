@@ -1581,15 +1581,21 @@ impl Tagger<'_> {
         })
     }
 
-    /// `APT TD`, `UNIT AB`: two letters right after a Pub 28 designator.
+    /// `APT TD`, `UNIT AB`: two letters right after a designator that always
+    /// takes a value. Others are street words (`FRONT ST`, `UPPER RD`), and a suffix
+    /// or directional after the designator ends a street (`KEY RD`).
     fn letters_after_designator(&self, floor: usize, last: usize) -> bool {
         let t = self.text(last);
         last > floor
             && t.len() == 2
             && t.bytes().all(|c| c.is_ascii_alphabetic())
+            && self.lex.suffix(t).is_none()
+            && self.lex.directional(t).is_none()
             && self.toks[last].seg == self.toks[last - 1].seg
             && longest_ending(self.toks, floor, last, |s| {
-                self.lex.unit(s).filter(|l| l.kind != MatchKind::Observed)
+                self.lex
+                    .unit(s)
+                    .filter(|l| l.kind != MatchKind::Observed && l.value.range_required())
             })
             .is_some()
     }
