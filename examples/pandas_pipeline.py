@@ -42,24 +42,20 @@ def main(out: str | None = None) -> pd.DataFrame:
     counts = parsed["addr_key"].dropna().value_counts()
     print(f"{(counts > 1).sum()} duplicated key(s)")
 
-    # 5. Pre-split columns: no batch helper yet, so loop over parse_fields.
+    # 5. Pre-split columns: parse_fields_many takes the columns as lists.
     split = pd.read_csv(DATA / "addresses_split.csv", dtype=str)
-    # pandas holds a missing cell as NaN; parse_fields wants None.
-    def text(v):
-        return v if isinstance(v, str) else None
-
-    rows = [
-        dp.parse_fields(
-            line1=text(r["line1"]),
-            line2=text(r["line2"]),
-            city=text(r["city"]),
-            state=text(r["state"]),
-            zip=text(r["zip"]),
-        )
-        for r in split.to_dict("records")
+    # pandas holds a missing cell as NaN; the batch call wants None.
+    col = lambda name: split[name].astype(object).where(split[name].notna(), None).tolist()
+    rows = dp.parse_fields_many(
+        line1=col("line1"), line2=col("line2"), city=col("city"), state=col("state"), zip=col("zip")
+    )
+    split["addr_key"] = [a.key() if a else None for a in rows]
+    split["addr_slug"] = [a.slug() if a else None for a in rows]
+    # 6. A display form for people (mixed case; not a Pub 28 form).
+    split["addr_display"] = [
+        f"{d['line1'] or ''}, {d['last_line']}" if a and (d := a.to_display()) else None
+        for a in rows
     ]
-    split["addr_key"] = [a.key() for a in rows]
-    split["addr_slug"] = [a.slug() for a in rows]
     print(split)
 
     if out:
