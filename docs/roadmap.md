@@ -81,8 +81,8 @@ different `k1` keys today), and anything the messy data shows.
   styles and compared per state and per shape, to find parser bugs and place-list gaps.
 - A cleaner blind test: a hand-labeled sample of real messy data in the shapes people
   actually have.
-- A profile of `parse`: it is slower than an earlier build, and one address takes 10 to 23
-  microseconds in Rust, so there is probably a cheap win in the lexicon lookups.
+- More of the `parse` slowdown (issue #14 was mostly fixed in 0.2.0): about 8% of an
+  earlier build's speed is still spread across allocation in the place keys and `Vec` growth.
 - The pack infrastructure: report a pack's version in the output, and require a golden
   corpus per pack in CI.
 

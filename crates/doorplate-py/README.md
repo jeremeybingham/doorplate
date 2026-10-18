@@ -114,10 +114,10 @@ on a 14-thread machine (`crates/doorplate-py/benchmarks/bench_batch.py`):
 
 | | Time | Per second | Speed-up |
 |---|---|---|---|
-| a loop of `parse` | 2.11 s | 47,000 | 1x |
-| `parse_many` | 0.32 s | 315,000 | 6.6x |
-| `parse_many` and a pandas DataFrame of 7 columns | 0.49 s | 205,000 | 4.3x |
-| `parse_many` and a Polars DataFrame of 7 columns | 0.40 s | 252,000 | 5.3x |
+| a loop of `parse` | 1.71 s | 58,000 | 1x |
+| `parse_many` | 0.26 s | 379,000 | 6.5x |
+| `parse_many` and a pandas DataFrame of 7 columns | 0.43 s | 235,000 | 4.0x |
+| `parse_many` and a Polars DataFrame of 7 columns | 0.35 s | 287,000 | 4.9x |
 
 **Helpers.** Install the extra and parse a column in one call:
 
@@ -192,7 +192,7 @@ For every field with pandas, use `to_dict()` and
 `pd.json_normalize([a.to_dict() if a else {} for a in parsed])`.
 
 Calling `to_dict()` on every row costs about as much as parsing again (a loop with
-`to_dict` ran at 24,000 per second), and reading attributes from 100,000 Python
+`to_dict` ran at 26,000 per second), and reading attributes from 100,000 Python
 objects is now most of the time, so pick columns when you can. Pre-split columns
 (`line1`, `city`, ...): call `parse_fields_many(line1=df["line1"].tolist(), city=...)`.
 
