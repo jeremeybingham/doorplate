@@ -7,7 +7,7 @@ some, see [Sharing messy data](../CONTRIBUTING.md#sharing-messy-data).
 
 ## Stability while it is an alpha
 
-- **Keys.** The match key is versioned (`k1:`) and each version is a contract
+- **Keys.** The match key is versioned (`k2:`) and each version is a contract
   ([`key-format.md`](key-format.md)), but expect new versions. A parser fix that changes
   what an input produces changes its key, and that needs a new version, so `k2:` and later
   are likely as the parser improves. Store the version prefix with the keys.
@@ -72,8 +72,9 @@ street corners with cross-street fields) is open; today that text goes to `unpar
 
 ### The key
 
-Candidates for `k2`: how leading zeros in route numbers are written (`RR 02` and `RR 2` have
-different `k1` keys today), and anything the messy data shows.
+`k2` starts with 0.3.0 and collects the key-affecting changes found with the data on hand (the
+plan and checklist are issue #44, including how leading zeros in route numbers are written).
+More outside data (hand-labeled real data and a second national source) is wanted before any `k3`.
 
 ### Data and benchmarks
 

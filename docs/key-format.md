@@ -1,16 +1,17 @@
-# Canonical key and slug spec (version k1)
+# Canonical key and slug spec (version k2)
 
 This page specifies the **key** (below) and the **slug** (last section).
 
 The key is versioned, and a given version is a contract: stored keys must keep
 meaning the same thing, so any change to what an input produces needs a new version
-prefix (`k2:`) and an update here. `k1` is never edited in place.
+prefix (`k3:`) and an update here. `k2` is never edited in place.
 
 **This is an alpha release.** Expect new key versions as the parser improves: the
 parser's behavior is still settling, and every fix that changes how an input is read
 changes its key. If you store keys, store the version prefix with them (it is part of
 the key) and plan to re-key when a new version appears. Keys of different versions
-are never equal.
+are never equal. To re-key, parse the original addresses again: a stored key cannot be
+converted.
 
 A key says two inputs name the same place as far as this library can tell. It
 does not say the address exists or is deliverable (see README).
@@ -18,14 +19,14 @@ does not say the address exists or is deliverable (see README).
 ## Format
 
 ```
-k1:S|<number>|<predir>|<name>|<suffix>|<postdir>|<state>|<zip5>[|<unit>|<unit2>]
-k1:P|<box>|<state>|<zip5>
-k1:R|<RR|HC>|<route>|<box>|<state>|<zip5>
-k1:M|<kind>|<number>|<box>|<post office>|<state>|<zip5>
-k1:G|<state>|<zip5>
+k2:S|<number>|<predir>|<name>|<suffix>|<postdir>|<state>|<zip5>[|<unit>|<unit2>]
+k2:P|<box>|<state>|<zip5>
+k2:R|<RR|HC>|<route>|<box>|<state>|<zip5>
+k2:M|<kind>|<number>|<box>|<post office>|<state>|<zip5>
+k2:G|<state>|<zip5>
 ```
 
-- Prefix `k1:`, then a one-letter **form**, then segments separated by `|`.
+- Prefix `k2:`, then a one-letter **form**, then segments separated by `|`.
   Every form has a fixed number of segments, and an empty value leaves an
   empty segment (`...||...`).
 - Forms: `S` street, `P` PO Box, `R` rural or highway contract route, `M`
@@ -53,8 +54,8 @@ k1:G|<state>|<zip5>
 
 ## Strong and partial keys
 
-A key with both a state and a ZIP5 uses the `k1:` prefix. If either is
-missing, the prefix is `k1n:` and the same body follows (`k1n:S|123||MAIN|ST||FL|`).
+A key with both a state and a ZIP5 uses the `k2:` prefix. If either is
+missing, the prefix is `k2n:` and the same body follows (`k2n:S|123||MAIN|ST||FL|`).
 A partial key matches less reliably, and it can never equal a located key, so
 the two kinds do not mix in a join by accident. `MissingState` or
 `MissingZip` is also set in the diagnostics.
@@ -90,7 +91,7 @@ Applied to every free-text segment (number, name, route, box, unit):
 Spelling variants (`North`/`N`, `Street`/`ST`, `Florida`/`FL`) are resolved by
 the parser through the Pub 28 tables, not by the key. Sources for those
 tables: `docs/usps-pub28-notes.md`. The key format itself (segments, form
-letters, dropped unit type, `k1n`) is this library's own convention, not a
+letters, dropped unit type, `k2n`) is this library's own convention, not a
 USPS rule.
 
 ## No key
@@ -101,10 +102,19 @@ route, military line or general delivery, or a placeholder such as `NO SITUS`
 
 ## Stability
 
-`k1` is the format as of the first release. The key is a function of the parse, and
+`k2` is the format as of version 0.3.0. The key is a function of the parse, and
 the parse is a function of the shipped tables and rules: a bug fix that changes what
-an input produces is a key change and needs `k2`. The slug and `place` are not part
+an input produces is a key change and needs `k3`. The slug and `place` are not part
 of the key and may change with parser improvements.
+
+## Version history
+
+- **`k1`** was the key of versions 0.1.0 and 0.2.0. It is retired: the library no longer
+  produces it and cannot compute it. The segment layout is the same as `k2`; `k2` exists
+  because 0.3.0 changes how some inputs are read, and a changed reading changes the key
+  (the changes are listed in the changelog).
+- **`k2`** (this page) starts with 0.3.0. Until 0.3.0 is tagged `k2` still takes key-affecting
+  changes; after that it is frozen. More outside data is wanted before any `k3`.
 
 ## Slug
 

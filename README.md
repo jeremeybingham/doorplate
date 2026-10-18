@@ -23,17 +23,17 @@ For one line or separate fields it gives you:
   state, ZIP, and the less common shapes (PO boxes, rural and highway routes,
   military and general delivery);
 - **USPS Publication 28** and **RESO Data Dictionary 2.0** output;
-- a **canonical match key** (`k1:...`) and a URL-safe **slug**;
+- a **canonical match key** (`k2:...`) and a URL-safe **slug**;
 - **diagnostics**: warnings with stable codes and the text it could not place, so
   you can send doubtful rows to review.
 
 > [!WARNING]
 > 🚧 **Alpha release.** This is an early version (0.2.0). 🚧
 >
-> - **Keys will probably change.** The match key is versioned (`k1:`). As the parser
->   improves, expect new key versions (`k2:` and later): a changed key gets a new
+> - **Keys will probably change.** The match key is versioned (`k2:`). As the parser
+>   improves, expect new key versions (`k3:` and later): a changed key gets a new
 >   prefix, so an old key is never silently reinterpreted, but if you store keys, store
->   their version with them and plan to re-key. Don't treat `k1` as permanent yet.
+>   their version with them and plan to re-key. Don't treat `k2` as permanent yet.
 > - **Accuracy and speed are not guaranteed.** The numbers below were measured on one
 >   machine and a few datasets; your data may behave differently. Watch the warnings.
 > - Names in the API and the warning codes may still change before 1.0.
@@ -66,7 +66,7 @@ a = doorplate.parse("123 north main street apt 4, Miami FL 33101")
 
 a.street_name, a.unit_number        # ("MAIN", "4")
 a.to_usps()["line1"]                # "123 N MAIN ST APT 4"
-a.key()                             # "k1:S|123|N|MAIN|ST||FL|33101"
+a.key()                             # "k2:S|123|N|MAIN|ST||FL|33101"
 a.slug()                            # "123-n-main-st-apt-4-miami-fl-33101"
 a.to_display()["line1"]             # "123 N Main St Apt 4" (mixed case, display only)
 a.warnings                          # []
@@ -80,7 +80,7 @@ $ doorplate parse "123 N. Main St #4, miami, fl 33101" --usps
 123 N MAIN ST # 4
 MIAMI FL 33101
 $ doorplate parse "123 N. Main St #4, miami, fl 33101" | jq -r .key
-k1:S|123|N|MAIN|ST||FL|33101
+k2:S|123|N|MAIN|ST||FL|33101
 ```
 
 ## What you get
@@ -93,12 +93,12 @@ One address, followed through:
 | Place | `MIAMI`, Dade County, found by name (`city` keeps what you wrote) |
 | USPS (Pub 28) | `123 N MAIN ST APT 4` / `MIAMI FL 33101` |
 | RESO | `StreetNumber` `123`, `StreetDirPrefix` `N`, `StreetName` `MAIN`, `StreetSuffix` `ST`, `UnitNumber` `APT 4`, `City` `MIAMI`, `StateOrProvince` `FL`, `PostalCode` `33101`, `UnparsedAddress` `123 N MAIN ST APT 4, MIAMI, FL 33101` |
-| Key | `k1:S\|123\|N\|MAIN\|ST\|\|FL\|33101` (with the unit: `k1:S\|123\|N\|MAIN\|ST\|\|FL\|33101\|4\|`) |
+| Key | `k2:S\|123\|N\|MAIN\|ST\|\|FL\|33101` (with the unit: `k2:S\|123\|N\|MAIN\|ST\|\|FL\|33101\|4\|`) |
 | Slug | `123-n-main-st-apt-4-miami-fl-33101` |
 | Warnings | none |
 
 **The key** identifies a property for deduplication and joins. It uses the street
-parts, state and ZIP, not the city, and it is versioned: the `k1:` format will not
+parts, state and ZIP, not the city, and it is versioned: the `k2:` format will not
 change in place. [`docs/key-format.md`](docs/key-format.md) is the contract.
 **The slug** is for URLs and display; it is not unique. **Warnings** are stable
 snake_case codes (`missing_zip`, `unparsed_remainder`, `dual_address`, ...) meant
@@ -110,10 +110,10 @@ warnings that say what is missing:
 ```python
 >>> a = doorplate.parse("12 elm st. #5 orlando fl")
 >>> a.to_usps()["line1"], a.key(), a.warnings
-('12 ELM ST # 5', 'k1n:S|12||ELM|ST||FL|', ['missing_zip'])
+('12 ELM ST # 5', 'k2n:S|12||ELM|ST||FL|', ['missing_zip'])
 ```
 
-With no ZIP the key starts `k1n:` (a weaker match), and `missing_zip` says why.
+With no ZIP the key starts `k2n:` (a weaker match), and `missing_zip` says why.
 Only input with no address text at all is an error.
 
 ## Install
@@ -175,7 +175,7 @@ assert_eq!(a.unit_number.as_deref(), Some("4"));
 
 a.to_usps().line1;                // Some("123 N MAIN ST APT 4")
 a.to_reso();                      // RESO Data Dictionary 2.0 fields
-a.key(KeyOptions::property());    // Some("k1:S|123|N|MAIN|ST||FL|33101")
+a.key(KeyOptions::property());    // Some("k2:S|123|N|MAIN|ST||FL|33101")
 a.slug();                         // Some("123-n-main-st-apt-4-miami-fl-33101"), display only
 a.to_display().line1;             // Some("123 N Main St Apt 4"); to_long(): "123 North Main Street Apartment 4"
 a.diagnostics.warnings;           // e.g. MissingZip, UnparsedRemainder
@@ -311,7 +311,7 @@ and small invented sample files.
 | Page | Contents |
 |---|---|
 | [`docs/how-it-works.md`](docs/how-it-works.md) | The pipeline, the design choices, the layout |
-| [`docs/key-format.md`](docs/key-format.md) | The `k1` key and the slug: the contract |
+| [`docs/key-format.md`](docs/key-format.md) | The `k2` key and the slug: the contract |
 | [`docs/reso-mapping.md`](docs/reso-mapping.md) | RESO field mapping |
 | [`docs/usps-pub28-notes.md`](docs/usps-pub28-notes.md) | The source of every table and parser rule |
 | [`docs/usaddress-compat.md`](docs/usaddress-compat.md) | usaddress-shaped output, labels, migration |

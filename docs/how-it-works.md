@@ -120,7 +120,7 @@ finding about the parse, not a statement that the address is wrong.
 - **`default_state` is a lookup hint, never a fill.** When the input names no state
   and has no known ZIP, a city is looked up in the hinted state and the state's
   pack readings apply. `state` stays empty, `missing_state` still fires and the
-  key keeps its `k1n` form; `default_state_applied` says when the hint decided
+  key keeps its `k2n` form; `default_state_applied` says when the hint decided
   something.
 - **Dual addresses keep both.** A record with a street address and a PO Box fills
   the street fields and `po_box` and raises `dual_address`. The key, the slug and
@@ -149,11 +149,11 @@ finding about the parse, not a statement that the address is wrong.
 The canonical key is a deterministic string for deduplication and joins:
 `123 N. Main Street, Apt 4` and `123 north main st #4` give the same key. It uses
 the street components, state and ZIP5 and leaves out the city, which is the noisiest
-field. Addresses missing a state or ZIP get the weaker `k1n:` prefix and a warning.
+field. Addresses missing a state or ZIP get the weaker `k2n:` prefix and a warning.
 Unit inclusion is an option (off by default, property level).
 
-The key format is versioned (`k1:`). Any change to what an input produces needs a
-new version prefix (`k2:`) and an update to `docs/key-format.md`; `k1` is never
+The key format is versioned (`k2:`). Any change to what an input produces needs a
+new version prefix (`k3:`) and an update to `docs/key-format.md`; `k2` is never
 edited in place. This is an alpha release, so expect new key versions as the parser
 improves; store the version with your keys. The slug is built from the
 USPS output, is for display, and is not unique or versioned.
@@ -262,7 +262,7 @@ docs/                       this page and the references below
 
 | Page | Contents |
 |---|---|
-| [`key-format.md`](key-format.md) | The `k1` key and the slug: the contract |
+| [`key-format.md`](key-format.md) | The `k2` key and the slug: the contract |
 | [`reso-mapping.md`](reso-mapping.md) | RESO Data Dictionary field mapping |
 | [`usps-pub28-notes.md`](usps-pub28-notes.md) | The source of every table and parser rule |
 | [`places.md`](places.md) | The national place list: sources, licenses, coverage |
