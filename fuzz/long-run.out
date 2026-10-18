@@ -1,0 +1,9 @@
+nohup: ignoring input
+[05:49:58Z] run dir /home/jeremey/projects/temp-postal/doorplate/fuzz/runs/20261018T054958Z; 5 h (18000 s) per target, 6 workers each, 14 cores
+seeded 437 corpus cases into /home/jeremey/projects/temp-postal/doorplate/fuzz/runs/20261018T054958Z/seeds
+[05:49:59Z] building targets
+[05:49:59Z] starting parse (corpus 2671 files)
+[05:49:59Z] starting parse_fields (corpus 2705 files)
+[10:50:47Z] parse exited with status 0
+[10:50:47Z] parse_fields exited with status 0
+[10:50:48Z] done; summary in /home/jeremey/projects/temp-postal/doorplate/fuzz/runs/20261018T054958Z/summary.md

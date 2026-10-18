@@ -5,6 +5,13 @@ All notable changes are listed here, newest first. The project follows
 version (`k1`), tracked separately in [`docs/key-format.md`](docs/key-format.md): a
 change to what an input produces needs a new key version.
 
+## [Unreleased]
+
+### Documentation
+
+- Each crates.io package now has its own README (`crates/doorplate/README.md`,
+  `crates/doorplate-cli/README.md`) instead of the repository README.
+
 ## [0.1.0] - 2026-10-18
 
 The first release. It is an alpha: keys are likely to get new versions as the parser
