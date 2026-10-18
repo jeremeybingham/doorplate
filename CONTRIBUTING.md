@@ -75,6 +75,18 @@ in an `observed` list with its evidence and raises `non_standard_abbreviation`. 
 state pack addition names its evidence and is add-only (`docs/packs/fl.md`). A change
 to a Pub 28 table should be checked with `tools/pub28/verify.py`.
 
+## Package pages and READMEs
+
+Four READMEs are shown on package pages and must not drift apart: `README.md`
+(GitHub), `crates/doorplate/README.md` and `crates/doorplate-cli/README.md`
+(crates.io), and `crates/doorplate-py/README.md` (PyPI). Each is selected by the
+`readme` key in its `Cargo.toml` or `pyproject.toml`. If your change affects the API,
+CLI options, install instructions, feature flags, minimum Rust or Python versions,
+warning codes, the key format, benchmark figures, or the alpha and help-wanted
+notices, update every README it touches in the same pull request. Use absolute
+links in the three crate READMEs, since crates.io and PyPI do not resolve relative
+ones, and keep the statement that the library does not validate deliverability.
+
 ## Rules for the code
 
 - `doorplate` stays pure Rust with no Python dependency; emitters never re-parse or
