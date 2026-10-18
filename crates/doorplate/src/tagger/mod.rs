@@ -327,6 +327,7 @@ pub(crate) fn tag_fields(
         if after_fraction {
             t.claim_fraction(l2.start);
         }
+        t.claim_bare_unit(l2.clone());
         return t.finish();
     }
     let city_range = t.city_field(city, state.is_empty());
@@ -344,6 +345,7 @@ pub(crate) fn tag_fields(
     if after_fraction {
         t.claim_fraction(l2.start);
     }
+    t.claim_bare_unit(l2.clone());
     t.finish()
 }
 
