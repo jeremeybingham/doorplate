@@ -70,6 +70,8 @@ Rust 1.80 or later; the Python extension needs 1.83. Plain `cargo test` needs no
 
 ## Data changes
 
+What data may be used and committed is in [`docs/data-policy.md`](docs/data-policy.md).
+
 Tables live in `crates/doorplate/data/`. A spelling that Pub 28 does not list goes
 in an `observed` list with its evidence and raises `non_standard_abbreviation`. A
 state pack addition names its evidence and is add-only (`docs/packs/fl.md`). A change

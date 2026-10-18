@@ -25,6 +25,7 @@ imply otherwise in docs or code comments.
 | Accuracy and speed, and how to rerun them | [`docs/benchmarks.md`](docs/benchmarks.md), [`benchmarks/README.md`](benchmarks/README.md) |
 | How the parser works | [`docs/how-it-works.md`](docs/how-it-works.md) |
 | What is planned and what is not | [`docs/roadmap.md`](docs/roadmap.md) |
+| What data may be used and committed | [`docs/data-policy.md`](docs/data-policy.md) |
 
 Parsing never raises on odd input: it returns a `ParsedAddress` with `warnings` (stable
 snake_case codes) and the text it could not place. Only input with no address text at
@@ -64,9 +65,10 @@ Plain `cargo test` needs no Python. Rust 1.80 or later; the Python extension nee
   `k1` in place.
 - Every USPS or RESO rule implemented must be traceable to a source in `docs/`
   (`docs/usps-pub28-notes.md`, `docs/reso-mapping.md`).
-- Private data (local exports, the geocode benchmark) stays in `local-data/`
-  (git-ignored). Never commit it and never print personal names from it. Examples and
-  tests use invented addresses.
+- Private data (local exports, the geocode benchmark, the Netsyms database) stays in
+  `local-data/` (git-ignored). Never commit it and never print personal names from it.
+  Examples and tests use invented addresses. The full rules are in
+  [`docs/data-policy.md`](docs/data-policy.md).
 
 ## Where things are
 

@@ -41,6 +41,10 @@ GeoNames gives each ZIP one place.
 
 ## Sources and licenses
 
+The rules for what may be committed, and how data seen only in private sources (such as
+the Netsyms database) may reach this list, are in [`data-policy.md`](data-policy.md).
+
+
 | Data | Source | License |
 |---|---|---|
 | Places, county subdivisions (`census`) | US Census Bureau 2024 Gazetteer Files: places (32,333), county subdivisions (36,421), counties (3,222), https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2024_Gazetteer/ | Public domain |
