@@ -5,6 +5,15 @@ All notable changes are listed here, newest first. The project follows
 version (`k1`), tracked separately in [`docs/key-format.md`](docs/key-format.md): a
 change to what an input produces needs a new key version.
 
+## [Unreleased]
+
+### Documentation
+
+- Benchmarks: the headline geocode-benchmark figure is now the `dev` split, 92.6% of whole
+  addresses right (usaddress: 88.1%), not the `test` split's 96.4%, which the rules were
+  tuned against. `benchmarks/accuracy.py` and `convert_geocode_benchmark.py` score the
+  `dev`, `train` and `test` splits.
+
 ## [0.2.0] - 2026-10-18
 
 Still an alpha. New API and docs; no change to the `k1` key or to what any input

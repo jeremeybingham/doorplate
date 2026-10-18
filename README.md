@@ -237,13 +237,15 @@ what the input said; the place found is reported beside it. Sources and licenses
 
 | | doorplate | usaddress |
 |---|---|---|
-| Whole address right, geocode benchmark (30,622 one-line addresses) | 96.4% | 88.2% |
+| Whole address right, geocode benchmark dev split (60,522 one-line addresses) | 92.6% | 88.1% |
 | One address from Python | 17 µs | 83 µs |
 | 100,000 addresses (`parse_many` / a loop of `usaddress.parse`) | 0.26 s | 8.3 s |
 | Installed size | 1.7 MB wheel | 4.8 MB with dependencies |
 
-The rules and the place list were developed while reading this benchmark's errors,
-so read 96.4% as an estimate for data of that shape, not a guarantee for yours.
+The rules and the place list were developed while reading the errors of this
+benchmark's *test* split (96.4% whole address), so that figure is optimistic; the dev
+split was not read for that, and 92.6% is the estimate for data of that shape (one
+line, US street addresses, a city and a state), not a guarantee for yours.
 Method, caveats, memory and Rust timings: [`docs/benchmarks.md`](docs/benchmarks.md).
 
 ## What it does not do

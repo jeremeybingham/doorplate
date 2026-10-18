@@ -18,7 +18,7 @@ doorplate 0.2.0 and usaddress 0.5.16, built with `--release`.
 
 | | doorplate | usaddress |
 |---|---|---|
-| Geocode benchmark, whole address (coarse) | 96.4% | 88.2% |
+| Geocode benchmark, dev split, whole address (coarse) | 92.6% | 88.1% |
 | usaddress's own test files, whole address (coarse) | 99.2% | 100.0% |
 | One address from Python, `parse` / `usaddress.parse` | 17 µs | 83 µs |
 | 100,000 addresses, `parse_many` / a loop of `usaddress.parse` | 0.26 s | 8.3 s |
@@ -32,25 +32,37 @@ Scores use usaddress's labels, folded into the coarse set unless marked fine
 (`docs/usaddress-compat.md`, "Scoring rules"). A whole address counts as
 right only when every token is. `benchmarks/accuracy.py` prints these tables.
 
-### Geocode benchmark (30,622 addresses, one line, no commas)
+### Geocode benchmark (one line, no commas)
 
-The test split of the [geocoding address-parsing benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark):
-street addresses with input errors and variants mined from a production
-geocoder's logs, written uppercase as `4394 MAIN ST PORT HENRY NY 12974`. It
-states no license, so it stays in the gitignored `local-data/` and only
-aggregate numbers are published.
+The [geocoding address-parsing benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark)
+has three splits of street addresses with input errors and variants mined from a
+production geocoder's logs, written uppercase as `4394 MAIN ST PORT HENRY NY 12974`.
+The splits share no street. The benchmark states no license, so it stays in the
+gitignored `local-data/` and only aggregate numbers are published.
 
-| | doorplate | usaddress |
+| Whole address (coarse) | Addresses | doorplate | usaddress |
+|---|---|---|---|
+| **dev** | 60,522 | **92.6%** | 88.1% |
+| train | 148,173 | 92.5% | 88.1% |
+| test | 30,622 | 96.4% | 88.2% |
+
+| dev split | doorplate | usaddress |
 |---|---|---|
-| Tokens (coarse) | 99.3% | 97.7% |
-| Whole address (coarse) | 96.4% | 88.2% |
-| Tokens (fine) | 95.9% | 94.7% |
-| Whole address (fine) | 82.3% | 77.3% |
+| Tokens (coarse) | 98.4% | 97.6% |
+| Whole address (coarse) | 92.6% | 88.1% |
+| Tokens (fine) | 95.7% | 95.4% |
+| Whole address (fine) | 82.7% | 80.2% |
 
-Neither library was trained on it. doorplate's rules and place list were written
-after reading this benchmark's error classes, so read 96.4% as an estimate for data
-of this shape (one line, US street addresses, a city and state), not as a held-out
-result for any address you may have.
+Neither library was trained on any split. **Read the dev figure (92.6%) as the
+estimate, not the test figure (96.4%).** doorplate's rules and place list were written
+after reading the *test* split's error classes, so test is optimistic; dev and train were
+not read for that and agree with each other to 0.1 point. The 4-point gap is mostly place
+names: city tokens are 97.1% right on test and 93.2% on dev (usaddress 95.7%), because
+neighborhoods and unincorporated communities (`GLEN IRIS`, `DOWNTOWN MONTGOMERY`) that
+the place list lacks are read as part of the street, and a few county-road forms (`LEE ROAD 123`,
+`CTY ROAD 321`) are missed. The fix plan is issue #29.
+Once the dev split's most common error classes had been listed (to write this up), it was
+no longer fully blind: fixes should be made against train and checked on dev.
 
 ### usaddress's own test files
 
