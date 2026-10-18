@@ -77,4 +77,4 @@ Plain `cargo test` needs no Python. Rust 1.80 or later; the Python extension nee
 - `crates/doorplate/data/`: the Pub 28 tables, the national place list and state packs.
 - `tests/corpus/`: the golden corpus. `examples/`: runnable examples.
 - `docs/`: design notes and the sources of every rule. `tools/`: verification, fuzzing,
-  corpus and comparison scripts. `benchmarks/`: speed, accuracy and size scripts.
+  corpus, comparison and the Netsyms harness (`tools/netsyms/`, offline, private data). `benchmarks/`: speed, accuracy and size scripts.
