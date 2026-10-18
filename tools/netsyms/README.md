@@ -33,8 +33,8 @@ tail -f local-data/netsyms-runs/*/progress.log
 
 ## Limits
 
-- `--budget-gb` (default 55): the run stops cleanly when the database's folder plus all runs
-  exceed it. Finished chunks are kept; repeat the command with `--run-id <id>` to resume.
+- `--budget-gb` (default 55): the run stops cleanly when the database's folder (not counting
+  `.7z` archives) plus all runs exceed it. Finished chunks are kept; repeat the command with `--run-id <id>` to resume.
 - `--min-free-gb` (default 20): refuses to start below this much free disk.
 - `--threads N`: caps the Rust parse threads.
 - A run is resumable at any point: a chunk counts as finished only when its `done/` marker

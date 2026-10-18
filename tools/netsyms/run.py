@@ -46,7 +46,7 @@ def parse_args(argv=None):
     ap.add_argument("--workers", type=int, default=max(1, min(6, (os.cpu_count() or 2) // 2)),
                     help="processes working on different chunks (default: half the cores, at most 6)")
     ap.add_argument("--budget-gb", type=float, default=55.0,
-                    help="abort when the database's folder plus all runs exceed this (default 55)")
+                    help="abort when the database's folder (not counting .7z archives) plus all runs exceed this (default 55)")
     ap.add_argument("--min-free-gb", type=float, default=20.0, help="refuse to start below this")
     ap.add_argument("--full-hash", action="store_true", help="SHA-256 the whole database (slow)")
     ap.add_argument("--confirm", action="store_true", help="actually run (default: print the plan)")
@@ -54,9 +54,13 @@ def parse_args(argv=None):
 
 
 def dir_size(path):
+    """Bytes under `path`, not counting archives (`.7z`): the budget covers the extracted
+    database and the runs."""
     total = 0
     for p, _, files in os.walk(path):
         for f in files:
+            if f.endswith(".7z"):
+                continue
             try:
                 total += os.path.getsize(os.path.join(p, f))
             except OSError:
