@@ -185,3 +185,17 @@ def test_stub_covers_the_public_names():
 
 def test_package_is_typed():
     assert (PACKAGE / "py.typed").exists()
+
+
+def test_display_and_long_forms():
+    a = uap.parse("123 north main street apt 4, miami fl 33101-1234")
+    assert a.to_display() == {
+        "line1": "123 N Main St Apt 4",
+        "city": "Miami",
+        "state": "FL",
+        "zip": "33101-1234",
+        "last_line": "Miami FL 33101-1234",
+    }
+    assert a.to_long()["line1"] == "123 North Main Street Apartment 4"
+    assert a.to_usps()["line1"] == "123 N MAIN ST APT 4"
+    assert uap.parse("Tampa FL 33601").to_display()["line1"] is None

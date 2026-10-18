@@ -60,6 +60,16 @@ fn fields_and_usps_output() {
 }
 
 #[test]
+fn display_and_long_output() {
+    let input = "123 north main street apt 4, miami fl 33101";
+    let (out, _, code) = cli(&["parse", input, "--display"], "");
+    assert_eq!(code, 0);
+    assert_eq!(out, "123 N Main St Apt 4\nMiami FL 33101\n");
+    let (out, _, _) = cli(&["parse", input, "--long"], "");
+    assert_eq!(out, "123 North Main Street Apartment 4\nMiami FL 33101\n");
+}
+
+#[test]
 fn stdin_gives_one_json_line_per_address_and_reports_blank_lines() {
     let (out, err, code) = cli(&["parse"], "1 MAIN ST\n\n2 ELM AVE\n");
     assert_eq!(out.lines().count(), 2);

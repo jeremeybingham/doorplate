@@ -64,11 +64,10 @@ street corners with cross-street fields) is open; today that text goes to `unpar
 
 ### More output
 
-- A mixed-case display form (`123 N Main St`) and a long form (`123 North Main Street`).
-  Neither is a Pub 28 form; they would be labeled display only.
-- A batch call for pre-split fields (`parse_fields_many`) and a columnar or Arrow result
-  for DataFrames: reading attributes from Python objects is most of the time in a pandas or
-  Polars pipeline.
+- Done: `to_display()` and `to_long()` (display only, not Pub 28) and the batch call for
+  pre-split fields (`parse_fields_many`).
+- A columnar or Arrow result for DataFrames (issue #24): reading attributes from Python
+  objects is most of the time in a pandas or Polars pipeline.
 - A Polars expression namespace, if there is demand.
 
 ### The key

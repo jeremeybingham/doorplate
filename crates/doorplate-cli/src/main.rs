@@ -1,7 +1,8 @@
 //! `doorplate` command-line tool.
 //!
 //! ```text
-//! doorplate parse "<address>" [--pretty] [--usps | --usaddress | --tag] [--default-state ST]
+//! doorplate parse "<address>" [--pretty] [--usps | --display | --long | --usaddress | --tag]
+//!                 [--default-state ST]
 //! doorplate parse --line1 X [--line2 X] [--city X] [--state X] [--zip X]
 //! doorplate parse            (no argument or "-": one address per stdin line, JSONL out)
 //! doorplate parse-file IN.csv --column NAME [-o OUT.csv] [--default-state ST]
@@ -18,12 +19,14 @@ use std::io::{self, BufRead, Write};
 use std::process::ExitCode;
 
 const USAGE: &str = "usage:
-  doorplate parse \"<address>\" [--pretty] [--usps | --usaddress | --tag]
+  doorplate parse \"<address>\" [--pretty] [--usps | --display | --long | --usaddress | --tag]
                   [--default-state ST]
-  doorplate parse --line1 X [--line2 X] [--city X] [--state X] [--zip X] [--pretty] [--usps]
-                  [--default-state ST]
+  doorplate parse --line1 X [--line2 X] [--city X] [--state X] [--zip X] [--pretty]
+                  [--usps | --display | --long] [--default-state ST]
   doorplate parse [-]                 read one address per line from stdin
-                                 (--usaddress: tokens with usaddress labels;
+                                 (--display: mixed case, `123 N Main St`; --long: spelled out,
+                                 `123 North Main Street`; neither is a Pub 28 form.
+                                 --usaddress: tokens with usaddress labels;
                                  --tag: joined by label, like usaddress.tag())
   doorplate parse-file IN.csv --column NAME [--line2 NAME] [--city NAME] [--state NAME]
                   [--zip NAME] [-o OUT.csv] [--default-state ST]
@@ -133,7 +136,14 @@ fn parse_cmd(args: &[String]) -> Result<ExitCode, CliError> {
             "--zip",
             "--default-state",
         ],
-        &["--pretty", "--usps", "--usaddress", "--tag"],
+        &[
+            "--pretty",
+            "--usps",
+            "--display",
+            "--long",
+            "--usaddress",
+            "--tag",
+        ],
     )?;
     let parser = parser_for(&o)?;
     let fields = Fields {
@@ -198,6 +208,17 @@ fn print_one(
 fn print_parsed(out: &mut impl Write, a: &ParsedAddress, o: &Opts) -> io::Result<()> {
     if o.has("--usps") {
         for line in a.to_usps().lines() {
+            writeln!(out, "{line}")?;
+        }
+        return Ok(());
+    }
+    if o.has("--display") || o.has("--long") {
+        let d = if o.has("--long") {
+            a.to_long()
+        } else {
+            a.to_display()
+        };
+        for line in d.lines() {
             writeln!(out, "{line}")?;
         }
         return Ok(());

@@ -266,6 +266,25 @@ and 239 are images (`images/28c2_019_1.jpg`, `28c2_019_2.jpg`,
 | The attention line is not emitted; Pub 28 places it above the recipient, outside the address lines this library writes. | Section 214. |
 | Parts the parse did not find are left out. `diagnostics` is not consulted; unparsed text is not emitted. | Library behavior, not a USPS rule. |
 
+### Display emitter (`emit/display.rs`, `ParsedAddress::to_display`, `to_long`)
+
+Output: `DisplayAddress { line1, city, state, zip }`, plus `last_line()` and
+`lines()`. **Neither form is a Pub 28 form**: they are for showing an address to
+a person, so there is no Pub 28 source for the casing; the source of each rule is
+the project's own style choice (issue #5). Use `to_usps()` for mail. The words
+come from the same tables as the USPS emitter (`Directional::name()`,
+`StreetSuffix::name()`, `UnitType::name()`), so the two never disagree on what a
+word is.
+
+| Rule | Source |
+|---|---|
+| `to_display()`: Pub 28 abbreviations in mixed case (`123 N Main St Apt 4`); directionals stay upper case (`N`, `NE`). `to_long()`: directionals, suffixes and unit designators spelled out (`123 North Main Street Apartment 4`). The state stays a two-letter code and the ZIP as is in both. | Project style; words from `data/directionals.toml`, the suffix table (Pub 28 Appendix C1) and the unit table (Appendix C2). |
+| Capitalized words; hyphen- and slash-separated parts cased alone (`Mid-Island`); a word with a digit is upper case except an ordinal's suffix (`5th`, `101st`, `23B`); a leading `Mc` is kept (`McDonald`); `of`, `the`, `de`, `la`, `del`, `and` are lower case unless first (`Via de la Valle`). | Project style. Judged on the geocode benchmark's 30,622 addresses. |
+| Apostrophes were dropped by the parse (`OBRIEN`), so `Obrien` is the best case; no guess is made. | Section 354 (the cleaner's removal list). |
+| Unknown unit designator `#4` (no space; the Pub 28 `# 4` is a mailpiece form). PO Box `PO Box 12`; routes `RR 2 Box 152` (long: `Rural Route`, `Highway Contract Route`); military `PSC 1650 Box 10`, `Unit 9900 Box 0500`; `General Delivery`. A dual address is the PO Box alone, as in the USPS form. | Project style; the line structure follows the USPS emitter rules above. |
+| Highway names: the state code and one- or two-letter prefixes upper case, the rest capitalized (`KY State Highway 625`, `US Highway 41`, `FM 1200`, `County Road 23E`). | Project style over Appendix F's names. |
+| The city is title-cased as parsed (`St Petersburg`); a military post office stays `APO`, `FPO`, `DPO`. | Project style. |
+
 ### Notes on the emitter rules
 
 Each was checked against the live Pub 28 text in October 2026 and again on

@@ -34,7 +34,9 @@ mod tagger;
 mod tokenize;
 mod types;
 
-pub use emit::{AddressType, KeyOptions, ResoAddress, TaggedAddress, UsaddressTag, UspsAddress};
+pub use emit::{
+    AddressType, DisplayAddress, KeyOptions, ResoAddress, TaggedAddress, UsaddressTag, UspsAddress,
+};
 pub use input::Fields;
 pub use lexicon::{HighwayPrefix, Lexicons, Lookup, MatchKind, ZipPlaces};
 pub use parser::{OptionsError, ParseError, ParseOptions, Parser};

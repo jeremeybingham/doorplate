@@ -1,6 +1,6 @@
 ## What and why
 
-<!-- One change per pull request. Say what changes and why; link the issue if there is one. -->
+<!-- A reasonable number of related changes per pull request. Say what changes and why; link the issue if there is one. -->
 
 ## Checklist
 

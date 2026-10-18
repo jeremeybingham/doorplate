@@ -68,6 +68,7 @@ a.street_name, a.unit_number        # ("MAIN", "4")
 a.to_usps()["line1"]                # "123 N MAIN ST APT 4"
 a.key()                             # "k1:S|123|N|MAIN|ST||FL|33101"
 a.slug()                            # "123-n-main-st-apt-4-miami-fl-33101"
+a.to_display()["line1"]             # "123 N Main St Apt 4" (mixed case, display only)
 a.warnings                          # []
 ```
 
@@ -175,6 +176,7 @@ a.to_usps().line1;                // Some("123 N MAIN ST APT 4")
 a.to_reso();                      // RESO Data Dictionary 2.0 fields
 a.key(KeyOptions::property());    // Some("k1:S|123|N|MAIN|ST||FL|33101")
 a.slug();                         // Some("123-n-main-st-apt-4-miami-fl-33101"), display only
+a.to_display().line1;             // Some("123 N Main St Apt 4"); to_long(): "123 North Main Street Apartment 4"
 a.diagnostics.warnings;           // e.g. MissingZip, UnparsedRemainder
 ```
 
@@ -189,6 +191,7 @@ state hint.
 doorplate parse "123 N Main St, Miami FL 33101" --pretty     # JSON: components, output, key, warnings
 doorplate parse-file in.csv --column address -o out.csv      # appends addr_* columns
 doorplate parse "281 EVELYN DR DOTHAN" --default-state AL
+doorplate parse "123 N Main St, Miami FL 33101" --display    # mixed case; --long spells words out (not Pub 28)
 doorplate parse "123 N Main St, Miami FL 33101" --tag        # usaddress-style joined labels
 doorplate parse -  < addresses.txt                           # one address per line, JSON lines out
 ```
@@ -270,8 +273,8 @@ The next work, roughly in this order, depends on what real data shows:
   for that state.
 - **More address shapes and rules.** Named buildings without a building word, a few
   highway and unit forms, and more (the gaps are listed in the roadmap).
-- **More output.** A mixed-case display form and a long form (`North Main Street`), a
-  batch call for pre-split fields, and a columnar result for DataFrames.
+- **More output.** A columnar result for DataFrames (the display and long forms and
+  the batch call for pre-split fields are in).
 - **Stable key versions.** A `k2` as the parser settles; the key policy is in
   [`docs/key-format.md`](docs/key-format.md).
 
