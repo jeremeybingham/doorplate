@@ -38,6 +38,13 @@ k2:G|<state>|<zip5>
   Appendix F), and followed by any name words after the route
   (`HIGHWAY 66 FRONTAGE`). `<suffix>` and the
   directionals are Pub 28 abbreviations.
+- **Route numbers:** leading zeros before another digit are dropped from a rural
+  or highway contract route and from a highway route in a street name, so `RR 02`
+  and `RR 2` share a key, as do `COUNTY ROAD 023` and `COUNTY ROAD 23`; an
+  all-zero route keeps one zero (`00` is `0`). Pub 28 sections 242 and 252 call
+  the zero unnecessary. Box numbers (`BOX 04`) and PO Box numbers keep theirs: section
+  282 says the ZIP+4 file marks significant box zeros. The USPS output writes the
+  route as given.
 - `M`: `<kind>` is CPR, OPC, PSC, UPR or UNIT; `<post office>` is APO, FPO or
   DPO (empty when absent).
 - `<state>` is the USPS code. `<zip5>` is five digits.

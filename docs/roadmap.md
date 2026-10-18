@@ -73,7 +73,7 @@ street corners with cross-street fields) is open; today that text goes to `unpar
 ### The key
 
 `k2` starts with 0.3.0 and collects the key-affecting changes found with the data on hand (the
-plan and checklist are issue #44, including how leading zeros in route numbers are written).
+plan and checklist are issue #44; the key drops leading zeros from route numbers and keeps them in box numbers).
 More outside data (hand-labeled real data and a second national source) is wanted before any `k3`.
 
 ### Data and benchmarks
