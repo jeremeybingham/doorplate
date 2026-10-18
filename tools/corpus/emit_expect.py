@@ -32,12 +32,18 @@ def special(e):
     if e.get("general_delivery"): return "GENERAL DELIVERY"
     return ""
 
-def name_text(e):
+def route_key(r):
+    """A route number in the key: leading zeros before another digit are dropped
+    (`02` is `2`, `00` is `0`; Pub 28 sections 242 and 252). Box numbers keep theirs."""
+    return re.sub(r"^0+(?=\d)","",r)
+
+def name_text(e,key=False):
     """The street's name; for a highway, the highway and any name words after
-    the route (`HIGHWAY 66 FRONTAGE`, docs/key-format.md)."""
+    the route (`HIGHWAY 66 FRONTAGE`, docs/key-format.md). The key drops the
+    route's leading zeros; the USPS line keeps them."""
     nm=plain(e["street_name"]) if e.get("street_name") else ""
     if e.get("highway"):
-        h=e["highway"]; return join(h.get("state",""),h["prefix"],plain(h["route"]),nm)
+        h=e["highway"]; r=plain(h["route"]); return join(h.get("state",""),h["prefix"],route_key(r) if key else r,nm)
     return nm
 
 def has_street(e): return bool(e.get("street_name") or e.get("highway"))
@@ -87,12 +93,12 @@ def key(e,unit):
     # A dual address keys on the street (docs/key-format.md).
     if e.get("po_box") and not has_street(e): body=["P",e["po_box"],st,z]
     elif e.get("rural_route"):
-        r=e["rural_route"]; body=["R",r["kind"],r["route"],r.get("box",""),st,z]
+        r=e["rural_route"]; body=["R",r["kind"],route_key(r["route"]),r.get("box",""),st,z]
     elif e.get("military"):
         m=e["military"]; body=["M",m["kind"],m["number"],m.get("box",""),e.get("military_post_office",""),st,z]
     elif e.get("general_delivery"): body=["G",st,z]
     elif e.get("street_name") or e.get("highway"):
-        body=["S",e.get("street_number",""),e.get("street_dir_prefix",""),name_text(e),e.get("street_suffix",""),e.get("street_dir_suffix",""),st,z]
+        body=["S",e.get("street_number",""),e.get("street_dir_prefix",""),name_text(e,True),e.get("street_suffix",""),e.get("street_dir_suffix",""),st,z]
         if unit: body+=[e.get("unit_number",""),e.get("second_unit_number","")]
     else: return None
     return pre+body[0]+":"[:0]+"|".join([body[0]]+[keyseg(x) for x in body[1:]])[1:] if False else pre+"|".join([body[0]]+[keyseg(x) for x in body[1:]])

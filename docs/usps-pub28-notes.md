@@ -264,7 +264,7 @@ and 239 are images (`images/28c2_019_1.jpg`, `28c2_019_2.jpg`,
 | City names are written as parsed, spelled out or not. No SAINT/ST, FORT/FT or MOUNT/MT rule is applied: Pub 28 says to spell city names in full, and allows only the City State file's 13-character abbreviations, which this library does not have. | Sections 221, 223. |
 | Military: a post office (APO, FPO, DPO) takes the city's place (`APO AE 09001`); the delivery line is `<type> <number> BOX <box>`, with box leading zeros kept (`UNIT 9900 BOX 0500`). | Sections 225.1, 238.1, 239 and their examples. |
 | General delivery: `GENERAL DELIVERY`, spelled out, on the delivery line. | Section 261. |
-| Rural and highway contract route numbers are written as given. 242 and 252 say a leading zero "is not necessary", not that it must go, and the key keeps the value as given (`RR 02` and `RR 2` have different keys today; #13), so the emitter does too. Box hyphens are kept as given (243, 252.1: only the ZIP+4 file can say). | Sections 242, 243, 252, 252.1. |
+| Rural and highway contract route numbers are written as given by the emitter. 242 and 252 say a leading zero "is not necessary", not that it must go, so the USPS line keeps it (`RR 02`). The key drops leading zeros from route numbers (`RR 02` and `RR 2` share a key; `COUNTY ROAD 023` is `COUNTY ROAD 23`; an all-zero route keeps one zero) but keeps them in box numbers (`BOX 04`, `PO BOX 0123`). Box hyphens are kept as given (243, 252.1: only the ZIP+4 file can say). | Sections 242, 243, 252, 252.1, 282. The route number is a function of the parse in the key only (issue #13, decided for `k2`). Corpus `rg-182` to `rg-188`. |
 | A state name inside a highway name is written as its code (`KENTUCKY STATE HIGHWAY 625` is `KY STATE HIGHWAY 625`; `KENTUCKY 440` is `KY HIGHWAY 440`). A state name that is the whole primary name stays spelled out (`OKLAHOMA AVE`). | Appendix F and its note; section 358. See "Highways" below. |
 | Dual address (street and PO Box): the PO Box alone, without the street's units. Pub 28 says to eliminate dual addresses on the mailpiece if possible, and that the delivery address is normally the PO Box. The key and the RESO output use the street. | Section 215 and its example (`28c2_005.htm`, image `28c2_005_1.jpg`). |
 | The attention line is not emitted; Pub 28 places it above the recipient, outside the address lines this library writes. | Section 214. |
@@ -318,9 +318,9 @@ Each was checked against the live Pub 28 text in October 2026 and again on
    `Highway::state` and written as its code. A state that is the whole primary
    name (`OKLAHOMA AVE`) stays spelled out. Corpus `p28-highway-028` to
    `p28-highway-037`.
-6. **Leading zeros.** Route numbers are kept as given (see the table above).
-   Stripping them only in the emitter would make the USPS output key differently
-   from its input, and stripping them in the parser or key would change keys.
+6. **Leading zeros.** Route numbers are kept as given by the emitters and by the
+   parse; the key drops them (see the table above), so the USPS output of `RR 02`
+   re-parses to the same key. Box numbers keep their zeros everywhere.
 7. **Military and general delivery.** The 238.1 and 239 examples
    (`CPR 895 BOX 74` / `APO AE 09499-0001`, `UNIT 9900 BOX 0500` /
    `DPO AE 09701-0500`) and section 261 are matched by the corpus, which checks

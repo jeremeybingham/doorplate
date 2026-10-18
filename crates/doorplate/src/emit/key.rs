@@ -4,7 +4,7 @@
 
 use std::fmt::Write;
 
-use crate::types::{ParsedAddress, Warning};
+use crate::types::{Highway, ParsedAddress, Warning};
 
 /// Options for [`ParsedAddress::key`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -54,7 +54,7 @@ impl ParsedAddress {
         } else if let Some(r) = &self.rural_route {
             segs.extend([
                 r.kind.abbr().to_string(),
-                esc(&r.route),
+                esc(&route_key(&r.route)),
                 r.box_number.as_deref().map(esc).unwrap_or_default(),
             ]);
             'R'
@@ -73,10 +73,16 @@ impl ParsedAddress {
         } else if self.street_name.is_some() || self.highway.is_some() {
             let name = match &self.highway {
                 // Name words after the route stay: `HIGHWAY 66 FRONTAGE`.
-                Some(h) => match &self.street_name {
-                    Some(n) => format!("{} {n}", h.name()),
-                    None => h.name(),
-                },
+                Some(h) => {
+                    let route = Highway {
+                        route: route_key(&h.route),
+                        ..h.clone()
+                    };
+                    match &self.street_name {
+                        Some(n) => format!("{} {n}", route.name()),
+                        None => route.name(),
+                    }
+                }
                 None => self.street_name.clone().unwrap_or_default(),
             };
             segs.extend([
@@ -124,6 +130,19 @@ impl ParsedAddress {
         }
         Some(key)
     }
+}
+
+/// A route number as the key writes it: leading zeros before another digit
+/// are dropped (`02` is `2`, `023` is `23`, `00` is `0`), since Pub 28
+/// sections 242 and 252 call the zero unnecessary. Box numbers keep theirs
+/// (section 282).
+fn route_key(route: &str) -> String {
+    let zeros = route
+        .bytes()
+        .zip(route.bytes().skip(1))
+        .take_while(|&(a, b)| a == b'0' && b.is_ascii_digit())
+        .count();
+    route[zeros..].to_string()
 }
 
 /// Escape one segment: uppercase, drop periods and apostrophes (Pub 28 uses
