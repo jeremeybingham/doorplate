@@ -19,25 +19,27 @@ tool. It runs offline with no runtime dependencies and no data to download.
 
 For one line or separate fields it gives you:
 
-- **components**: street number, directionals, street name, suffix, units, city,
+- 🧩 **components**: street number, directionals, street name, suffix, units, city,
   state, ZIP, and the less common shapes (PO boxes, rural and highway routes,
   military and general delivery);
-- **USPS Publication 28** and **RESO Data Dictionary 2.0** output;
-- a **canonical match key** (`k1:...`) and a URL-safe **slug**;
-- **diagnostics**: warnings with stable codes and the text it could not place, so
+- 📮 **USPS Publication 28** and 🏠 **RESO Data Dictionary 2.0** output;
+- 🔑 a **canonical match key** (`k1:...`) and a URL-safe **slug**;
+- 🩺 **diagnostics**: warnings with stable codes and the text it could not place, so
   you can send doubtful rows to review.
 
-> **Alpha release.** This is the first version (0.1.0), and it is early.
+> [!WARNING]
+> 🚧 **Alpha release.** This is the first version (0.1.0), and it is early. 🚧
 >
-> - **Keys will probably change.** The match key is versioned (`k1:`). As the parser
+> - 🔑 **Keys will probably change.** The match key is versioned (`k1:`). As the parser
 >   improves, expect new key versions (`k2:` and later): a changed key gets a new
 >   prefix, so an old key is never silently reinterpreted, but if you store keys, store
 >   their version with them and plan to re-key. Don't treat `k1` as permanent yet.
-> - **Accuracy and speed are not guaranteed.** The numbers below were measured on one
+> - 📏 **Accuracy and speed are not guaranteed.** The numbers below were measured on one
 >   machine and a few datasets; your data may behave differently. Watch the warnings.
-> - Names in the API and the warning codes may still change before 1.0.
+> - 🏷️ Names in the API and the warning codes may still change before 1.0.
 
-> **Help wanted: messy addresses.** The parser gets better with real, messy data. If
+> [!TIP]
+> 🙋 **Help wanted: messy addresses.** The parser gets better with real, messy data. If
 > you have addresses it parses badly (odd abbreviations, typos, cut-off lines, units
 > in strange places, county or mailing-list exports), please
 > [open an issue](https://github.com/jeremeybingham/doorplate/issues/new?template=misparse-or-messy-data.md)
@@ -45,7 +47,8 @@ For one line or separate fields it gives you:
 > first: keep the shape and swap the names, numbers and places
 > ([how](CONTRIBUTING.md#sharing-messy-data)).
 
-> **This is not an address validator.** `doorplate` parses and formats. It does
+> [!IMPORTANT]
+> 🚫 **This is not an address validator.** `doorplate` parses and formats. It does
 > not check that an address exists or can receive mail; Pub 28 formatting is not
 > deliverability, and validation needs postal-service-certified data. Warnings
 > such as `zip_city_mismatch` are hints about the input, not verdicts.
