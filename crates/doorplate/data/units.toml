@@ -1,0 +1,197 @@
+# units.toml
+#
+# Secondary unit designators (apartment, suite, ...), their standard
+# abbreviations, and whether Pub 28 expects a secondary range (number) after
+# the designator.
+#
+# Source: USPS Publication 28, Appendix C2 "Secondary Unit Designators".
+#   https://pe.usps.com/text/pub28/pub28apc_003.htm
+# The "#" designator: Pub 28 allows the pound sign in place of a designator
+# when the designator is not known; it is handled by the tagger, not listed
+# here. See docs/usps-pub28-notes.md for the section reference and the
+# verification status of this table.
+#
+# Verified against a copy of the Appendix C2 page (October 2026): every
+# designator, abbreviation and range_required flag (the "**" marks in C2)
+# matches.
+#
+# Each entry:
+#   name            designator name
+#   abbr            standard abbreviation (what we emit)
+#   range_required  true when Pub 28 expects a number after the designator
+#   forms           accepted spellings, including name and abbreviation
+#   observed        optional; spellings seen in real data that Appendix C2 does
+#                   not list. Recognized, but flagged as non-standard. Source
+#                   noted per entry.
+#
+# Some forms collide with other tables (FL = Floor vs Florida, LOT, KEY vs the
+# KEY street suffix, SIDE). Context decides; that is the tagger's job.
+
+[[unit]]
+name = "APARTMENT"
+abbr = "APT"
+range_required = true
+forms = ["APARTMENT", "APT"]
+# observed: Florida address data ("APTO 417", "APART 1707", "AP 902");
+# APTO, APARTAMENTO and APARTAMENT are Spanish spellings
+observed = ["AP", "APART", "APARTAMENT", "APARTAMENTO", "APP", "APPT", "APRT", "APTO"]
+
+[[unit]]
+name = "BASEMENT"
+abbr = "BSMT"
+range_required = false
+forms = ["BASEMENT", "BSMT"]
+
+[[unit]]
+name = "BUILDING"
+abbr = "BLDG"
+range_required = true
+forms = ["BUILDING", "BLDG"]
+
+[[unit]]
+name = "DEPARTMENT"
+abbr = "DEPT"
+range_required = true
+forms = ["DEPARTMENT", "DEPT"]
+
+[[unit]]
+name = "FLOOR"
+abbr = "FL"
+range_required = true
+forms = ["FLOOR", "FL"]
+
+[[unit]]
+name = "FRONT"
+abbr = "FRNT"
+range_required = false
+forms = ["FRONT", "FRNT"]
+
+[[unit]]
+# C2 spells the description "Hanger". HANGAR is the dictionary spelling.
+name = "HANGER"
+abbr = "HNGR"
+range_required = true
+forms = ["HANGER", "HNGR"]
+# observed: correct English spelling, not the one C2 lists
+observed = ["HANGAR"]
+
+[[unit]]
+name = "KEY"
+abbr = "KEY"
+range_required = true
+forms = ["KEY"]
+
+[[unit]]
+name = "LOBBY"
+abbr = "LBBY"
+range_required = false
+forms = ["LOBBY", "LBBY"]
+
+[[unit]]
+name = "LOT"
+abbr = "LOT"
+range_required = true
+forms = ["LOT"]
+# observed: Florida county property listings ("2613 LEAR RD -UNIT B LT 18")
+observed = ["LT"]
+
+[[unit]]
+name = "LOWER"
+abbr = "LOWR"
+range_required = false
+forms = ["LOWER", "LOWR"]
+
+[[unit]]
+name = "OFFICE"
+abbr = "OFC"
+range_required = false
+forms = ["OFFICE", "OFC"]
+
+[[unit]]
+name = "PENTHOUSE"
+abbr = "PH"
+range_required = false
+forms = ["PENTHOUSE", "PH"]
+
+[[unit]]
+name = "PIER"
+abbr = "PIER"
+range_required = true
+forms = ["PIER"]
+
+[[unit]]
+name = "REAR"
+abbr = "REAR"
+range_required = false
+forms = ["REAR"]
+
+[[unit]]
+name = "ROOM"
+abbr = "RM"
+range_required = true
+forms = ["ROOM", "RM"]
+
+[[unit]]
+name = "SIDE"
+abbr = "SIDE"
+range_required = false
+forms = ["SIDE"]
+
+[[unit]]
+name = "SLIP"
+abbr = "SLIP"
+range_required = true
+forms = ["SLIP"]
+
+[[unit]]
+name = "SPACE"
+abbr = "SPC"
+range_required = true
+forms = ["SPACE", "SPC"]
+
+[[unit]]
+name = "STOP"
+abbr = "STOP"
+range_required = true
+forms = ["STOP"]
+
+[[unit]]
+name = "SUITE"
+abbr = "STE"
+range_required = true
+forms = ["SUITE", "STE"]
+# observed: Florida address data ("SUIT 300", "N WICKHAM RD SU B",
+# "ALTA MEADOWS LANE SU 612"; SU in 16 lines at 6 distinct addresses)
+observed = ["SUIT", "SU"]
+
+[[unit]]
+name = "TRAILER"
+abbr = "TRLR"
+range_required = true
+forms = ["TRAILER", "TRLR"]
+
+[[unit]]
+name = "UNIT"
+abbr = "UNIT"
+range_required = true
+forms = ["UNIT"]
+# observed: Pasco County listings ("9960 EAGLES POINT CIRCLE UN 3");
+# Florida address data: industrial and studio units that Appendix C2
+# has no word for ("14355 SW 120TH STREET, BAY 102" 127 lines, "STUDIO 7" 99,
+# "BOOTH 12" 11), read as a plain unit
+observed = ["UN", "BAY", "STUDIO", "BOOTH"]
+
+[[unit]]
+name = "UPPER"
+abbr = "UPPR"
+range_required = false
+forms = ["UPPER", "UPPR"]
+
+[[unit]]
+# Not in Appendix C2. Pub 28 section 285 (Private Mailbox Addresses): mail to
+# a commercial mail receiving agency uses PMB or # before the private mailbox
+# number (https://pe.usps.com/text/pub28/28c2_040.htm).
+name = "PRIVATE MAILBOX"
+abbr = "PMB"
+range_required = true
+forms = ["PRIVATE MAILBOX", "PMB"]

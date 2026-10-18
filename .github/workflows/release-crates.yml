@@ -1,0 +1,46 @@
+name: Release crates.io
+# Publishes `doorplate`, then `doorplate-cli` (which depends on the published
+# core crate), when a version tag is pushed. Needs the repository secret
+# CARGO_REGISTRY_TOKEN (a crates.io token with publish-new and publish-update).
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  publish:
+    # Never runs from a fork or the archived development repository.
+    if: github.repository == 'jeremeybingham/doorplate'
+    runs-on: ubuntu-latest
+    environment: crates-io
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: The tag matches the workspace version
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          version=$(cargo metadata --no-deps --format-version 1 \
+            | python3 -c "import json,sys; print(next(p['version'] for p in json.load(sys.stdin)['packages'] if p['name']=='doorplate'))")
+          test "v$version" = "${GITHUB_REF_NAME}" || { echo "tag ${GITHUB_REF_NAME} != crate version v$version"; exit 1; }
+      - name: Package the core crate (dry run)
+        run: cargo publish -p doorplate --dry-run --locked
+      - name: Publish doorplate
+        # A manual run stops after the dry run above.
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: cargo publish -p doorplate --locked
+      - name: Publish doorplate-cli
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: |
+          # The index can lag a few seconds behind the upload.
+          for delay in 0 10 20 30 60; do
+            sleep "$delay"
+            cargo publish -p doorplate-cli --locked && exit 0
+          done
+          exit 1

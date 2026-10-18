@@ -1,0 +1,25 @@
+# Florida state pack: curated places and ZIPs behind the `state-fl` feature.
+# Provenance and licenses: docs/packs/fl.md. build.rs checks every file and
+# stops the build on a malformed or contradictory row.
+#
+# places.tsv  name, county, kind (municipality | place), sources, variants
+#             (`;`-separated spellings seen in real data, mostly typos)
+# zips.tsv    zip, main place, shared places (`;`-separated)
+# places_added.tsv  name, county, kind, addresses: communities seen in
+#             Florida address data that the pack and the national list lack
+# variants_added.tsv  variant, place, addresses: more spellings of a place
+# zips_observed.tsv  zip, place, addresses: more shared places, seen in
+#             Florida address data
+# overrides.toml  suffix and highway spellings read differently in Florida
+#             (CR = CIRCLE, SR = STATE ROAD)
+#
+# The files are edited by hand; each addition names its evidence.
+
+state = "FL"
+version = "2026.10.4"
+sources = [
+  "curated by the authors from county listings (MIT OR Apache-2.0)",
+  "US Census Bureau 2024 Gazetteer, places (public domain)",
+  "GeoNames postal codes, US (CC BY 4.0)",
+  "Florida public-record address export, 2025-10-10",
+]

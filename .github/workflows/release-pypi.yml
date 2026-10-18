@@ -1,0 +1,75 @@
+name: Release PyPI
+# Builds the abi3 wheels and the sdist and publishes them to PyPI through
+# trusted publishing (no token). Runs when a version tag is pushed. The PyPI
+# publisher is configured for this file name.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  wheels:
+    name: wheel (${{ matrix.name }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - name: linux-x86_64
+            os: ubuntu-latest
+            manylinux: auto
+          - name: linux-aarch64
+            os: ubuntu-24.04-arm
+            manylinux: auto
+          - name: macos-universal2
+            os: macos-latest
+            target: universal2-apple-darwin
+          - name: windows-x64
+            os: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: PyO3/maturin-action@v1
+        with:
+          command: build
+          args: --release --out dist --manifest-path crates/doorplate-py/Cargo.toml
+          target: ${{ matrix.target }}
+          manylinux: ${{ matrix.manylinux }}
+          rust-toolchain: stable
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheel-${{ matrix.name }}
+          path: dist/*.whl
+          if-no-files-found: error
+
+  sdist:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: PyO3/maturin-action@v1
+        with:
+          command: sdist
+          args: --out dist --manifest-path crates/doorplate-py/Cargo.toml
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sdist
+          path: dist/*.tar.gz
+          if-no-files-found: error
+
+  publish:
+    needs: [wheels, sdist]
+    # Only a tag push publishes, and only from the release repository; a manual
+    # run stops after building.
+    if: github.repository == 'jeremeybingham/doorplate' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - uses: pypa/gh-action-pypi-publish@release/v1

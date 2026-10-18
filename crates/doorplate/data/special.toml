@@ -1,0 +1,264 @@
+# special.toml
+#
+# Non-street address forms (PO Box, rural route, highway contract route,
+# general delivery), attention words, highway-name prefixes, and placeholder
+# text.
+#
+# Sources:
+#   USPS Publication 28, chapter 2: sections 214 (attention line), 24x
+#   (rural route), 25x (highway contract route), 26x (general delivery) and
+#   28x (Post Office Box); section 237 and Appendix F (highway street names).
+#     https://pe.usps.com/text/pub28/
+#   Placeholder phrases are NOT a USPS rule: they are stand-in text seen in
+#   Florida county property data.
+# See docs/usps-pub28-notes.md for the section references and verification
+# status of each table.
+#
+# Spellings are written as normalized lexicon keys: uppercase, periods
+# removed, runs of spaces collapsed. "P.O. Box", "P O BOX" and "PO  BOX" all
+# normalize to a listed form; "POBOX" (no space) is listed separately.
+#
+# Shapes:
+#   standard  the form we emit
+#   forms     accepted spellings, including the standard one
+#   synonyms  (po_box only) other words for a box that Pub 28 says to write
+#             as PO BOX
+#
+# Context matters for several forms (BOX alone, RTE, RT, CR, US, I). The
+# tagger accepts them only in the right position, e.g. RR/HC followed by a
+# route number and BOX, or a highway prefix followed by a route number.
+
+[po_box]
+# Pub 28 section 281: write PO BOX ##. Section 283: CALLER, FIRM CALLER, BIN,
+# LOCKBOX and DRAWER are changed to PO BOX. PO DRAWER and LOCK BOX are not
+# named there; they stay as accepted input.
+standard = "PO BOX"
+forms = ["PO BOX", "P O BOX", "POBOX", "PO BX", "POB", "P O B", "POST OFFICE BOX", "POST BOX"]
+synonyms = ["DRAWER", "PO DRAWER", "CALLER", "FIRM CALLER", "BIN", "LOCKBOX", "LOCK BOX"]
+
+[box]
+# The box word inside rural route and highway contract addresses ("RR 2 BOX 15").
+standard = "BOX"
+forms = ["BOX", "BX"]
+
+[rural_route]
+# Pub 28 section 241: write RR ## BOX ##; do not use RURAL, NUMBER, NO or the
+# pound sign. Section 244: change RFD and RD (meaning rural or rural free
+# delivery) to RR. RD is also the ROAD suffix, so the tagger takes it as a
+# rural route only in the RD ## BOX ## position.
+standard = "RR"
+forms = ["RR", "R R", "RURAL ROUTE", "RURAL RTE", "RURAL RT", "RURAL", "RFD", "RFD ROUTE", "RURAL FREE DELIVERY", "RD", "RTE", "RT", "ROUTE"]
+
+[highway_contract]
+# Pub 28 section 251: write HC ## BOX ##. Use the HC abbreviation; do not use
+# HIGHWAY CONTRACT, ROUTE, NUMBER, NO, STAR ROUTE or the pound sign. Those
+# words are accepted here as input only; the emitter writes HC.
+standard = "HC"
+forms = ["HC", "H C", "HCR", "HIGHWAY CONTRACT", "HIGHWAY CONTRACT ROUTE", "HWY CONTRACT", "STAR ROUTE", "STAR RTE",
+  # With ROUTE written out, which section 251 says to drop (seen in input:
+  # HC ROUTE 72, HC R 32, HIGHWAY CONTRACT RTE 46, HWY CONTRACT ROUTE 102).
+  "HC ROUTE", "HC RTE", "HC RT", "HC R", "HCR ROUTE",
+  "HIGHWAY CONTRACT RTE", "HIGHWAY CONTRACT RT", "HWY CONTRACT ROUTE", "HWY CONTRACT RTE"]
+
+[general_delivery]
+# Pub 28 section 261: GENERAL DELIVERY, spelled out, no abbreviation. The
+# shortened forms are input only.
+standard = "GENERAL DELIVERY"
+forms = ["GENERAL DELIVERY", "GEN DELIVERY", "GENERAL DEL", "GEN DEL"]
+
+[attention]
+# Pub 28 section 214, Attention Line: placed above the recipient line, with
+# ATTN before the name (https://pe.usps.com/text/pub28/28c2_004.htm). C/O
+# (care of) lines are handled the same way; that is not a Pub 28 term, but
+# Florida address data uses both in the address lines.
+standard = "ATTN"
+forms = ["ATTN", "ATTENTION", "C/O", "CARE OF"]
+
+# Highway prefixes: a prefix followed by a route number is the street name
+# ("COUNTY ROAD 23", "HWY 2301"). The number after it is the road's, not a
+# house number or unit ("8932 HWY 2301" in county data). Route numbers may
+# carry letters (60E, 1080A, 1150EE) or be letters only (STATE ROUTE MM).
+#
+# Standards are from Pub 28 section 237 and Appendix F ("Address
+# Standardization: County, State, Local Highways"): the prefix is spelled out
+# (COUNTY ROAD, STATE HIGHWAY, US HIGHWAY, INTERSTATE), except FM. Spellings
+# Appendix F shows in its "Examples in Use" column are noted per entry; the
+# others are accepted input that Appendix F does not show. Appendix F also
+# writes I10 and IH280 with no space; splitting those is the tokenizer's job.
+#
+# Prefix and route-table spellings overlap on purpose (RD, RT, RTE and ROUTE
+# are also rural route forms; RD is also the ROAD suffix). The tagger decides
+# by position: ROUTE 88 is a highway, ROUTE 2 BOX 15 a rural route.
+#
+# State-dependent abbreviations are deliberately left out of the base table
+# and belong in state packs (docs/how-it-works.md): "SR" is State Road in
+# Florida and State Route elsewhere (Appendix F itself shows both, SR 220 ->
+# STATE ROAD 220 and SR MM -> STATE ROUTE MM); "RR" is Ranch Road in Texas but
+# a rural route everywhere in Pub 28.
+
+[[highway]]
+# Appendix F: HIGHWAY, HIWAY, HWY. The rest are C1 spellings of HIGHWAY.
+standard = "HIGHWAY"
+forms = ["HIGHWAY", "HWY", "HIGHWY", "HIWAY", "HIWY", "HWAY"]
+# Not in Pub 28; a misspelling seen in input (12631 IMPERIAL HGWY).
+observed = ["HGWY"]
+
+[[highway]]
+# Appendix F: COUNTY RD, COUNTY ROAD, CR, CNTY RD.
+standard = "COUNTY ROAD"
+forms = ["COUNTY ROAD", "COUNTY RD", "CNTY RD", "CO RD", "CR"]
+# A typo for COUNTY ROAD, taken only before a route number (10 COUNTRY ROAD
+# 3668); COUNTRY ROAD alone stays a street name.
+observed = ["COUNTRY ROAD", "COUNTRY RD"]
+
+[[highway]]
+# Appendix F: COUNTY HIGHWAY, COUNTY HWY, CNTY HWY.
+standard = "COUNTY HIGHWAY"
+forms = ["COUNTY HIGHWAY", "COUNTY HWY", "CNTY HWY", "CO HWY"]
+
+[[highway]]
+# Appendix F: ST HIGHWAY, STATE HWY.
+standard = "STATE HIGHWAY"
+forms = ["STATE HIGHWAY", "STATE HWY", "ST HIGHWAY", "ST HWY", "SH"]
+
+[[highway]]
+# Appendix F: ST RD, STATE ROAD (and SR; see above).
+standard = "STATE ROAD"
+forms = ["STATE ROAD", "STATE RD", "ST RD"]
+
+[[highway]]
+# Appendix F: ST RT, STATE RTE (and SR; see above).
+standard = "STATE ROUTE"
+forms = ["STATE ROUTE", "STATE RTE", "ST RT", "ST RTE"]
+
+[[highway]]
+# Appendix F: US, US HWY, US HIGHWAY.
+standard = "US HIGHWAY"
+forms = ["US HIGHWAY", "US HWY", "US"]
+
+[[highway]]
+# Appendix F: I, IH, INTERSTATE, INTERSTATE HWY.
+standard = "INTERSTATE"
+forms = ["INTERSTATE", "INTERSTATE HIGHWAY", "INTERSTATE HWY", "IH", "I"]
+
+[[highway]]
+# Appendix F: FARM TO MARKET, FM, HWY FM. Standard is FM, not spelled out.
+standard = "FM"
+forms = ["FM", "FARM TO MARKET", "FARM TO MARKET ROAD", "FARM ROAD", "HWY FM"]
+
+[[highway]]
+# Appendix F: RANCH RD.
+standard = "RANCH ROAD"
+forms = ["RANCH ROAD", "RANCH RD"]
+
+[[highway]]
+# Section 237 and Appendix F: TOWNSHIP RD, TSR.
+standard = "TOWNSHIP ROAD"
+forms = ["TOWNSHIP ROAD", "TOWNSHIP RD", "TWP RD", "TSR"]
+
+[[highway]]
+# Section 237 and Appendix F: RD, ROAD ("RD 5A" -> ROAD 5A).
+standard = "ROAD"
+forms = ["ROAD", "RD"]
+
+[[highway]]
+# Appendix F: RT, RTE, ROUTE.
+standard = "ROUTE"
+forms = ["ROUTE", "RTE", "RT"]
+
+[[highway]]
+# Appendix F: EXPRESSWAY 55 stays spelled out (not the EXPY suffix form).
+standard = "EXPRESSWAY"
+forms = ["EXPRESSWAY"]
+
+[[highway]]
+# Appendix F: LOOP 410.
+standard = "LOOP"
+forms = ["LOOP"]
+
+# Military delivery lines (Pub 28 section 238.1): one of five address types
+# with its number, then BOX and the box number ("PSC 1650 BOX 10",
+# "UNIT 908 BOX 111"). Department of State mail uses the same shape
+# (section 239: "UNIT 9900 BOX 0500"). CMR (community mail room) is an older
+# type that the current Pub 28 does not list, so it is left out.
+# The standard values are fixed: build.rs maps each to a MilitaryKind.
+
+[[military]]
+standard = "CPR"
+forms = ["CPR", "CONSOLIDATED POSTAL ROOM"]
+
+[[military]]
+standard = "OPC"
+forms = ["OPC", "OFFICIAL POSTAL CENTER"]
+
+[[military]]
+standard = "PSC"
+forms = ["PSC", "POSTAL SERVICE CENTER"]
+
+[[military]]
+standard = "UPR"
+forms = ["UPR", "UNIT POSTAL ROOM"]
+
+[[military]]
+standard = "UNIT"
+forms = ["UNIT"]
+
+# Military post offices, written in the city position with AA, AE or AP as
+# the state (Pub 28 section 225.1 for APO and FPO; section 239 for DPO).
+
+[[military_post_office]]
+standard = "APO"
+forms = ["APO"]
+
+[[military_post_office]]
+standard = "FPO"
+forms = ["FPO"]
+
+[[military_post_office]]
+standard = "DPO"
+forms = ["DPO"]
+
+[country]
+# Names of the United States written after the address ("MIAMI, FL 33101,
+# USA"). Dropped from the parse with a `country_ignored` warning;
+# other countries are out of scope. Normalized keys, so
+# "U.S.A." is USA. Not a USPS rule: Pub 28 addresses are domestic and carry
+# no country line; the names are plain English names for the country.
+phrases = [
+  "US",
+  "USA",
+  "UNITED STATES",
+  "UNITED STATES OF AMERICA",
+]
+
+[placeholder]
+# Whole-line stand-ins meaning "no usable street address". Matched against the
+# normalized street line, optionally after a leading run of zeros ("0 UNKNOWN",
+# "00 UNASSIGNED LOCATION RE"). Seen in Florida county data; the phrases are
+# generic assessor wording.
+phrases = [
+  "UNKNOWN",
+  "PROPERTY ADDRESS UNKNOWN",
+  "NO SITUS",
+  "NOT ASSIGNED",
+  "NO STREET",
+  "NO PHYSICAL ADDRESS",
+  "N/A",
+  "NA",
+  "CONFIDENTIAL",
+  "UNASSIGNED",
+  "UNASSIGNED LOCATION",
+  "PROPERTY LOCATION IS NOT AVAILABLE",
+  "PROPERTY LOCATION IS NOT AVAIL",
+  "NO ADDRESS",
+  "NO ADDRESS ON TAX ROLL",
+  # Florida address data writes "**Private Address**" for a withheld address.
+  "PRIVATE ADDRESS",
+]
+
+[building]
+# Words that end a building name (EAST TOWER, ANNEX BUILDING, MEDICAL PLAZA).
+# Not a USPS rule: Pub 28 has no building line. Chosen from building
+# names seen in input and Florida address data. The tagger takes a name ending in
+# one of these only after the street or its unit (see docs/usps-pub28-notes.md).
+words = ["ANNEX", "BUILDING", "CENTER", "CENTRE", "COMPLEX", "HALL", "PAVILION", "PLAZA", "TOWER", "TOWERS", "WING"]
