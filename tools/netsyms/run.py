@@ -17,6 +17,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import shutil
 import sqlite3
 import subprocess
@@ -28,7 +29,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 HERE = Path(__file__).resolve().parent
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 REQUIRED = ["zipcode", "number", "street", "street2", "city", "state", "plus4", "country", "source"]
 GB = 1 << 30
 
@@ -140,6 +141,52 @@ def street_text(a):
                                 a.street_dir_suffix) if p)
 
 
+def _load_forms():
+    """Every suffix and directional spelling mapped to its standard abbreviation, read from
+    the shipped tables (crates/doorplate/data/), so `ST` and `STREET` compare equal."""
+    canon = {}
+    for name in ("suffixes.toml", "directionals.toml"):
+        abbr = None
+        for line in (ROOT / "crates" / "doorplate" / "data" / name).read_text().splitlines():
+            m = re.match(r'abbr = "([^"]+)"', line)
+            if m:
+                abbr = m.group(1)
+            m = re.match(r"forms = \[(.*)\]", line)
+            if m and abbr:
+                for form in re.findall(r'"([^"]+)"', m.group(1)):
+                    canon.setdefault(form.upper(), abbr)
+    return canon
+
+
+CANON = _load_forms()
+SYNONYMS = {"HWY": "HIGHWAY", "RTE": "ROUTE", "CO": "COUNTY", "CTY": "COUNTY"}
+
+
+def words(text):
+    out = []
+    for tok in re.findall(r"[A-Z0-9]+", (text or "").upper()):
+        tok = CANON.get(tok, tok)
+        out.extend(SYNONYMS.get(tok, tok).split())
+    return Counter(out)
+
+
+def street_ok(street, street2, number, a):
+    """True when every word of the source street is accounted for in the parse (as a street
+    part, unit, building, attention or unparsed text) and every parsed street word came from
+    the source street, its second line or the number field (junk in the number field, such as
+    `NULL`, is flagged by the `number` mismatch, not here). Spelled-out suffixes and standardized highway
+    names are equal, so only real changes to the street remain."""
+    src = words(street)
+    parts = [a.street_dir_prefix, a.street_name, a.street_suffix, a.street_dir_suffix]
+    if a.highway:
+        parts.append(a.highway["name"])
+    parsed = words(" ".join(p for p in parts if p))
+    elsewhere = words(" ".join(x for x in (
+        a.unit_type, a.unit_number, a.second_unit_type, a.second_unit_number, a.unparsed,
+        a.building, a.attention, a.po_box) if x))
+    return not (src - (parsed + elsewhere)) and not (parsed - (src + words(street2) + words(number)))
+
+
 def process_chunk(con, args, lo, hi, fields_many):
     cur = con.execute(
         f"select rowid, number, street, street2, city, state, zipcode, plus4, source "
@@ -182,7 +229,7 @@ def process_chunk(con, args, lo, hi, fields_many):
                 mism.append("city")
             if bool(street2) != bool(a.unit_type or a.unit_number):
                 mism.append("unit")
-            if compact(street) != compact(street_text(a)):
+            if not street_ok(street, street2, number, a):
                 mism.append("street")
             place = a.place["name"] if a.place else ""
             triples[(st, (rzip or "")[:5], norm(rcity), source or "", place)] += 1
