@@ -1,16 +1,12 @@
 # CLAUDE.md
 
-Rust-core US address parser (`doorplate`) with a PyO3 Python wrapper. Read
-`docs/how-it-works.md` first.
+@AGENTS.md
 
-## Rules
-- `doorplate` must stay pure Rust with no Python dependency. PyO3 lives only in `doorplate-py`.
-- Never panic on input. Parsing always returns a `ParsedAddress` with diagnostics.
-- Emitters read `ParsedAddress`; they never re-parse or mutate it.
-- All lexicon access goes through the `Lexicons` interface. No state-specific logic in the tagger.
-- The canonical key format is a public contract. A change to what an input produces needs a new version prefix (`k2`) and an update to `docs/key-format.md`; never edit `k1` in place.
-- Every USPS or RESO rule implemented must be traceable to a source in `docs/` (`docs/usps-pub28-notes.md`, `docs/reso-mapping.md`).
-- This library formats and parses; it does not validate deliverability. Do not imply otherwise in docs or code comments.
+Rust-core US address parser (`doorplate`) with a PyO3 Python wrapper. Read
+`docs/how-it-works.md` first. The rules that must hold (pure Rust core, never panic,
+emitters do not re-parse, the key contract, sources for every rule, private data) and the
+build commands are in `AGENTS.md`, imported above; this file holds the process we follow
+when working on the project with Claude Code.
 
 ## Workflow
 - Before finishing a task run `cargo fmt`, `cargo clippy --workspace --all-targets --all-features -- -D warnings` and `cargo test --workspace --all-features`.
@@ -21,4 +17,5 @@ Rust-core US address parser (`doorplate`) with a PyO3 Python wrapper. Read
 - Private data (local exports, the geocode benchmark) stays in `local-data/` (git-ignored); never commit it, and never print personal names from it.
 - Four READMEs are published as package pages and must stay in sync with the code and each other: `README.md` (GitHub), `crates/doorplate/README.md` (crates.io), `crates/doorplate-cli/README.md` (crates.io) and `crates/doorplate-py/README.md` (PyPI). When a change touches the API, CLI options, install steps, features, MSRV or Python versions, warning codes, the key format, accuracy figures, or the alpha/help-wanted notices, update every README it affects in the same change. Keep links in the three crate READMEs absolute (crates.io and PyPI do not resolve relative links) and keep the not-a-validator statement in all four.
 - New public API (a function, a method, a CLI flag or an output form) also gets an example in `examples/` (the notebook, a pipeline script or `crates/doorplate/examples/`) in the same change; `crates/doorplate-py/tests/test_examples.py` runs them.
+- `AGENTS.md` is the tool-neutral guide for agents and contributors. Keep it in step with the code and with this file: when the build commands, the rules that must hold, the layout or the documentation links change, update `AGENTS.md` in the same change, and keep its links relative to the repository root.
 - Keep small commits. A pull request holds a reasonable number of related changes; split unrelated work into separate pull requests.
