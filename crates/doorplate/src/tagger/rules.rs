@@ -665,7 +665,9 @@ impl Tagger<'_> {
     /// `OAK ST NORWICH CT` ends in a state copy).
     fn completes_street(&self, lo: usize, hi: usize) -> bool {
         let last = self.text(hi - 1);
-        if hi - 1 <= lo {
+        // In the street's own segment: after a comma (`N ELM ST, OAKDALE NE`) the
+        // token ends a city and state, not the street.
+        if hi - 1 <= lo || self.toks[lo].seg != self.toks[hi - 1].seg {
             return false;
         }
         if self.lex.directional(last).is_some() {
