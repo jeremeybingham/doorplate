@@ -140,8 +140,39 @@ pub(crate) fn tokenize(
         }
         p.piece(a, b, paren, next_starts_numeric, lex);
     }
+    join_split_grid_number(&mut out, lex);
     join_directional_comma(&mut out, lex);
     out
+}
+
+/// The hyphen of `1174-1/2`: digits, a hyphen, then a fraction.
+fn fraction_hyphen(t: &str) -> Option<usize> {
+    let (num, frac) = t.split_once('-')?;
+    let (a, b) = frac.split_once('/')?;
+    let digits = |s: &str| !s.is_empty() && s.bytes().all(|c| c.is_ascii_digit());
+    (digits(num) && digits(a) && digits(b)).then_some(num.len())
+}
+
+/// `N 10129 MAPLE RD`: a lone compass letter and a number of three digits or
+/// more that open the line, with a street word after them, are one grid-style
+/// house number (`N10129`) split by a space. A directional after the digits
+/// (`E 1000 N`, a Utah street) or no word at all keeps them apart.
+fn join_split_grid_number(out: &mut Vec<Token>, lex: &Lexicons) {
+    if out.len() < 3
+        || !matches!(out[0].text.as_str(), "N" | "S" | "E" | "W")
+        || out[1].text.len() < 3
+        || !out[1].text.bytes().all(|c| c.is_ascii_digit())
+        || out[0].seg != out[1].seg
+        || out[0].seg != out[2].seg
+        || out[0].span.field != out[1].span.field
+        || lex.directional(&out[2].text).is_some()
+        || !out[2].text.bytes().any(|c| c.is_ascii_alphabetic())
+    {
+        return;
+    }
+    let digits = out.remove(1);
+    out[0].text.push_str(&digits.text);
+    out[0].span.end = digits.span.end;
 }
 
 /// `3324 N, ANDREWS AVE`: a comma right after a lone directional that follows
@@ -293,6 +324,12 @@ impl Piece<'_> {
         // writes these with a space). Only after a highway prefix or a state
         // code that is not also a directional (`NE-2` stays whole); SR is
         // left to state packs.
+        // `1174-1/2`: a hyphen before a fraction is a space (`1174 1/2`).
+        if let Some(cut) = fraction_hyphen(t) {
+            self.emit(t[..cut].to_string(), s2, s2 + cut, paren);
+            self.emit(t[cut + 1..].to_string(), s2 + cut + 1, e2, paren);
+            return;
+        }
         if let Some(cut) = route_hyphen(t, lex) {
             self.emit(t[..cut].to_string(), s2, s2 + cut, paren);
             self.emit(t[cut + 1..].to_string(), s2 + cut + 1, e2, paren);

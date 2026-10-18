@@ -54,7 +54,7 @@ pub(crate) enum NumberShape {
 }
 
 pub(crate) fn house_number(t: &str) -> Option<NumberShape> {
-    if is_grid_number(t) || is_lettered_number(t) {
+    if is_grid_number(t) || is_lettered_number(t) || is_lettered_number_letter(t) {
         return Some(NumberShape::Plain);
     }
     let d = t.bytes().take_while(u8::is_ascii_digit).count();
@@ -103,6 +103,16 @@ pub(crate) fn is_grid_number(t: &str) -> bool {
         k += 1 + d;
     }
     (1..=2).contains(&letters) && b.len() >= 4
+}
+
+/// A compass letter, three digits or more and one trailing letter:
+/// `E7608B` (Wisconsin grid numbers with a suffix letter).
+pub(crate) fn is_lettered_number_letter(t: &str) -> bool {
+    let b = t.as_bytes();
+    b.len() >= 5
+        && matches!(b[0], b'N' | b'S' | b'E' | b'W')
+        && b[b.len() - 1].is_ascii_alphabetic()
+        && b[1..b.len() - 1].iter().all(u8::is_ascii_digit)
 }
 
 /// A letter and two digits or more: `T703` (Ohio township numbering),
