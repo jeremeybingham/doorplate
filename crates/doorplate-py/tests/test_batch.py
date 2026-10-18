@@ -155,3 +155,51 @@ def test_pandas_recipe():
     assert pd.isna(out.loc[1, "addr_street_name"])
     assert out.loc[2, "addr_po_box"] == "12"
     assert out.loc[0, "addr_place.name"] == "MIAMI"
+
+
+FIELDS = {
+    "line1": ["123 N Main St", "PO Box 12", "THE COVE", None, ""],
+    "line2": [None, None, "1111 ASBURY WAY", None, ""],
+    "city": ["Miami", "Tampa", "Orlando", None, None],
+    "state": ["FL", "FL", "FL", None, None],
+    "zip": ["33101", "33601", "32801", None, None],
+}
+
+
+def _row(i):
+    return {k: v[i] for k, v in FIELDS.items()}
+
+
+def test_fields_many_same_as_a_loop_of_parse_fields():
+    batch = uap.parse_fields_many(**FIELDS)
+    assert len(batch) == 5
+    for i in range(3):
+        assert batch[i].to_dict() == uap.parse_fields(**_row(i)).to_dict()
+
+
+def test_fields_many_unusable_rows_are_none():
+    batch = uap.parse_fields_many(**FIELDS)
+    assert [b is None for b in batch] == [False, False, False, True, True]
+
+
+def test_fields_many_omitted_columns_and_default_state():
+    out = uap.parse_fields_many(line1=["281 EVELYN DR", "1 Main St"], city=["DOTHAN", "Miami"])
+    one = uap.parse_fields(line1="281 EVELYN DR", city="DOTHAN")
+    assert out[0].to_dict() == one.to_dict()
+    hinted = uap.parse_fields_many(line1=["281 EVELYN DR"], city=["DOTHAN"], default_state="AL")
+    assert hinted[0].to_dict() == uap.parse_fields(
+        line1="281 EVELYN DR", city="DOTHAN", default_state="AL"
+    ).to_dict()
+    assert [a.to_dict() for a in uap.Parser("AL").parse_fields_many(
+        line1=["281 EVELYN DR"], city=["DOTHAN"]
+    )] == [hinted[0].to_dict()]
+
+
+def test_fields_many_rejects_bad_columns():
+    with pytest.raises(ValueError):
+        uap.parse_fields_many()
+    with pytest.raises(ValueError):
+        uap.parse_fields_many(line1=["1 Main St"], city=["Miami", "Tampa"])
+    with pytest.raises(ValueError):
+        uap.parse_fields_many(line1=["1 Main St"], default_state="ZZ")
+    assert uap.parse_fields_many(line1=[]) == []

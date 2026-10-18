@@ -465,6 +465,53 @@ impl PyParser {
         results.into_iter().map(|r| r.ok().map(wrap)).collect()
     }
 
+    /// Parse a batch of pre-split addresses given as columns: each of
+    /// `line1`, `line2`, `city`, `state` and `zip` is a sequence (an element
+    /// may be `None`) or omitted, and the given columns must have the same
+    /// length. The GIL is released while Rust parses (in parallel). An element
+    /// with no address text gives `None`.
+    #[pyo3(signature = (line1=None, line2=None, city=None, state=None, zip=None))]
+    fn parse_fields_many(
+        &self,
+        py: Python<'_>,
+        line1: Option<Vec<Option<String>>>,
+        line2: Option<Vec<Option<String>>>,
+        city: Option<Vec<Option<String>>>,
+        state: Option<Vec<Option<String>>>,
+        zip: Option<Vec<Option<String>>>,
+    ) -> PyResult<Vec<Option<PyParsedAddress>>> {
+        let mut columns = [line1, line2, city, state, zip];
+        let mut lens = columns.iter().flatten().map(Vec::len);
+        let Some(n) = lens.next() else {
+            return Err(PyValueError::new_err(
+                "parse_fields_many needs at least one column",
+            ));
+        };
+        if lens.any(|l| l != n) {
+            return Err(PyValueError::new_err(
+                "parse_fields_many columns must all have the same length",
+            ));
+        }
+        let mut take = |i: usize, row: usize| {
+            columns[i]
+                .as_mut()
+                .and_then(|c| c.get_mut(row))
+                .and_then(Option::take)
+        };
+        let rows: Vec<Fields> = (0..n)
+            .map(|row| Fields {
+                line1: take(0, row),
+                line2: take(1, row),
+                city: take(2, row),
+                state: take(3, row),
+                zip: take(4, row),
+            })
+            .collect();
+        let parser = &self.inner;
+        let results = py.detach(|| parser.parse_fields_many(&rows));
+        Ok(results.into_iter().map(|r| r.ok().map(wrap)).collect())
+    }
+
     fn __repr__(&self) -> &'static str {
         "Parser()"
     }
@@ -517,6 +564,24 @@ fn parse_many(
     Ok(parser.parse_many(py, texts))
 }
 
+/// Parse a batch of pre-split addresses (see `Parser.parse_fields_many`).
+#[pyfunction]
+#[pyo3(signature = (line1=None, line2=None, city=None, state=None, zip=None, default_state=None))]
+fn parse_fields_many(
+    py: Python<'_>,
+    line1: Option<Vec<Option<String>>>,
+    line2: Option<Vec<Option<String>>>,
+    city: Option<Vec<Option<String>>>,
+    state: Option<Vec<Option<String>>>,
+    zip: Option<Vec<Option<String>>>,
+    default_state: Option<&str>,
+) -> PyResult<Vec<Option<PyParsedAddress>>> {
+    let parser = PyParser {
+        inner: parser_for(default_state)?,
+    };
+    parser.parse_fields_many(py, line1, line2, city, state, zip)
+}
+
 /// The counterpart of `usaddress.tag()`: `(dict, address_type)`.
 #[pyfunction]
 #[pyo3(signature = (text, default_state=None))]
@@ -555,6 +620,7 @@ fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(parse, m)?)?;
     m.add_function(wrap_pyfunction!(parse_fields, m)?)?;
     m.add_function(wrap_pyfunction!(parse_many, m)?)?;
+    m.add_function(wrap_pyfunction!(parse_fields_many, m)?)?;
     m.add_function(wrap_pyfunction!(tag, m)?)?;
     m.add_function(wrap_pyfunction!(parse_tokens, m)?)?;
     m.add_function(wrap_pyfunction!(address_type, m)?)?;

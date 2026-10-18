@@ -7,6 +7,12 @@ change to what an input produces needs a new key version.
 
 ## [Unreleased]
 
+### Added
+
+- `Parser::parse_fields_many` (parallel with the `rayon` feature) and, in Python,
+  `parse_fields_many(line1=, line2=, city=, state=, zip=, default_state=None)` and
+  `Parser.parse_fields_many`: a batch call for pre-split columns, GIL released.
+
 ### Documentation
 
 - Each crates.io package now has its own README (`crates/doorplate/README.md`,

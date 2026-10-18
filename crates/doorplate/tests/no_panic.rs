@@ -139,6 +139,26 @@ proptest! {
         }
     }
 
+    #[test]
+    fn parse_fields_many_matches_parse_fields(
+        v in prop::collection::vec((address_like(), address_like()), 0..8)
+    ) {
+        let p = Parser::new();
+        let fields: Vec<Fields> = v
+            .into_iter()
+            .map(|(a, b)| Fields {
+                line1: Some(a),
+                city: Some(b),
+                ..Fields::default()
+            })
+            .collect();
+        let many = p.parse_fields_many(&fields);
+        prop_assert_eq!(many.len(), fields.len());
+        for (m, f) in many.into_iter().zip(&fields) {
+            prop_assert_eq!(m, p.parse_fields(f));
+        }
+    }
+
     /// Keys are spelling-independent: case changes never change the key.
     #[test]
     fn key_ignores_ascii_case(s in address_like()) {

@@ -149,11 +149,14 @@ import doorplate
 doorplate.parse_fields(line1="THE COVE", line2="1111 ASBURY WAY",
                        city="Orlando", state="FL", zip="32801")   # pre-split fields
 doorplate.parse_many(["1 Main St, Miami FL", "PO Box 5, Tampa FL"])  # parallel, GIL released
+doorplate.parse_fields_many(line1=["1 Main St", "PO Box 5"],            # pre-split columns, same
+                            city=["Miami", "Tampa"], state=["FL", "FL"])  # but a batch
 doorplate.parse("281 EVELYN DR DOTHAN", default_state="AL").city     # "DOTHAN"
 doorplate.tag("PO Box 12, Tampa FL 33601")    # ({...usaddress labels...}, "PO Box")
 ```
 
-`parse_many` parses a list on all cores and keeps the order. For a pandas or
+`parse_many` and `parse_fields_many` (pre-split columns) parse a list on all cores
+and keep the order. For a pandas or
 Polars column, `doorplate.pandas.parse_column` and `doorplate.polars.parse_column`
 return component columns in one call. Details, the DataFrame recipes and the
 types: [`crates/doorplate-py/README.md`](crates/doorplate-py/README.md).
@@ -175,8 +178,8 @@ a.slug();                         // Some("123-n-main-st-apt-4-miami-fl-33101"),
 a.diagnostics.warnings;           // e.g. MissingZip, UnparsedRemainder
 ```
 
-`Parser::parse_fields` takes pre-split fields (`Fields`); `Parser::parse_many`
-parses a batch, in parallel with the `rayon` feature.
+`Parser::parse_fields` takes pre-split fields (`Fields`); `Parser::parse_many` and
+`Parser::parse_fields_many` parse a batch, in parallel with the `rayon` feature.
 `Parser::with_options(ParseOptions { default_state: Some("FL".into()) })?` sets a
 state hint.
 

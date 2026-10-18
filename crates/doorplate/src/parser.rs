@@ -238,6 +238,20 @@ impl Parser {
             inputs.iter().map(|s| self.parse(s)).collect()
         }
     }
+
+    /// Parse a batch of pre-split addresses, in order; one result per element,
+    /// as [`Self::parse_fields`]. Parallel with the `rayon` feature.
+    pub fn parse_fields_many(&self, inputs: &[Fields]) -> Vec<Result<ParsedAddress, ParseError>> {
+        #[cfg(feature = "rayon")]
+        {
+            use rayon::prelude::*;
+            inputs.par_iter().map(|f| self.parse_fields(f)).collect()
+        }
+        #[cfg(not(feature = "rayon"))]
+        {
+            inputs.iter().map(|f| self.parse_fields(f)).collect()
+        }
+    }
 }
 
 /// Character length of each segment, from its first token to its last.
