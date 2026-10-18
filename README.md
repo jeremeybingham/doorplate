@@ -159,7 +159,8 @@ doorplate.tag("PO Box 12, Tampa FL 33601")    # ({...usaddress labels...}, "PO B
 `parse_many` and `parse_fields_many` (pre-split columns) parse a list on all cores
 and keep the order. For a pandas or
 Polars column, `doorplate.pandas.parse_column` and `doorplate.polars.parse_column`
-return component columns in one call. Details, the DataFrame recipes and the
+return component columns in one call; `doorplate.duckdb` adds `doorplate_parse(...)` functions
+and `parse_column` for DuckDB (`pip install "doorplate[duckdb]"`). Details, the DataFrame recipes and the
 types: [`crates/doorplate-py/README.md`](crates/doorplate-py/README.md).
 
 ### Rust

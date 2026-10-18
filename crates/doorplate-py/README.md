@@ -64,6 +64,7 @@ dp.parse("281 EVELYN DR DOTHAN", default_state="AL").city     # "DOTHAN"
 pip install doorplate                  # the parser
 pip install "doorplate[pandas]"        # plus the pandas helper
 pip install "doorplate[polars]"        # plus the Polars helper
+pip install "doorplate[duckdb]"        # plus the DuckDB functions (DuckDB and PyArrow)
 ```
 
 Python 3.10 or later. Wheels are built for Linux (x86_64, aarch64), macOS
@@ -106,7 +107,7 @@ need. The key is a versioned contract
 ([key format](https://github.com/jeremeybingham/doorplate/blob/main/docs/key-format.md));
 the slug is for display.
 
-## Batches, pandas and Polars
+## Batches, pandas, Polars and DuckDB
 
 `parse_many(texts)` takes a list or tuple of strings, releases the GIL, parses in
 parallel with Rust threads, and returns the results in order. On 100,000 addresses
@@ -118,6 +119,7 @@ on a 14-thread machine (`crates/doorplate-py/benchmarks/bench_batch.py`):
 | `parse_many` | 0.26 s | 379,000 | 6.5x |
 | `parse_many` and a pandas DataFrame of 7 columns | 0.43 s | 235,000 | 4.0x |
 | `parse_many` and a Polars DataFrame of 7 columns | 0.35 s | 287,000 | 4.9x |
+| DuckDB, `doorplate_parse(a)` with 7 columns | 0.42 s | 238,000 | 4.1x |
 
 **Helpers.** Install the extra and parse a column in one call:
 
@@ -137,6 +139,22 @@ text, is null in every column. The default columns are `street_number`,
 `slug` and `warnings` (codes joined by commas). `AVAILABLE_COLUMNS` in either module
 lists the rest (`key_unit`, `usps_line1`, `usps_line2`, `usps_last_line`, `po_box`,
 `attention`, `building`, `unparsed`, ...). They are built over `parse_many`.
+
+**DuckDB.** `pip install "doorplate[duckdb]"`, then register two functions on a connection and use them in SQL:
+
+```python
+import duckdb
+from doorplate import duckdb as dd
+
+con = duckdb.connect()
+dd.register(con, columns=["street_name", "city", "state", "zip5", "key"])
+con.sql("SELECT doorplate_parse(address).street_name, doorplate_parse(address).key FROM addresses")
+con.sql("SELECT doorplate_parse_fields(line1, line2, city, state, zip).key FROM split")
+
+rel = dd.parse_column(con.table("addresses"), "address", connection=con)   # input columns + addr_* columns, lazy
+```
+
+`doorplate_parse` returns a STRUCT of VARCHAR fields (`columns` defaults to the same list as the other helpers; `AVAILABLE_COLUMNS` has the rest) and NULL for a NULL, blank or no-address-text row. Each row is parsed once however many fields you read, in batches of 2,048 rows that Rust parses in parallel with the GIL released. Choose only the columns you need: building every column costs more (about 154,000 addresses/s with all 15 against 238,000 with 7). `parse_column` stays lazy, so it works on tables larger than memory. Pass `connection=` unless the relation came from `duckdb.sql(...)`.
 
 **Polars by hand** (when you want other fields):
 

@@ -1,4 +1,4 @@
-"""Column extraction shared by the pandas and Polars helpers.
+"""Column extraction shared by the pandas, Polars and DuckDB helpers.
 
 Neither library is imported here. The helpers parse a batch with
 `parse_many` and read the chosen columns from the results.
@@ -87,6 +87,21 @@ def texts_of(values: Iterable[object]) -> list[str]:
     return [v if isinstance(v, str) else "" for v in values]
 
 
+def columns_of(
+    parsed: Sequence[ParsedAddress | None], names: Sequence[str]
+) -> dict[str, list[str | None]]:
+    """One list per column name from already parsed results; a `None` result
+    is `None` in every column."""
+    out: dict[str, list[str | None]] = {}
+    for name in names:
+        if name in _DERIVED:
+            get = _DERIVED[name]
+            out[name] = [get(a) if a is not None else None for a in parsed]
+        else:
+            out[name] = [getattr(a, name) if a is not None else None for a in parsed]
+    return out
+
+
 def extract(
     values: Iterable[object],
     columns: Sequence[str] | None,
@@ -96,11 +111,4 @@ def extract(
     A row with no address text is `None` in every column."""
     names = check_columns(columns)
     parsed = parse_many(texts_of(values), default_state=default_state)
-    out: dict[str, list[str | None]] = {}
-    for name in names:
-        if name in _DERIVED:
-            get = _DERIVED[name]
-            out[name] = [get(a) if a is not None else None for a in parsed]
-        else:
-            out[name] = [getattr(a, name) if a is not None else None for a in parsed]
-    return names, out
+    return names, columns_of(parsed, names)

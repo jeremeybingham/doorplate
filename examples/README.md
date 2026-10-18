@@ -10,6 +10,7 @@ that an address exists or can receive mail.
 | [`crates/doorplate/examples/quickstart.rs`](../crates/doorplate/examples/quickstart.rs) | The same in Rust: the output forms, `parse_fields_many` and `parse_many`. Run with `cargo run -p doorplate --example quickstart` |
 | [`polars_pipeline.py`](polars_pipeline.py) | Polars: `parse_column` on a CSV, picking columns, finding rows with warnings, duplicates by key, pre-split columns with `parse_fields_many`, a display column |
 | [`pandas_pipeline.py`](pandas_pipeline.py) | The same with pandas |
+| [`duckdb_pipeline.py`](duckdb_pipeline.py) | DuckDB: `doorplate_parse` and `doorplate_parse_fields` in SQL, and `parse_column` on a relation (needs `pip install "doorplate[duckdb]"`) |
 | [`data/addresses_oneline.csv`](data/addresses_oneline.csv) | One address per row in a single column (street, PO box, rural route, general delivery, a unit, a blank row) |
 | [`data/addresses_split.csv`](data/addresses_split.csv) | Line 1, line 2, city, state and ZIP in separate columns, with gaps |
 | [`data/addresses_messy.txt`](data/addresses_messy.txt) | One line per address as people type them: lowercase, `c/o`, a country, an intersection, no state |
@@ -23,6 +24,7 @@ From the repository root, with the package built (`maturin develop` in
 pip install pandas polars jupyter
 python examples/polars_pipeline.py
 python examples/pandas_pipeline.py --out /tmp/parsed.csv
+python examples/duckdb_pipeline.py                       # needs duckdb and pyarrow
 jupyter lab examples/quickstart.ipynb
 ```
 

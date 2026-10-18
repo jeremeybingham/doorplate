@@ -35,6 +35,17 @@ def test_polars_pipeline(capsys):
     assert "412 N Harbor St Apt 3B, Tampa FL 33602" in out  # to_display, via parse_fields_many
 
 
+def test_duckdb_pipeline(capsys):
+    pytest.importorskip("duckdb")
+    pytest.importorskip("pyarrow")
+    rows = run_script("duckdb_pipeline.py")
+    assert len(rows) == 12
+    out = capsys.readouterr().out
+    assert "k1:S|412|N|HARBOR|ST||FL|33602" in out
+    assert "row(s) with warnings" in out
+    assert [r[0] for r in rows].count(None) == 0  # the id column is kept
+
+
 def test_notebook_executes():
     pytest.importorskip("pandas")
     nbformat = pytest.importorskip("nbformat")

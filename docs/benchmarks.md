@@ -140,6 +140,11 @@ corpus addresses): a loop of `parse` 1.71 s, `parse_many` 0.26 s (6.5x),
 `parse_many` into a pandas frame of seven columns 0.43 s (4.0x), into a Polars
 frame 0.35 s (4.9x). Reading attributes from 100,000 Python objects is now
 most of the time; `to_dict()` on every row costs about as much as parsing again.
+The DuckDB functions (`doorplate.duckdb`) parse a 100,000-row table in 0.42 s with seven
+struct fields (4.1x a loop of `parse`) and 0.65 s with all fifteen (2.7x): the cost of
+building the Arrow struct grows with the columns, so ask for only those you need. A
+1,000,000-row table with four fields ran at about 213,000 rows/s, against about 280,000/s
+for `parse_many` on the same strings.
 
 ## Size and memory
 
