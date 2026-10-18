@@ -1,6 +1,6 @@
 # Contributing to doorplate
 
-Thanks for helping. The most useful contribution is usually a **misparsed address**.
+Thanks for helping. The most useful contribution is usually a **misparsed address**. Please follow the [Code of Conduct](CODE_OF_CONDUCT.md); to report a security problem privately, see [`SECURITY.md`](SECURITY.md).
 
 ## Reporting a misparse
 

@@ -32,8 +32,10 @@ all is an error. The match key is versioned (`k1:`); store the prefix with store
 
 ## Contributing
 
-Start with [`CONTRIBUTING.md`](CONTRIBUTING.md): reporting a misparse, fixing a parsing
-bug, data changes, and the rules for code. The golden corpus
+Report security problems privately ([`SECURITY.md`](SECURITY.md)); conduct is covered by
+[`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md). For everything else start with
+[`CONTRIBUTING.md`](CONTRIBUTING.md): reporting a misparse, fixing a parsing bug, data
+changes, and the rules for code. The golden corpus
 ([`tests/corpus/README.md`](tests/corpus/README.md)) is the regression suite; every
 parsing bug fixed gets a case. Open issues are the backlog.
 
