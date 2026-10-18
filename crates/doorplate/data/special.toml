@@ -254,6 +254,9 @@ phrases = [
   "NO ADDRESS ON TAX ROLL",
   # Florida address data writes "**Private Address**" for a withheld address.
   "PRIVATE ADDRESS",
+  # Database no-data markers (a national address database: issue #51).
+  "NULL",
+  "NONE",
 ]
 
 [building]
