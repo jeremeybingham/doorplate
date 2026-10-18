@@ -679,6 +679,16 @@ impl Tagger<'_> {
             && !(lo..hi - 1).any(|k| self.lex.suffix(self.text(k)).is_some())
     }
 
+    /// The fraction opening line 2 (`123 MAIN ST` / `1/2 APT 3`) is the
+    /// fraction of the house number when the delivery pass left it unclaimed.
+    pub(super) fn claim_fraction(&mut self, k: usize) {
+        if matches!(self.tags[k], Tag::Untagged | Tag::Unparsed)
+            && self.tags.contains(&Tag::StreetNumber)
+        {
+            self.set(k..k + 1, Tag::StreetNumber);
+        }
+    }
+
     // ---- delivery line -----------------------------------------------------
 
     pub(super) fn delivery(&mut self, lo: usize, hi: usize) {

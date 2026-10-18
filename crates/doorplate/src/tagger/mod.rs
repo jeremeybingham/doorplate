@@ -295,13 +295,38 @@ pub(crate) fn tag_fields(
             line = l1.clone();
         }
     }
+    // `123 MAIN ST` / `1/2`: a line 2 that is only a fraction is the fraction
+    // of the house number, so line 1 is read alone and the fraction joins the
+    // number. A fraction that opens a longer line 2 (`1/2 APT 3`) joins it
+    // after the delivery line is read, if nothing claimed it.
+    let line1_number = !l1.is_empty()
+        && crate::classify::house_number(&toks[l1.start].text).is_some()
+        && !toks
+            .get(l1.start + 1)
+            .is_some_and(|n| crate::classify::is_fraction(&n.text));
+    let lone_fraction = line1_number
+        && l2.len() == 1
+        && l2.start == l1.end
+        && crate::classify::is_fraction(&toks[l2.start].text);
+    if lone_fraction {
+        t.set(l2.clone(), Tag::StreetNumber);
+        line = l1.clone();
+    }
     line.start = t.drop_truncated_copy(line.start, line.end);
+    let after_fraction = line1_number
+        && !lone_fraction
+        && l2.start == l1.end
+        && !l2.is_empty()
+        && crate::classify::is_fraction(&toks[l2.start].text);
     if city.is_empty() && state.is_empty() && zip.is_empty() {
         // Everything is on the address lines: read them like one line.
         let (street_end, c) = t.last_line_in(line.start, line.end);
         let street_end = t.drop_repeated_zip(line.start, street_end);
         let street_end = t.drop_city_copy(line.start, street_end, c);
         t.delivery(line.start, street_end);
+        if after_fraction {
+            t.claim_fraction(l2.start);
+        }
         return t.finish();
     }
     let city_range = t.city_field(city, state.is_empty());
@@ -316,6 +341,9 @@ pub(crate) fn tag_fields(
     let end = t.drop_repeated_state(line.start, end);
     let end = t.drop_city_copy(line.start, end, city_range);
     t.delivery(line.start, end);
+    if after_fraction {
+        t.claim_fraction(l2.start);
+    }
     t.finish()
 }
 
