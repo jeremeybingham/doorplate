@@ -14,7 +14,7 @@ to download.
 This library formats and parses; it **does not validate** that an address exists or
 can receive mail.
 
-> **Alpha release (0.1.0).** Expect rough edges. The match key is versioned (`k1:`) and
+> **Alpha release (0.2.0).** Expect rough edges. The match key is versioned (`k1:`) and
 > will probably get new versions as the parser improves, so store the version prefix
 > with your keys and plan to re-key. Accuracy and speed are measurements on a few
 > datasets, not guarantees.
