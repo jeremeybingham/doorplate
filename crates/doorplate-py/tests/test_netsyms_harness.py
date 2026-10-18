@@ -16,6 +16,7 @@ pytest.importorskip("pyarrow")
 TOOLS = Path(__file__).resolve().parents[3] / "tools" / "netsyms"
 
 ROWS = [
+    ("7", "MAIN STREET", "", "MIAMI", "FL", "33101", "", "US", "t/one"),
     # number, street, street2, city, state, zipcode, plus4, country, source
     ("123", "N MAIN ST", "APT 4", "MIAMI", "FL", "33101", "1234", "US", "t/one"),
     ("88", "BAYVIEW DR", "", "PENSACOLA", "FL", "32502", "", "US", "t/one"),
@@ -60,9 +61,9 @@ def test_run_resume_and_analysis(db, tmp_path):
     r = root / "r1"
     assert (r / "DONE").exists()
     manifest = json.loads((r / "manifest.json").read_text())
-    assert manifest["input"]["table"] == "addresses" and manifest["schema_version"] == 1
+    assert manifest["input"]["table"] == "addresses" and manifest["schema_version"] == 2
     totals = json.loads((r / "DONE").read_text())
-    assert totals["rows"] == 4  # the Canadian row is out of scope
+    assert totals["rows"] == 5  # the Canadian row is out of scope
     for sub in ("agg_state_source", "agg_warnings", "agg_triples", "flagged", "chunk_status"):
         assert list((r / sub).glob("*")), sub
     # No two names may differ only by case: macOS and Windows would treat them as one.
@@ -74,7 +75,9 @@ def test_run_resume_and_analysis(db, tmp_path):
     out = subprocess.run(
         [sys.executable, str(TOOLS / "analyze.py"), str(r)], capture_output=True, text=True, check=True
     ).stdout
-    assert "| rows | 4 |" in out
+    assert "| rows | 5 |" in out
+    # A suffix spelled out in the source is not a street mismatch (schema version 2).
+    assert "| street | 0 |" in out
     assert (r / "summary.md").exists() and (r / "place_gaps.parquet").exists()
 
 
@@ -86,3 +89,16 @@ def test_incomplete_run_is_refused(db, tmp_path):
         [sys.executable, str(TOOLS / "analyze.py"), str(root / "r2")], capture_output=True, text=True
     )
     assert res.returncode != 0 and "incomplete" in res.stderr + res.stdout
+
+
+def test_compare_two_runs(db, tmp_path):
+    root = tmp_path / "runs"
+    run(db, root, "--run-id", "a", "--confirm")
+    run(db, root, "--run-id", "b", "--confirm")
+    out = subprocess.run(
+        [sys.executable, str(TOOLS / "compare.py"), str(root / "a"), str(root / "b")],
+        capture_output=True, text=True, check=True,
+    ).stdout
+    assert "| rows | 5 | 5 | +0 |" in out
+    assert (root / "b" / "compare-a-vs-b.md").exists()
+    assert "different input" not in out

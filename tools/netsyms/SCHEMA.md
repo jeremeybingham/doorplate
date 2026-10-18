@@ -1,4 +1,4 @@
-# Netsyms run artifacts (schema version 1)
+# Netsyms run artifacts (schema version 2)
 
 Written by `tools/netsyms/run.py`, read by `tools/netsyms/analyze.py`. The folder is
 private (docs/data-policy.md): aggregate numbers may leave it, nothing else.
@@ -19,6 +19,8 @@ A row whose parse returns no result (no address text) is counted as `no_result`.
 
 ## Comparison rules (the `mismatches` codes)
 
+Schema version 2 changes the `street` rule (below); runs of version 1 are not comparable on `m_street`.
+
 Normalization `norm`: upper case, periods dropped, whitespace collapsed. `compact`: `norm`
 with everything but letters and digits removed.
 
@@ -31,7 +33,7 @@ with everything but letters and digits removed.
 | `zip4` | the source has a `plus4` and it differs from the parsed `zip4` |
 | `city` | `compact(city)` differs from `compact(parsed city)` (the parser keeps the city as written, upper-cased) |
 | `unit` | the source has a `street2` but the parse has no unit, or the reverse |
-| `street` | `compact(street)` differs from `compact(prefix + name + suffix + postdirectional)`. **Noisy:** the source may spell suffixes or directionals out (`NORTH MAIN STREET` against the parsed `N MAIN ST`); the components are stored so the analysis can refine this. |
+| `street` | a word of the source `street` is not accounted for in the parse (a street part, unit, building, attention or unparsed text), or a parsed street word came from none of the source `street`, `street2` and `number` (junk in `number`, such as `NULL`, is flagged by `number`, not here). Suffix and directional spellings are compared by their standard abbreviation (`ST` equals `STREET`), and a standardized highway name (`US HWY 377`, `US HIGHWAY 377`) is equal to itself. In schema version 1 this was a plain comparison with the abbreviated street and flagged about 96% benign differences. |
 
 A mismatch can be a parser bug or a source error; it is not a verdict on either.
 This library formats and parses; it does not validate that an address exists or can
