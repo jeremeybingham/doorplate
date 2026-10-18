@@ -6,8 +6,9 @@ that an address exists or can receive mail.
 
 | File | Shows |
 |---|---|
-| [`quickstart.ipynb`](quickstart.ipynb) | A tour: `parse`, the USPS and RESO forms, keys and slugs, messy lines and warnings, `default_state`, `parse_fields`, `parse_many`, a pandas frame, the CLI on a file |
-| [`polars_pipeline.py`](polars_pipeline.py) | Polars: `parse_column` on a CSV, picking columns, finding rows with warnings, duplicates by key, pre-split columns |
+| [`quickstart.ipynb`](quickstart.ipynb) | A tour: `parse`, the USPS and RESO forms, the display and long forms (`to_display`, `to_long`; not Pub 28), keys and slugs, messy lines and warnings, `default_state`, `parse_fields`, `parse_many`, `parse_fields_many`, a pandas frame, the CLI on a file (`--usps`, `--display`, `--long`) |
+| [`crates/doorplate/examples/quickstart.rs`](../crates/doorplate/examples/quickstart.rs) | The same in Rust: the output forms, `parse_fields_many` and `parse_many`. Run with `cargo run -p doorplate --example quickstart` |
+| [`polars_pipeline.py`](polars_pipeline.py) | Polars: `parse_column` on a CSV, picking columns, finding rows with warnings, duplicates by key, pre-split columns with `parse_fields_many`, a display column |
 | [`pandas_pipeline.py`](pandas_pipeline.py) | The same with pandas |
 | [`data/addresses_oneline.csv`](data/addresses_oneline.csv) | One address per row in a single column (street, PO box, rural route, general delivery, a unit, a blank row) |
 | [`data/addresses_split.csv`](data/addresses_split.csv) | Line 1, line 2, city, state and ZIP in separate columns, with gaps |
@@ -31,6 +32,7 @@ The CLI on a file (build it with `cargo build --release -p doorplate-cli`):
 target/release/doorplate parse-file examples/data/addresses_oneline.csv --column address -o /tmp/parsed.csv
 target/release/doorplate parse-file examples/data/addresses_split.csv --column line1 --line2 line2 --city city --state state --zip zip
 target/release/doorplate parse - < examples/data/addresses_messy.txt
+target/release/doorplate parse "123 north main street apt 4, miami fl 33101" --display   # or --long, --usps
 ```
 
 The tests in `crates/doorplate-py/tests/test_examples.py` run both scripts and the

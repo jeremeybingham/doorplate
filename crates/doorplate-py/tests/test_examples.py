@@ -19,7 +19,9 @@ def test_pandas_pipeline(capsys):
     assert len(df) == 12
     assert df.loc[0, "addr_street_name"] == "HARBOR"
     assert df["addr_key"].isna().sum() == 1  # the row with no address text
-    assert "row(s) with warnings" in capsys.readouterr().out
+    out = capsys.readouterr().out
+    assert "row(s) with warnings" in out
+    assert "412 N Harbor St Apt 3B, Tampa FL 33602" in out  # to_display, via parse_fields_many
 
 
 def test_polars_pipeline(capsys):
@@ -28,7 +30,9 @@ def test_polars_pipeline(capsys):
     assert df.height == 12
     assert df["addr_street_name"][0] == "HARBOR"
     assert df["addr_key"].null_count() == 1
-    assert "row(s) with warnings" in capsys.readouterr().out
+    out = capsys.readouterr().out
+    assert "row(s) with warnings" in out
+    assert "412 N Harbor St Apt 3B, Tampa FL 33602" in out  # to_display, via parse_fields_many
 
 
 def test_notebook_executes():
@@ -45,6 +49,12 @@ def test_notebook_executes():
     )
     assert "k1:S|123|N|MAIN|ST||FL|33101" in text
     assert "intersection_detected" in text
+    assert "123 N Main St Apt 4" in text  # to_display
+    assert "123 North Main Street Apartment 4" in text  # to_long
+    assert "100 Northeast 5th Avenue Southwest" in text
+    assert "parse_fields_many" in "".join(
+        "".join(c.source) for c in nb.cells if c.cell_type == "code"
+    )
 
 
 @pytest.mark.parametrize("name", ["addresses_oneline.csv", "addresses_split.csv", "addresses_messy.txt"])

@@ -43,15 +43,33 @@ def main(out: str | None = None) -> pl.DataFrame:
     )
     print(f"{dupes.height} duplicated key(s)")
 
-    # 5. Pre-split columns: no batch helper yet, so loop over parse_fields.
+    # 5. Pre-split columns: parse_fields_many takes the columns as lists (nulls are None).
     split = pl.read_csv(DATA / "addresses_split.csv", infer_schema_length=0)
-    rows = [
-        dp.parse_fields(
-            line1=r["line1"], line2=r["line2"], city=r["city"], state=r["state"], zip=r["zip"]
-        )
-        for r in split.iter_rows(named=True)
+    rows = dp.parse_fields_many(
+        line1=split["line1"].to_list(),
+        line2=split["line2"].to_list(),
+        city=split["city"].to_list(),
+        state=split["state"].to_list(),
+        zip=split["zip"].to_list(),
+    )
+    # 6. A display form for people (mixed case; not a Pub 28 form).
+    display = [
+        f"{d['line1'] or ''}, {d['last_line']}" if a and (d := a.to_display()) else None
+        for a in rows
     ]
-    print(split.hstack(pl.DataFrame({"addr_key": [a.key() for a in rows], "addr_slug": [a.slug() for a in rows]})))
+    print(
+        split.hstack(
+            pl.DataFrame(
+                {
+                    "addr_key": [a.key() if a else None for a in rows],
+                    "addr_slug": [a.slug() if a else None for a in rows],
+                    "addr_display": display,
+                },
+                schema={"addr_key": pl.String, "addr_slug": pl.String, "addr_display": pl.String},
+            )
+        )
+    )
+    print("display forms:", *display, sep="\n  ")
 
     if out:
         parsed.write_csv(out)

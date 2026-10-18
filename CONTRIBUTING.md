@@ -87,6 +87,14 @@ notices, update every README it touches in the same pull request. Use absolute
 links in the three crate READMEs, since crates.io and PyPI do not resolve relative
 ones, and keep the statement that the library does not validate deliverability.
 
+## Examples
+
+New public API (a function, a method, a CLI flag or an output form) also gets an
+example in `examples/` (the notebook, a pipeline script, or
+`crates/doorplate/examples/` for Rust) in the same pull request. Use invented
+addresses. `crates/doorplate-py/tests/test_examples.py` runs the scripts and the
+notebook, so they cannot go stale silently.
+
 ## Rules for the code
 
 - `doorplate` stays pure Rust with no Python dependency; emitters never re-parse or
