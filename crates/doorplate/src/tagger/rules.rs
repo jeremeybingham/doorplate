@@ -1702,10 +1702,17 @@ impl Tagger<'_> {
                         continue;
                     }
                 }
-                if let Some((_, w)) = longest_ending(self.toks, floor, start, |s| lex.unit(s)) {
-                    found.push((start - w..start, start..j));
-                    j = start - w;
-                    continue;
+                if let Some((u, w)) = longest_ending(self.toks, floor, start, |s| lex.unit(s)) {
+                    // A directional after a designator that does not always
+                    // take a value is the street's postdirectional:
+                    // `OCEAN FRONT W` is not unit `FRNT W`.
+                    let street_word = lex.directional(t).is_some()
+                        && !(u.kind != MatchKind::Observed && u.value.range_required());
+                    if !street_word {
+                        found.push((start - w..start, start..j));
+                        j = start - w;
+                        continue;
+                    }
                 }
             }
             // A later line or comma segment that is only a number: "403" as
