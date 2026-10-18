@@ -87,6 +87,13 @@ notices, update every README it touches in the same pull request. Use absolute
 links in the three crate READMEs, since crates.io and PyPI do not resolve relative
 ones, and keep the statement that the library does not validate deliverability.
 
+## Agent instructions
+
+`AGENTS.md` is the tool-neutral guide for AI coding agents (it is also useful as a map of
+the repository); `CLAUDE.md` imports it and adds our own process for Claude Code. If your
+change alters the build commands, the rules that must hold, the layout or the
+documentation links, update `AGENTS.md` in the same pull request.
+
 ## Examples
 
 New public API (a function, a method, a CLI flag or an output form) also gets an
