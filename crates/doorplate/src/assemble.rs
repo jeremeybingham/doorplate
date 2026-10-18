@@ -6,7 +6,7 @@
 //! each token is. Spelling choices that Pub 28 does not list
 //! (`MatchKind::Observed`) raise `NonStandardAbbreviation`.
 
-use crate::classify::{is_ordinal, join, zip_parts};
+use crate::classify::{is_fraction, is_ordinal, join, zip_parts};
 use crate::lexicon::{Lexicons, MatchKind, Special};
 use crate::tagger::{Tag, Tagged};
 use crate::tokenize::Token;
@@ -100,7 +100,14 @@ pub(crate) fn assemble(
             }
             Tag::Skip => {}
             Tag::StreetNumber => {
-                set_once(&mut addr.street_number, text);
+                match &mut addr.street_number {
+                    // A fraction that is not next to the number (it opened line 2).
+                    Some(n) if is_fraction(&text) => {
+                        n.push(' ');
+                        n.push_str(&text);
+                    }
+                    _ => set_once(&mut addr.street_number, text),
+                }
                 record(addr, Component::StreetNumber);
             }
             Tag::PreDir => {
