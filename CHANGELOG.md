@@ -5,7 +5,7 @@ All notable changes are listed here, newest first. The project follows
 version (`k1`), tracked separately in [`docs/key-format.md`](docs/key-format.md): a
 change to what an input produces needs a new key version.
 
-## [0.1.0] - Unreleased
+## [0.1.0] - 2026-10-18
 
 The first release. It is an alpha: keys are likely to get new versions as the parser
 improves (store the `k1:` prefix with your keys and plan to re-key), and accuracy and
