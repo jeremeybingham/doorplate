@@ -37,7 +37,7 @@ fn parse_prints_one_json_line() {
     assert_eq!(v["components"]["unit_type"], "APT");
     assert_eq!(v["usps"]["line1"], "123 N MAIN ST APT 4");
     assert_eq!(v["usps"]["last_line"], "MIAMI FL 33101");
-    assert_eq!(v["key"], "k1:S|123|N|MAIN|ST||FL|33101");
+    assert_eq!(v["key"], "k2:S|123|N|MAIN|ST||FL|33101");
     assert_eq!(v["reso"]["City"], "MIAMI");
     assert_eq!(v["warnings"], serde_json::json!([]));
 }

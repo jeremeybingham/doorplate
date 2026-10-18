@@ -29,7 +29,7 @@ imply otherwise in docs or code comments.
 
 Parsing never raises on odd input: it returns a `ParsedAddress` with `warnings` (stable
 snake_case codes) and the text it could not place. Only input with no address text at
-all is an error. The match key is versioned (`k1:`); store the prefix with stored keys.
+all is an error. The match key is versioned (`k2:`); store the prefix with stored keys.
 
 ## Contributing
 
@@ -61,8 +61,9 @@ Plain `cargo test` needs no Python. Rust 1.80 or later; the Python extension nee
 - Emitters read `ParsedAddress`; they never re-parse or mutate it.
 - All lexicon access goes through the `Lexicons` interface. No state-specific logic in the tagger.
 - The canonical key format is a public contract. A change to what an input produces
-  needs a new version prefix (`k2`) and an update to `docs/key-format.md`; never edit
-  `k1` in place.
+  needs a new version prefix (`k3`) and an update to `docs/key-format.md`; never edit
+  `k2` in place. `k2` is not released until 0.3.0 is tagged: until then key-affecting
+  changes go into `k2` (the list is issue #44).
 - Every USPS or RESO rule implemented must be traceable to a source in `docs/`
   (`docs/usps-pub28-notes.md`, `docs/reso-mapping.md`).
 - Private data (local exports, the geocode benchmark, the Netsyms database) stays in

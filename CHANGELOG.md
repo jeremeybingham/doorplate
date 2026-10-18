@@ -2,10 +2,18 @@
 
 All notable changes are listed here, newest first. The project follows
 [Semantic Versioning](https://semver.org/). The canonical key format has its own
-version (`k1`), tracked separately in [`docs/key-format.md`](docs/key-format.md): a
+version (currently `k2`), tracked separately in [`docs/key-format.md`](docs/key-format.md): a
 change to what an input produces needs a new key version.
 
 ## [Unreleased]
+
+### Changed
+
+- **The match key is now `k2`** (`k2:` and `k2n:` for a partial key; 0.3.0). `k1` is retired: the
+  library no longer produces it. The segment layout is the same, and the changes that make it a
+  new version are listed here as they land (issue #44). The key is a function of the parse, so
+  keys of different versions never compare equal: to re-key stored data, parse the original
+  addresses again. `docs/key-format.md` is the `k2` spec.
 
 ### Documentation
 

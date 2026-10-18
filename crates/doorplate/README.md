@@ -15,7 +15,7 @@ parsing never panics.
 This library formats and parses; it **does not validate** that an address exists or
 can receive mail.
 
-> **Alpha release (0.2.0).** Expect rough edges. The match key is versioned (`k1:`)
+> **Alpha release (0.2.0).** Expect rough edges. The match key is versioned (`k2:`)
 > and will probably get new versions as the parser improves, so store the version
 > prefix with your keys and plan to re-key. Names in the API and the warning codes may
 > still change before 1.0.
@@ -41,7 +41,7 @@ assert_eq!(a.unit_number.as_deref(), Some("4"));
 
 a.to_usps().line1;                // Some("123 N MAIN ST APT 4")
 a.to_reso();                      // RESO Data Dictionary 2.0 fields
-a.key(KeyOptions::property());    // Some("k1:S|123|N|MAIN|ST||FL|33101")
+a.key(KeyOptions::property());    // Some("k2:S|123|N|MAIN|ST||FL|33101")
 a.slug();                         // Some("123-n-main-st-apt-4-miami-fl-33101"), display only
 a.to_display().line1;             // Some("123 N Main St Apt 4"); to_long(): "123 North Main Street Apartment 4"
 a.diagnostics.warnings;           // e.g. MissingZip, UnparsedRemainder
@@ -69,7 +69,7 @@ a.diagnostics.warnings;           // e.g. MissingZip, UnparsedRemainder
 ## The match key
 
 `a.key(...)` identifies a property for deduplication and joins. It uses the street
-parts, state and ZIP, not the city, and it is versioned: the `k1:` format will not
+parts, state and ZIP, not the city, and it is versioned: the `k2:` format will not
 change in place. [Key format](https://github.com/jeremeybingham/doorplate/blob/main/docs/key-format.md) is the contract. The
 slug is for URLs and display; it is not unique.
 
