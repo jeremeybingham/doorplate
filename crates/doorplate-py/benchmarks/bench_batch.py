@@ -7,7 +7,8 @@ The input is the golden corpus's single-line addresses (tests/corpus),
 repeated to N (default 100,000). Each timing is the best of three runs. With
 `to_dict`, the Python objects are turned into dicts too. The last rows build
 a pandas and a polars DataFrame of seven chosen columns from the parsed
-addresses (the README recipes), when those libraries are installed.
+addresses (the README recipes), and the last two time the DuckDB functions
+(`doorplate.duckdb`) over a table, when those libraries are installed.
 """
 import json
 import os
@@ -77,6 +78,26 @@ def main():
             )
 
         rows.append(("parse_many -> polars", to_polars))
+    except ImportError:
+        pass
+    try:
+        import duckdb
+
+        from doorplate import duckdb as dd
+
+        con = duckdb.connect()
+        con.execute("create table addr (a varchar)")
+        con.executemany("insert into addr values (?)", [(s,) for s in texts])
+        dd.register(con, "p_all")
+        dd.register(con, "p_cols", columns=cols)
+        rows.append((
+            "duckdb, 15 columns",
+            lambda: con.sql("select p_all(a).key from addr").fetchall(),
+        ))
+        rows.append((
+            "duckdb, 7 columns",
+            lambda: con.sql("select p_cols(a).zip5 from addr").fetchall(),
+        ))
     except ImportError:
         pass
     base_t = None

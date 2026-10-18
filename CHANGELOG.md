@@ -14,6 +14,15 @@ change to what an input produces needs a new key version.
   tuned against. `benchmarks/accuracy.py` and `convert_geocode_benchmark.py` score the
   `dev`, `train` and `test` splits.
 
+## [Unreleased]
+
+### Added
+
+- `doorplate.duckdb` (extra: `pip install "doorplate[duckdb]"`): `register(con)` adds
+  `doorplate_parse(text)` and `doorplate_parse_fields(line1, line2, city, state, zip)` to a
+  DuckDB connection, returning a STRUCT of the chosen columns (Arrow UDFs, GIL released), and
+  `parse_column(relation, column)` returns a lazy relation with the parsed columns added.
+
 ## [0.2.0] - 2026-10-18
 
 Still an alpha. New API and docs; no change to the `k1` key or to what any input

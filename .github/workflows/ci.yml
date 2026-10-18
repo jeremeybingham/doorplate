@@ -81,6 +81,6 @@ jobs:
         run: |
           python -m venv .venv
           . .venv/bin/activate
-          pip install maturin pytest usaddress pandas polars nbclient nbformat ipykernel
+          pip install maturin pytest usaddress pandas polars duckdb pyarrow nbclient nbformat ipykernel
           maturin develop --manifest-path crates/doorplate-py/Cargo.toml
           pytest crates/doorplate-py/tests -q
