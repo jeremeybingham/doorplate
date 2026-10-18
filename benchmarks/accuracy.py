@@ -65,17 +65,28 @@ def main():
             print("|---|---|---|---|---|---|---|")
             print("| all | " + " | ".join(row[1:7]) + " |\n")
 
-    if (GEOCODE / "test_usaddress.xml").exists():
-        rep = compare("gold", str(GEOCODE / "test_usaddress.xml"))
-        row = table_row(rep, "test_usaddress.xml")
-        print("## Geocode benchmark (blind, 30,622 one-line addresses)\n")
+    # dev and train were never read while the rules were written; test was.
+    splits = [
+        ("dev", "Geocode benchmark, dev split (never read while writing rules)"),
+        ("train", "Geocode benchmark, train split (never read while writing rules)"),
+        ("test", "Geocode benchmark, test split (read while writing rules: optimistic)"),
+    ]
+    found = False
+    for split, title in splits:
+        xml = GEOCODE / f"{split}_usaddress.xml"
+        if not xml.exists():
+            continue
+        found = True
+        rep = compare("gold", str(xml))
+        row = table_row(rep, f"{split}_usaddress.xml")
+        print(f"## {title} ({row[1] if row else '?'} one-line addresses)\n")
         if row:
             print("| | Ours | usaddress |\n|---|---|---|")
             print(f"| Tokens (coarse) | {row[3]} | {row[4]} |")
             print(f"| Whole address (coarse) | {row[5]} | {row[6]} |")
             print(f"| Tokens (fine) | {row[7]} | {row[8]} |")
             print(f"| Whole address (fine) | {row[9]} | {row[10]} |\n")
-    else:
+    if not found:
         print("## Geocode benchmark\n\nSkipped: `local-data/geocode-benchmark/` is not here.\n")
 
 

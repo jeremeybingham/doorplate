@@ -22,16 +22,23 @@ A debug build is much slower: always use `--release`.
 
 ### The geocode benchmark
 
-The test split of the
+The
 [geocoding address-parsing benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark)
-(30,622 one-line US street addresses, IOB-labeled) states no license, so it is
-not in this repository. To use it, download `test.txt` into
-`local-data/geocode-benchmark/` (git-ignored), then convert it to usaddress's
-XML format, which `tools/compare/compare_usaddress.py` reads:
+(one-line US street addresses, IOB-labeled) has three splits: `test` (30,622),
+`dev` (60,522) and `train` (148,173). It states no license, so it is not in
+this repository. To use it, download `test.txt`, `dev.txt` and `train.txt` from
+its `benchmark_dataset/` folder into `local-data/geocode-benchmark/`
+(git-ignored), then convert them to usaddress's XML format, which
+`tools/compare/compare_usaddress.py` reads:
 
 ```sh
-python benchmarks/convert_geocode_benchmark.py
+python benchmarks/convert_geocode_benchmark.py test dev train
 ```
+
+The rules and the place data were written while reading the `test` split's errors,
+so `test` over-states accuracy. `dev` and `train` were not read for that, which
+makes them the better estimate (but see `docs/benchmarks.md`: `dev`'s most common
+error classes have since been looked at, so fix against `train` and check on `dev`.)
 
 ## Scripts
 
