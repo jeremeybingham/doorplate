@@ -39,6 +39,7 @@ a.unit_number          # "4"
 a.place                # {"name": "MIAMI", "state": "FL", "county": "DADE", ...}
 a.warnings             # []
 a.to_usps()["line1"]   # "123 N MAIN ST APT 4"
+a.to_display()["line1"]  # "123 N Main St Apt 4" (to_long(): "123 North Main Street Apartment 4"); display only, not Pub 28
 a.key()                # "k1:S|123|N|MAIN|ST||FL|33101"
 a.slug()               # "123-n-main-st-apt-4-miami-fl-33101"
 a.to_reso()            # RESO Data Dictionary 2.0 fields
@@ -96,8 +97,8 @@ has the components (`street_number`, `street_dir_prefix`, `street_name`,
 `state`, `zip5`, `zip4`, `military_post_office`), the structured shapes (`highway`,
 `rural_route`, `military`, `place`, plain dicts), `general_delivery`, `warnings`
 (stable snake_case codes), `unparsed`, `input` and `confidence`, and the methods
-`key(unit=False)`, `slug()`, `to_usps(max_line=None)`, `to_reso()`,
-`to_usaddress_tags()`, `tag()`, `address_type()`, `repeated_labels()` and
+`key(unit=False)`, `slug()`, `to_usps(max_line=None)`, `to_display()`, `to_long()`,
+`to_reso()`, `to_usaddress_tags()`, `tag()`, `address_type()`, `repeated_labels()` and
 `to_dict()`.
 
 A `ParsedAddress` computes its output formats when you ask, so take only what you

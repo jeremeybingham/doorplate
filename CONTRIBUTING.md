@@ -93,7 +93,7 @@ ones, and keep the statement that the library does not validate deliverability.
   change a parse; parsing never panics.
 - This library formats and parses; it does not validate deliverability. Keep docs and
   comments consistent with that.
-- Small commits, one change per pull request, with a short explanation of why.
+- Small commits. A pull request holds a reasonable number of related changes (split unrelated work), with a short explanation of why.
 
 ## License
 

@@ -311,6 +311,19 @@ impl PyParsedAddress {
         Ok(d)
     }
 
+    /// Mixed case with Pub 28 abbreviations, `123 N Main St Apt 4`, for
+    /// showing to people: `{"line1", "city", "state", "zip", "last_line"}`.
+    /// Not a Pub 28 form (see `to_usps`).
+    fn to_display<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyDict>> {
+        display_dict(py, &self.inner.to_display())
+    }
+
+    /// Mixed case with directionals, suffixes and units spelled out,
+    /// `123 North Main Street Apartment 4`. Same keys as `to_display`.
+    fn to_long<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyDict>> {
+        display_dict(py, &self.inner.to_long())
+    }
+
     /// RESO Data Dictionary 2.0 fields by name; a field with no value is left
     /// out.
     fn to_reso<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyDict>> {
@@ -400,6 +413,19 @@ impl PyParsedAddress {
     fn __repr__(&self) -> String {
         format!("ParsedAddress({:?})", self.inner.source.original)
     }
+}
+
+fn display_dict<'py>(
+    py: Python<'py>,
+    d: &doorplate::DisplayAddress,
+) -> PyResult<Bound<'py, PyDict>> {
+    let out = PyDict::new(py);
+    out.set_item("line1", d.line1.clone())?;
+    out.set_item("city", d.city.clone())?;
+    out.set_item("state", d.state.clone())?;
+    out.set_item("zip", d.zip.clone())?;
+    out.set_item("last_line", d.last_line())?;
+    Ok(out)
 }
 
 /// An address parser with settings. Cheap to construct and thread-safe.

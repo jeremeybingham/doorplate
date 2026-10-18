@@ -1,12 +1,14 @@
 //! Emitters: read-only consumers of [`ParsedAddress`](crate::ParsedAddress).
 //! They never mutate or re-parse it.
 
+mod display;
 mod key;
 mod reso;
 mod slug;
 mod usaddress;
 mod usps;
 
+pub use display::DisplayAddress;
 pub use key::KeyOptions;
 pub use reso::ResoAddress;
 pub use usaddress::{AddressType, TaggedAddress, UsaddressTag};

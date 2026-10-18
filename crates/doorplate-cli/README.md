@@ -32,6 +32,7 @@ doorplate parse "123 N Main St, Miami FL 33101" --pretty     # JSON: components,
 doorplate parse "123 N. Main St #4, miami, fl 33101" --usps  # Pub 28 lines
 doorplate parse-file in.csv --column address -o out.csv      # appends addr_* columns
 doorplate parse "281 EVELYN DR DOTHAN" --default-state AL    # state hint
+doorplate parse "123 N Main St, Miami FL 33101" --display    # mixed case; --long spells words out (not Pub 28)
 doorplate parse "123 N Main St, Miami FL 33101" --tag        # usaddress-style joined labels
 doorplate parse -  < addresses.txt                           # one address per line, JSON lines out
 ```

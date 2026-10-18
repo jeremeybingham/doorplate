@@ -9,6 +9,10 @@ change to what an input produces needs a new key version.
 
 ### Added
 
+- Display and long forms: `ParsedAddress::to_display()` (`123 N Main St Apt 4`) and
+  `to_long()` (`123 North Main Street Apartment 4`), returning `DisplayAddress`; in
+  Python `to_display()` and `to_long()`; in the CLI `--display` and `--long`. Neither
+  is a Pub 28 form (use `to_usps()` for mail).
 - `Parser::parse_fields_many` (parallel with the `rayon` feature) and, in Python,
   `parse_fields_many(line1=, line2=, city=, state=, zip=, default_state=None)` and
   `Parser.parse_fields_many`: a batch call for pre-split columns, GIL released.
