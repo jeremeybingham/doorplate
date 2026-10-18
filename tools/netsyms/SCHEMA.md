@@ -42,7 +42,7 @@ receive mail.
 Every table is Parquet (zstd), one file per chunk, `NNNNNN.parquet`, where `NNNNNN` is the
 chunk number (`rowid` range `[min + N*chunk_rowids, min + (N+1)*chunk_rowids)`).
 
-`done/NNNNNN.json` is written last, after the chunk's Parquet files: `chunk`, `rowid_lo`,
+`chunk_status/NNNNNN.json` is written last, after the chunk's Parquet files: `chunk`, `rowid_lo`,
 `rowid_hi`, `rows`, `flagged`, `seconds`. `DONE` exists only when every chunk finished and
 holds the totals. `manifest.json` holds the run identity (see its keys; `input.sha256` is of
 the first and last MiB unless `scope` says `whole file`).

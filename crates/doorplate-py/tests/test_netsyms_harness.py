@@ -39,11 +39,13 @@ def db(tmp_path):
 
 
 def run(db, root, *extra):
-    return subprocess.run(
+    res = subprocess.run(
         [sys.executable, str(TOOLS / "run.py"), "--db", str(db), "--out-root", str(root),
          "--chunk-rowids", "2", "--workers", "2", "--min-free-gb", "0", *extra],
-        capture_output=True, text=True, check=True,
+        capture_output=True, text=True,
     )
+    assert res.returncode == 0, res.stdout + res.stderr
+    return res
 
 
 def test_plan_writes_nothing(db, tmp_path):
@@ -61,8 +63,11 @@ def test_run_resume_and_analysis(db, tmp_path):
     assert manifest["input"]["table"] == "addresses" and manifest["schema_version"] == 1
     totals = json.loads((r / "DONE").read_text())
     assert totals["rows"] == 4  # the Canadian row is out of scope
-    for sub in ("agg_state_source", "agg_warnings", "agg_triples", "flagged", "done"):
+    for sub in ("agg_state_source", "agg_warnings", "agg_triples", "flagged", "chunk_status"):
         assert list((r / sub).glob("*")), sub
+    # No two names may differ only by case: macOS and Windows would treat them as one.
+    names = [p.name.lower() for p in r.iterdir()]
+    assert len(names) == len(set(names)), names
     # A second run with the same id finds every chunk done and does nothing new.
     again = run(db, root, "--run-id", "r1", "--confirm")
     assert "skipped_resumed" in again.stdout

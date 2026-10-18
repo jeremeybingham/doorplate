@@ -41,7 +41,7 @@ def main(argv=None):
     complete = (run / "DONE").exists()
     if not complete and not args.partial:
         sys.exit("the run has no DONE marker (incomplete); resume it, or pass --partial")
-    nchunks = len(list((run / "done").glob("*.json")))
+    nchunks = len(list((run / "chunk_status").glob("*.json")))
     con = duckdb.connect()
     for t in ("agg_state_source", "agg_warnings", "agg_triples", "flagged"):
         con.execute(f"create view {t} as select * from read_parquet('{run / t}/*.parquet')")

@@ -254,7 +254,7 @@ def run_chunk(run, args, lo, cid, con, fields_many):
     write_chunk(run, cid, by_ss, warns, triples, flagged)
     info = {"chunk": cid, "rowid_lo": clo, "rowid_hi": chi, "rows": len(rows),
             "flagged": len(flagged), "seconds": round(time.time() - t0, 2)}
-    (run / "done" / f"{cid:06d}.json").write_text(json.dumps(info) + "\n")
+    (run / "chunk_status" / f"{cid:06d}.json").write_text(json.dumps(info) + "\n")
     return info
 
 
@@ -305,7 +305,7 @@ def main(argv=None):
 
     from doorplate import __version__, parse_fields_many
 
-    for d in ("agg_state_source", "agg_warnings", "agg_triples", "flagged", "done"):
+    for d in ("agg_state_source", "agg_warnings", "agg_triples", "flagged", "chunk_status"):
         (run / d).mkdir(parents=True, exist_ok=True)
     manifest_path = run / "manifest.json"
     if not manifest_path.exists():
@@ -329,7 +329,7 @@ def main(argv=None):
         print(line, flush=True)
         log.write(line + "\n")
 
-    todo = [cid for cid in range(p["chunks"]) if not (run / "done" / f"{cid:06d}.json").exists()]
+    todo = [cid for cid in range(p["chunks"]) if not (run / "chunk_status" / f"{cid:06d}.json").exists()]
     skipped = p["chunks"] - len(todo)
     done_n = 0
     t_start = time.time()
@@ -375,7 +375,7 @@ def main(argv=None):
     except KeyboardInterrupt:
         say(f"interrupted; resume with --run-id {run_id}")
         return 130
-    finished = sorted((run / "done").glob("*.json"))
+    finished = sorted((run / "chunk_status").glob("*.json"))
     all_info = [json.loads(f.read_text()) for f in finished]
     totals = {"chunks": len(all_info), "rows": sum(i["rows"] for i in all_info),
               "flagged": sum(i["flagged"] for i in all_info),
@@ -400,7 +400,7 @@ A doorplate parse of Netsyms rows. **Private: do not commit anything in this fol
 
 - `manifest.json`: what was run (commit, doorplate version, data hash, input fingerprint, options).
 - `SCHEMA.md`: every artifact's columns and the comparison rules.
-- `done/NNNNNN.json`: one per finished chunk. `DONE` exists only when every chunk of the
+- `chunk_status/NNNNNN.json`: one per finished chunk. `DONE` exists only when every chunk of the
   whole database finished (`LIMITED` marks a test slice).
 - `agg_state_source/`, `agg_warnings/`, `agg_triples/`, `flagged/`: Parquet, one file per chunk.
 - `progress.log`: one line per chunk.

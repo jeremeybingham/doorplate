@@ -37,7 +37,7 @@ tail -f local-data/netsyms-runs/*/progress.log
   `.7z` archives) plus all runs exceed it. Finished chunks are kept; repeat the command with `--run-id <id>` to resume.
 - `--min-free-gb` (default 20): refuses to start below this much free disk.
 - `--threads N`: caps the Rust parse threads.
-- A run is resumable at any point: a chunk counts as finished only when its `done/` marker
+- A run is resumable at any point: a chunk counts as finished only when its `chunk_status/` marker
   exists, and every file is written under a temporary name and renamed.
 
 ## For a new session
