@@ -138,6 +138,22 @@ pub(crate) fn is_unit_value(t: &str) -> bool {
     ok_chars && !t.starts_with('-') && (has_digit(t) || single_letter || letter_range)
 }
 
+/// One to three short tokens that make a unit with no designator (`2 5`,
+/// `4 G`, `B B5`, `9 2 208`). A token is digits, one or two letters, or
+/// letters mixed with digits, up to six characters; at least one token holds
+/// a digit or is a single letter, so words do not qualify.
+pub(crate) fn is_bare_unit<'a>(tokens: impl Iterator<Item = &'a str> + Clone) -> bool {
+    let short = |t: &str| {
+        let letters = t.bytes().filter(u8::is_ascii_alphabetic).count();
+        t.len() <= 6
+            && t.bytes().all(|c| c.is_ascii_alphanumeric())
+            && (all_digits(t) || has_digit(t) || letters <= 2)
+    };
+    (1..=3).contains(&tokens.clone().count())
+        && tokens.clone().all(short)
+        && tokens.into_iter().any(|t| has_digit(t) || is_letter(t))
+}
+
 /// A word that is a unit value after a `#`: letters only, as in `# REAR`,
 /// `# PRIMARY`, `# GAR`. Without the `#` a word is not a unit value.
 pub(crate) fn is_unit_word(t: &str) -> bool {

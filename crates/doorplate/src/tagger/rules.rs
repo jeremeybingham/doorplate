@@ -5,10 +5,10 @@ use std::ops::Range;
 
 use super::{Decision, PlaceCtx, Tag, Tagger};
 use crate::classify::{
-    all_digits, has_digit, house_number, is_cut_designator, is_fraction, is_glued_ordinal,
-    is_grid_number, is_letter, is_lettered_route, is_ordinal, is_route_value, is_slash_pair,
-    is_unit_value, is_unit_word, join, longest_at, longest_ending, zip_parts, NumberShape,
-    ORDINAL_SUFFIXES,
+    all_digits, has_digit, house_number, is_bare_unit, is_cut_designator, is_fraction,
+    is_glued_ordinal, is_grid_number, is_letter, is_lettered_route, is_ordinal, is_route_value,
+    is_slash_pair, is_unit_value, is_unit_word, join, longest_at, longest_ending, zip_parts,
+    NumberShape, ORDINAL_SUFFIXES,
 };
 use crate::lexicon::{MatchKind, Special, MAX_PLACE_WORDS};
 use crate::types::{StateKind, Warning};
@@ -687,6 +687,37 @@ impl Tagger<'_> {
         {
             self.set(k..k + 1, Tag::StreetNumber);
         }
+    }
+
+    /// A line 2 of one to three short bare tokens (`2 5`, `4 G`, `B B5`) is a
+    /// unit when the delivery pass left it unclaimed, no unit was found yet and the street has
+    /// a name. Words do
+    /// not qualify: a token is digits, one or two letters, or letters mixed
+    /// with digits (up to six characters), and one token holds a digit or is
+    /// a single letter.
+    pub(super) fn claim_bare_unit(&mut self, r: Range<usize>) {
+        let lex = self.lex;
+        let free = r
+            .clone()
+            .all(|k| matches!(self.tags[k], Tag::Untagged | Tag::Unparsed) && !self.toks[k].paren);
+        let one_seg = r
+            .clone()
+            .all(|k| self.toks[k].seg == self.toks[r.start].seg);
+        // The street needs a name of its own: `1921 NW` / `46` is a street cut
+        // across lines, and a highway or PO Box line takes no bare unit.
+        let named = (0..self.toks.len())
+            .any(|k| self.tags[k] == Tag::Name && lex.directional(self.text(k)).is_none());
+        if r.is_empty() || !free || !one_seg || !named || self.tags.contains(&Tag::UnitNumber(0)) {
+            return;
+        }
+        let tokens = || r.clone().map(|k| self.text(k));
+        if !is_bare_unit(tokens())
+            || !tokens().all(|t| lex.unit(t).is_none() && !lex.is_placeholder(t))
+        {
+            return;
+        }
+        self.set(r, Tag::UnitNumber(0));
+        self.decide(Decision::BareUnit);
     }
 
     // ---- delivery line -----------------------------------------------------
@@ -1538,6 +1569,37 @@ impl Tagger<'_> {
                 || longest_ending(self.toks, floor, v, |s| self.lex.unit(s)).is_some())
     }
 
+    /// `# 2 5`, `# B B5`: up to three short tokens in one segment after a
+    /// `#` are one unit value. Returns where the run starts (`last` is its
+    /// final token), or `None` for a single token.
+    fn hash_run(&self, floor: usize, last: usize) -> Option<usize> {
+        let seg = self.toks[last].seg;
+        (last.saturating_sub(2).max(floor + 1)..last).find(|&s| {
+            self.toks[s - 1].is_hash()
+                && (s..=last).all(|k| self.toks[k].seg == seg && !self.toks[k].paren)
+                && is_bare_unit((s..=last).map(|k| self.text(k)))
+        })
+    }
+
+    /// `APT TD`, `UNIT AB`: two letters right after a designator that always
+    /// takes a value. Others are street words (`FRONT ST`, `UPPER RD`), and a suffix
+    /// or directional after the designator ends a street (`KEY RD`).
+    fn letters_after_designator(&self, floor: usize, last: usize) -> bool {
+        let t = self.text(last);
+        last > floor
+            && t.len() == 2
+            && t.bytes().all(|c| c.is_ascii_alphabetic())
+            && self.lex.suffix(t).is_none()
+            && self.lex.directional(t).is_none()
+            && self.toks[last].seg == self.toks[last - 1].seg
+            && longest_ending(self.toks, floor, last, |s| {
+                self.lex
+                    .unit(s)
+                    .filter(|l| l.kind != MatchKind::Observed && l.value.range_required())
+            })
+            .is_some()
+    }
+
     /// Up to two units at the end of `floor..hi`, read from the right.
     /// `name_lo` is where the street name starts (for the bare-unit rule).
     /// Returns the new end of the street.
@@ -1587,13 +1649,14 @@ impl Tagger<'_> {
             }
             // "# 309", "UNIT 203", "LOT H28", and a word after '#': "# REAR".
             if (is_unit_value(t)
-                || (last > floor && self.toks[last - 1].is_hash() && is_unit_word(t)))
+                || (last > floor && self.toks[last - 1].is_hash() && is_unit_word(t))
+                || self.letters_after_designator(floor, last))
                 && last > floor
             {
                 let start = if self.split_value(floor, last) {
                     last - 1
                 } else {
-                    last
+                    self.hash_run(floor, last).unwrap_or(last)
                 };
                 if self.toks[start - 1].is_hash() {
                     self.set(start - 1..start, Tag::Skip);
