@@ -5,7 +5,10 @@ All notable changes are listed here, newest first. The project follows
 version (`k1`), tracked separately in [`docs/key-format.md`](docs/key-format.md): a
 change to what an input produces needs a new key version.
 
-## [Unreleased]
+## [0.2.0] - 2026-10-18
+
+Still an alpha. New API and docs; no change to the `k1` key or to what any input
+parses to.
 
 ### Added
 
@@ -17,10 +20,18 @@ change to what an input produces needs a new key version.
   `parse_fields_many(line1=, line2=, city=, state=, zip=, default_state=None)` and
   `Parser.parse_fields_many`: a batch call for pre-split columns, GIL released.
 
+### Changed
+
+- Faster lexicon lookups (no allocation for tokens that are already keys): about 15%
+  less time on the 30,622-address geocode benchmark. Output is unchanged.
+
 ### Documentation
 
 - Each crates.io package now has its own README (`crates/doorplate/README.md`,
   `crates/doorplate-cli/README.md`) instead of the repository README.
+- Fuzzing: `tools/fuzz/long_run.sh` runs both fuzz targets unattended for a set time.
+  A 5-hour run of `parse` and `parse_fields` (about 194 and 177 million inputs) found
+  no crashes, timeouts or out-of-memory kills.
 
 ## [0.1.0] - 2026-10-18
 

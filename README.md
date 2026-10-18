@@ -28,7 +28,7 @@ For one line or separate fields it gives you:
   you can send doubtful rows to review.
 
 > [!WARNING]
-> 🚧 **Alpha release.** This is the first version (0.1.0), and it is early. 🚧
+> 🚧 **Alpha release.** This is an early version (0.2.0). 🚧
 >
 > - **Keys will probably change.** The match key is versioned (`k1:`). As the parser
 >   improves, expect new key versions (`k2:` and later): a changed key gets a new
