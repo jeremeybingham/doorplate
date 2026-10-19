@@ -72,6 +72,28 @@ list, and is subject to state statutes that prohibit that use. We treat it as fo
   The metadata's credit line asks for acknowledgment of the Department of Transportation,
   the Census Bureau's Geography Division and the contributing providers; follow it.
 
+## The Florida DBPR licensee files
+
+The Florida Department of Business and Professional Regulation publishes licensee files for
+each profession (https://www2.myfloridalicense.com/instant-public-records/). They are public
+record (Chapter 119, Florida Statutes) and contain personal names with mailing and location
+addresses, so they stay in the git-ignored `local-data/florida-dbpr/`; only city, ZIP and
+street-key aggregates are used, and no name is printed or committed. What we have done with
+them (2026-10-19, aggregate results only):
+
+- *Profile:* 293 CSVs, 245 of them with addresses (many have no header row; the address
+  columns were inferred from the data): 4,092,224 address rows, 1,794,538 distinct Florida
+  street addresses with a city.
+- *Parser scoring:* 94.8% of 1.96M distinct records parse with no warning. The leftovers are
+  mostly business and building names on line 2 and 3; two unit gaps (two units in one value,
+  a business name after a unit) became a rule (PR #66).
+- *Florida pack 2026.10.5:* 26 communities, 37 spellings and 123 observed ZIP pairs by the
+  pack's existing rules (PR #67, `docs/packs/fl.md`).
+- *A one-line check* (`tools/compare/oneline_fl.py`): the records rendered as one line with no
+  commas, with the true city known. It showed that a rule tuned on the geocode benchmark alone
+  (compass words as city heads) broke spelled-out postdirectionals, because the benchmark
+  writes them abbreviated; the rule was corrected in #29.
+
 ## The Netsyms data
 
 [Netsyms](https://netsyms.com/gis/addresses) publishes a national address database
