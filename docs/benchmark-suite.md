@@ -62,7 +62,7 @@ A version directory is never edited after it is published (see "Versions").
  "tokens": [["1234", "AddressNumber"], ["W", "StreetNamePreDirectional"], ["Example", "StreetName"],
             ["Ave", "StreetNamePostType"], ["Apt", "OccupancyType"], ["5", "OccupancyIdentifier"],
             ["Springfield", "PlaceName"], ["IL", "StateName"], ["62704", "ZipCode"]],
- "stratum": "natural", "style": "mixed-commas", "type": "street", "state": "IL",
+ "stratum": "natural", "style": "mixed-commas", "mods": [], "type": "street", "state": "IL",
  "source": "nad", "tags": []}
 ```
 
@@ -70,7 +70,8 @@ A version directory is never edited after it is published (see "Versions").
 - `tokens`: the gold labels, in usaddress's label set, assigned by the generator. A token
   with no letter or digit is not scored, as in `tools/compare/compare_usaddress.py`.
 - `stratum`: `natural`, `hard` or `hand` (see "Composition").
-- `style`: how the record was written (see "Styles").
+- `style`: how the record was written (see "Styles"); `mods` lists the modifiers applied to it
+  (`hash-unit`, `zip4`, `no-zip`, `no-state`, `noise`, `extra-text`).
 - `type`: `street`, `po_box`, `rural`, `highway`, `military` or `general_delivery`.
 - `source`: `nad`, `tiger`, `synthetic` (a shape NAD has no rows for, such as a PO box) or
   `hand`.
@@ -216,9 +217,11 @@ The generator drops any record whose input string (whitespace collapsed, lowerca
 - the geocode benchmark's splits
 
 It also drops duplicates within the suite, and the NAD rows the label rules do not cover: a building,
-floor or room value, a unit in a form the designator list does not read, and a street name that ends in
-a street type with the type column empty (probably a provider split). Together these are about 11% of
-the NAD pool.
+floor or room value, a unit in a form the designator list does not read (a lone word, a glued
+designator, a fraction), and the provider splits found while building the generator: a street type or
+direction left inside the name, a route name with a number and no type column, a house number of
+zeros, and a city that is a placeholder (`NOT STATED`), holds a comma or a street type. Each is a rule of
+`provider_split` in `tools/benchsuite/build.py`, never a single row.
 
 ## Scoring
 

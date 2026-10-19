@@ -97,7 +97,7 @@ def unit_words(unit):
 
 def record_from_row(r):
     """The structured record, or None when the row is not usable (a provider split, an odd unit)."""
-    g = lambda c: (r[c] or "").strip()
+    g = lambda c: (r[c] or "").strip().upper()  # NAD is about half mixed case; the style decides the case
     if not (g("Add_Number") and g("St_Name") and g("Post_City") and re.fullmatch(r"[A-Z]{2}", g("State"))
             and re.fullmatch(r"\d{5}", g("Zip_Code"))):
         return None
