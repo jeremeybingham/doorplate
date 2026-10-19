@@ -47,7 +47,7 @@ a.to_display().line1;             // Some("123 N Main St Apt 4"); to_long(): "12
 a.diagnostics.warnings;           // e.g. MissingZip, UnparsedRemainder
 ```
 
-- `Parser::parse_fields` takes pre-split fields (`Fields`).
+- `Parser::parse_fields` takes pre-split fields (`Fields`: `line1`, `line2`, `city`, `state`, `zip`, each optional).
 - `Parser::parse_many` and `Parser::parse_fields_many` parse a batch, in parallel
   with the `rayon` feature.
 - `Parser::with_options(ParseOptions { default_state: Some("FL".into()) })?` sets a
@@ -57,6 +57,33 @@ a.diagnostics.warnings;           // e.g. MissingZip, UnparsedRemainder
   `ParsedAddress` with warnings (stable snake_case codes) and the text it could not
   place.
 
+Addresses arrive in different shapes. Whole lines, split columns, PO boxes, rural routes, military and
+general delivery, units on a second line, and rows with gaps all go through the same calls:
+
+```rust
+use doorplate::{Fields, Parser};
+
+let parser = Parser::new();
+let rows = vec![
+    Fields { line1: Some("412 N HARBOR ST".into()), line2: Some("APT 3B".into()),
+             city: Some("TAMPA".into()), state: Some("FL".into()), zip: Some("33602".into()) },
+    Fields { line1: Some("PO BOX 4821".into()), city: Some("JACKSONVILLE".into()),
+             state: Some("FL".into()), ..Fields::default() },
+    Fields::default(), // no address text: an error for this row only
+];
+for r in parser.parse_fields_many(&rows) {
+    match r {
+        Ok(a) => println!("{:?} {:?}", a.to_display().lines(), a.diagnostics.warnings),
+        Err(e) => println!("{e}"),
+    }
+}
+```
+
+The runnable tour is [`examples/quickstart.rs`](https://github.com/jeremeybingham/doorplate/blob/main/crates/doorplate/examples/quickstart.rs)
+(`cargo run -p doorplate --example quickstart` in a clone). For CSV files without writing code, install
+[`doorplate-cli`](https://crates.io/crates/doorplate-cli); for pandas, Polars and DuckDB, use the
+[Python package](https://pypi.org/project/doorplate/), which wraps this crate.
+
 ## Features
 
 | Feature | Default | Adds |
@@ -65,6 +92,19 @@ a.diagnostics.warnings;           // e.g. MissingZip, UnparsedRemainder
 | `state-fl` | yes | the curated Florida pack |
 | `rayon` | no | parallel `Parser::parse_many` and `parse_fields_many` |
 | `corpus` | no | the golden-corpus loader and runner (`doorplate::corpus`); pulls in serde |
+
+## Accuracy and speed
+
+| | doorplate | usaddress |
+|---|---|---|
+| Whole address right, benchmark suite, `natural` stratum (16,001 addresses written in five styles) | 98.3% | 96.1% |
+| Whole address right, geocode benchmark dev split (60,522 one-line addresses) | 94.4% | 88.1% |
+| One address in Rust (median of the corpus shapes, criterion; `cargo bench -p doorplate --bench parse`) | 7 to 18 µs | |
+
+The suite and the geocode benchmark are run from Python (the table compares with the Python library usaddress); see the
+[benchmarks](https://github.com/jeremeybingham/doorplate/blob/main/docs/benchmarks.md) for the suite's strata, method and caveats, and
+[`benchmarks/README.md`](https://github.com/jeremeybingham/doorplate/blob/main/benchmarks/README.md) to rerun them. These are
+measurements on a few data sets, not promises for yours.
 
 ## The match key
 

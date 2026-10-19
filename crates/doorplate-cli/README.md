@@ -31,6 +31,7 @@ Rust 1.80 or later.
 doorplate parse "123 N Main St, Miami FL 33101" --pretty     # JSON: components, output, key, warnings
 doorplate parse "123 N. Main St #4, miami, fl 33101" --usps  # Pub 28 lines
 doorplate parse-file in.csv --column address -o out.csv      # appends addr_* columns
+doorplate parse --line1 "412 N HARBOR ST" --line2 "APT 3B" --city Tampa --state FL --zip 33602   # pre-split fields
 doorplate parse "281 EVELYN DR DOTHAN" --default-state AL    # state hint
 doorplate parse "123 N Main St, Miami FL 33101" --display    # mixed case; --long spells words out (not Pub 28)
 doorplate parse "123 N Main St, Miami FL 33101" --tag        # usaddress-style joined labels
@@ -43,6 +44,38 @@ k2:S|123|N|MAIN|ST||FL|33101
 ```
 
 `doorplate --help` lists every option.
+
+## CSV files
+
+`parse-file` reads a CSV file and writes it back with the parsed columns appended, so it works on the shape your
+data already has:
+
+```sh
+# a column of whole addresses
+doorplate parse-file addresses.csv --column address -o parsed.csv
+
+# street line, unit line, city, state and ZIP in separate columns (any of them may be empty)
+doorplate parse-file split.csv --column line1 --line2 line2 --city city --state state --zip zip -o parsed.csv
+
+# a state hint for rows that name no state
+doorplate parse-file addresses.csv --column address --default-state FL -o parsed.csv
+```
+
+Every input column is kept, and the new `addr_` columns are the components (`street_number`, `street_name`,
+`unit_number`, `city`, `state`, `zip5`, ...), the shapes (`po_box`, `rural_route`, `military`, `general_delivery`),
+`place`, the USPS lines, `key`, `key_unit`, `slug`, `warnings` (stable codes joined by commas) and `unparsed`. PO
+boxes, routes, military addresses and street addresses can share one file. A blank row, or a row with no address
+text, is written with empty new columns and counted on standard error instead of stopping the run. Without `-o`
+the CSV goes to standard output, so it composes with other tools. On a Florida file with five address columns it
+ran at about 30,000 rows per second on one thread, including reading and writing about 30 columns
+([benchmarks](https://github.com/jeremeybingham/doorplate/blob/main/docs/benchmarks.md)).
+
+For a data frame, SQL or a notebook, the [Python package](https://pypi.org/project/doorplate/) has pandas, Polars
+and DuckDB helpers over the same parser. On the benchmark suite (19,586 labeled addresses neither library was made
+from) it gets 98.3% of whole addresses right on the `natural` stratum, against 96.1% for the Python library
+usaddress; the method, the caveats and the blind spots are in the
+[benchmarks](https://github.com/jeremeybingham/doorplate/blob/main/docs/benchmarks.md). These are measurements on a
+few data sets, not promises for yours.
 
 ## More
 
