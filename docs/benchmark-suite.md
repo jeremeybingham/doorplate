@@ -297,12 +297,17 @@ a score: the style mix is an assumption (below) and the gold labels have not bee
 
 | | Wrong, all records | Wrong, records with no label doorplate leaves unmodeled |
 |---|---|---|
-| doorplate | 8.67% (17,344 of 200,000) | 5.75% (11,034 of 191,926) |
+| doorplate | 7.16% (14,314 of 200,000) | 5.75% (11,034 of 191,926) |
 | usaddress | 7.57% (15,134 of 200,000) | 6.33% (12,158 of 191,926) |
 
+A trailing `USA` is not an error for doorplate: it drops the word on purpose and says so with
+`country_ignored`, so the inventory counts a gold `CountryName` token that doorplate leaves unlabeled
+as right (the fields are right). A first run that counted it wrong gave doorplate 8.67% on all records
+and a "no label" class of 152 per 10,000; that was a scoring artifact, not a blind spot.
+
 The two columns are the two headline figures of "Scoring". Both are a measure of where each library
-fails, on one fixed mix. Of the 200,000, both are right on 177,464, only doorplate on 5,192, only
-usaddress on 7,402, and neither on 9,942.
+fails, on one fixed mix. Of the 200,000, both are right on 180,250, only doorplate on 5,436, only
+usaddress on 4,616, and neither on 9,698.
 
 **Styles.** The local sources are 99% uppercase (Florida DBPR line 1s, Netsyms), so how often people
 write mixed case cannot be measured here. The inventory used 30% `upper-commas`, 20% `mixed-commas`, 25%
@@ -317,14 +322,14 @@ different mix is arithmetic.
 
 | Style or feature | doorplate wrong | usaddress wrong |
 |---|---|---|
-| `upper-commas` | 6.1% | 5.9% |
-| `mixed-commas` | 6.3% | 6.1% |
-| `spelled-out` | 6.6% | 6.6% |
-| `upper-nocommas` | 13.2% | 10.2% |
-| `mixed-nocommas` | 13.1% | 10.4% |
-| With a unit | 28.9% | 28.4% |
-| Multi-word city | 11.9% | 9.4% |
-| `extra-text` | 69.8% | 14.2% |
+| `upper-commas` | 5.2% | 5.9% |
+| `mixed-commas` | 5.5% | 6.1% |
+| `spelled-out` | 5.6% | 6.6% |
+| `upper-nocommas` | 10.5% | 10.2% |
+| `mixed-nocommas` | 10.4% | 10.4% |
+| With a unit | 28.0% | 28.4% |
+| Multi-word city | 11.1% | 9.4% |
+| `extra-text` (a recipient line or `USA`) | 18.0% | 14.2% |
 
 **The hard stratum, with the rule applied as written** (every class above 1 in 10,000 gets its
 proportional share of 3,000, floor 50). The two libraries' counts are added for the share. The rate
@@ -332,20 +337,19 @@ columns are per 10,000 records.
 
 | Class | doorplate | usaddress | Records |
 |---|---|---|---|
-| A building name (`BuildingName -> *`, five pairs) | 223.0 | 213.8 | 813 |
-| A postdirectional read as part of the city (`StreetName -> PlaceName`) | 94.1 | 98.5 | 359 |
-| A trailing country word (`USA`) given no label (`CountryName -> None`) | 151.5 | 0 | 282 |
-| A number prefix read as the number (`AddressNumberPrefix -> AddressNumber`) | 88.2 | 57.1 | 271 |
-| A unit identifier read as street (`OccupancyIdentifier -> StreetName`) | 43.6 | 88.2 | 245 |
-| A city read as street (`PlaceName -> StreetName`) | 53.1 | 58.6 | 208 |
-| A house-number suffix (a fraction) read as street (`AddressNumber -> StreetName`) | 66.8 | 44.5 | 207 |
-| A unit identifier read as city (`OccupancyIdentifier -> PlaceName`) | 80.6 | 18.6 | 185 |
-| A number prefix read as street (`AddressNumberPrefix -> StreetName`) | 9.9 | 32.1 | 78 |
-| Street read as a unit identifier (`StreetName -> OccupancyIdentifier`) | 7.8 | 22.0 | 56 |
-| A street premodifier read as street (`StreetNamePreModifier -> StreetName`) | 15.7 | 12.8 | 53 |
+| A building name (`BuildingName -> *`, five pairs) | 223.0 | 213.8 | 898 |
+| A postdirectional read as part of the city (`StreetName -> PlaceName`) | 94.1 | 98.5 | 396 |
+| A number prefix read as the number (`AddressNumberPrefix -> AddressNumber`) | 88.2 | 57.1 | 299 |
+| A unit identifier read as street (`OccupancyIdentifier -> StreetName`) | 43.6 | 88.2 | 271 |
+| A city read as street (`PlaceName -> StreetName`) | 53.1 | 58.6 | 230 |
+| A house-number suffix (a fraction) read as street (`AddressNumber -> StreetName`) | 66.8 | 44.5 | 229 |
+| A unit identifier read as city (`OccupancyIdentifier -> PlaceName`) | 80.6 | 18.6 | 204 |
+| A number prefix read as street (`AddressNumberPrefix -> StreetName`) | 9.9 | 32.1 | 86 |
+| Street read as a unit identifier (`StreetName -> OccupancyIdentifier`) | 7.8 | 22.0 | 61 |
+| A street premodifier read as street (`StreetNamePreModifier -> StreetName`) | 15.7 | 12.8 | 58 |
 | 26 more classes between 1 and 20 per 10,000 (mostly one library's) | | | 50 each |
 
-Floors alone add 1,250 records, so the rule as written gives about 4,060 hard records, not 3,000.
+Floors alone add 1,300 records, so the rule as written gives about 4,030 hard records, not 3,000.
 Three things need the owner before the generator is built (step 3):
 
 1. **Size.** Take the hard stratum as about 4,000 (20%, with `natural` at 75%), or raise the class
@@ -354,9 +358,10 @@ Three things need the owner before the generator is built (step 3):
    100%, usaddress 99%), which says the rendering (a bare NAD `Building` after the street) is not how
    people write one. They are 2.3% of the pool. Proposal: keep them out of `natural`, treat them as one
    hard class, and settle their labels in the label audit (step 4).
-3. **Unmodeled labels.** `USA`, recipient lines and number prefixes are labels doorplate does not model
+3. **Unmodeled labels.** Recipient lines and number prefixes are labels doorplate does not model
    (#35). They fill most of the doorplate-only classes and make "all records" and "shared labels" differ
-   by about 3 points for doorplate. This is by design, and why both figures are reported.
+   by about 1.4 points for doorplate. This is by design, and why both figures are reported. A trailing
+   `USA` is not among them: it is handled (see above).
 
 Classes that match issues already known: the postdirectional-as-city and the city-as-street classes
 (one-line input with no commas, #29), a unit identifier read as street or city (a bare unit before the city on one line),

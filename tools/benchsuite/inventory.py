@@ -231,13 +231,17 @@ def compare(gold, pred):
         if not scored(gt):
             continue
         g, p = norm(gl), norm(pl)
+        if g == "CountryName" and p is None:
+            continue  # doorplate drops a trailing USA on purpose, with `country_ignored`: the fields are right
         if coarse(g) != coarse(p):
             first = first or (g, coarse(g), coarse(p))
     return first
 
 
 def fine_wrong(gold, pred):
-    return len(pred) == len(gold) and any(scored(gt) and norm(gl) != norm(pl) for (gt, gl), (_, pl) in zip(gold, pred))
+    return len(pred) == len(gold) and any(
+        scored(gt) and norm(gl) != norm(pl) and not (gl == "CountryName" and pl is None)
+        for (gt, gl), (_, pl) in zip(gold, pred))
 
 
 def wilson(k, n, z=1.96):
