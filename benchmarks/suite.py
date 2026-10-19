@@ -6,7 +6,7 @@
     python benchmarks/suite.py speed     [--suite DIR] [--out FILE]   # parsing speed and peak memory
     python benchmarks/suite.py all                                    # the three, one after the other
 
-The specification is docs/benchmark-suite.md; `benchmarks/suite/README.md` says how to run it. Build the
+The specification is docs/benchmark-suite.md; `benchmarks/README.md` says how to run it. Build the
 extension with `maturin develop --release` first and install usaddress (`pip install usaddress`).
 
 The runner puts itself in the reference resource profile (4 logical CPUs and 8 GB of memory, on Linux): it

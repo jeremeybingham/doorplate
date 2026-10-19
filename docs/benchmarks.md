@@ -10,6 +10,10 @@ diagnostics).
 This library formats and parses; it does not validate deliverability. None of
 the figures below say an address exists or can receive mail.
 
+This page holds the results. Which benchmark is which (the suite, the geocode benchmark, the speed and size
+scripts, the checks on private data) and how to run each: the table in the project README
+([Benchmarks](../README.md#benchmarks)) and [`benchmarks/README.md`](../benchmarks/README.md).
+
 The benchmark suite that ships in the repository (`benchmarks/suite/v1/`, the specification in
 `docs/benchmark-suite.md`, issue #75) leads this page. It is 19,586 labeled addresses that neither
 library's rules, model or tests were made from, run under a fixed 4-CPU, 8 GB profile, and it holds both
@@ -37,7 +41,7 @@ doorplate `main` at 9f09030 (the unreleased 0.3.0 work; the version string is st
 ## The benchmark suite
 
 `benchmarks/suite/v1/` holds 19,586 labeled addresses and `python benchmarks/suite.py all` scores doorplate
-and usaddress on them (the runner, how to run it and the resource profile: `benchmarks/suite/README.md`).
+and usaddress on them (the runner, how to run it and the resource profile: `benchmarks/README.md`).
 It was built once, audited, and is frozen: `v1` is never edited, and label errors found later go into `v2`
 with both versions' scores kept here. Rows are anonymized National Address Database points (the real street,
 city, state and ZIP; invented house and unit numbers), Census TIGER street names for the six states NAD
@@ -331,17 +335,8 @@ model on its first call, so its memory after import understates it.
 
 ## Rerunning
 
-```sh
-cargo build --release -p doorplate-cli
-(cd crates/doorplate-py && maturin develop --release)
-python benchmarks/suite.py all
-python benchmarks/accuracy.py
-python benchmarks/speed_python.py
-python benchmarks/speed_rust.py [--csv FILE --column NAME ...]
-python benchmarks/size_memory.py
-```
-
-`benchmarks/README.md` has the setup and what each script needs. The geocode
-benchmark is not redistributable, so it is not in the repository: download it
-and put it in `local-data/geocode-benchmark/` (`benchmarks/README.md`); a script
-skips a source that is not there.
+Every figure on this page can be rerun: `benchmarks/README.md` has one table of what to run for each question,
+the setup, and what each script needs. In short: `python benchmarks/suite.py all` for the suite, then
+`accuracy.py`, `speed_python.py`, `speed_rust.py` and `size_memory.py` for the older sets. The geocode
+benchmark is not redistributable, so it is not in the repository: download it into `local-data/geocode-benchmark/`
+(`benchmarks/README.md` says how); a script skips a source that is not there.
