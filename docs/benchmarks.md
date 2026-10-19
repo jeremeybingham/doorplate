@@ -10,6 +10,11 @@ diagnostics).
 This library formats and parses; it does not validate deliverability. None of
 the figures below say an address exists or can receive mail.
 
+A standard benchmark suite that ships in the repository is being built
+(`docs/benchmark-suite.md`, issue #75). When it is done, its figures will lead this page. It
+is a fair comparison with usaddress, run under a 4-CPU, 8 GB profile, and it holds both
+libraries' blind spots.
+
 **Machine:** Intel Core i9-9900K (14 threads), 49 GB RAM, Linux 6.18 on WSL2,
 Rust 1.91, Python 3.13 (speed and size runs in a virtual environment),
 doorplate `main` at 9f09030 (the unreleased 0.3.0 work; the version string is still 0.2.0) and usaddress 0.5.16, built with `--release`.

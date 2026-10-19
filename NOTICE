@@ -17,3 +17,11 @@ This product includes data from third parties under their own terms:
   and street spellings in crates/doorplate/data/packs/fl/ (see
   docs/packs/fl.md). Public record; no attribution is required.
 - usaddress test data (MIT, datamade), vendored in tests/external/usaddress/.
+- National Address Database (NAD), US Department of Transportation
+  (https://www.transportation.gov/gis/national-address-database), a work of the
+  US federal government (public domain). Compiled with the US Census Bureau's
+  Geography Division from the address data of its contributing state, local and
+  tribal providers. Street, city, state and ZIP values are used, with invented
+  house and unit numbers, in the benchmark suite in benchmarks/suite/ (see
+  docs/benchmark-suite.md). The suite is for parser testing; it is not a list of
+  real or deliverable addresses.
