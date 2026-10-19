@@ -7,10 +7,11 @@ use super::{Decision, PlaceCtx, Tag, Tagger};
 use crate::classify::{
     all_digits, has_digit, house_number, is_bare_unit, is_cut_designator, is_fraction,
     is_glued_ordinal, is_grid_number, is_letter, is_lettered_route, is_ordinal, is_route_value,
-    is_slash_pair, is_unit_value, is_unit_word, join, longest_at, longest_ending, zip_parts,
-    NumberShape, ORDINAL_SUFFIXES,
+    is_slash_pair, is_unit_pair, is_unit_value, is_unit_word, join, longest_at, longest_ending,
+    zip_parts, NumberShape, ORDINAL_SUFFIXES,
 };
 use crate::lexicon::{MatchKind, Special, MAX_PLACE_WORDS};
+use crate::tokenize::Token;
 use crate::types::{StateKind, Warning};
 
 /// A special delivery line: the tags to apply and where it ends.
@@ -1626,6 +1627,73 @@ impl Tagger<'_> {
         })
     }
 
+    /// `UNIT 3 & 4`, `SUITE 5 AND 6`: two unit values joined by `&` or `AND`
+    /// in one segment, right after a designator or `#`. Returns where the
+    /// pair starts (`last` is its final token).
+    fn and_pair(&self, floor: usize, last: usize) -> Option<usize> {
+        if last < floor + 3 {
+            return None;
+        }
+        let s = last - 2;
+        let seg = self.toks[last].seg;
+        let joined = matches!(self.text(last - 1), "&" | "AND");
+        let after_designator = self.toks[s - 1].is_hash()
+            || longest_ending(self.toks, floor, s, |u| {
+                self.lex.unit(u).filter(|l| l.kind != MatchKind::Observed)
+            })
+            .is_some();
+        (joined
+            && self.toks[last - 1].seg == seg
+            && self.toks[s].seg == seg
+            && is_unit_value(self.text(s))
+            && is_unit_value(self.text(last))
+            && after_designator)
+            .then_some(s)
+    }
+
+    /// `UNIT 12 BLU SPA`: one to three words after a whole unit (a designator
+    /// or `#`, then a value with a digit) in one segment are the tenant or
+    /// business name, not part of the unit. Returns where the words start.
+    fn words_after_unit(&self, floor: usize, hi: usize) -> Option<usize> {
+        let lex = self.lex;
+        for k in 1..=3usize {
+            if hi < floor + k + 2 {
+                break;
+            }
+            let start = hi - k;
+            let seg = self.toks[hi - 1].seg;
+            let word = |t: &Token| {
+                t.seg == seg
+                    && !t.paren
+                    && t.text.len() >= 3
+                    && t.text.bytes().all(|c| c.is_ascii_alphabetic())
+                    && lex.unit(&t.text).is_none()
+                    && lex.suffix(&t.text).is_none()
+                    && lex.directional(&t.text).is_none()
+                    && lex.state(&t.text).is_none()
+            };
+            if !self.toks[start..hi].iter().all(word) {
+                break;
+            }
+            let value = start - 1;
+            if self.toks[value].seg != seg
+                || !is_unit_value(self.text(value))
+                || !has_digit(self.text(value))
+            {
+                continue;
+            }
+            let designator = self.toks[value - 1].seg == seg
+                && (self.toks[value - 1].is_hash()
+                    || lex.unit(self.text(value - 1)).is_some_and(|l| {
+                        l.kind != MatchKind::Observed && l.value.range_required()
+                    }));
+            if designator {
+                return Some(start);
+            }
+        }
+        None
+    }
+
     /// `APT TD`, `UNIT AB`: two letters right after a designator that always
     /// takes a value. Others are street words (`FRONT ST`, `UPPER RD`), and a suffix
     /// or directional after the designator ends a street (`KEY RD`).
@@ -1665,6 +1733,14 @@ impl Tagger<'_> {
                 j = last;
                 continue;
             }
+            // "UNIT 12 BLU SPA": a business name after a whole unit.
+            if found.is_empty() && j == hi {
+                if let Some(w) = self.words_after_unit(floor, hi) {
+                    self.set(w..hi, Tag::Unparsed);
+                    j = w;
+                    continue;
+                }
+            }
             // A designator cut off at the line limit: "... DR UNI".
             if found.is_empty()
                 && j == hi
@@ -1694,6 +1770,7 @@ impl Tagger<'_> {
             }
             // "# 309", "UNIT 203", "LOT H28", and a word after '#': "# REAR".
             if (is_unit_value(t)
+                || is_unit_pair(t)
                 || (last > floor && self.toks[last - 1].is_hash() && is_unit_word(t))
                 || self.letters_after_designator(floor, last))
                 && last > floor
@@ -1701,7 +1778,9 @@ impl Tagger<'_> {
                 let start = if self.split_value(floor, last) {
                     last - 1
                 } else {
-                    self.hash_run(floor, last).unwrap_or(last)
+                    self.hash_run(floor, last)
+                        .or_else(|| self.and_pair(floor, last))
+                        .unwrap_or(last)
                 };
                 if self.toks[start - 1].is_hash() {
                     self.set(start - 1..start, Tag::Skip);
