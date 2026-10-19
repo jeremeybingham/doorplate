@@ -11,7 +11,9 @@ and none of the data below is used to claim otherwise.
    profiles and reports live there. Never commit anything from it.
 2. **Aggregate numbers and our own fixes ship; source rows do not.** Counts, rates and
    scores can be published. Rows, street names, house numbers, coordinates and
-   personal names cannot, in commits, issues, pull requests, docs or comments.
+   personal names cannot, in commits, issues, pull requests, docs or comments. The one
+   exception is the benchmark suite: anonymized NAD rows, made as
+   `docs/benchmark-suite.md` describes (see "The National Address Database" below).
 3. **Examples are invented.** A corpus case, a doc example or a bug report uses an
    invented address of the same shape (`CONTRIBUTING.md#sharing-messy-data`).
 4. **Never print personal names** from private data, in a terminal log that is pasted
@@ -29,7 +31,7 @@ and none of the data below is used to claim otherwise.
 | Florida public-record address data | `crates/doorplate/data/packs/fl/` (city/ZIP pairs and street spellings only; no names) | Yes | Public record (Chapter 119, Florida Statutes) |
 | Florida DBPR licensee files (names, mailing and location addresses; 293 CSV, 10 XLS) | `local-data/florida-dbpr/` | **No** (aggregates only) | Public record (Chapter 119, Florida Statutes). Contains personal names: only city, ZIP and street-key aggregates may be used, as for the other Florida exports |
 | Geocode benchmark (`test`, `dev`, `train`) | `local-data/geocode-benchmark/` | **No** | No license stated. Only aggregate scores ship (`docs/benchmarks.md`). |
-| National Address Database (NAD) r24, text file | `local-data/nad-2026/` | **No** (extracts only, see below) | Work of the US federal government, no copyright (17 U.S.C. § 105); the metadata says it is available for re-use without limitation or restriction |
+| National Address Database (NAD) r24, text file | `local-data/nad-2026/`; anonymized rows in `benchmarks/suite/` | **Anonymized rows in the benchmark suite only** (see below) | Work of the US federal government, no copyright (17 U.S.C. § 105); the metadata says it is available for re-use without limitation or restriction |
 | Netsyms Address Database 2026-05 | `local-data/netsyms-2026/` | **No** (see below) | No formal license; see the next section |
 | Florida exports with names, the labeled Florida sample, comparison reports | `local-data/` | **No** | Private; contain personal names or rows |
 
@@ -48,6 +50,17 @@ list, and is subject to state statutes that prohibit that use. We treat it as fo
 - **Row-level data stays in `local-data/`.** The file is large (42 GB of text) and its
   providers are credited in its own metadata; we do not redistribute it. Aggregate counts
   and our own fixes ship, with invented examples in corpus cases, as for the other sources.
+- **The benchmark suite is the one exception** (decided 2026-10-19, issue #75). Its records
+  (`benchmarks/suite/`) take street, city, state and ZIP from NAD, which is public domain,
+  and are anonymized so that no record is a real address point:
+  - house and unit numbers are invented
+  - building names are replaced
+  - only streets with at least 20 NAD address points in their ZIP code are used
+  - no coordinates, source names or ids are carried over
+
+  The rules are in `docs/benchmark-suite.md` ("Anonymization"). The suite is for parser
+  testing only, like the rest of our NAD use. Anything else from NAD still ships as counts
+  only, and corpus cases stay invented.
 - **Place names:** a name found in `Uninc_Comm`, `Nbrhd_Comm` or the other place columns may
   ship when the counts show it is real and used (rows and distinct providers, cited as
   aggregates), citing NAD as the source. Because NAD is public domain, it can serve as the
@@ -68,7 +81,8 @@ list, and is subject to state statutes that prohibit that use. We treat it as fo
   - *Evaluated and not used:* NAD's `Addr_Type`, `AddrClass`, `Lifecycle` and `DeliverTyp`
     (mostly `Unknown`, empty or unnormalized), and the GNIS populated-places file (#52: about a tenth
     of the place-name gap, so nothing shipped).
-- **If anything derived ships**, cite NAD in `docs/places.md` or the pack doc that uses it.
+- **If anything derived ships**, cite NAD in `docs/places.md`, the pack doc or
+  `docs/benchmark-suite.md`, whichever uses it, and in `NOTICE`.
   The metadata's credit line asks for acknowledgment of the Department of Transportation,
   the Census Bureau's Geography Division and the contributing providers; follow it.
 

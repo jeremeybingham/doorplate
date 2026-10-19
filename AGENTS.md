@@ -23,6 +23,7 @@ imply otherwise in docs or code comments.
 | Output fields | [`docs/reso-mapping.md`](docs/reso-mapping.md), `to_usps()`, `to_display()`, `to_long()` |
 | Coming from usaddress | [`docs/usaddress-compat.md`](docs/usaddress-compat.md) |
 | Accuracy and speed, and how to rerun them | [`docs/benchmarks.md`](docs/benchmarks.md), [`benchmarks/README.md`](benchmarks/README.md) |
+| The benchmark suite (in progress): what it holds and the rules that keep it fair | [`docs/benchmark-suite.md`](docs/benchmark-suite.md) |
 | How the parser works | [`docs/how-it-works.md`](docs/how-it-works.md) |
 | What is planned and what is not | [`docs/roadmap.md`](docs/roadmap.md) |
 | What data may be used and committed | [`docs/data-policy.md`](docs/data-policy.md) |
