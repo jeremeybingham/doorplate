@@ -174,16 +174,16 @@ The mix is fixed here **before either parser runs on the suite**. About 20,000 r
 Each reported group has at least 500 records, so a group's figure has a 95% interval of about
 ±2 points.
 
-The `natural` mix by address type and style is filled in from the local counts in step 2:
+The `natural` mix by address type, measured in step 2 (see "Step 2 results" for the sources):
 
-| Address type | Share of `natural` |
-|---|---|
-| Street, no unit | _to be measured_ |
-| Street with a unit | _to be measured_ |
-| PO box | _to be measured_ |
-| Rural or highway-contract route | _to be measured_ |
-| Military | _to be measured_ (floor 100) |
-| General delivery | _to be measured_ (floor 50) |
+| Address type | Share of `natural` | Records of 16,000 | Basis |
+|---|---|---|---|
+| Street, no unit | 83.6% | about 13,380 | The rest after the rows below |
+| Street with a unit | 12.2% | about 1,950 | 12.7% of NAD rows have a unit; 9.7% of Florida DBPR line 1s show one |
+| PO box | 2.7% | about 430 | 2.75% of the 470,000 DBPR mailing addresses of a known type |
+| Rural or highway-contract route | 0.6% | 100 (floor) | Measured 0.03%: too rare to sample without a floor |
+| Military | 0.6% | 100 (floor) | Measured 0.004% |
+| General delivery | 0.3% | 50 (floor) | Measured: 1 row in 500,000 |
 
 ### The hard stratum
 
@@ -202,7 +202,7 @@ Classes already known, to be counted with the rest:
 | A highway modifier before the city on one line | doorplate | #10 |
 | `VILLAGE OF` / `TOWN OF` / `CITY OF` before the city | doorplate | #68 |
 | A label doorplate does not model (number prefix, premodifier, subaddress, intersection) | doorplate | #35 |
-| _usaddress's classes_ | usaddress | measured in step 2 (its 88% on the geocode `dev` split shows they exist) |
+| usaddress's classes | usaddress | measured in step 2: see "Step 2 results" |
 
 The final table, with counts, goes in `MANIFEST.md`.
 
@@ -286,13 +286,90 @@ finish in a few minutes under the profile.
 - A new version is also needed when the usaddress pin moves or a source is replaced; the old
   version stays runnable.
 
+## Step 2 results
+
+Counts from the local data (`tools/benchsuite/shapes.py` and `tools/benchsuite/inventory.py`; no rows
+leave `local-data/`). The inventory drew 200,000 usable records from a random 1,000,000-row NAD sample,
+wrote each in a style, labeled it from the NAD columns, ran both parsers and sorted the wrong records
+with one classifier: the class is the first token whose coarse label (street parts folded into
+`StreetName`) differs from the gold, written `gold -> predicted`. It is an inventory of blind spots, not
+a score: the style mix is an assumption (below) and the gold labels have not been audited (step 4).
+
+| | Wrong, all records | Wrong, records with no label doorplate leaves unmodeled |
+|---|---|---|
+| doorplate | 8.67% (17,344 of 200,000) | 5.75% (11,034 of 191,926) |
+| usaddress | 7.57% (15,134 of 200,000) | 6.33% (12,158 of 191,926) |
+
+The two columns are the two headline figures of "Scoring". Both are a measure of where each library
+fails, on one fixed mix. Of the 200,000, both are right on 177,464, only doorplate on 5,192, only
+usaddress on 7,402, and neither on 9,942.
+
+**Styles.** The local sources are 99% uppercase (Florida DBPR line 1s, Netsyms), so how often people
+write mixed case cannot be measured here. The inventory used 30% `upper-commas`, 20% `mixed-commas`, 25%
+`upper-nocommas`, 15% `spelled-out` and 10% `mixed-nocommas`, with modifiers on `hash-unit` (10% of
+designator units), `no-zip` (3%), `no-state` (2%), `noise` (5%) and `extra-text` (3%). These are
+starting values for the owner's sign-off, not measurements. What was measured: 93% of the Florida
+auction listings have two commas; the geocode benchmark has none; 7.2% of DBPR line 1s have a unit
+designator word and 2.5% a `#`; 32% of DBPR line 1s spell the street type out and 5.6% a direction; 9%
+have a doubled space and 6% a period. NAD columns non-empty: unit 13.2%, building 2.6%, floor 2.4%,
+number prefix or suffix 0.9%, premodifier 0.2%. Error rates by style are in the table below, so a
+different mix is arithmetic.
+
+| Style or feature | doorplate wrong | usaddress wrong |
+|---|---|---|
+| `upper-commas` | 6.1% | 5.9% |
+| `mixed-commas` | 6.3% | 6.1% |
+| `spelled-out` | 6.6% | 6.6% |
+| `upper-nocommas` | 13.2% | 10.2% |
+| `mixed-nocommas` | 13.1% | 10.4% |
+| With a unit | 28.9% | 28.4% |
+| Multi-word city | 11.9% | 9.4% |
+| `extra-text` | 69.8% | 14.2% |
+
+**The hard stratum, with the rule applied as written** (every class above 1 in 10,000 gets its
+proportional share of 3,000, floor 50). The two libraries' counts are added for the share. The rate
+columns are per 10,000 records.
+
+| Class | doorplate | usaddress | Records |
+|---|---|---|---|
+| A building name (`BuildingName -> *`, five pairs) | 223.0 | 213.8 | 813 |
+| A postdirectional read as part of the city (`StreetName -> PlaceName`) | 94.1 | 98.5 | 359 |
+| A trailing country word (`USA`) given no label (`CountryName -> None`) | 151.5 | 0 | 282 |
+| A number prefix read as the number (`AddressNumberPrefix -> AddressNumber`) | 88.2 | 57.1 | 271 |
+| A unit identifier read as street (`OccupancyIdentifier -> StreetName`) | 43.6 | 88.2 | 245 |
+| A city read as street (`PlaceName -> StreetName`) | 53.1 | 58.6 | 208 |
+| A house-number suffix (a fraction) read as street (`AddressNumber -> StreetName`) | 66.8 | 44.5 | 207 |
+| A unit identifier read as city (`OccupancyIdentifier -> PlaceName`) | 80.6 | 18.6 | 185 |
+| A number prefix read as street (`AddressNumberPrefix -> StreetName`) | 9.9 | 32.1 | 78 |
+| Street read as a unit identifier (`StreetName -> OccupancyIdentifier`) | 7.8 | 22.0 | 56 |
+| A street premodifier read as street (`StreetNamePreModifier -> StreetName`) | 15.7 | 12.8 | 53 |
+| 26 more classes between 1 and 20 per 10,000 (mostly one library's) | | | 50 each |
+
+Floors alone add 1,250 records, so the rule as written gives about 4,060 hard records, not 3,000.
+Three things need the owner before the generator is built (step 3):
+
+1. **Size.** Take the hard stratum as about 4,000 (20%, with `natural` at 75%), or raise the class
+   threshold to 2 in 10,000 (dropping the classes below it), or lower the floor.
+2. **Building names.** Every record with a building name is wrong for both libraries (doorplate
+   100%, usaddress 99%), which says the rendering (a bare NAD `Building` after the street) is not how
+   people write one. They are 2.3% of the pool. Proposal: keep them out of `natural`, treat them as one
+   hard class, and settle their labels in the label audit (step 4).
+3. **Unmodeled labels.** `USA`, recipient lines and number prefixes are labels doorplate does not model
+   (#35). They fill most of the doorplate-only classes and make "all records" and "shared labels" differ
+   by about 3 points for doorplate. This is by design, and why both figures are reported.
+
+Classes that match issues already known: the postdirectional-as-city and the city-as-street classes
+(one-line input with no commas, #29), a unit identifier read as street or city (a bare unit before the city on one line),
+and the unmodeled labels (#35). The inventory cannot tell a place-list gap from a boundary error, so #29
+and #68 (`VILLAGE OF`) are counted inside those classes, not apart.
+
 ## Status
 
 Built in these steps (issue #75), each a small pull request or a local step:
 
-1. **This specification**, with the data-policy change that lets anonymized NAD rows ship.
+1. **This specification**, with the data-policy change that lets anonymized NAD rows ship. Done.
 2. **The blind-spot inventory** (local, counts only): fills in the composition tables. No rule
-   changes come from it.
+   changes come from it. Done: see "Step 2 results"; three decisions are open before step 3.
 3. **The generator**, `tools/benchsuite/build.py`, and the private twin.
 4. **The label audit**: a random 500 records, plus every record the generator flags.
 5. **The runner**, `benchmarks/suite.py`, with the profile and the CI job.
