@@ -7,7 +7,9 @@ change to what an input produces needs a new key version.
 
 ## [Unreleased]
 
-The next release is 0.3.0. Still an alpha. The match key moves to `k2`, and a batch of parsing
+## [0.3.0] - 2026-10-19
+
+Still an alpha. The match key moves to `k2`, and a batch of parsing
 rules found by running the parser over about 146 million split US address rows, a second
 national address source, nearly two million Florida licensee addresses and the geocode benchmark. On the
 benchmark's `dev` split the whole-address score goes from 92.6% to 94.4% (usaddress: 88.1%);
