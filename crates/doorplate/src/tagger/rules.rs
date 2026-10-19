@@ -472,6 +472,18 @@ impl Tagger<'_> {
     fn after_street(&self, c: usize, hi: usize) -> Option<usize> {
         let mut c = c;
         if c < hi && self.lex.directional(self.text(c)).is_some() {
+            // `123 MAIN ST NORTH GLEN ELLYN`: a spelled-out compass word with
+            // plain words after it, in the same segment, opens the city (a
+            // neighborhood or a `NORTH <town>`). An abbreviation (`N`) stays
+            // the postdirectional.
+            let opens_city = self.text(c).len() > 2
+                && c + 1 < hi
+                && self.toks[c + 1].seg == self.toks[c].seg
+                && !self.toks[c + 1].is_hash()
+                && self.lex.unit(self.text(c + 1)).is_none();
+            if opens_city {
+                return Some(c);
+            }
             // A directional with nothing after it is the postdirectional
             // (`HIGHWAY 29 SOUTH 32533`), not a city.
             c += 1;

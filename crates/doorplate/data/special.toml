@@ -264,8 +264,10 @@ phrases = [
 # `DOWNTOWN MIAMI`, `UPTOWN CHARLOTTE`. Not a USPS rule (Pub 28 has no such
 # word). Read only on a line with no commas, right after the street's suffix
 # and right before a place the place list knows. Seen in the geocode
-# benchmark's train split (issue #29).
-words = ["CENTRAL", "DOWNTOWN", "EAST", "NORTH", "NORTHEAST", "NORTHWEST", "OLD", "OLDE", "SOUTH", "SOUTHEAST", "SOUTHWEST", "UPTOWN", "WEST"]
+# benchmark's train split (issue #29). The compass words are not here: with a
+# known city after them, `5TH AVE NORTH SAINT PETERSBURG` has a spelled-out
+# postdirectional (the unknown-town case is in tagger/rules.rs, `after_street`).
+words = ["CENTRAL", "DOWNTOWN", "OLD", "OLDE", "UPTOWN"]
 
 [city_head]
 # Words that open a city name and are also street suffixes (`LAKE GENEVA`,
