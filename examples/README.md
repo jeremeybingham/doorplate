@@ -6,7 +6,7 @@ that an address exists or can receive mail.
 
 | File | Shows |
 |---|---|
-| [`quickstart.ipynb`](quickstart.ipynb) | A tour: `parse`, the USPS and RESO forms, the display and long forms (`to_display`, `to_long`; not Pub 28), keys and slugs, messy lines and warnings, `default_state`, `parse_fields`, `parse_many`, `parse_fields_many`, a pandas frame, the CLI on a file (`--usps`, `--display`, `--long`) |
+| [`quickstart.ipynb`](quickstart.ipynb) | A tour: `parse`, the USPS and RESO forms, the display and long forms (`to_display`, `to_long`; not Pub 28), keys and slugs, messy lines and warnings, the rare shapes (PO box, rural and highway routes, military, general delivery, a second unit), place data, `default_state`, `parse_fields`, `parse_many`, `parse_fields_many`, then pandas, Polars (review rows, group by key, split columns) and DuckDB (SQL on a CSV, `parse_column`), usaddress-style labels, and the CLI on a file |
 | [`crates/doorplate/examples/quickstart.rs`](../crates/doorplate/examples/quickstart.rs) | The same in Rust: the output forms, `parse_fields_many` and `parse_many`. Run with `cargo run -p doorplate --example quickstart` |
 | [`polars_pipeline.py`](polars_pipeline.py) | Polars: `parse_column` on a CSV, picking columns, finding rows with warnings, duplicates by key, pre-split columns with `parse_fields_many`, a display column |
 | [`pandas_pipeline.py`](pandas_pipeline.py) | The same with pandas |
@@ -21,7 +21,7 @@ From the repository root, with the package built (`maturin develop` in
 `crates/doorplate-py`) and the extras you need:
 
 ```sh
-pip install pandas polars jupyter
+pip install pandas polars duckdb pyarrow jupyter
 python examples/polars_pipeline.py
 python examples/pandas_pipeline.py --out /tmp/parsed.csv
 python examples/duckdb_pipeline.py                       # needs duckdb and pyarrow
