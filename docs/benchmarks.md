@@ -85,8 +85,10 @@ By how the record is written (all strata, whole address right):
 By address type: street 92.0% against 85.9%; PO box 99.6% against 99.6%; rural route 100% against 91.0%;
 highway contract 100% against 100%; general delivery 100% against 0.0%; military 72.3% against 0.8%
 (usaddress labels `PSC` as a subaddress and `UNIT` as a unit, and general delivery as a landmark). Of the 100
-military records of the `natural` stratum, the 30 `CMR` boxes are not recognized by doorplate as military
-(Pub 28 lists `CMR`); that is why its military fields-input figure below is 70%.
+military records of the `natural` stratum, the 30 `CMR` boxes (an older type that the current Pub 28 does not
+list, so doorplate leaves it out on purpose, `special.toml`) are not read as military; that is why its military
+fields-input figure below is 70%. The suite's share of `CMR` is a choice of the templates (a quarter of the
+generated military records), not a measured rate, so read that figure as a statement about `CMR` only.
 
 Where each goes wrong (`hard` stratum, whole address right; the class is `gold -> predicted` for the first
 token that differs, and the full list with every class is in the run's report):
