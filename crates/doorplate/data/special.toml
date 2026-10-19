@@ -267,6 +267,15 @@ phrases = [
 # benchmark's train split (issue #29).
 words = ["CENTRAL", "DOWNTOWN", "EAST", "NORTH", "NORTHEAST", "NORTHWEST", "OLD", "OLDE", "SOUTH", "SOUTHEAST", "SOUTHWEST", "UPTOWN", "WEST"]
 
+[city_head]
+# Words that open a city name and are also street suffixes (`LAKE GENEVA`,
+# `SAINT LOUIS`, `PORT ORCHARD`). Not a USPS rule (Pub 28 has no such word).
+# On a line with no commas, such a word right after the street's own suffix and
+# before at least one more word starts the city, so `123 MAIN ST LAKE GENEVA`
+# does not end the street at `LAKE`. Seen in the geocode benchmark's train split
+# (issue #29).
+words = ["BEACH", "CENTER", "CREEK", "FOREST", "FORT", "GARDEN", "GLEN", "GREEN", "GROVE", "HARBOR", "HILL", "ISLAND", "LAKE", "MEADOW", "MOUNT", "PARK", "POINT", "PORT", "RIVER", "SPRING", "VALLEY", "VILLAGE", "VILLAGES"]
+
 [building]
 # Words that end a building name (EAST TOWER, ANNEX BUILDING, MEDICAL PLAZA).
 # Not a USPS rule: Pub 28 has no building line. Chosen from building

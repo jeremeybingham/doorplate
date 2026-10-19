@@ -406,6 +406,12 @@ impl Lexicons {
         find_str(tables::AREA_WORDS, &normalize_key_cow(s))
     }
 
+    /// A suffix word that also opens a city name (`LAKE` in `LAKE GENEVA`).
+    /// Source: `data/special.toml` `[city_head]`.
+    pub fn is_city_head(&self, s: &str) -> bool {
+        find_str(tables::CITY_HEADS, &normalize_key_cow(s))
+    }
+
     pub fn is_placeholder(&self, s: &str) -> bool {
         let key = normalize_key(s);
         if !key.chars().any(char::is_alphanumeric) {

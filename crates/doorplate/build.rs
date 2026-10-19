@@ -497,6 +497,11 @@ fn gen_special(t: &Table, out: &mut String, mw: &mut usize) -> Result<HighwayRow
     area.sort();
     writeln!(out, "pub(crate) static AREA_WORDS: &[&str] = &{area:?};\n").ok();
 
+    let hctx = format!("{ctx} [city_head]");
+    let mut heads = key_list(table(t, "city_head", ctx)?, "words", &hctx, true)?;
+    heads.sort();
+    writeln!(out, "pub(crate) static CITY_HEADS: &[&str] = &{heads:?};\n").ok();
+
     let bctx = format!("{ctx} [building]");
     let mut words = key_list(table(t, "building", ctx)?, "words", &bctx, true)?;
     words.sort();

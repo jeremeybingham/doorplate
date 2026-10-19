@@ -445,8 +445,19 @@ impl Tagger<'_> {
         // first one followed by a word that is not also a suffix
         // ("12 LAKE SHORE DR CHICAGO"), else the last one.
         let min = if first_number { lo + 2 } else { lo + 1 };
-        let suffix = (min..hi)
-            .find(|&k| is_suffix(k) && k + 1 < hi && !is_suffix(k + 1))
+        // `123 MAIN ST LAKE GENEVA`: a suffix, then a word that opens a city
+        // and is also a suffix, with a word after it: the street ends at the
+        // first suffix.
+        let head = (min..hi.saturating_sub(2)).find(|&k| {
+            is_suffix(k)
+                && self.toks[k + 1].seg == self.toks[k].seg
+                && self.lex.is_city_head(self.text(k + 1))
+                // `HILL PARK WAY OTIS`: a suffix with more words after it ends
+                // the street, so the head belongs to the street name.
+                && !(is_suffix(k + 2) && k + 3 < hi)
+        });
+        let suffix = head
+            .or_else(|| (min..hi).find(|&k| is_suffix(k) && k + 1 < hi && !is_suffix(k + 1)))
             .or_else(|| (min..hi).rev().find(|&k| is_suffix(k)));
         let Some(p) = suffix else {
             let digits = self.toks[lo..hi].iter().any(|t| has_digit(&t.text));
