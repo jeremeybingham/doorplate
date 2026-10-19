@@ -407,12 +407,27 @@ def excluded_strings(training_dir):
 
 # ---- the build -----------------------------------------------------------------------------------------
 
-def sql_rows(con, where, n, seed):
-    keep = ("State,AddNum_Pre,Add_Number,AddNum_Suf,AddNo_Full,St_PreMod,St_PreDir,St_PreTyp,St_PreSep,St_Name,St_PosTyp,"
-            "St_PosDir,St_PosMod,StNam_Full,Building,Floor,Unit,Room,SubAddress,Post_City,Zip_Code,Plus_4,NAD_Source")
-    q = f"""select {', '.join('n.' + c for c in keep.split(','))} from '{NAD}' n
-            join common c on c.State = n.State and c.Zip_Code = n.Zip_Code and c.StNam_Full = n.StNam_Full
-            where n.Add_Number <> '' {where} using sample {n} rows (reservoir, {seed})"""
+NAD_COLUMNS = ("State,AddNum_Pre,Add_Number,AddNum_Suf,AddNo_Full,St_PreMod,St_PreDir,St_PreTyp,St_PreSep,St_Name,"
+               "St_PosTyp,St_PosDir,St_PosMod,StNam_Full,Building,Floor,Unit,Room,SubAddress,Post_City,Zip_Code,Plus_4,"
+               "NAD_Source")
+JOIN = f"""from '{NAD}' n join common c on c.State = n.State and c.Zip_Code = n.Zip_Code and c.StNam_Full = n.StNam_Full"""
+HASH = "hash(n.Add_Number, n.StNam_Full, n.Zip_Code, n.Unit, n.Post_City, {seed}) % 1000000"
+
+
+def counts_by_state(con, where=""):
+    return dict(con.execute(f"select n.State, count(*) {JOIN} where n.Add_Number <> '' {where} group by 1").fetchall())
+
+
+def hashed_rows(con, where, fractions, seed):
+    """Rows chosen by a hash of their own values (not by thread timing), so the same seed gives the same
+    rows on every run: each state keeps the share `fractions[state]` (0 to 1) of its usable rows."""
+    con.execute("create or replace table frac(State varchar, p double)")
+    con.executemany("insert into frac values (?, ?)", list(fractions.items()))
+    h = HASH.format(seed=seed)
+    q = f"""select {', '.join('n.' + c for c in NAD_COLUMNS.split(','))}, {h} as h {JOIN}
+            join frac f on f.State = n.State
+            where n.Add_Number <> '' {where} and {h} < f.p * 1000000
+            order by h, {', '.join('n.' + c for c in NAD_COLUMNS.split(','))}"""
     return con.execute(q).fetchdf().fillna("").to_dict("records")
 
 
@@ -459,9 +474,20 @@ def main():
     con.execute(f"""create table common as select State, Zip_Code, StNam_Full from '{NAD}'
         where Add_Number <> '' and StNam_Full <> '' and Post_City <> '' and length(Zip_Code) = 5
         group by all having count(*) >= 20""")
-    pool = sql_rows(con, "", round(1_200_000 * max(args.scale, 0.02)), seed)
-    enriched = sql_rows(con, f"and ({ENRICHED})", round(400_000 * max(args.scale, 0.02)), seed + 1)
+    nad_states = {s: w for s, w in POP.items() if s not in TIGER_FIPS}
+    tot_pop = sum(nad_states.values())
+    quota = {s: round(n_nad * w / tot_pop) for s, w in nad_states.items()}
+    usable = counts_by_state(con)
+    # a pool 12 times each state's quota (the filters drop about 15%, and a short state hands its need on)
+    pool = hashed_rows(con, "", {s: min(1.0, 12 * max(q, 5) / usable[s]) for s, q in quota.items() if s in usable}, seed)
+    pool_all = [r for r in pool]
+    total_usable = sum(usable.values())
+    uniform = hashed_rows(con, "", {s: min(1.0, cand / 2 / total_usable) for s in usable}, seed + 1)
+    enr_counts = counts_by_state(con, f"and ({ENRICHED})")
+    enr_total = sum(enr_counts.values())
+    enriched = hashed_rows(con, f"and ({ENRICHED})", {s: min(1.0, cand / 2 / enr_total) for s in enr_counts}, seed + 2)
     rng.shuffle(pool)
+    rng.shuffle(uniform)
     rng.shuffle(enriched)
 
     taken, recs = set(), []
@@ -479,23 +505,35 @@ def main():
         recs.append(item)
         return item
 
-    # natural: NAD streets by state population
-    nad_states = {s: w for s, w in POP.items() if s not in TIGER_FIPS}
-    tot = sum(nad_states.values())
+    # natural: NAD streets by state population; a state short of rows hands its need to the others
     by_state = collections.defaultdict(list)
     for row in pool:
         by_state[row["State"]].append(row)
-    short = {}
-    for state, w in sorted(nad_states.items()):
-        want, got = round(n_nad * w / tot), 0
-        for row in by_state.get(state, []):
-            if got >= want:
-                break
+    cursor = {st: iter(rows) for st, rows in by_state.items()}
+    got = collections.Counter()
+
+    def take(state, n):
+        done = 0
+        for row in cursor.get(state, ()):
             rec = nad_record(row, rng)
             if rec and keep(rec, "natural", []):
-                got += 1
-        if got < want:
-            short[state] = want - got
+                done += 1
+                if done >= n:
+                    return done
+        return done
+
+    for state in sorted(nad_states):
+        got[state] = take(state, quota[state])
+    short = {}
+    for _ in range(4):
+        need = n_nad - sum(got.values())
+        live = {st: w for st, w in nad_states.items() if st in cursor and got[st] >= quota[st]}
+        if need <= 0 or not live:
+            break
+        lw = sum(live.values())
+        for state, w in sorted(live.items()):
+            got[state] += take(state, max(1, round(need * w / lw)))
+    short = {st: quota[st] - got[st] for st in nad_states if got[st] < quota[st]}
     nat_places = []
     # synthetic types use the real city, state and ZIP of NAD rows
     place_rows = [r for r in pool if r["Post_City"].strip() and re.fullmatch(r"\d{5}", r["Zip_Code"])]
@@ -521,7 +559,7 @@ def main():
     quotas = {c["class"]: c["quota"] for c in json.loads((HERE / "hard_classes.json").read_text())["classes"]}
     scale_q = n_hard / sum(quotas.values())
     quotas = {c: max(2, round(q * scale_q)) for c, q in quotas.items()}
-    rows = enriched[: cand // 2] + pool[len(pool) // 2: len(pool) // 2 + cand // 2]
+    rows = enriched[: cand // 2] + uniform[: cand // 2]
     cands = []
     for row in rows:
         rec = nad_record(row, rng)
