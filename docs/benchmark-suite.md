@@ -217,7 +217,7 @@ hyphenated numbers, names that are also types or directions, cities with `St.`, 
 and ZIP forms, a recipient or `C/O` line, a trailing `USA`, PO boxes in nine spellings, rural, highway and
 military routes, general delivery, and a few intersections. `tools/benchsuite/hand.py` fills the slots with
 invented street names and numbers and real city, state and ZIP combinations, and writes
-`tools/benchsuite/hand/hand.jsonl` (1,000 records, 90 per shape at most; shipped, since nothing in it is real
+`tools/benchsuite/hand/hand.jsonl` (1,000 records, at most 32 from any one shape; shipped, since nothing in it is real
 but the place names). Labels come from the templates, never from a parser. The checks were two: a program
 checks that the labeled tokens are the tokens `usaddress.tokenize` finds in the string and that no string is
 in an exclusion file or repeats, and the shapes and one expansion of each were read a second time. The
