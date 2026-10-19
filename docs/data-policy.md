@@ -27,6 +27,7 @@ and none of the data below is used to claim otherwise.
 | GeoNames postal codes | `crates/doorplate/data/` | Yes | CC BY 4.0; attribution in `NOTICE` |
 | usaddress test data | `tests/external/usaddress/` | Yes | MIT (datamade) |
 | Florida public-record address data | `crates/doorplate/data/packs/fl/` (city/ZIP pairs and street spellings only; no names) | Yes | Public record (Chapter 119, Florida Statutes) |
+| Florida DBPR licensee files (names, mailing and location addresses; 293 CSV, 10 XLS) | `local-data/florida-dbpr/` | **No** (aggregates only) | Public record (Chapter 119, Florida Statutes). Contains personal names: only city, ZIP and street-key aggregates may be used, as for the other Florida exports |
 | Geocode benchmark (`test`, `dev`, `train`) | `local-data/geocode-benchmark/` | **No** | No license stated. Only aggregate scores ship (`docs/benchmarks.md`). |
 | National Address Database (NAD) r24, text file | `local-data/nad-2026/` | **No** (extracts only, see below) | Work of the US federal government, no copyright (17 U.S.C. § 105); the metadata says it is available for re-use without limitation or restriction |
 | Netsyms Address Database 2026-05 | `local-data/netsyms-2026/` | **No** (see below) | No formal license; see the next section |
