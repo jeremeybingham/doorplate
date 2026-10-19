@@ -20,7 +20,10 @@ library's rules, model or tests were made from, run under a fixed 4-CPU, 8 GB pr
 libraries' blind spots on purpose. The other sets below are older and each favors one side for a reason
 given with it.
 
-**Machine:** Intel Core i9-9900K (14 threads), 49 GB RAM, Linux 6.18 on WSL2,
+**Machine:** Intel Core i9-9900K (14 threads), 49 GB RAM, Linux 6.18 on WSL2. The suite's runner pins 4 CPUs and
+8 GB (its reference profile), and the Python speed runs below (`speed_python.py`, `bench_batch.py`) were pinned to
+the same 4 CPUs with `taskset -c 0-3` and `RAYON_NUM_THREADS=4`; the Rust (criterion) and size runs were not
+pinned and use all 14 threads where they use threads at all.
 Rust 1.91, Python 3.13 (speed and size runs in a virtual environment),
 doorplate `main` at 9f09030 (the unreleased 0.3.0 work; the version string is still 0.2.0) and usaddress 0.5.16, built with `--release`.
 
@@ -32,9 +35,9 @@ doorplate `main` at 9f09030 (the unreleased 0.3.0 work; the version string is st
 | Benchmark suite, whole suite (19,586), whole address (coarse) | 92.2% | 85.5% |
 | Geocode benchmark, dev split, whole address (coarse) | 94.4% | 88.1% |
 | usaddress's own test files, whole address (coarse) | 99.2% | 100.0% |
-| One address from Python, `parse` / `usaddress.parse` | 18 µs | 85 µs |
-| 100,000 addresses, `parse_many` / a loop of `usaddress.parse` | 0.27 s | 8.5 s |
-| One address in Rust (median of the corpus shapes) | 7 to 18 µs | |
+| Addresses per second, one thread, benchmark suite inputs (`parse_tokens` / `usaddress.parse`) | 33,862 | 9,142 |
+| Addresses per second, `parse_many` on 4 threads, suite inputs (usaddress has no batch call) | 127,001 | 9,142 |
+| One address in Rust (median of the corpus shapes, criterion, unpinned) | 7 to 18 µs | |
 | Installed size (wheel / package and dependencies) | 1.8 MB (4.3 MB unpacked) | 4.8 MB |
 | Import time | 1 ms | 10 ms |
 
@@ -254,35 +257,37 @@ about 30 columns per row.
 ### Python
 
 `benchmarks/speed_python.py`, 100,000 addresses (the inputs repeated), best of
-five runs.
+five runs, pinned to 4 CPUs like the suite (`taskset -c 0-3 env RAYON_NUM_THREADS=4 python benchmarks/speed_python.py`).
+The suite's own `speed` command (`python benchmarks/suite.py speed`) is the one to quote; this table shows the
+shape of the cost on other inputs.
 
 | | Corpus inputs | Geocode addresses |
 |---|---|---|
-| doorplate `parse` | 18 µs | 30 µs |
-| doorplate `parse`, then `key()` and `to_usps()` | 21 µs | 34 µs |
-| doorplate `tag` | 20 µs | 33 µs |
-| doorplate `parse_tokens` | 20 µs | 33 µs |
-| doorplate `parse_many` (14 threads) | 2.7 µs | 4.0 µs |
-| usaddress `parse` | 85 µs | 98 µs |
-| usaddress `tag` | 94 µs | 102 µs |
+| doorplate `parse` | 17.7 µs | 29.1 µs |
+| doorplate `parse`, then `key()` and `to_usps()` | 20.9 µs | 33.0 µs |
+| doorplate `tag` | 20.1 µs | 31.8 µs |
+| doorplate `parse_tokens` | 19.8 µs | 31.5 µs |
+| doorplate `parse_many` (4 threads) | 6.0 µs | 9.6 µs |
+| usaddress `parse` | 85.3 µs | 95.8 µs |
+| usaddress `tag` | 93.1 µs | 100.1 µs |
 
-Call by call on one thread, `parse_tokens` is 4.1x `usaddress.parse` on the
+Call by call on one thread, `parse_tokens` is 4.3x `usaddress.parse` on the
 corpus inputs and 3.0x on the geocode addresses. `parse_many` parses on all
-cores with the GIL released: 31x and 24x `usaddress.parse`, which is
+the cores it is given (4 here) with the GIL released: 14x and 10x `usaddress.parse`, which is
 single-threaded (usaddress could be run in several processes; that is a
 different comparison). A Python call costs about what the Rust parse does
 (18 µs against 19 µs on the corpus); the boundary is not the bottleneck.
 
 Building DataFrames (`crates/doorplate-py/benchmarks/bench_batch.py`, 100,000
-corpus addresses): a loop of `parse` 1.89 s, `parse_many` 0.27 s (7.0x),
-`parse_many` into a pandas frame of seven columns 0.46 s (4.2x), into a Polars
-frame 0.36 s (5.2x). Reading attributes from 100,000 Python objects is now
+corpus addresses, 4 CPUs): a loop of `parse` 1.79 s, `parse_many` 0.62 s (2.9x),
+`parse_many` into a pandas frame of seven columns 0.77 s (2.3x), into a Polars
+frame 0.69 s (2.6x). Reading attributes from 100,000 Python objects is now
 most of the time; `to_dict()` on every row costs about as much as parsing again.
-The DuckDB functions (`doorplate.duckdb`) parse a 100,000-row table in 0.46 s with seven
-struct fields (4.2x a loop of `parse`) and 0.69 s with all fifteen (2.7x): the cost of
+The DuckDB functions (`doorplate.duckdb`) parse a 100,000-row table in 0.64 s with seven
+struct fields (2.8x a loop of `parse`) and 0.91 s with all fifteen (2.0x): the cost of
 building the Arrow struct grows with the columns, so ask for only those you need. A
 1,000,000-row table with four fields ran at about 213,000 rows/s, against about 280,000/s
-for `parse_many` on the same strings (a separate run on 2026-10-17, not repeated).
+for `parse_many` on the same strings (a separate run on 2026-10-17 on all 14 threads, not repeated).
 
 ## Size and memory
 

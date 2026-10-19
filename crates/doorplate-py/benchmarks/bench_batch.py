@@ -45,7 +45,7 @@ def main():
     n = int(sys.argv[1]) if len(sys.argv) > 1 else 100_000
     base = corpus_inputs()
     texts = (base * (n // len(base) + 1))[:n]
-    print(f"{n} addresses ({len(base)} distinct), {os.cpu_count()} CPUs, "
+    print(f"{n} addresses ({len(base)} distinct), {len(os.sched_getaffinity(0)) if hasattr(os, 'sched_getaffinity') else os.cpu_count()} CPUs, "
           f"library {dp.__version__}")
     rows = [
         ("loop of parse", lambda: [dp.parse(s) for s in texts]),

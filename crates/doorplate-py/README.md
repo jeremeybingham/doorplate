@@ -111,15 +111,16 @@ the slug is for display.
 
 `parse_many(texts)` takes a list or tuple of strings, releases the GIL, parses in
 parallel with Rust threads, and returns the results in order. On 100,000 addresses
-on a 14-thread machine (`crates/doorplate-py/benchmarks/bench_batch.py`):
+with 4 CPUs, the benchmark suite's profile (`crates/doorplate-py/benchmarks/bench_batch.py`, run under
+`taskset -c 0-3` with `RAYON_NUM_THREADS=4`; more cores make the batch rows faster):
 
 | | Time | Per second | Speed-up |
 |---|---|---|---|
-| a loop of `parse` | 1.89 s | 53,000 | 1x |
-| `parse_many` | 0.27 s | 369,000 | 7.0x |
-| `parse_many` and a pandas DataFrame of 7 columns | 0.46 s | 220,000 | 4.2x |
-| `parse_many` and a Polars DataFrame of 7 columns | 0.36 s | 277,000 | 5.2x |
-| DuckDB, `doorplate_parse(a)` with 7 columns | 0.46 s | 220,000 | 4.2x |
+| a loop of `parse` | 1.79 s | 56,000 | 1x |
+| `parse_many` | 0.62 s | 162,000 | 2.9x |
+| `parse_many` and a pandas DataFrame of 7 columns | 0.77 s | 131,000 | 2.3x |
+| `parse_many` and a Polars DataFrame of 7 columns | 0.69 s | 144,000 | 2.6x |
+| DuckDB, `doorplate_parse(a)` with 7 columns | 0.64 s | 157,000 | 2.8x |
 
 **Helpers.** Install the extra and parse a column in one call:
 
