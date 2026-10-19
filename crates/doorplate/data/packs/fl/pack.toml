@@ -16,10 +16,11 @@
 # The files are edited by hand; each addition names its evidence.
 
 state = "FL"
-version = "2026.10.4"
+version = "2026.10.5"
 sources = [
   "curated by the authors from county listings (MIT OR Apache-2.0)",
   "US Census Bureau 2024 Gazetteer, places (public domain)",
   "GeoNames postal codes, US (CC BY 4.0)",
   "Florida public-record address export, 2025-10-10",
+  "Florida DBPR licensee files (public record, Chapter 119), 2026-10-18",
 ]

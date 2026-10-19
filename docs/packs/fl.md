@@ -14,9 +14,9 @@ address exists or can receive mail.
 | `pack.toml` | | state, pack version, sources |
 | `places.tsv` | 665 places (411 municipalities, 254 other places), 998 variants | `name`, `county`, `kind`, `sources`, `variants` |
 | `zips.tsv` | 1,473 ZIPs (107 shared with a second place) | `zip`, `place` (the main place), `shared` |
-| `places_added.tsv` | 36 more communities, all `place` | `name`, `county`, `kind`, `addresses` (distinct street addresses seen) |
-| `variants_added.tsv` | 37 more spellings of known places | `variant`, `place`, `addresses` |
-| `zips_observed.tsv` | 341 more (ZIP, place) pairs: 259 ZIPs, 199 places | `zip`, `place`, `addresses` (distinct street addresses seen) |
+| `places_added.tsv` | 62 more communities, all `place` | `name`, `county`, `kind`, `addresses` (distinct street addresses seen) |
+| `variants_added.tsv` | 74 more spellings of known places | `variant`, `place`, `addresses` |
+| `zips_observed.tsv` | 464 more (ZIP, place) pairs: 355 ZIPs, 259 places | `zip`, `place`, `addresses` (distinct street addresses seen) |
 | `overrides.toml` | 1 suffix spelling, 2 highway prefix spellings | `[[suffix]]` `spelling`, `suffix`; `[[highway]]` `spelling`, `highway`, `kind` |
 
 - `name` is the place in upper case with `SAINT` written out
@@ -43,7 +43,7 @@ address exists or can receive mail.
 | Place list, county, kind, variants, shared ZIPs | Curated by the authors from the sources below and from Florida county listings | MIT OR Apache-2.0 |
 | Place names (`census` in `sources`) | US Census Bureau, 2024 Gazetteer Files, places, Florida | Public domain |
 | ZIP to main place (`geonames` in `sources`) | GeoNames postal code export, `US.zip`, Florida rows, https://download.geonames.org/export/zip/ | CC BY 4.0, attribution in `NOTICE` |
-| Observed ZIP places (`zips_observed.tsv`), added communities and spellings, the `CR` and `SR` overrides | A Florida public-record address export (2025-10-10, 445,252 Florida addresses) and four further public-record address files (961,275 distinct Florida addresses together). Only city, ZIP and the parsed street key were used; no names are kept | Florida public record (Chapter 119, Florida Statutes) |
+| Observed ZIP places (`zips_observed.tsv`), added communities and spellings, the `CR` and `SR` overrides | A Florida public-record address export (2025-10-10, 445,252 Florida addresses) and four further public-record address files (961,275 distinct Florida addresses together); and, from pack version 2026.10.5, the Florida DBPR licensee files (downloaded 2026-10-18; 1,794,538 distinct Florida street addresses with a city, from licensees' mailing and location addresses). Only city, ZIP and the parsed street key were used; no names are kept | Florida public record (Chapter 119, Florida Statutes) |
 
 `zips.tsv` is GeoNames data: each ZIP's main place is GeoNames' place name for
 it, copied as is. The `shared` column was curated by the authors. In
@@ -77,6 +77,19 @@ The rules used for additions, so that a new one is judged the same way:
 - A variant that is the name of a different Census place is dropped:
   `BELLVIEW` is a Census place in Escambia County (ZIP 32526), not a spelling
   of BELLEVIEW (Marion County).
+
+Version 2026.10.5 applied these rules to the Florida DBPR licensee files. The
+`addresses` column of a row added from them counts distinct street addresses in
+those files only (not summed with the earlier export). Besides the 10-address line,
+a new community needs one main ZIP (the ZIP with most of its addresses has at
+least half of them) and a name that is a real place; a handful of candidates that
+fail are left out (`PLANTATION KEY` is split across ZIPs, `HIGH POINT RESORT` is a
+resort, `CIUDAD DE MIAMI` and `HIALEAH LAKES` are not places, and strings with
+mis-encoded accents are not names). Two spellings that the place key
+folds together (`GREEN ACRES CITY` and `GREENACRES CITY`; `SAN DESTIN` and
+`SANDESTIN`) need one row or none. Placeholders written as the city are not pack
+data (below). The 123 new observed pairs include `NAVARRE BEACH` in 32566 (389
+addresses).
 
 `pack.toml` `version` is `YYYY.MM.N`. Bump it whenever a `.tsv` file changes.
 It is not reported in parser output.
@@ -130,12 +143,18 @@ all observed spellings that raise `non_standard_abbreviation`.
 
 ## Known gaps
 
-- Cities that match no place: about 3,800 rows in 2,573 distinct cities among
-  961,275 distinct Florida addresses. The largest are not communities:
-  placeholders and counties written as the city (`FLORIDA`, `FL`,
-  `MIAMI DADE`, `BROWARD`), and communities and spellings just under the
-  10-address line.
-- `zip_city_mismatch` has a long tail of about 2,900 (city, ZIP) pairs, mostly
-  a nearby big city written for a suburb.
+- Cities that match no place: in the DBPR files 0.36% of Florida rows after
+  version 2026.10.5 (0.51% before), against 0.41% of rows in the earlier export. The
+  largest are not communities: placeholders and counties written as the city
+  (`NO CITY CODE`, `FLORIDA`, `FL`, `MIAMI DADE`, `MIAMI-DADE`, `BROWARD`,
+  `UNINCORPORATED`, `UNKNOWN`, `SOUTH FLORIDA`, and the bare counties `ORANGE` and
+  `PINELLAS`, roughly 600 distinct addresses together), and communities and
+  spellings under the 10-address line. Whether to read these as placeholders is
+  still open (#11). `MD MIAMI` and `MD HOMESTEAD` (a Miami-Dade district code
+  before the city) are listed spellings.
+- `zip_city_mismatch` fires on 0.68% of Florida rows in the DBPR files (0.78%
+  before), a long tail of about 7,000 (city, ZIP) pairs, mostly a nearby big city
+  written for a suburb. These numbers are on the data the rows came from; the
+  geocode benchmark's scores did not move.
 - A city that is no known place, with a ZIP the pack knows: `place` stays
   `None`.
