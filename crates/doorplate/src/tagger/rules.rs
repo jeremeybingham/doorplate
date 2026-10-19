@@ -238,11 +238,27 @@ impl Tagger<'_> {
     /// (`MAIN ST WEST PALM BEACH`).
     fn city_in_line(&self, lo: usize, hi: usize) -> Option<(usize, Decision)> {
         self.place_city(lo, hi)
-            .map(|c| (c, Decision::CityByPlace))
+            .map(|c| (self.with_area(lo, c), Decision::CityByPlace))
             .or_else(|| {
                 self.city_after_street(lo, hi)
                     .map(|c| (c, Decision::CityBySuffix))
             })
+    }
+
+    /// `123 MAIN ST DOWNTOWN MIAMI`: area words right before a known city, and
+    /// right after the street's suffix, belong to the city. Returns where the
+    /// city starts.
+    fn with_area(&self, lo: usize, c: usize) -> usize {
+        let seg = self.toks[c].seg;
+        let mut k = c;
+        while k > lo + 1 && self.toks[k - 1].seg == seg && self.lex.is_area_word(self.text(k - 1)) {
+            k -= 1;
+        }
+        if k < c && k > lo + 1 && self.lex.suffix(self.text(k - 1)).is_some() {
+            k
+        } else {
+            c
+        }
     }
 
     /// The place context for the last line: the state tagged there, else the
