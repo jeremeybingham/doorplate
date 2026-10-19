@@ -25,7 +25,7 @@ given with it.
 the same 4 CPUs with `taskset -c 0-3` and `RAYON_NUM_THREADS=4`; the Rust (criterion) and size runs were not
 pinned and use all 14 threads where they use threads at all.
 Rust 1.91, Python 3.13 (speed and size runs in a virtual environment),
-doorplate `main` at 9f09030 (the unreleased 0.3.0 work; the version string is still 0.2.0) and usaddress 0.5.16, built with `--release`.
+doorplate 0.3.0 (measured on `main` from 9f09030 on, while the library's version string still said 0.2.0) and usaddress 0.5.16, built with `--release`.
 
 ## In short
 
@@ -50,8 +50,8 @@ with both versions' scores kept here. Rows are anonymized National Address Datab
 city, state and ZIP; invented house and unit numbers), Census TIGER street names for the six states NAD
 lacks, templates for PO boxes, routes, military and general delivery, and 1,000 hand-labeled shapes. The
 gold labels come from the field each token was written from, never from either parser. Run on 4 CPUs and
-8 GB (Linux, the Intel i9-9900K of the machine above, pinned by the runner), doorplate 0.2.0 plus the
-unreleased 0.3.0 work, usaddress 0.5.16.
+8 GB (Linux, the Intel i9-9900K of the machine above, pinned by the runner), doorplate 0.3.0 (the version string
+said 0.2.0 when it was run), usaddress 0.5.16.
 
 **Whole address right, coarse** (street parts folded into `StreetName`; intervals are 95% Wilson):
 

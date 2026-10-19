@@ -12,7 +12,7 @@ warnings. It wraps the [`doorplate`](https://crates.io/crates/doorplate) library
 This tool formats and parses; it **does not validate** that an address exists or can
 receive mail.
 
-> **Alpha release (0.2.0).** The match key is versioned (`k2:`) and will probably
+> **Alpha release (0.3.0).** The match key is versioned (`k2:`) and will probably
 > get new versions, so store the version prefix with your keys. Options and output
 > fields may still change before 1.0. If it parses your addresses badly, please
 > [open an issue](https://github.com/jeremeybingham/doorplate/issues/new?template=misparse-or-messy-data.md).

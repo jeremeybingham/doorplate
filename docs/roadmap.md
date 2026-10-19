@@ -1,7 +1,7 @@
 # Roadmap
 
 What is planned, what depends on what, and what is deliberately not planned.
-`doorplate` 0.2.0 is an alpha. Priorities follow the data people bring: the more real,
+`doorplate` 0.3.0 is an alpha. Priorities follow the data people bring: the more real,
 messy addresses it sees, the sooner the items below that need them can happen. To send
 some, see [Sharing messy data](../CONTRIBUTING.md#sharing-messy-data).
 
