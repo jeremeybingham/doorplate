@@ -115,11 +115,11 @@ on a 14-thread machine (`crates/doorplate-py/benchmarks/bench_batch.py`):
 
 | | Time | Per second | Speed-up |
 |---|---|---|---|
-| a loop of `parse` | 1.71 s | 58,000 | 1x |
-| `parse_many` | 0.26 s | 379,000 | 6.5x |
-| `parse_many` and a pandas DataFrame of 7 columns | 0.43 s | 235,000 | 4.0x |
-| `parse_many` and a Polars DataFrame of 7 columns | 0.35 s | 287,000 | 4.9x |
-| DuckDB, `doorplate_parse(a)` with 7 columns | 0.42 s | 238,000 | 4.1x |
+| a loop of `parse` | 1.89 s | 53,000 | 1x |
+| `parse_many` | 0.27 s | 369,000 | 7.0x |
+| `parse_many` and a pandas DataFrame of 7 columns | 0.46 s | 220,000 | 4.2x |
+| `parse_many` and a Polars DataFrame of 7 columns | 0.36 s | 277,000 | 5.2x |
+| DuckDB, `doorplate_parse(a)` with 7 columns | 0.46 s | 220,000 | 4.2x |
 
 **Helpers.** Install the extra and parse a column in one call:
 
