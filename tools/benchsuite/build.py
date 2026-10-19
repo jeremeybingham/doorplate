@@ -462,7 +462,7 @@ def main():
     print(f"plan\n  read     {NAD.name}, {TIGER.name}, {GEONAMES.name}, the exclusion files\n"
           f"  write    {out_dir} (compare.jsonl.gz, doorplate.jsonl.gz, MANIFEST.md; under 10 MB)\n"
           f"  records  {n_nat} natural ({n_nad} NAD, {sum(n_tiger.values())} TIGER, {sum(synth.values())} synthetic) "
-          f"+ {n_hard} hard from {cand:,} candidates; seed {seed}{' (private twin)' if args.twin else ''}\n"
+          f"+ {n_hard} hard from {cand:,} candidates; {'the private twin (seed kept in local-data/)' if args.twin else f'seed {seed}'}\n"
           f"  time     about {max(1, round(6 * args.scale))} minutes ({args.workers} workers)")
     if not args.confirm:
         sys.exit("Dry run. Re-run with --confirm to start.")
@@ -652,7 +652,7 @@ def manifest(out_dir, compare, dp, files, achieved, quotas, short, excl_notes, s
     usps_n = sum(1 for r in dp if r.get("usps"))
     lines = [f"# Suite v1: manifest", "", f"Built {datetime.date.today()} by `tools/benchsuite/build.py` at commit `{commit}`"
              f"{' (a test build: scale ' + str(args.scale) + ')' if args.scale != 1.0 else ''}"
-             f"{' (the private twin)' if args.twin else ''}; seed {seed}. usaddress {usaddress.__version__ if hasattr(usaddress, '__version__') else '0.5.16'}.", "",
+             f"{' (the private twin)' if args.twin else ''}; {'seed ' + str(seed) if not args.twin else 'its seed is not published'}. usaddress {usaddress.__version__ if hasattr(usaddress, '__version__') else '0.5.16'}.", "",
              f"{len(compare):,} records, of which {hand_n} hand-labeled. `expect` is set on {expect_n:,} records and `usps` on {usps_n:,}"
              " (records with a number prefix or suffix, a premodifier, a pre-type or a post-modifier have neither).", ""]
     lines += ["## Checksums (SHA-256 of the gzip files)", ""] + [f"- `{n}`: `{h}`" for n, h in files.items()] + [""]
