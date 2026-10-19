@@ -348,7 +348,9 @@ def components(rec, mods, rng):
         fields = {"line1": street_words, "line2": None, "city": rec["city"], "state": rec["state"], "zip": rec["zip"]}
         sy = rec["synth"]
         expect = {k: v for k, v in sy.items() if k != "usps"}
-        expect.update({"city": rec["city"], "state": rec["state"], "zip5": rec["zip"]})
+        expect.update({"state": rec["state"], "zip5": rec["zip"]})
+        if "military" not in sy:  # the corpus convention: the post office (APO, FPO, DPO) is its own component, there is no city
+            expect["city"] = rec["city"]
         return fields, expect, {"delivery": sy["usps"], "last": f"{rec['city']} {rec['state']} {rec['zip']}"}
     fields = {"line1": street_words, "line2": unit_words or None, "city": rec["city"], "state": rec["state"],
               "zip": rec["zip"] + ("-" + zip4 if zip4 else "")}
