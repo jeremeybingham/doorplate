@@ -47,7 +47,7 @@ cargo fmt --check
 cargo clippy --workspace --all-targets --all-features -- -D warnings
 cargo test --workspace --all-features
 
-# Python (in a virtualenv with maturin and pytest)
+# Python (in a virtualenv with maturin and pytest; `uv venv` and `uv pip install` are fine)
 cd crates/doorplate-py && maturin develop --release && cd ../..
 pytest crates/doorplate-py/tests
 ```
@@ -110,7 +110,14 @@ notebook, so they cannot go stale silently.
   change a parse; parsing never panics.
 - This library formats and parses; it does not validate deliverability. Keep docs and
   comments consistent with that.
+- File names must differ by more than case: macOS and Windows file systems are case-insensitive (`done/` and `DONE` once broke CI).
 - Small commits. A pull request holds a reasonable number of related changes (split unrelated work), with a short explanation of why.
+
+## Releasing
+
+Maintainers only. Before a release: rerun `benchmarks/accuracy.py` and the speed and size scripts and update the figures in `docs/benchmarks.md` and in all four package READMEs (`CLAUDE.md` lists them); run one full Netsyms run on the release commit and compare it with the previous one (`tools/netsyms/README.md`); write the CHANGELOG, saying when keys changed (store the key prefix, re-parse to re-key); bump the versions; CI must be green on all platforms. Pushing a `v*` tag runs both release workflows; the `crates-io` environment needs a manual approval before anything is published.
+
+The project page is built by GitHub Actions (Pages is enabled with that source). A blog draft lives on the unmerged branch `blog-draft` (`site/`): merging it replaces the README-based page with the blog home, and the post stays unpublished in `_drafts/` until it is moved to `_posts/`.
 
 ## License
 

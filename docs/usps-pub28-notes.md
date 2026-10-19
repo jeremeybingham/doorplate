@@ -235,6 +235,23 @@ does back each one.
 | After a designator or `#`, two unit values joined by `/`, `&` or `AND` are one unit value, kept as written: `UNIT 101/102`, `SUITE 3 & 4`, `STE 5 AND 6` (a small `1/2` stays a fraction). One to three plain words after a whole unit (a designator that always takes a value or `#`, then a value with a digit) in the same line are a tenant or business name: the unit is read and the words stay in `unparsed` (`UNIT 12 BLU SPA`); a suffix, directional, state or designator among the words keeps the line as it was. | Not a USPS rule (Pub 28 section 213 gives one designator and one value). Seen in Florida DBPR licensee files (a tenant in two units, a business name after the unit): about 1.2k and 1.3k of 1.96M distinct records. Corpus `rg-218` to `rg-223`. |
 | Three forms of house number in a split source (`missing_street_number` before): a lone compass letter N, S, E or W and a number of three digits or more opening the line, with a street word after them, are one grid-style number (`N 10129 MAPLE RD` is `N10129`; `W 8 MILE RD` and `E 1000 N` are unchanged); a grid number takes one trailing letter (`E7608B`); a hyphen before a fraction is a space (`1174-1/2` is `1174 1/2`). | Pub 28 section 232 for the fraction and for letters in a number (`N165 W2123`-style grid numbers are already read); the shapes are observed in a national address database: about 20%, 6% and 4% of the 45.8k `missing_street_number` rows (aggregate; issue #54). The other shapes in that class (decimals, mileposts, blocks, repeated slash ranges, Puerto Rico lot codes) are left unparsed on purpose. Corpus `rg-195` to `rg-201`. |
 
+### Left as it is on purpose
+
+Decisions taken for `k2` (issues #44, #54, #29), so they are not reopened without new evidence.
+Each is a case where the data does not say which reading is right, or where a rule costs more
+than it gains.
+
+| Input | What the parser does | Why |
+|---|---|---|
+| A unit inside the number field (`1120 -202`, `1535 227`) | The second number stays unparsed (and may fall into the street name) | Source stuffing and true ranges look alike; class D of the Netsyms review (#37) |
+| `missing_street_number` shapes in a split source: decimals and `MILEPOST 4.2`, `BLOCK 100`, `HWY 12` in the number column, a slash range whose street repeats the number (`132/134`), Puerto Rico lot codes (`K7`, `4-F-23`), several addresses in one field | Unparsed, with the warning | Distinct address shapes or source errors; Puerto Rico needs a state rule (#53). Decisions in #54 |
+| An abbreviated directional after the suffix before a city (`MAIN ST N BIRMINGHAM`) | The postdirectional | Reading it as the city's first word broke 10 to 17 times as many cities as it fixed on the geocode benchmark, and 4 points of Florida one-line accuracy (see the compass row above) |
+| A lone directional letter as the whole of line 2 (`E`) | The street's postdirectional | Ambiguous with a street continued across lines, which the Florida data needs; the NAD sample labels the same text as a unit (about 0.05% of rows) |
+| `NORTH POINT DR`, `WEST END AVE` | `NORTH` is the predirectional | A design choice kept for the key; NAD labels it the same way in about 0.07% of rows |
+| Business and building names on line 2 or 3, or in the address position of line 1 | Dropped with `unparsed_remainder` (a building word keeps `building`) | Not in the key; about 48% and 25% of the leftovers in the Florida DBPR files (class E) |
+| A trailing number in the street (`SHORE ROAD 20`) | A unit, as before | Ambiguous and state-specific; waits for the state-pattern pass (#53) |
+| A highway modifier before a city on one line, a PO Box on line 2 beside a street with no number | As before | No volume in the data on hand (#10) |
+
 ### Rules from the Pub 28 re-check
 
 Corpus `p28-twosuf-001` to `006`, `p28-highway-038` to `040`.

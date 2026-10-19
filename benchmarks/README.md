@@ -40,6 +40,23 @@ so `test` over-states accuracy. `dev` and `train` were not read for that, which
 makes them the better estimate (but see `docs/benchmarks.md`: `dev`'s most common
 error classes have since been looked at, so fix against `train` and check on `dev`.)
 
+### Fixing against `train` without overfitting
+
+Hold 20% of `train` out, unread: `python benchmarks/split_geocode_train.py` writes
+`train80_usaddress.xml` (to fix against) and `train20_heldout_usaddress.xml` (every fifth address;
+score it only to check that a fix generalizes) beside the other splits. Then `dev` and `test` are
+regression checks. Two helpers (counts only, never an address):
+
+```sh
+python tools/compare/city_diff.py BASE_CLI NEW_CLI [train80|train20_heldout|dev|test]   # cities gained and lost
+python tools/compare/oneline_fl.py [--binary target/release/doorplate]                  # Florida records as one line
+```
+
+The benchmark writes street postdirectionals abbreviated (`N`), so a compass word after a suffix is
+always part of the city there; `oneline_fl.py` renders real Florida records (private, from the DBPR
+files in `docs/data-policy.md`) as one line with no commas, where spelled-out postdirectionals occur.
+A rule that helps one and hurts the other is a rule to look at again (#29).
+
 ## Scripts
 
 | Script | Measures | Needs |
