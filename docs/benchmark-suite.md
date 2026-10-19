@@ -217,7 +217,7 @@ hyphenated numbers, names that are also types or directions, cities with `St.`, 
 and ZIP forms, a recipient or `C/O` line, a trailing `USA`, PO boxes in nine spellings, rural, highway and
 military routes, general delivery, and a few intersections. `tools/benchsuite/hand.py` fills the slots with
 invented street names and numbers and real city, state and ZIP combinations, and writes
-`tools/benchsuite/hand/hand.jsonl` (1,000 records, at most 32 from any one shape; shipped, since nothing in it is real
+`tools/benchsuite/hand/hand.jsonl` (1,000 records, at most 38 from any one shape; shipped, since nothing in it is real
 but the place names). Labels come from the templates, never from a parser. The checks were two: a program
 checks that the labeled tokens are the tokens `usaddress.tokenize` finds in the string and that no string is
 in an exclusion file or repeats, and the shapes and one expansion of each were read a second time. The
@@ -427,5 +427,9 @@ Built in these steps (issue #75), each a small pull request or a local step:
    rule about the NAD columns, none is a changed label, and no gold label was set to a parser's output.
    157 of 17,011 `expect` records (0.9%) still differ from `parse_fields`, and three records have a token
    count that differs from the gold in one parser; they are left as they are.
-5. **The runner**, `benchmarks/suite.py`, with the profile and the CI job.
+5. **The runner**, `benchmarks/suite.py`, with the profile and the CI job. Done: `compare`, `doorplate`,
+   `speed` and `all` (a full run takes about 20 seconds), the profile applied by the runner itself, the
+   `workflow_dispatch` job in `.github/workflows/suite.yml` and `benchmarks/suite/README.md`. The runner scores
+   by character span, treats a trailing country that doorplate drops as handled, and prints the `natural`
+   stratum's figures first, since the hard stratum over-represents blind spots by design.
 6. **`v1` frozen and scored**: figures in `docs/benchmarks.md` and the READMEs.
