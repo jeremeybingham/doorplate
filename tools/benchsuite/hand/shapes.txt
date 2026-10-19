@@ -1,0 +1,119 @@
+# The hand stratum of the benchmark suite (#75): hand-written labeled shapes, copying the forms messy real
+# rows take (typed forms, mailing lists, MLS fields, PO boxes, routes, military). tools/benchsuite/hand.py
+# expands them into hand.jsonl with invented streets and numbers and real city, state and ZIP combinations.
+#
+# count | type | tag | case | template
+# A template word is TEXT/LABEL: the label applies to every token of the text; LABEL1+LABEL2 labels each token
+# in turn (the counts must match); `-` is a token that carries no label (a lone comma). Labels:
+# N number, Ns number suffix, Np number prefix, pd pre-directional, pt pre-type, S street name, T post-type,
+# D post-directional, Ot unit type, Oi unit id, C city, ST state, Z zip, R recipient, CN country, Bt box type,
+# Bi box id, Gt route/box group type, Gi group id, Cr corner of, Is intersection separator.
+# Slots: {n} {n2} number, {street} {street2} invented names, {ty} {ty2} street type ({ty.} with a period),
+# {dir} {dir2} compass letters, {dirdot} dotted, {dirw} spelled, {u} {u2} unit ids, {desig} unit designators,
+# {city} {city1} {st} {zip} {zip4} {stfull} a real place, {box} {route} {mnum} {rec} {ord} {ordw}, {tyt} a misspelt
+# type, {cityt} a misspelt city. A slot may end in ^ (upper) or _ (lower): {street^}. Case: mixed leaves the
+# template's case, lower and upper change the whole string; `spacey` joins words with 1 to 3 spaces.
+#
+# --- plain street addresses in the forms people type ---
+40 | street | lowercase | lower | {n}/N {street}/S {ty}/T {city}/C {st}/ST {zip}/Z
+30 | street | lowercase-commas | lower | {n}/N {street}/S {ty},/T {city},/C {st}/ST {zip}/Z
+25 | street | upper-period-types | upper | {n}/N {street}/S {ty.}/T {city},/C {st}/ST {zip}/Z
+25 | street | no-space-after-comma | mixed | {n}/N {street}/S {ty},{city1},{st}/T+C+ST {zip}/Z
+15 | street | space-before-comma | mixed | {n}/N {street}/S {ty}/T ,/- {city},/C {st}/ST {zip}/Z
+12 | street | double-spaces | spacey | {n}/N {street}/S {ty},/T {city},/C {st}/ST {zip}/Z
+10 | street | semicolons | mixed | {n}/N {street}/S {ty};/T {city};/C {st}/ST {zip}/Z
+10 | street | weird-case | mixed | {n}/N {street^}/S {ty_}/T {city^},/C {st}/ST {zip}/Z
+10 | street | typo-type | mixed | {n}/N {street}/S {tyt},/T {city},/C {st}/ST {zip}/Z
+8 | street | typo-city | mixed | {n}/N {street}/S {ty},/T {cityt},/C {st}/ST {zip}/Z
+# --- units in the forms people write them ---
+30 | street | unit-apt-hash | mixed | {n}/N {street}/S {ty}/T Apt./Ot #{u},/Oi {city},/C {st}/ST {zip}/Z
+30 | street | unit-hash-only | mixed | {n}/N {street}/S {ty}/T #{u},/Oi {city},/C {st}/ST {zip}/Z
+20 | street | unit-hash-space | mixed | {n}/N {street}/S {ty}/T #/Oi {u},/Oi {city},/C {st}/ST {zip}/Z
+30 | street | unit-designator-comma | mixed | {n}/N {street}/S {ty},/T {desig}/Ot {u},/Oi {city},/C {st}/ST {zip}/Z
+25 | street | unit-no-commas | mixed | {n}/N {street}/S {ty}/T {desig}/Ot {u}/Oi {city}/C {st}/ST {zip}/Z
+25 | street | unit-bare-id | mixed | {n}/N {street}/S {ty}/T {ud}/Oi {city}/C {st}/ST {zip}/Z
+20 | street | unit-before-street | mixed | {desig}/Ot {u},/Oi {n}/N {street}/S {ty},/T {city},/C {st}/ST {zip}/Z
+15 | street | unit-floor-room | mixed | {n}/N {street}/S {ty},/T Fl/Ot {u},/Oi {city},/C {st}/ST {zip}/Z
+12 | street | unit-lot-space | mixed | {n}/N {street}/S {ty}/T Lot/Ot {u}/Oi {city}/C {st}/ST {zip}/Z
+12 | street | unit-trailer | mixed | {n}/N {street}/S {ty},/T Trlr/Ot {u},/Oi {city},/C {st}/ST {zip}/Z
+10 | street | unit-spelled | mixed | {n}/N {street}/S {ty},/T Apartment/Ot {u},/Oi {city},/C {st}/ST {zip}/Z
+10 | street | unit-suite-spelled-upper | upper | {n}/N {street}/S {ty},/T Suite/Ot {u},/Oi {city},/C {st}/ST {zip}/Z
+10 | street | two-units | mixed | {n}/N {street}/S {ty},/T {desig}/Ot {u}/Oi Rm/Ot {u2},/Oi {city},/C {st}/ST {zip}/Z
+10 | street | unit-lowercase-hash | lower | {n}/N {street}/S {ty}/T #{u}/Oi {city}/C {st}/ST {zip}/Z
+# --- directionals ---
+30 | street | predir-dotted | mixed | {n}/N {dirdot}/pd {street}/S {ty},/T {city},/C {st}/ST {zip}/Z
+25 | street | postdir-after-type | mixed | {n}/N {street}/S {ty}/T {dir}/D {city}/C {st}/ST {zip}/Z
+25 | street | predir-spelled | mixed | {n}/N {dirw}/pd {street}/S {ty},/T {city},/C {st}/ST {zip}/Z
+20 | street | postdir-spelled | mixed | {n}/N {street}/S {ty}/T {dirw}/D {city}/C {st}/ST {zip}/Z
+20 | street | pre-and-post-dir | mixed | {n}/N {dir}/pd {street}/S {ty}/T {dir2},/D {city},/C {st}/ST {zip}/Z
+15 | street | numbered-street-dir | mixed | {n}/N {dir}/pd {ord}/S {ty},/T {city},/C {st}/ST {zip}/Z
+15 | street | spelled-ordinal-street | mixed | {n}/N {dirw}/pd {ordw}/S {ty}/T {city},/C {st}/ST {zip}/Z
+12 | street | postdir-dotted-no-commas | mixed | {n}/N {street}/S {ty}/T {dirdot}/D {city}/C {st}/ST {zip}/Z
+# --- highways and routes ---
+20 | street | state-route | mixed | {n}/N State/pt Route/pt {route}/S {city},/C {st}/ST {zip}/Z
+15 | street | us-highway | mixed | {n}/N US/pt Hwy/pt {route}/S {city},/C {st}/ST {zip}/Z
+15 | street | county-road | mixed | {n}/N County/pt Road/pt {route}/S {city},/C {st}/ST {zip}/Z
+10 | street | co-rd-abbrev | mixed | {n}/N Co/pt Rd/pt {route}/S {city}/C {st}/ST {zip}/Z
+10 | street | county-road-letter | mixed | {n}/N County/pt Road/pt {L}/S {city},/C {st}/ST {zip}/Z
+10 | street | highway-with-dir | mixed | {n}/N Highway/pt {route}/S {dir}/D {city}/C {st}/ST {zip}/Z
+10 | street | fm-road | mixed | {n}/N FM/pt {n2}/S {city},/C {st}/ST {zip}/Z
+8 | street | route-letter-suffix | mixed | {n}/N Route/pt {route}A/S {city},/C {st}/ST {zip}/Z
+# --- house number shapes ---
+12 | street | fraction | mixed | {n}/N 1/2/Ns {street}/S {ty},/T {city},/C {st}/ST {zip}/Z
+12 | street | hyphen-number | mixed | {n}-{n2}/N {street}/S {ty},/T {city},/C {st}/ST {zip}/Z
+10 | street | number-letter | mixed | {n}{L}/N {street}/S {ty},/T {city},/C {st}/ST {zip}/Z
+10 | street | number-letter-spaced | mixed | {n}/N {L}/Ns {street}/S {ty},/T {city},/C {st}/ST {zip}/Z
+10 | street | letter-prefix | mixed | W/Np {n}/N {street}/S {ty},/T {city},/C {st}/ST {zip}/Z
+8 | street | number-word | mixed | One/N {street}/S Plaza/T {city},/C {st}/ST {zip}/Z
+# --- names that are also types or directions ---
+15 | street | avenue-letter | mixed | {n}/N Avenue/S {L},/S {city},/C {st}/ST {zip}/Z
+12 | street | name-is-direction | mixed | {n}/N North/S {ty},/T {city},/C {st}/ST {zip}/Z
+10 | street | name-is-type | mixed | {n}/N Park/S Avenue/T {city},/C {st}/ST {zip}/Z
+10 | street | court-street | mixed | {n}/N Court/S Street/T {city},/C {st}/ST {zip}/Z
+# --- cities with abbreviations and punctuation ---
+25 | street | special-city | mixed | {n}/N {street}/S {ty},/T {cityx},/C {stx}/ST {zipx}/Z
+15 | street | special-city-no-commas | upper | {n}/N {street}/S {ty}/T {cityx}/C {stx}/ST {zipx}/Z
+# --- state and ZIP forms ---
+15 | street | state-spelled | mixed | {n}/N {street}/S {ty},/T {city},/C {stfull}/ST {zip}/Z
+10 | street | zip-plus4 | mixed | {n}/N {street}/S {ty},/T {city},/C {st}/ST {zip4}/Z
+8 | street | zip-no-hyphen | mixed | {n}/N {street}/S {ty},/T {city},/C {st}/ST {zip}{zip4s}/Z
+12 | street | no-zip | mixed | {n}/N {street}/S {ty},/T {city},/C {st}/ST
+10 | street | no-state | mixed | {n}/N {street}/S {ty},/T {city},/C {zip}/Z
+8 | street | state-lowercase | mixed | {n}/N {street}/S {ty}/T {city}/C {st_}/ST {zip}/Z
+# --- recipients, care of, country ---
+20 | street | recipient-line | mixed | {rec},/R {n}/N {street}/S {ty},/T {city},/C {st}/ST {zip}/Z
+15 | street | care-of | mixed | C/O/R {rec},/R {n}/N {street}/S {ty},/T {city},/C {st}/ST {zip}/Z
+12 | street | attention | mixed | Attn:/R {rec},/R {n}/N {street}/S {ty},/T {city},/C {st}/ST {zip}/Z
+15 | street | trailing-usa | mixed | {n}/N {street}/S {ty},/T {city},/C {st}/ST {zip},/Z USA/CN
+10 | street | trailing-united-states | mixed | {n}/N {street}/S {ty},/T {city},/C {st}/ST {zip},/Z United/CN States/CN
+5 | street | trailing-usa-dotted | mixed | {n}/N {street}/S {ty},/T {city},/C {st}/ST {zip}/Z U.S.A./CN
+# --- PO boxes ---
+25 | po_box | po-box | mixed | PO/Bt Box/Bt {box},/Bi {city},/C {st}/ST {zip}/Z
+15 | po_box | p-o-dots | mixed | P.O./Bt Box/Bt {box}/Bi {city}/C {st}/ST {zip}/Z
+10 | po_box | p-o-spaced | mixed | P/Bt O/Bt Box/Bt {box},/Bi {city},/C {st}/ST {zip}/Z
+10 | po_box | pob | mixed | POB/Bt {box}/Bi {city}/C {st}/ST {zip}/Z
+8 | po_box | box-only | mixed | Box/Bt {box},/Bi {city},/C {st}/ST {zip}/Z
+10 | po_box | post-office-box | mixed | Post/Bt Office/Bt Box/Bt {box},/Bi {city},/C {st}/ST {zip}/Z
+10 | po_box | po-box-lowercase | lower | po/Bt box/Bt {box}/Bi {city}/C {st}/ST {zip}/Z
+8 | po_box | po-box-letter | mixed | PO/Bt Box/Bt {box}{L}/Bi {city},/C {st}/ST {zip}/Z
+6 | po_box | po-box-hash | mixed | PO/Bt Box/Bt #{box},/Bi {city},/C {st}/ST {zip}/Z
+8 | street | street-and-po-box | mixed | {n}/N {street}/S {ty},/T PO/Bt Box/Bt {box},/Bi {city},/C {st}/ST {zip}/Z
+# --- rural and highway-contract routes ---
+15 | rural | rr | mixed | RR/Gt {route}/Gi Box/Bt {box},/Bi {city},/C {st}/ST {zip}/Z
+12 | rural | rural-route-spelled | mixed | Rural/Gt Route/Gt {route}/Gi Box/Bt {box}/Bi {city}/C {st}/ST {zip}/Z
+8 | rural | rr-bx | mixed | RR/Gt {route}/Gi Bx/Bt {box}/Bi {city}/C {st}/ST {zip}/Z
+8 | rural | rr-dotted-number | upper | R.R./Gt {route}/Gi BOX/Bt {box},/Bi {city},/C {st}/ST {zip}/Z
+12 | highway | hc | mixed | HC/Gt {route}/Gi Box/Bt {box},/Bi {city},/C {st}/ST {zip}/Z
+6 | highway | hcr | mixed | HCR/Gt {route}/Gi Box/Bt {box}/Bi {city}/C {st}/ST {zip}/Z
+6 | rural | star-route | mixed | Star/Gt Route/Gt {route}/Gi Box/Bt {box},/Bi {city},/C {st}/ST {zip}/Z
+# --- military and general delivery ---
+12 | military | psc | mixed | PSC/Gt {mnum}/Gi Box/Bt {box},/Bi {mc}/C {ms}/ST {mz}/Z
+10 | military | unit | mixed | Unit/Gt {mnum}/Gi Box/Bt {box},/Bi {mc}/C {ms}/ST {mz}/Z
+8 | military | cmr | mixed | CMR/Gt {mnum}/Gi Box/Bt {box}/Bi {mc}/C {ms}/ST {mz}/Z
+8 | military | psc-lowercase | lower | psc/Gt {mnum}/Gi box/Bt {box},/Bi {mc},/C {ms}/ST {mz}/Z
+10 | general_delivery | general-delivery | mixed | General/Bt Delivery,/Bt {city},/C {st}/ST {zip}/Z
+5 | general_delivery | general-delivery-upper | upper | General/Bt Delivery/Bt {city}/C {st}/ST {zip}/Z
+# --- intersections (labels doorplate does not model) ---
+8 | street | intersection | mixed | {street}/S {ty}/T &/Is {street2}/S {ty2},/T {city},/C {st}/ST {zip}/Z
+6 | street | intersection-and | mixed | {street}/S {ty}/T and/Is {street2}/S {ty2}/T {city}/C {st}/ST
+5 | street | corner-of | mixed | Corner/Cr of/Cr {street}/S {ty}/T &/Is {street2}/S {ty2},/T {city},/C {st}/ST {zip}/Z

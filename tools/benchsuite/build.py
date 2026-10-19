@@ -642,10 +642,10 @@ def main():
             taken.add(norm(r["input"]))
             recs.append(item)
 
-    hand = out_dir / "hand.jsonl"
+    hand = HERE / "hand" / "hand.jsonl"
     hand_n = 0
     if hand.exists():
-        for line in hand.read_text().splitlines():
+        for line in hand.read_text().splitlines()[: round(1000 * args.scale)]:
             if line.strip():
                 recs.append({"hand": json.loads(line)})
                 hand_n += 1

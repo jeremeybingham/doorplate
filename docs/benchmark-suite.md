@@ -207,6 +207,25 @@ Classes already known, to be counted with the rest:
 
 The final table, with counts, goes in `MANIFEST.md`.
 
+### The hand stratum
+
+90 shapes written by hand in `tools/benchsuite/hand/shapes.txt`, each with its gold labels, copying the
+forms messy real rows take: typed lowercase and uppercase forms, commas missing or spaced, double spaces,
+semicolons, a misspelt type or city, a dozen unit forms (`Apt. #4`, `# 4`, `Ste G`, `Lot 37E`, a unit before
+the street), dotted, spelled-out and doubled directionals, state routes and county roads, fractions and
+hyphenated numbers, names that are also types or directions, cities with `St.`, `Mt.` and apostrophes, state
+and ZIP forms, a recipient or `C/O` line, a trailing `USA`, PO boxes in nine spellings, rural, highway and
+military routes, general delivery, and a few intersections. `tools/benchsuite/hand.py` fills the slots with
+invented street names and numbers and real city, state and ZIP combinations, and writes
+`tools/benchsuite/hand/hand.jsonl` (1,000 records, 90 per shape at most; shipped, since nothing in it is real
+but the place names). Labels come from the templates, never from a parser. The checks were two: a program
+checks that the labeled tokens are the tokens `usaddress.tokenize` finds in the string and that no string is
+in an exclusion file or repeats, and the shapes and one expansion of each were read a second time. The
+hand stratum includes forms doorplate does not model (intersections, a recipient, `USA`), at the rates the
+shapes give them. Two parsers cut some of these strings into tokens differently (doorplate keeps `#D` as one
+token where usaddress cuts `#` and `D`; a comma with no space after it is cut differently), so the runner
+scores by character spans, as `tools/compare/compare_usaddress.py` does, never by token index.
+
 ### Exclusions
 
 The generator drops any record whose input string (whitespace collapsed, lowercased) appears in:
@@ -392,7 +411,7 @@ Built in these steps (issue #75), each a small pull request or a local step:
    thread timing). The first complete build has 16,001 `natural` and 2,585 `hard` records (18,586 in all).
    Twelve hard classes fall short of their quota by 415 records between them: they were mostly NAD
    splitting artifacts (a house-number range, a type left in the name) that the rules below remove, and
-   the manifest lists each. The 1,000 `hand` records are still to be written (`hand.jsonl`).
+   the manifest lists each. The 1,000 `hand` records are in (next section); the build has 19,586 records.
 4. **The label audit**: a random 500 records, plus every record the generator flags. Done by reading
    about 440 random and 80 flagged records with the parsers' outputs hidden
    (`tools/benchsuite/audit.py` never runs a parser). It found, and the generator now fixes by rule:
