@@ -48,6 +48,9 @@ def test_duckdb_pipeline(capsys):
 
 def test_notebook_executes():
     pytest.importorskip("pandas")
+    pytest.importorskip("polars")
+    pytest.importorskip("duckdb")
+    pytest.importorskip("pyarrow")
     nbformat = pytest.importorskip("nbformat")
     nbclient = pytest.importorskip("nbclient")
     pytest.importorskip("ipykernel")
@@ -63,6 +66,10 @@ def test_notebook_executes():
     assert "123 N Main St Apt 4" in text  # to_display
     assert "123 North Main Street Apartment 4" in text  # to_long
     assert "100 Northeast 5th Avenue Southwest" in text
+    assert "k2:R|RR|2|152|MO|65801" in text  # rare shapes
+    assert "PENSACOLA" in text  # place data, from a ZIP
+    assert "k2:S|412|N|HARBOR|ST||FL|33602" in text  # Polars, DuckDB and pandas sections
+    assert "'StreetNamePostType'" in text  # usaddress-style labels
     assert "parse_fields_many" in "".join(
         "".join(c.source) for c in nb.cells if c.cell_type == "code"
     )

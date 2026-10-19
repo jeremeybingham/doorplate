@@ -54,8 +54,10 @@ whose key (or other output) changes, each with its row in `docs/usps-pub28-notes
   (ZIP, place) pairs, from the Florida licensee files, by the pack's existing rules. `zip_city_mismatch`
   and "no place found" fire less often on Florida data.
 
-Left as they are on purpose, with the evidence: `docs/usps-pub28-notes.md`, "Left as it is on
-purpose".
+Some inputs were looked at in this work and deliberately not changed, because the data does not say
+which reading is right (a unit stuffed into the number field, `1120 -202`; a lone directional as the whole
+of line 2) or a rule would break more than it fixes. Each is listed with its reason and its evidence in
+`docs/usps-pub28-notes.md`, under "Left as it is on purpose", so it is not reopened without new evidence.
 
 ### Added
 

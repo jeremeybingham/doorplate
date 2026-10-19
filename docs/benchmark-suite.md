@@ -429,7 +429,7 @@ Built in these steps (issue #75), each a small pull request or a local step:
    count that differs from the gold in one parser; they are left as they are.
 5. **The runner**, `benchmarks/suite.py`, with the profile and the CI job. Done: `compare`, `doorplate`,
    `speed` and `all` (a full run takes about 20 seconds), the profile applied by the runner itself, the
-   `workflow_dispatch` job in `.github/workflows/suite.yml` and `benchmarks/suite/README.md`. The runner scores
+   `workflow_dispatch` job in `.github/workflows/suite.yml` and the how-to in `benchmarks/README.md`. The runner scores
    by character span, treats a trailing country that doorplate drops as handled, and prints the `natural`
    stratum's figures first, since the hard stratum over-represents blind spots by design.
 6. **`v1` frozen and scored**: figures in `docs/benchmarks.md` and the READMEs. Done: `benchmarks/suite/v1/` is

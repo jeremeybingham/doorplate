@@ -115,7 +115,7 @@ notebook, so they cannot go stale silently.
 
 ## Releasing
 
-Maintainers only. Before a release: rerun `benchmarks/accuracy.py` and the speed and size scripts and update the figures in `docs/benchmarks.md` and in all four package READMEs (`CLAUDE.md` lists them); run one full Netsyms run on the release commit and compare it with the previous one (`tools/netsyms/README.md`); write the CHANGELOG, saying when keys changed (store the key prefix, re-parse to re-key); bump the versions; CI must be green on all platforms. Pushing a `v*` tag runs both release workflows; the `crates-io` environment needs a manual approval before anything is published.
+Maintainers only. Before a release: rerun `benchmarks/suite.py all`, `benchmarks/accuracy.py` and the speed and size scripts and update the figures in `docs/benchmarks.md` and in all four package READMEs (`CLAUDE.md` lists them); run one full Netsyms run on the release commit and compare it with the previous one (`tools/netsyms/README.md`); write the CHANGELOG, saying when keys changed (store the key prefix, re-parse to re-key); bump the versions; CI must be green on all platforms. Pushing a `v*` tag runs both release workflows; the `crates-io` environment needs a manual approval before anything is published.
 
 The project page is built by GitHub Actions (Pages is enabled with that source). A blog draft lives on the unmerged branch `blog-draft` (`site/`): merging it replaces the README-based page with the blog home, and the post stays unpublished in `_drafts/` until it is moved to `_posts/`.
 
