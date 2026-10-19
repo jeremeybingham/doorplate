@@ -12,6 +12,11 @@ CLI = ROOT / "target" / "release" / "doorplate"
 GEOCODE = ROOT / "local-data" / "geocode-benchmark"
 
 
+def usable_cpus():
+    """CPUs this process may use: the affinity mask when there is one (taskset, the suite runner), else all."""
+    return len(os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else os.cpu_count()
+
+
 def machine():
     """One line: CPU, cores, RAM, OS, Python, Rust."""
     cpu = "unknown CPU"
@@ -32,7 +37,7 @@ def machine():
         rust = subprocess.run(["rustc", "--version"], capture_output=True, text=True).stdout.strip()
     except OSError:
         rust = "rustc not found"
-    return (f"{cpu}, {os.cpu_count()} threads{ram}; {platform.system()} {platform.release()}; "
+    return (f"{cpu}, {usable_cpus()} threads{ram}; {platform.system()} {platform.release()}; "
             f"Python {platform.python_version()}; {rust}")
 
 

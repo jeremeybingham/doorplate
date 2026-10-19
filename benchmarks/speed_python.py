@@ -20,7 +20,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from _common import best, corpus_inputs, geocode_inputs, machine  # noqa: E402
+from _common import best, corpus_inputs, geocode_inputs, machine, usable_cpus  # noqa: E402
 
 import doorplate as dp  # noqa: E402
 
@@ -60,7 +60,7 @@ def table(name, texts):
         ours = base["doorplate `parse_tokens`"]
         theirs = base["usaddress `parse`"]
         print(f"\nOne thread, call by call: `parse_tokens` is {theirs / ours:.1f}x `usaddress.parse`. "
-              f"`parse_many` parses on all {os.cpu_count()} threads with the GIL released, "
+              f"`parse_many` parses on all {usable_cpus()} threads with the GIL released, "
               f"{theirs / base['doorplate `parse_many`']:.1f}x `usaddress.parse` (which is single-threaded).\n")
     else:
         print()

@@ -137,9 +137,9 @@ doorplate parse-file split.csv --column line1 --line2 line2 --city city --state 
 
 Every helper adds the same columns: the components, `address_type`, `key`, `slug`, `warnings` (codes joined by
 commas), and optionally the USPS lines, the unit-level key and the unparsed text. A blank or missing row stays
-blank instead of failing. On 100,000 addresses (a 14-thread machine), `parse_many` takes 0.27 s, and
-building a pandas, Polars or DuckDB result with seven columns takes 0.36 to 0.46 s. Runnable versions with
-data of several shapes are in [`examples/`](examples/README.md) (a notebook, a pandas, a Polars and a DuckDB
+blank instead of failing. The helpers are built over `parse_many`, which parses on every core it is given: on
+the benchmark suite's inputs, under its 4-CPU, 8 GB profile, it handles about 120,000 addresses per second
+(`usaddress.parse` in a loop: about 9,100). Runnable versions with data of several shapes are in [`examples/`](examples/README.md) (a notebook, a pandas, a Polars and a DuckDB
 pipeline); the full API and the recipes are in
 [`crates/doorplate-py/README.md`](crates/doorplate-py/README.md).
 
@@ -302,12 +302,15 @@ The headline numbers, then what each benchmark in the repository is, so you can 
 |---|---|---|
 | Whole address right, [benchmark suite](benchmarks/README.md#the-benchmark-suite), `natural` stratum (16,001 addresses written in five styles) | 98.3% | 96.1% |
 | Whole address right, geocode benchmark dev split (60,522 one-line addresses) | 94.4% | 88.1% |
-| One address from Python | 18 µs | 85 µs |
-| 100,000 addresses (`parse_many` / a loop of `usaddress.parse`) | 0.27 s | 8.5 s |
+| Addresses per second from Python, one thread (suite inputs; `parse_tokens` / `usaddress.parse`) | about 33,900 | about 9,100 |
+| Addresses per second, `parse_many` on 4 threads (usaddress has no batch call) | about 120,000 | about 9,100 |
 | Installed size | 1.8 MB wheel | 4.8 MB with dependencies |
 
-These were measured on one machine and a few data sets, not promised for yours. Method, every other figure
-and the caveats: [`docs/benchmarks.md`](docs/benchmarks.md).
+The accuracy and speed rows of the suite come from `python benchmarks/suite.py all` (4 CPUs, 8 GB; the speed is
+the best of three runs on one machine, so read the ratios: about 3.7x on one thread and 13x on four; the recorded run is in `docs/benchmarks.md`). The geocode row is
+an outside data set, and the size row is from `benchmarks/size_memory.py`. They were measured on a few data
+sets and are not promised for yours. Method, every other figure and the caveats:
+[`docs/benchmarks.md`](docs/benchmarks.md).
 
 ### The benchmarks, and which to run
 
