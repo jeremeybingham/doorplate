@@ -7,22 +7,55 @@ change to what an input produces needs a new key version.
 
 ## [Unreleased]
 
-### Changed
+The next release is 0.3.0. Still an alpha. The match key moves to `k2`, and a batch of parsing
+rules found by running the parser over about 146 million split US address rows, a second
+national address source, nearly two million Florida licensee addresses and the geocode benchmark. On the
+benchmark's `dev` split the whole-address score goes from 92.6% to 94.4% (usaddress: 88.1%);
+speed and size are unchanged.
 
-- **The match key is now `k2`** (`k2:` and `k2n:` for a partial key; 0.3.0). `k1` is retired: the
-  library no longer produces it. The segment layout is the same, and the changes that make it a
-  new version are listed here as they land (issue #44). The key is a function of the parse, so
-  keys of different versions never compare equal: to re-key stored data, parse the original
-  addresses again. `docs/key-format.md` is the `k2` spec.
+### Changed: the match key is now `k2`
 
-### Documentation
+The prefix is `k2:` (and `k2n:` for a partial key). `k1` is retired: the library no longer
+produces it and there is no migration tool. The segment layout is the same. The key is a function
+of the parse, so keys of different versions never compare equal, and several inputs now parse
+differently, which is why this is a new version. To re-key stored data, store the prefix with your
+keys and parse the original addresses again. `docs/key-format.md` is the `k2` spec. The inputs
+whose key (or other output) changes, each with its row in `docs/usps-pub28-notes.md`:
 
-- Benchmarks: the headline geocode-benchmark figure is now the `dev` split, 92.6% of whole
-  addresses right (usaddress: 88.1%), not the `test` split's 96.4%, which the rules were
-  tuned against. `benchmarks/accuracy.py` and `convert_geocode_benchmark.py` score the
-  `dev`, `train` and `test` splits.
+- **Units.** A pre-split second line of one to three short bare tokens (`2 5`, `4 G`, `B B5`) is a
+  unit with no designator, and so are up to three such tokens after a `#`. A designator that always
+  takes a value followed by two letters (`APT TD`) is a unit. Two units in one value
+  (`UNIT 101/102`, `SUITE 3 & 4`) are one unit value, kept as written, and a business name after a
+  whole unit (`UNIT 12 BLU SPA`) stays in `unparsed` instead of hiding the unit. A directional after
+  a designator that does not always take a value is the street's postdirectional
+  (`123 OCEAN FRONT W` is the name `OCEAN FRONT`, not unit `FRNT W`).
+- **House numbers from split sources.** A fraction alone in line 2 (or opening it) joins the number
+  (`123 MAIN ST` / `1/2` is `123 1/2`). A lone `N`, `S`, `E` or `W` and a number of three digits or
+  more that open the line are one grid number (`N 10129` is `N10129`); a grid number takes one
+  trailing letter (`E7608B`); a hyphen before a fraction is a space (`1174-1/2`). A comma right after
+  a lone directional that follows the number is dropped (`3324 N, ANDREWS AVE`).
+- **Placeholders.** A line 2 of no-data markers (`NONE`, `PA NONE`, `NULL`, `999999999 999999999`) is
+  dropped instead of becoming a unit or leftover text, and `NULL` or a run of nines where the house
+  number goes is dropped. A marker dropped from an otherwise usable address raises no `placeholder`
+  warning (that warning removes the key).
+- **Route numbers.** The key drops leading zeros from rural and highway route numbers (`RR 02` and
+  `RR 2` share a key; `COUNTY ROAD 023` is `COUNTY ROAD 23`) and keeps them in box numbers. The USPS
+  output writes the route as given.
+- **The end of the street and the start of the city, one line with no commas.**
+  Area words (`DOWNTOWN`, `UPTOWN`, `OLD`, `OLDE`, `CENTRAL`) before a known city belong to the
+  city. Words that open a city name and are also suffixes (`LAKE`, `PARK`, `FOREST`, `FORT`, `PORT`,
+  `MOUNT`, `VILLAGE`, and others) start the city after the street's own suffix
+  (`123 MAIN ST LAKE QUINCEBROOK`). A spelled-out compass word before a known city is the street's
+  postdirectional, and before an unknown town it opens the city. A lone directional that equals the
+  first word of the city stays the postdirectional (`123 MAIN ST WEST` with city `WEST POINT`). A
+  trailing suffix or directional equal to the state field is kept (`123 DEBBIE CT` with state `CT`).
+- **Florida pack 2026.10.5** (`state-fl`): 26 more communities, 37 more spellings (abbreviations,
+  misspellings, `VILLAGE OF` forms and the Miami-Dade district code) and 123 more observed
+  (ZIP, place) pairs, from the Florida licensee files, by the pack's existing rules. `zip_city_mismatch`
+  and "no place found" fire less often on Florida data.
 
-## [Unreleased]
+Left as they are on purpose, with the evidence: `docs/usps-pub28-notes.md`, "Left as it is on
+purpose".
 
 ### Added
 
@@ -30,6 +63,18 @@ change to what an input produces needs a new key version.
   `doorplate_parse(text)` and `doorplate_parse_fields(line1, line2, city, state, zip)` to a
   DuckDB connection, returning a STRUCT of the chosen columns (Arrow UDFs, GIL released), and
   `parse_column(relation, column)` returns a lazy relation with the parsed columns added.
+- For maintainers: a batch harness over the Netsyms address database (`tools/netsyms/`: `run.py`,
+  `analyze.py`, `compare.py`, `nad_score.py`) and the National Address Database scorecard;
+  `tools/compare/oneline_fl.py` and `city_diff.py`; `benchmarks/split_geocode_train.py`.
+
+### Documentation
+
+- The headline geocode-benchmark figure is the `dev` split (94.4% of whole addresses; the rules were
+  first tuned against `test`, 96.7%), with 20% of `train` held out unread. All figures in
+  `docs/benchmarks.md` and the READMEs are rerun.
+- `docs/data-policy.md` (what data may be used and committed, and how Netsyms, the National Address
+  Database and the Florida licensee files were used), `AGENTS.md`, `SECURITY.md`,
+  `CODE_OF_CONDUCT.md`; `CONTRIBUTING.md` has a "Releasing" section.
 
 ## [0.2.0] - 2026-10-18
 
