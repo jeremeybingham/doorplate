@@ -12,46 +12,27 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](crates/doorplate-py/README.md)
 [![Rust 1.80+](https://img.shields.io/badge/rustc-1.80%2B-orange.svg)](Cargo.toml)
 
-Parse a US address into its parts, format it the way the Postal Service and the
-real estate industry write it, and get a stable key to match it against other
-records. `doorplate` is a Rust library with a Python package and a command-line
-tool. It runs offline with no runtime dependencies and no data to download.
+Parse US addresses into components, with USPS Publication 28 and RESO output, a canonical
+match key, a URL-safe slug, and diagnostics. A Rust library with a Python package and a
+command-line tool (abi3 wheels for Python 3.10 and later); no runtime dependencies, no data
+to download, no machine-learned model, and parsing never panics.
 
-For one line or separate fields it gives you:
+This library formats and parses; it **does not validate** that an address exists or can
+receive mail. Pub 28 formatting is not deliverability, and validation needs
+postal-service-certified data; warnings such as `zip_city_mismatch` are hints about the
+input, not verdicts.
 
-- **components**: street number, directionals, street name, suffix, units, city,
-  state, ZIP, and the less common shapes (PO boxes, rural and highway routes,
-  military and general delivery);
-- **USPS Publication 28** and **RESO Data Dictionary 2.0** output;
-- a **canonical match key** (`k2:...`) and a URL-safe **slug**;
-- **diagnostics**: warnings with stable codes and the text it could not place, so
-  you can send doubtful rows to review.
-
-> [!WARNING]
-> 🚧 **Alpha release.** This is an early version (0.2.0). 🚧
+> **Alpha release (0.2.0).** Expect rough edges. The match key is versioned (`k2:`) and
+> will probably get new versions as the parser improves, so store the version prefix
+> with your keys and plan to re-key. Accuracy and speed are measurements on a few
+> datasets, not guarantees. Names in the API and the warning codes may still change
+> before 1.0.
 >
-> - **Keys will probably change.** The match key is versioned (`k2:`). As the parser
->   improves, expect new key versions (`k3:` and later): a changed key gets a new
->   prefix, so an old key is never silently reinterpreted, but if you store keys, store
->   their version with them and plan to re-key. Don't treat `k2` as permanent yet.
-> - **Accuracy and speed are not guaranteed.** The numbers below were measured on one
->   machine and a few datasets; your data may behave differently. Watch the warnings.
-> - Names in the API and the warning codes may still change before 1.0.
-
-> [!TIP]
-> **Help wanted: messy addresses.** The parser gets better with real, messy data. If
-> you have addresses it parses badly (odd abbreviations, typos, cut-off lines, units
-> in strange places, county or mailing-list exports), please
+> **Help wanted: messy addresses.** If it parses your addresses badly (odd abbreviations,
+> typos, cut-off lines, units in strange places, county or mailing-list exports), please
 > [open an issue](https://github.com/jeremeybingham/doorplate/issues/new?template=misparse-or-messy-data.md)
-> with a sample. I want to fix them. If the data is private, we can anonymize it
-> first: keep the shape and swap the names, numbers and places
+> with a sample. I want to fix them. Private data can be anonymized first
 > ([how](CONTRIBUTING.md#sharing-messy-data)).
-
-> [!IMPORTANT]
-> 🚫 **This is not an address validator.** `doorplate` parses and formats. It does
-> not check that an address exists or can receive mail; Pub 28 formatting is not
-> deliverability, and validation needs postal-service-certified data. Warnings
-> such as `zip_city_mismatch` are hints about the input, not verdicts.
 
 ## Quickstart
 
@@ -82,6 +63,85 @@ MIAMI FL 33101
 $ doorplate parse "123 N. Main St #4, miami, fl 33101" | jq -r .key
 k2:S|123|N|MAIN|ST||FL|33101
 ```
+
+## Features
+
+- **Any shape of address.** Street addresses with directionals, suffixes, units and a second unit; PO boxes;
+  rural and highway-contract routes; military and general delivery; highways with a state or county prefix;
+  intersections and care-of lines are recognized and set apart. Missing pieces (no ZIP, no state, no commas)
+  parse, with a warning that says what is missing.
+- **One line or separate fields.** `parse` takes a single string; `parse_fields` takes `line1`, `line2`, `city`,
+  `state` and `zip` as your data has them, in whatever combination is filled in.
+- **Output you can load.** Components, USPS Publication 28 lines, RESO Data Dictionary 2.0 fields, a display
+  form for people, usaddress-style labels, a canonical match key (`k2:...`), a URL-safe slug.
+- **Diagnostics.** Stable warning codes and the text it could not place, so doubtful rows go to review instead
+  of into your database.
+- **Place data.** A national list of 50,375 places and 41,154 ZIPs finds the city on a line with no commas and
+  completes a cut-off city; `default_state` is a hint for input with no state.
+- **DataFrames, SQL and CSV files.** pandas, Polars and DuckDB helpers, a batch call that uses every core, and a
+  command that parses a CSV file ([below](#works-with-your-data)).
+- **Offline and deterministic.** The same input gives the same output on every platform. Rust, Python and the
+  command line share one parser.
+
+## Works with your data
+
+Addresses arrive in different shapes. Pick the call that matches yours; all of them give the same components,
+keys and warnings.
+
+| Your data | Use |
+|---|---|
+| A column of whole addresses (`123 N Main St Apt 4, Miami FL 33101`) in **pandas** or **Polars** | `doorplate.pandas.parse_column` / `doorplate.polars.parse_column` |
+| The same, in **DuckDB** (a table, or a CSV or Parquet file it reads; `parse_column` is lazy, so tables larger than memory work) | `doorplate_parse(address)` in SQL, or `doorplate.duckdb.parse_column` on a relation |
+| Separate columns (street line, unit line, city, state, ZIP), complete or with gaps | `parse_fields_many` (lists), `doorplate_parse_fields(...)` in DuckDB |
+| A **CSV file**, without writing any Python | `doorplate parse-file in.csv --column address -o out.csv`, or `--column line1 --line2 ... --city ... --state ... --zip ...` for split columns |
+| One address per line in a text file or a pipe | `doorplate parse - < addresses.txt` (JSON lines out) |
+| A mix of street addresses, PO boxes, rural routes, military, units in line 2, missing ZIPs | One call parses them all; the `address_type`, `warnings` and `key` columns say which is which |
+| Any list of strings, in code | `parse_many` (all cores, GIL released) |
+
+```python
+import pandas as pd
+from doorplate.pandas import parse_column
+
+df = pd.read_csv("addresses.csv")                                # a column named "address"
+out = df.join(parse_column(df["address"], default_state="FL"))   # addr_street_name, addr_zip5, addr_key, addr_warnings, ...
+```
+
+```python
+import polars as pl
+import doorplate as dp
+from doorplate.polars import parse_column
+
+df = pl.read_csv("addresses.csv")
+out = df.hstack(parse_column(df["address"]))                     # whole addresses in one column
+
+split = pl.read_csv("split.csv", infer_schema_length=0)          # line1, line2, city, state, zip, with gaps
+rows = dp.parse_fields_many(line1=split["line1"].to_list(), line2=split["line2"].to_list(),
+                            city=split["city"].to_list(), state=split["state"].to_list(),
+                            zip=split["zip"].to_list())          # one ParsedAddress per row
+```
+
+```python
+import duckdb
+from doorplate import duckdb as dd
+
+con = duckdb.connect()
+dd.register(con, columns=["street_name", "city", "state", "zip5", "key", "warnings"])
+con.sql("SELECT id, doorplate_parse(address).key AS key FROM read_csv('addresses.csv')")
+con.sql("SELECT doorplate_parse_fields(line1, line2, city, state, zip).key FROM read_csv('split.csv', all_varchar=true)")
+```
+
+```sh
+doorplate parse-file addresses.csv --column address -o parsed.csv                       # appends addr_* columns
+doorplate parse-file split.csv --column line1 --line2 line2 --city city --state state --zip zip -o parsed.csv
+```
+
+Every helper adds the same columns: the components, `address_type`, `key`, `slug`, `warnings` (codes joined by
+commas), and optionally the USPS lines, the unit-level key and the unparsed text. A blank or missing row stays
+blank instead of failing. On 100,000 addresses (a 14-thread machine), `parse_many` takes 0.27 s, and
+building a pandas, Polars or DuckDB result with seven columns takes 0.36 to 0.46 s. Runnable versions with
+data of several shapes are in [`examples/`](examples/README.md) (a notebook, a pandas, a Polars and a DuckDB
+pipeline); the full API and the recipes are in
+[`crates/doorplate-py/README.md`](crates/doorplate-py/README.md).
 
 ## What you get
 
