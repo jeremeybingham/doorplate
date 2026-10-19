@@ -135,6 +135,14 @@ pub(crate) fn is_slash_pair(t: &str) -> bool {
         && !is_fraction(t)
 }
 
+/// Two unit values joined by a slash: `101/102` (one tenant in two units).
+/// Read only after a unit designator or `#`; a small `1/2` is a fraction.
+pub(crate) fn is_unit_pair(t: &str) -> bool {
+    t.split_once('/')
+        .is_some_and(|(a, b)| is_unit_value(a) && is_unit_value(b))
+        && !is_fraction(t)
+}
+
 /// A unit or box value: has a digit (`309`, `4C`, `H28`, `A4-2`, `3-203`)
 /// or is one letter (`B`). Letters, digits and inner hyphens only.
 pub(crate) fn is_unit_value(t: &str) -> bool {
