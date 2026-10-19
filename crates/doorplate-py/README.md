@@ -107,6 +107,23 @@ need. The key is a versioned contract
 ([key format](https://github.com/jeremeybingham/doorplate/blob/main/docs/key-format.md));
 the slug is for display.
 
+## Your data, by shape
+
+Pick the call that matches how your addresses arrive; all of them give the same components, keys and warnings.
+
+| Your data | Use |
+|---|---|
+| A column of whole addresses, in pandas or Polars | `doorplate.pandas.parse_column` / `doorplate.polars.parse_column` |
+| The same in DuckDB (a table, or a CSV or Parquet file it reads) | `doorplate_parse(address)` in SQL, or `doorplate.duckdb.parse_column` on a relation |
+| Separate columns (street line, unit line, city, state, ZIP), complete or with gaps | `parse_fields_many(line1=[...], ...)`, or `doorplate_parse_fields(...)` in DuckDB |
+| A mix of street addresses, PO boxes, rural routes, military, units in line 2, missing ZIPs | one call parses them all; `address_type`, `warnings` and `key` say which is which |
+| Any list of strings | `parse_many` (all cores, GIL released) |
+| A CSV file with no Python | the `doorplate` command: [`doorplate-cli`](https://crates.io/crates/doorplate-cli), `doorplate parse-file in.csv --column address -o out.csv` |
+
+Runnable versions with several data shapes: the
+[examples](https://github.com/jeremeybingham/doorplate/tree/main/examples) (a notebook with pandas, Polars and DuckDB
+sections, and a pipeline for each).
+
 ## Batches, pandas, Polars and DuckDB
 
 `parse_many(texts)` takes a list or tuple of strings, releases the GIL, parses in
@@ -226,8 +243,28 @@ objects is now most of the time, so pick columns when you can. Pre-split columns
 | (none) | `parse(s, default_state="FL")`: a state hint for input with no state |
 
 Tokens that cannot be placed are left out of `tag()`, and some usaddress labels
-(landmarks, corners, recipients) are not modeled. The mapping and the differences:
+(landmarks, corners, recipients) are not modeled. `parse_tokens` also cuts a few strings into different tokens
+from `usaddress.parse` (`#4` stays one token, and a comma with no space after it ends a token differently), so
+compare labels by character span, not by token index
+([issue 78](https://github.com/jeremeybingham/doorplate/issues/78)). The mapping and the differences:
 [usaddress compatibility](https://github.com/jeremeybingham/doorplate/blob/main/docs/usaddress-compat.md).
+
+## Accuracy and speed
+
+| | doorplate | usaddress |
+|---|---|---|
+| Whole address right, benchmark suite, `natural` stratum (16,001 addresses written in five styles) | 98.3% | 96.1% |
+| Whole address right, geocode benchmark dev split (60,522 one-line addresses) | 94.4% | 88.1% |
+| Addresses per second, one thread (suite inputs) | about 33,900 | about 9,100 |
+| Addresses per second, `parse_many` on 4 threads | about 120,000 | about 9,100 (no batch call) |
+| Installed size | 1.8 MB wheel | 4.8 MB with dependencies |
+
+The suite is 19,586 labeled addresses that neither library was made from (anonymized National Address Database
+rows with invented numbers, plus PO boxes, routes, military and hand-labeled shapes); it also holds both
+libraries' known blind spots on purpose, so read its `natural` stratum as the estimate for ordinary input. Speed is
+on 4 CPUs, 8 GB. These are measurements on a few data sets, not promises for yours. Method and every other figure:
+[benchmarks](https://github.com/jeremeybingham/doorplate/blob/main/docs/benchmarks.md); how to rerun them:
+[`benchmarks/README.md`](https://github.com/jeremeybingham/doorplate/blob/main/benchmarks/README.md).
 
 ## More
 
@@ -238,6 +275,7 @@ Tokens that cannot be placed are left out of `tag()`, and some usaddress labels
   and the [roadmap](https://github.com/jeremeybingham/doorplate/blob/main/docs/roadmap.md)
   (a confidence score and customization packs are planned).
 - [Examples](https://github.com/jeremeybingham/doorplate/tree/main/examples): a
-  notebook tour and DataFrame pipelines.
+  notebook tour (rare shapes, place data, pandas, Polars, DuckDB, the command line) and a pipeline for each
+  DataFrame library.
 
 Licensed under either of MIT or Apache-2.0 at your option.
