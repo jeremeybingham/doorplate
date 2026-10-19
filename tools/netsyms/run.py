@@ -46,8 +46,8 @@ def parse_args(argv=None):
     ap.add_argument("--threads", type=int, help="Rust parse threads per worker (default: cores / workers)")
     ap.add_argument("--workers", type=int, default=max(1, min(6, (os.cpu_count() or 2) // 2)),
                     help="processes working on different chunks (default: half the cores, at most 6)")
-    ap.add_argument("--budget-gb", type=float, default=55.0,
-                    help="abort when the database's folder (not counting .7z archives) plus all runs exceed this (default 55)")
+    ap.add_argument("--budget-gb", type=float, default=60.0,
+                    help="abort when the database's folder (not counting .7z archives) plus all runs exceed this (default 60)")
     ap.add_argument("--min-free-gb", type=float, default=20.0, help="refuse to start below this")
     ap.add_argument("--full-hash", action="store_true", help="SHA-256 the whole database (slow)")
     ap.add_argument("--confirm", action="store_true", help="actually run (default: print the plan)")
