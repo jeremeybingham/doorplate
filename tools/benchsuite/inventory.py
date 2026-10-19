@@ -177,9 +177,11 @@ def render(rec, rng):
         if idx and rng.random() < 0.6:
             i = idx[0]
             toks[i] = (toks[i][0] + ".", toks[i][1])
+    lead = 0  # tokens of a recipient line placed before the address
     if "extra-text" in mods:
         if commas and rng.random() < 0.5:  # a recipient line needs a comma to be unambiguous
             toks = [("C/O", "Recipient"), ("PROPERTY", "Recipient"), ("MGMT", "Recipient")] + toks
+            lead = 3
         else:
             toks = toks + [("USA", "CountryName")]
     if mixed:
@@ -188,7 +190,7 @@ def render(rec, rng):
     marks = []
     n_line, n_unit, n_city = len(line1), len(unit), len(city)
     if commas:
-        off = len(toks) - (len(line1) + n_unit + n_city + len(tail))  # leading recipient words
+        off = lead
         stops = {off + n_line + n_unit - 1, off + n_line + n_unit + n_city - 1}
         if "extra-text" in mods and toks[0][1] == "Recipient":
             stops.add(2)

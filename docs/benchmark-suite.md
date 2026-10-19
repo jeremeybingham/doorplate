@@ -303,17 +303,18 @@ a score: the style mix is an assumption (below) and the gold labels have not bee
 
 | | Wrong, all records | Wrong, records with no label doorplate leaves unmodeled |
 |---|---|---|
-| doorplate | 7.16% (14,314 of 200,000) | 5.75% (11,034 of 191,926) |
-| usaddress | 7.57% (15,134 of 200,000) | 6.33% (12,158 of 191,926) |
+| doorplate | 6.81% (13,623 of 200,000) | 5.75% (11,034 of 191,926) |
+| usaddress | 7.41% (14,822 of 200,000) | 6.33% (12,158 of 191,926) |
 
 A trailing `USA` is not an error for doorplate: it drops the word on purpose and says so with
 `country_ignored`, so the inventory counts a gold `CountryName` token that doorplate leaves unlabeled
-as right (the fields are right). A first run that counted it wrong gave doorplate 8.67% on all records
-and a "no label" class of 152 per 10,000; that was a scoring artifact, not a blind spot.
+as right (the fields are right). Two mistakes of the first runs are fixed and their numbers
+not kept: counting that dropped `USA` as wrong, and a renderer bug that moved the commas by one word
+when `USA` was added after the address (found in the blind label audit, step 4).
 
 The two columns are the two headline figures of "Scoring". Both are a measure of where each library
-fails, on one fixed mix. Of the 200,000, both are right on 180,250, only doorplate on 5,436, only
-usaddress on 4,616, and neither on 9,698.
+fails, on one fixed mix. Of the 200,000, both are right on 180,970, only doorplate on 5,407, only
+usaddress on 4,208, and neither on 9,415.
 
 **Styles.** The local sources are 99% uppercase (Florida DBPR line 1s, Netsyms), so how often people
 write mixed case cannot be measured here. The inventory used 30% `upper-commas`, 20% `mixed-commas`, 25%
@@ -328,14 +329,14 @@ different mix is arithmetic.
 
 | Style or feature | doorplate wrong | usaddress wrong |
 |---|---|---|
-| `upper-commas` | 5.2% | 5.9% |
-| `mixed-commas` | 5.5% | 6.1% |
-| `spelled-out` | 5.6% | 6.6% |
+| `upper-commas` | 4.7% | 5.7% |
+| `mixed-commas` | 5.0% | 5.9% |
+| `spelled-out` | 5.1% | 6.3% |
 | `upper-nocommas` | 10.5% | 10.2% |
 | `mixed-nocommas` | 10.4% | 10.4% |
-| With a unit | 28.0% | 28.4% |
-| Multi-word city | 11.1% | 9.4% |
-| `extra-text` (a recipient line or `USA`) | 18.0% | 14.2% |
+| With a unit | 27.4% | 28.3% |
+| Multi-word city | 10.2% | 9.0% |
+| `extra-text` (a recipient line or `USA`) | 6.2% | 8.9% |
 
 **The hard stratum.** Every class above 1 in 10,000 gets a floor of 50, and the rest of the 3,000 is
 shared in proportion to the classes above the floor (a class whose share would fall under 50 is
@@ -344,21 +345,21 @@ columns are per 10,000 records. Building names are not in the table (decision 2 
 
 | Class | doorplate | usaddress | Records |
 |---|---|---|---|
-| A postdirectional read as part of the city (`StreetName -> PlaceName`) | 94.1 | 98.5 | 367 |
-| A number prefix read as the number (`AddressNumberPrefix -> AddressNumber`) | 88.2 | 57.1 | 277 |
-| A unit identifier read as street (`OccupancyIdentifier -> StreetName`) | 43.6 | 88.2 | 251 |
-| A city read as street (`PlaceName -> StreetName`) | 53.1 | 58.6 | 213 |
-| A house-number suffix (a fraction) read as street (`AddressNumber -> StreetName`) | 66.8 | 44.5 | 212 |
-| A unit identifier read as city (`OccupancyIdentifier -> PlaceName`) | 80.6 | 18.6 | 189 |
-| A number prefix read as street (`AddressNumberPrefix -> StreetName`) | 9.9 | 32.1 | 80 |
-| Street read as a unit identifier (`StreetName -> OccupancyIdentifier`) | 7.8 | 22.0 | 57 |
-| A street premodifier read as street (`StreetNamePreModifier -> StreetName`) | 15.7 | 12.8 | 54 |
-| 26 more classes between 1 and 20 per 10,000 (mostly one library's) | | | 50 each |
+| A postdirectional read as part of the city (`StreetName -> PlaceName`) | 94.0 | 94.6 | 390 |
+| A number prefix read as the number (`AddressNumberPrefix -> AddressNumber`) | 88.3 | 57.2 | 301 |
+| A unit identifier read as street (`OccupancyIdentifier -> StreetName`) | 40.1 | 88.1 | 265 |
+| A house-number suffix (a fraction) read as street (`AddressNumber -> StreetName`) | 66.7 | 44.6 | 230 |
+| A unit identifier read as city (`OccupancyIdentifier -> PlaceName`) | 79.4 | 18.6 | 203 |
+| A city read as street (`PlaceName -> StreetName`) | 25.1 | 48.9 | 153 |
+| A number prefix read as street (`AddressNumberPrefix -> StreetName`) | 9.9 | 32.1 | 87 |
+| Street read as a unit identifier (`StreetName -> OccupancyIdentifier`) | 7.9 | 22.0 | 62 |
+| A street premodifier read as street (`StreetNamePreModifier -> StreetName`) | 15.7 | 12.8 | 59 |
+| 25 more classes between 1 and 20 per 10,000 (mostly one library's) | | | 50 each |
 
 **Decisions (owner, 2026-10-19).**
 
 1. **Size.** The suite stays at about 20,000 records, 80% `natural`, 15% `hard` (3,000) and 5% `hand`.
-   With building names out, the floors take 1,300 of the 3,000 and the rule above fills the rest.
+   With building names out, the floors take 1,250 of the 3,000 and the rule above fills the rest.
 2. **Building names are out of `v1`.** Every record with a building name was wrong for both libraries
    (doorplate 100%, usaddress 99%) because a bare NAD `Building` after the street is not how people
    write one, so its gold labels are doubtful. They are neither in `natural` nor a hard class. The
@@ -370,8 +371,8 @@ columns are per 10,000 records. Building names are not in the table (decision 2 
    the per-style rates above let a reader re-weight them.
 
 Unmodeled labels (recipient lines, number prefixes; #35) are labels doorplate does not model. They fill
-most of the doorplate-only classes and make "all records" and "shared labels" differ by about 1.4
-points for doorplate. This is by design, and why both figures are reported. A trailing `USA` is not among
+most of the doorplate-only classes and make "all records" and "shared labels" differ by about 1
+point for doorplate. This is by design, and why both figures are reported. A trailing `USA` is not among
 them: it is handled (see above).
 
 Classes that match issues already known: the postdirectional-as-city and the city-as-street classes
@@ -386,7 +387,26 @@ Built in these steps (issue #75), each a small pull request or a local step:
 1. **This specification**, with the data-policy change that lets anonymized NAD rows ship. Done.
 2. **The blind-spot inventory** (local, counts only): fills in the composition tables. No rule
    changes come from it. Done: see "Step 2 results" and the owner's decisions.
-3. **The generator**, `tools/benchsuite/build.py`, and the private twin.
-4. **The label audit**: a random 500 records, plus every record the generator flags.
+3. **The generator**, `tools/benchsuite/build.py`, and the private twin. Done: a build takes about two
+   minutes and gives the same bytes every run (rows are chosen by a hash of their own values, not by
+   thread timing). The first complete build has 16,001 `natural` and 2,585 `hard` records (18,586 in all).
+   Twelve hard classes fall short of their quota by 415 records between them: they were mostly NAD
+   splitting artifacts (a house-number range, a type left in the name) that the rules below remove, and
+   the manifest lists each. The 1,000 `hand` records are still to be written (`hand.jsonl`).
+4. **The label audit**: a random 500 records, plus every record the generator flags. Done by reading
+   about 440 random and 80 flagged records with the parsers' outputs hidden
+   (`tools/benchsuite/audit.py` never runs a parser). It found, and the generator now fixes by rule:
+   a renderer bug that moved the commas when `USA` followed the address; hyphenated house numbers
+   (`171-` + `49`) written with a space, now one number; a `<NULL>` suffix, a digit-only prefix, a suffix
+   that is a compass letter, a repeated designator (`UNIT UNIT 604`), and a post-modifier; placeholder and
+   comma-holding cities, also for the synthetic types; and clusters (a few Florida and Atlanta cities were
+   6% of a sample), now capped at 0.5% of the NAD records for a city and two records for a street. After
+   the fixes a third sample of 110 had no label errors. One part of this was not blind, and is
+   stated here so it can be judged: while building the generator, the `expect` components were compared
+   with what doorplate's `parse_fields` returns, and the rows where they differed showed which source
+   splits the rules should reject (a type left in the name, a route with no type column). Every fix is a
+   rule about the NAD columns, none is a changed label, and no gold label was set to a parser's output.
+   157 of 17,011 `expect` records (0.9%) still differ from `parse_fields`, and three records have a token
+   count that differs from the gold in one parser; they are left as they are.
 5. **The runner**, `benchmarks/suite.py`, with the profile and the CI job.
 6. **`v1` frozen and scored**: figures in `docs/benchmarks.md` and the READMEs.

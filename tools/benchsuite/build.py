@@ -154,6 +154,8 @@ def provider_split(row):
     if city in PLACEHOLDER_CITY or not re.fullmatch(r"[A-Z][A-Z .'\-]*", city) or set(city.split()) & SPELLED_TYPES:
         return True
     unit = g("Unit").split()
+    if g("St_PosMod") or (len(unit) > 1 and any(w.rstrip(".") in I.DESIGNATOR_WORDS for w in unit[1:])):
+        return True  # a post-modifier after the type, or a designator repeated inside the unit (`UNIT UNIT 604`)
     if "/" in g("Unit") or re.search(r"\d[A-Z]{2,}", g("Unit")):
         return True
     ident = unit[1:] if unit and re.fullmatch(r"[A-Z]+\.?", unit[0]) and len(unit) > 1 else unit
@@ -166,11 +168,38 @@ def provider_split(row):
     return False
 
 
+def good_city(city):
+    return city not in PLACEHOLDER_CITY and bool(re.fullmatch(r"[A-Z][A-Z .'\-]*", city)) and not set(city.split()) & SPELLED_TYPES
+
+
+def tidy_number(row):
+    """Merge a hyphenated prefix or suffix into the house number (`171-` + `49` is `171-49`); None for
+    prefixes and suffixes the label rules do not cover (a digit-only prefix, a word, `<NULL>`)."""
+    row = dict(row)
+    pre, suf, num = row["AddNum_Pre"].strip().upper(), row["AddNum_Suf"].strip().upper(), row["Add_Number"].strip()
+    if pre.endswith("-") and re.fullmatch(r"\d+-", pre):
+        num, pre = pre + num, ""
+    if suf.startswith("-") and re.fullmatch(r"-\d+", suf):
+        num, suf = num + suf, ""
+    if pre and not re.fullmatch(r"[A-Z]{1,2}", pre):
+        return None
+    if suf and not (re.fullmatch(r"[A-DF-MO-RT-VX-Z]", suf) or re.fullmatch(r"\d/\d", suf)):
+        return None  # a suffix letter that is a compass letter (`42301 N MEQUON`) reads as a predirectional
+    if re.search(r"[<>]|\bNULL\b", " ".join(str(v).upper() for v in row.values())):
+        return None
+    row.update({"AddNum_Pre": pre, "AddNum_Suf": suf, "Add_Number": num})
+    return row
+
+
 def nad_record(row, rng):
     """A structured record from one NAD row (anonymized), or None."""
+    row = tidy_number(row)
+    if row is None:
+        return None
     if row["Building"].strip() or provider_split(row):
         return None  # building names are out of v1
     row = anonymize(row, rng)
+    row["Add_Number"] = row["Add_Number"] if re.fullmatch(r"[0-9A-Za-z\-/]+", row["Add_Number"]) else ""
     rec = I.record_from_row(row)
     if rec is None:
         return None
@@ -512,11 +541,20 @@ def main():
     cursor = {st: iter(rows) for st, rows in by_state.items()}
     got = collections.Counter()
 
+    per_city, per_street = collections.Counter(), collections.Counter()
+    city_cap = max(3, round(0.005 * n_nad))  # no city is more than 0.5% of the NAD records; no street more than twice
+
     def take(state, n):
         done = 0
         for row in cursor.get(state, ()):
+            ck = (state, row["Post_City"].strip().upper())
+            sk = (state, row["Zip_Code"], row["StNam_Full"].strip().upper())
+            if per_city[ck] >= city_cap or per_street[sk] >= 2:
+                continue
             rec = nad_record(row, rng)
             if rec and keep(rec, "natural", []):
+                per_city[ck] += 1
+                per_street[sk] += 1
                 done += 1
                 if done >= n:
                     return done
@@ -536,7 +574,7 @@ def main():
     short = {st: quota[st] - got[st] for st in nad_states if got[st] < quota[st]}
     nat_places = []
     # synthetic types use the real city, state and ZIP of NAD rows
-    place_rows = [r for r in pool if r["Post_City"].strip() and re.fullmatch(r"\d{5}", r["Zip_Code"])]
+    place_rows = [r for r in pool if good_city(r["Post_City"].strip().upper()) and re.fullmatch(r"\d{5}", r["Zip_Code"])]
     for kind, n in synth.items():
         got = 0
         while got < n:
