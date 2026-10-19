@@ -104,8 +104,8 @@ A suite row is never a real address point:
 - **Unit values are invented** in the same way. The designator (`APT`, `STE`) is kept.
 - **Only common streets.** A street is used only if NAD has at least 20 address points on it
   in that ZIP code, so an invented number does not point to one of a handful of houses.
-- **Building names are replaced** with invented ones of the same shape (`BLDG 4`, `NORTH TOWER`),
-  since a provider's building value can hold a business or family name.
+- **Building names are not used.** A provider's building value can hold a business or family name, and
+  `v1` leaves building names out altogether (see "Step 2 results").
 - **Nothing else is carried over**: no coordinates, no NAD source names, no ids.
 - Street, city, state and ZIP are kept. They are public facts, and the shapes under test
   depend on them.
@@ -128,7 +128,7 @@ records:
 | `St_PosTyp` | `StreetNamePostType` |
 | `St_PosDir` | `StreetNamePostDirectional` |
 | `St_PosMod` | `StreetName` (usaddress has no post-modifier label) |
-| `Building` | `BuildingName` (invented, above) |
+| `Building` | Not used in `v1` |
 | `Floor`, `Unit`, `Room`: designator, value | `OccupancyType`, `OccupancyIdentifier` |
 | `Post_City` | `PlaceName` |
 | `State` | `StateName` |
@@ -197,7 +197,7 @@ Classes already known, to be counted with the rest:
 | Class | Library it is known for | Issue |
 |---|---|---|
 | A neighborhood or unincorporated place missing from the place list | doorplate | #29 |
-| A named building with no building word | doorplate | #37 (E) |
+| A named building with no building word | doorplate | #37 (E); not in `v1` (see "Step 2 results") |
 | A trailing number in the street read as a unit | doorplate | #37 (F) |
 | A highway modifier before the city on one line | doorplate | #10 |
 | `VILLAGE OF` / `TOWN OF` / `CITY OF` before the city | doorplate | #68 |
@@ -215,7 +215,10 @@ The generator drops any record whose input string (whitespace collapsed, lowerca
 - the golden corpus (`tests/corpus/`) or the Pub 28 examples
 - the geocode benchmark's splits
 
-It also drops duplicates within the suite.
+It also drops duplicates within the suite, and the NAD rows the label rules do not cover: a building,
+floor or room value, a unit in a form the designator list does not read, and a street name that ends in
+a street type with the type column empty (probably a provider split). Together these are about 11% of
+the NAD pool.
 
 ## Scoring
 
@@ -331,37 +334,42 @@ different mix is arithmetic.
 | Multi-word city | 11.1% | 9.4% |
 | `extra-text` (a recipient line or `USA`) | 18.0% | 14.2% |
 
-**The hard stratum, with the rule applied as written** (every class above 1 in 10,000 gets its
-proportional share of 3,000, floor 50). The two libraries' counts are added for the share. The rate
-columns are per 10,000 records.
+**The hard stratum.** Every class above 1 in 10,000 gets a floor of 50, and the rest of the 3,000 is
+shared in proportion to the classes above the floor (a class whose share would fall under 50 is
+fixed at 50, and the shares are worked out again). The two libraries' counts are added. The rate
+columns are per 10,000 records. Building names are not in the table (decision 2 below).
 
 | Class | doorplate | usaddress | Records |
 |---|---|---|---|
-| A building name (`BuildingName -> *`, five pairs) | 223.0 | 213.8 | 898 |
-| A postdirectional read as part of the city (`StreetName -> PlaceName`) | 94.1 | 98.5 | 396 |
-| A number prefix read as the number (`AddressNumberPrefix -> AddressNumber`) | 88.2 | 57.1 | 299 |
-| A unit identifier read as street (`OccupancyIdentifier -> StreetName`) | 43.6 | 88.2 | 271 |
-| A city read as street (`PlaceName -> StreetName`) | 53.1 | 58.6 | 230 |
-| A house-number suffix (a fraction) read as street (`AddressNumber -> StreetName`) | 66.8 | 44.5 | 229 |
-| A unit identifier read as city (`OccupancyIdentifier -> PlaceName`) | 80.6 | 18.6 | 204 |
-| A number prefix read as street (`AddressNumberPrefix -> StreetName`) | 9.9 | 32.1 | 86 |
-| Street read as a unit identifier (`StreetName -> OccupancyIdentifier`) | 7.8 | 22.0 | 61 |
-| A street premodifier read as street (`StreetNamePreModifier -> StreetName`) | 15.7 | 12.8 | 58 |
+| A postdirectional read as part of the city (`StreetName -> PlaceName`) | 94.1 | 98.5 | 367 |
+| A number prefix read as the number (`AddressNumberPrefix -> AddressNumber`) | 88.2 | 57.1 | 277 |
+| A unit identifier read as street (`OccupancyIdentifier -> StreetName`) | 43.6 | 88.2 | 251 |
+| A city read as street (`PlaceName -> StreetName`) | 53.1 | 58.6 | 213 |
+| A house-number suffix (a fraction) read as street (`AddressNumber -> StreetName`) | 66.8 | 44.5 | 212 |
+| A unit identifier read as city (`OccupancyIdentifier -> PlaceName`) | 80.6 | 18.6 | 189 |
+| A number prefix read as street (`AddressNumberPrefix -> StreetName`) | 9.9 | 32.1 | 80 |
+| Street read as a unit identifier (`StreetName -> OccupancyIdentifier`) | 7.8 | 22.0 | 57 |
+| A street premodifier read as street (`StreetNamePreModifier -> StreetName`) | 15.7 | 12.8 | 54 |
 | 26 more classes between 1 and 20 per 10,000 (mostly one library's) | | | 50 each |
 
-Floors alone add 1,300 records, so the rule as written gives about 4,030 hard records, not 3,000.
-Three things need the owner before the generator is built (step 3):
+**Decisions (owner, 2026-10-19).**
 
-1. **Size.** Take the hard stratum as about 4,000 (20%, with `natural` at 75%), or raise the class
-   threshold to 2 in 10,000 (dropping the classes below it), or lower the floor.
-2. **Building names.** Every record with a building name is wrong for both libraries (doorplate
-   100%, usaddress 99%), which says the rendering (a bare NAD `Building` after the street) is not how
-   people write one. They are 2.3% of the pool. Proposal: keep them out of `natural`, treat them as one
-   hard class, and settle their labels in the label audit (step 4).
-3. **Unmodeled labels.** Recipient lines and number prefixes are labels doorplate does not model
-   (#35). They fill most of the doorplate-only classes and make "all records" and "shared labels" differ
-   by about 1.4 points for doorplate. This is by design, and why both figures are reported. A trailing
-   `USA` is not among them: it is handled (see above).
+1. **Size.** The suite stays at about 20,000 records, 80% `natural`, 15% `hard` (3,000) and 5% `hand`.
+   With building names out, the floors take 1,300 of the 3,000 and the rule above fills the rest.
+2. **Building names are out of `v1`.** Every record with a building name was wrong for both libraries
+   (doorplate 100%, usaddress 99%) because a bare NAD `Building` after the street is not how people
+   write one, so its gold labels are doubtful. They are neither in `natural` nor a hard class. The
+   class #37 (E) names stays a corpus matter, and building names return in `v2` once their labels have
+   a design of their own.
+3. **Styles.** The weights used in the inventory stand as the `v1` mix: 30% `upper-commas`, 20%
+   `mixed-commas`, 25% `upper-nocommas`, 15% `spelled-out` and 10% `mixed-nocommas`, with the modifiers
+   above. The local data cannot measure mixed case (99% uppercase), so these are chosen, not measured;
+   the per-style rates above let a reader re-weight them.
+
+Unmodeled labels (recipient lines, number prefixes; #35) are labels doorplate does not model. They fill
+most of the doorplate-only classes and make "all records" and "shared labels" differ by about 1.4
+points for doorplate. This is by design, and why both figures are reported. A trailing `USA` is not among
+them: it is handled (see above).
 
 Classes that match issues already known: the postdirectional-as-city and the city-as-street classes
 (one-line input with no commas, #29), a unit identifier read as street or city (a bare unit before the city on one line),
@@ -374,7 +382,7 @@ Built in these steps (issue #75), each a small pull request or a local step:
 
 1. **This specification**, with the data-policy change that lets anonymized NAD rows ship. Done.
 2. **The blind-spot inventory** (local, counts only): fills in the composition tables. No rule
-   changes come from it. Done: see "Step 2 results"; three decisions are open before step 3.
+   changes come from it. Done: see "Step 2 results" and the owner's decisions.
 3. **The generator**, `tools/benchsuite/build.py`, and the private twin.
 4. **The label audit**: a random 500 records, plus every record the generator flags.
 5. **The runner**, `benchmarks/suite.py`, with the profile and the CI job.
