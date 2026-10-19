@@ -1,0 +1,30 @@
+name: Benchmark suite
+# Runs the benchmark suite on a GitHub-hosted runner (4 vCPU, the reference profile).
+# Start it by hand from the Actions tab; it never runs on push or pull request.
+on:
+  workflow_dispatch:
+
+jobs:
+  suite:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Build the extension and install usaddress
+        run: |
+          python -m venv .venv && . .venv/bin/activate
+          pip install maturin usaddress
+          maturin develop --release -m crates/doorplate-py/Cargo.toml
+      - name: Run the suite
+        run: |
+          . .venv/bin/activate
+          python benchmarks/suite.py all --out suite-report.md
+      - name: Keep the report
+        uses: actions/upload-artifact@v4
+        with:
+          name: suite-report
+          path: suite-report.md

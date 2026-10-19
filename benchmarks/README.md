@@ -64,9 +64,11 @@ A rule that helps one and hurts the other is a rule to look at again (#29).
 | `accuracy.py` | Whole-address and token accuracy: the golden corpus, usaddress's test files, the geocode benchmark (blind) | the CLI; `usaddress`; the geocode benchmark for the last |
 | `speed_python.py` | Addresses per second from Python: `parse`, `parse_many`, `parse_fields`, against `usaddress.parse` and `usaddress.tag` on the same inputs | the extension; `usaddress` |
 | `speed_rust.py` | Rust speed: runs `cargo bench` (criterion) and a CLI file run, prints the medians | Rust; optional CSV |
+| `suite.py` | The benchmark suite (`benchmarks/suite/`): labeled addresses scored for doorplate and usaddress under a 4-CPU, 8 GB profile, the doorplate-only track, and speed (`benchmarks/suite/README.md`) | the extension; `usaddress` |
 | `size_memory.py` | Binary, wheel and installed size; import time; resident memory after import and after a batch; usaddress for comparison | the CLI; the extension; `usaddress`; `maturin` |
 
 ```sh
+python benchmarks/suite.py all
 python benchmarks/accuracy.py
 python benchmarks/speed_python.py [N]
 python benchmarks/speed_rust.py [--csv FILE --column NAME]
