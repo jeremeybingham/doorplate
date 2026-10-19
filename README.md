@@ -238,6 +238,7 @@ what the input said; the place found is reported beside it. Sources and licenses
 
 | | doorplate | usaddress |
 |---|---|---|
+| Whole address right, [benchmark suite](benchmarks/suite/README.md) (16,001 addresses written in five styles) | 98.3% | 96.1% |
 | Whole address right, geocode benchmark dev split (60,522 one-line addresses) | 94.4% | 88.1% |
 | One address from Python | 18 µs | 85 µs |
 | 100,000 addresses (`parse_many` / a loop of `usaddress.parse`) | 0.27 s | 8.5 s |
@@ -248,7 +249,14 @@ benchmark's *test* split (96.7% whole address), so that figure is optimistic; la
 rules were fixed against part of the train split (20% of it held out, unread, 94.1%)
 and checked on dev, and 94.4% is the estimate for data of that shape (one
 line, US street addresses, a city and a state), not a guarantee for yours.
-Method, caveats, memory and Rust timings: [`docs/benchmarks.md`](docs/benchmarks.md).
+
+The suite's 16,001 `natural` addresses are anonymized National Address Database rows
+(real streets, cities and ZIP codes, invented numbers) with gold labels that neither parser
+made, and it also holds both libraries' known blind spots. The same suite's `hard` stratum
+(the blind spots, drawn on purpose) is 54% against 18%, and doorplate scores 0% on a house
+number with a letter prefix (`W 615 County Road C`). The rules, the private twin that
+checks the public set was not tuned to, and every other figure:
+[`docs/benchmarks.md`](docs/benchmarks.md).
 
 ## What it does not do
 

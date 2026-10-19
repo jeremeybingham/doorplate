@@ -432,4 +432,6 @@ Built in these steps (issue #75), each a small pull request or a local step:
    `workflow_dispatch` job in `.github/workflows/suite.yml` and `benchmarks/suite/README.md`. The runner scores
    by character span, treats a trailing country that doorplate drops as handled, and prints the `natural`
    stratum's figures first, since the hard stratum over-represents blind spots by design.
-6. **`v1` frozen and scored**: figures in `docs/benchmarks.md` and the READMEs.
+6. **`v1` frozen and scored**: figures in `docs/benchmarks.md` and the READMEs. Done: `benchmarks/suite/v1/` is
+   committed and is not edited again; the public and the private-twin scores agree within 0.4 points; the
+   figures are in `docs/benchmarks.md`, `README.md`, `CHANGELOG.md` and `AGENTS.md`.

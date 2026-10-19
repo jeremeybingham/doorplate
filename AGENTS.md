@@ -23,7 +23,7 @@ imply otherwise in docs or code comments.
 | Output fields | [`docs/reso-mapping.md`](docs/reso-mapping.md), `to_usps()`, `to_display()`, `to_long()` |
 | Coming from usaddress | [`docs/usaddress-compat.md`](docs/usaddress-compat.md) |
 | Accuracy and speed, and how to rerun them | [`docs/benchmarks.md`](docs/benchmarks.md), [`benchmarks/README.md`](benchmarks/README.md) |
-| The benchmark suite (in progress): what it holds and the rules that keep it fair | [`docs/benchmark-suite.md`](docs/benchmark-suite.md) |
+| The benchmark suite: what it holds, how to run it and the rules that keep it fair (it is not a work list) | [`docs/benchmark-suite.md`](docs/benchmark-suite.md), [`benchmarks/suite/README.md`](benchmarks/suite/README.md) |
 | How the parser works | [`docs/how-it-works.md`](docs/how-it-works.md) |
 | What is planned and what is not | [`docs/roadmap.md`](docs/roadmap.md) |
 | What data may be used and committed | [`docs/data-policy.md`](docs/data-policy.md) |
@@ -51,6 +51,9 @@ cargo test --workspace --all-features
 # Python (in a virtualenv with maturin and pytest)
 cd crates/doorplate-py && maturin develop --release && cd ../..
 pytest crates/doorplate-py/tests
+
+# The benchmark suite (needs usaddress; the extension built with --release)
+python benchmarks/suite.py all
 ```
 
 Plain `cargo test` needs no Python. Rust 1.80 or later; the Python extension needs 1.83.
@@ -79,4 +82,4 @@ Plain `cargo test` needs no Python. Rust 1.80 or later; the Python extension nee
 - `crates/doorplate/data/`: the Pub 28 tables, the national place list and state packs.
 - `tests/corpus/`: the golden corpus. `examples/`: runnable examples.
 - `docs/`: design notes and the sources of every rule. `tools/`: verification, fuzzing,
-  corpus, comparison and the Netsyms harness (`tools/netsyms/`, offline, private data). `benchmarks/`: speed, accuracy and size scripts.
+  corpus, comparison and the Netsyms harness (`tools/netsyms/`, offline, private data). `benchmarks/`: speed, accuracy and size scripts, and the benchmark suite (`benchmarks/suite.py`, its data in `benchmarks/suite/v1/`, which is frozen; its generator, `tools/benchsuite/`, needs private data).

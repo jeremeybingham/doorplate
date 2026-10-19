@@ -11,7 +11,7 @@ The next release is 0.3.0. Still an alpha. The match key moves to `k2`, and a ba
 rules found by running the parser over about 146 million split US address rows, a second
 national address source, nearly two million Florida licensee addresses and the geocode benchmark. On the
 benchmark's `dev` split the whole-address score goes from 92.6% to 94.4% (usaddress: 88.1%);
-speed and size are unchanged.
+speed and size are unchanged. A benchmark suite now ships in the repository.
 
 ### Changed: the match key is now `k2`
 
@@ -59,6 +59,12 @@ purpose".
 
 ### Added
 
+- A benchmark suite (`benchmarks/suite/v1/`, `python benchmarks/suite.py all`, issue #75): 19,586 labeled addresses
+  (anonymized National Address Database rows, Census TIGER street names for the states NAD lacks, templates for PO
+  boxes, routes, military and general delivery, and 1,000 hand-labeled shapes) scored for doorplate and usaddress
+  under a fixed 4-CPU, 8 GB profile, with a doorplate-only track and a private twin that checks the public set was
+  not tuned to. On its `natural` stratum doorplate gets 98.3% of whole addresses right and usaddress 96.1%; on the
+  `hard` stratum, which holds both libraries' blind spots on purpose, 54.3% and 18.3%.
 - `doorplate.duckdb` (extra: `pip install "doorplate[duckdb]"`): `register(con)` adds
   `doorplate_parse(text)` and `doorplate_parse_fields(line1, line2, city, state, zip)` to a
   DuckDB connection, returning a STRUCT of the chosen columns (Arrow UDFs, GIL released), and
