@@ -28,8 +28,48 @@ and none of the data below is used to claim otherwise.
 | usaddress test data | `tests/external/usaddress/` | Yes | MIT (datamade) |
 | Florida public-record address data | `crates/doorplate/data/packs/fl/` (city/ZIP pairs and street spellings only; no names) | Yes | Public record (Chapter 119, Florida Statutes) |
 | Geocode benchmark (`test`, `dev`, `train`) | `local-data/geocode-benchmark/` | **No** | No license stated. Only aggregate scores ship (`docs/benchmarks.md`). |
+| National Address Database (NAD) r24, text file | `local-data/nad-2026/` | **No** (extracts only, see below) | Work of the US federal government, no copyright (17 U.S.C. § 105); the metadata says it is available for re-use without limitation or restriction |
 | Netsyms Address Database 2026-05 | `local-data/netsyms-2026/` | **No** (see below) | No formal license; see the next section |
 | Florida exports with names, the labeled Florida sample, comparison reports | `local-data/` | **No** | Private; contain personal names or rows |
+
+## The National Address Database (NAD)
+
+The US Department of Transportation's [National Address Database](https://www.transportation.gov/gis/national-address-database)
+aggregates address points from state, local and tribal providers (99,226,272 records in
+release 24, compiled 2026-09-30; the text file `TXT.zip` from
+https://data.transportation.gov/d/fc2s-wawr). Its metadata says it is a work of the federal
+government, not subject to copyright, and available for re-use without limitation or
+restriction. It also says the data is provided "as is", is not intended for use as a mailing
+list, and is subject to state statutes that prohibit that use. We treat it as follows:
+
+- **Use:** parser testing and aggregate statistics only. No mailing lists, and no claim that
+  an address exists or can receive mail.
+- **Row-level data stays in `local-data/`.** The file is large (42 GB of text) and its
+  providers are credited in its own metadata; we do not redistribute it. Aggregate counts
+  and our own fixes ship, with invented examples in corpus cases, as for the other sources.
+- **Place names:** a name found in `Uninc_Comm`, `Nbrhd_Comm` or the other place columns may
+  ship when the counts show it is real and used (rows and distinct providers, cited as
+  aggregates), citing NAD as the source. Because NAD is public domain, it can serve as the
+  public confirming source itself; keep a threshold written down for any new rule.
+- **What we have done with it** (2026-10-19, aggregate results only; scripts in
+  `tools/netsyms/`, results in issue #29):
+  - *Profile:* 99,226,272 records in 47 jurisdictions (no HI, MI, MS, NH, NV or PR); fill rates
+    for each column and state; 95 `NAD_Source` values.
+  - *Place names:* 89,490 community and neighborhood names (`Uninc_Comm`, `Nbrhd_Comm`) differ
+    from the postal city outside MA and CT, but only 68 of 6,020 city names in the geocode
+    benchmark's `train` place-name gap are among them. **Nothing from NAD ships in the place
+    data**; the gap is area words and neighborhood labels no address database holds (the area-word
+    rule, #62, came from that triage instead).
+  - *Scorecard:* a 1,000,000-row random sample scored against NAD's labeled parts
+    (`tools/netsyms/nad_score.py`). It confirmed the parser against labeled data and found one
+    bug, fixed with corpus `rg-207` to `rg-211`: a trailing directional equal to the city's first
+    word (`MAIN ST WEST` / `WEST POINT`) was dropped as a copy of the city.
+  - *Evaluated and not used:* NAD's `Addr_Type`, `AddrClass`, `Lifecycle` and `DeliverTyp`
+    (mostly `Unknown`, empty or unnormalized), and the GNIS populated-places file (#52: about a tenth
+    of the place-name gap, so nothing shipped).
+- **If anything derived ships**, cite NAD in `docs/places.md` or the pack doc that uses it.
+  The metadata's credit line asks for acknowledgment of the Department of Transportation,
+  the Census Bureau's Geography Division and the contributing providers; follow it.
 
 ## The Netsyms data
 

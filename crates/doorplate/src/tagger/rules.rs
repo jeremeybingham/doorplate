@@ -525,6 +525,18 @@ impl Tagger<'_> {
             if before.is_hash() || self.lex.unit(&before.text).is_some() {
                 continue;
             }
+            // `123 MAIN ST WEST` before `WEST POINT`: a lone directional right
+            // after a suffix or a grid number is the street's postdirectional,
+            // not a copy of the city's first word.
+            let prev = self.text(hi - k - 1);
+            if k == 1
+                && self.lex.directional(&tail[0].text).is_some()
+                && (self.lex.suffix(prev).is_some()
+                    || prev.bytes().all(|c| c.is_ascii_digit())
+                    || is_ordinal(prev))
+            {
+                continue;
+            }
             // One cut-off word needs two letters or more; a lone letter is
             // more likely a unit ("DR B") than a copy of "BRADENTON".
             if k == 1 && tail[0].text.len() < 2 && tail[0].text != words[0] {
