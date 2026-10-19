@@ -50,3 +50,23 @@ the commit, doorplate version, data-table hash and the input fingerprint the run
 ## After a rule change
 
 Rerun the harness on the same database (a new run id), then `python tools/netsyms/compare.py <before> <after>`. The report lists how the totals, warning codes and per-state flagged counts moved, and warns when the two runs are not like for like (a different schema version, input or chunk size). Schema version 2 changed the `street` rule, so compare version-2 runs with each other.
+
+## The NAD scorecard (`nad_score.py`)
+
+The National Address Database labels the parts of each address (`docs/data-policy.md`), which the
+Netsyms rows do not. `nad_score.py` draws a random 1,000,000-row sample of the NAD text file (one
+pass, about 3 minutes, `--make-sample --confirm`), parses `AddNo_Full` + `StNam_Full` as line 1 and
+`SubAddress` as line 2, and compares our predirectional, postdirectional, suffix and unit with NAD's
+wherever NAD has a non-empty label. It prints counts only. Run it after a street or unit rule changes:
+
+```sh
+python tools/netsyms/nad_score.py --make-sample --confirm   # once; writes local-data/nad-2026/sample1m.parquet
+python tools/netsyms/nad_score.py
+```
+
+Read it with care: many providers put the suffix inside the name and leave the type empty (those rows
+are skipped, since NAD has no label to compare), and `Unit` is spelled out (`Apartment 4`). On
+the 2026-10-19 sample (NAD r24, seed 7) we differ from a labeled value in 0.11% of suffixes, 0.69% of
+predirectionals, 0.14% of postdirectionals (0.50% before the city-copy fix, #29) and 3.7% of units
+(mostly a spelled-out designator, a lone letter, or a bare number after a one-word street).
+
