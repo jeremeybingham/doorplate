@@ -400,6 +400,12 @@ impl Lexicons {
         find_str(tables::BUILDING_WORDS, &normalize_key_cow(s))
     }
 
+    /// A word that opens a neighborhood or district name before a city
+    /// (`DOWNTOWN` in `DOWNTOWN MIAMI`). Source: `data/special.toml` `[area]`.
+    pub fn is_area_word(&self, s: &str) -> bool {
+        find_str(tables::AREA_WORDS, &normalize_key_cow(s))
+    }
+
     pub fn is_placeholder(&self, s: &str) -> bool {
         let key = normalize_key(s);
         if !key.chars().any(char::is_alphanumeric) {

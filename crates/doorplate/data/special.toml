@@ -259,6 +259,14 @@ phrases = [
   "NONE",
 ]
 
+[area]
+# Words that open a neighborhood or district name written before a city:
+# `DOWNTOWN MIAMI`, `UPTOWN CHARLOTTE`. Not a USPS rule (Pub 28 has no such
+# word). Read only on a line with no commas, right after the street's suffix
+# and right before a place the place list knows. Seen in the geocode
+# benchmark's train split (issue #29).
+words = ["CENTRAL", "DOWNTOWN", "EAST", "NORTH", "NORTHEAST", "NORTHWEST", "OLD", "OLDE", "SOUTH", "SOUTHEAST", "SOUTHWEST", "UPTOWN", "WEST"]
+
 [building]
 # Words that end a building name (EAST TOWER, ANNEX BUILDING, MEDICAL PLAZA).
 # Not a USPS rule: Pub 28 has no building line. Chosen from building
