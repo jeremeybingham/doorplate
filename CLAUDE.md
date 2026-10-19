@@ -9,6 +9,7 @@ build commands are in `AGENTS.md`, imported above; this file holds the process w
 when working on the project with Claude Code.
 
 ## Workflow
+- The shell is `zsh` (on Linux under WSL2): quote globs that should reach the program unexpanded, and note that an unmatched glob is an error, not a literal.
 - Before finishing a task run `cargo fmt`, `cargo clippy --workspace --all-targets --all-features -- -D warnings` and `cargo test --workspace --all-features`.
 - Add a golden-corpus case for every parsing bug fixed (format: `tests/corpus/README.md`). When a change makes more cases pass, rerun the corpus test with `UPDATE_CORPUS_BASELINE=1` and commit `tests/corpus/passing.txt`.
 - Parse-rule changes also need a row in `docs/usps-pub28-notes.md` (its source, even when the source is data rather than USPS). Re-run `python3 tools/corpus/emit_expect.py --check tests/corpus/*.jsonl` after changing a rule the corpus emitters follow.
