@@ -231,7 +231,8 @@ crates/
 tests/corpus/               golden corpus (JSONL) and its baseline
 tests/external/usaddress/   usaddress's labeled test files (MIT, vendored)
 tools/                      corpus emitter expectations, usaddress comparison, place list, Pub 28 checks,
-                            the Netsyms harness (netsyms/) and the benchmark suite generator (benchsuite/)
+                            the Netsyms harness (netsyms/), the ingest tool that turns any address source
+                            into one record format (ingest/) and the benchmark suite generator (benchsuite/)
 benchmarks/                 the benchmark suite (suite.py, suite/v1/) and the accuracy, speed and size scripts
 examples/                   notebook, Polars, pandas and DuckDB pipelines, sample data
 fuzz/                       cargo-fuzz targets (nightly)
@@ -266,14 +267,14 @@ docs/                       this page and the references below
   after comparison on a sample of the Netsyms address database for every parse-rule
   change, a full run over its 146.6 million US rows before a release (no panics, no failed
   rows, warning and mismatch counts compared with the previous run), the National Address
-  Database scorecard, and a one-line Florida check (`tools/netsyms/README.md`,
+  Database scorecard, and a one-line Florida check (`tools/harness/README.md`,
   `benchmarks/README.md`, `data-policy.md`).
 - **Pub 28 check**: `tools/pub28/verify.py` compares the tables with the live
   Publication 28 pages and runs every Appendix F example through the parser.
 - **CI**: `cargo fmt --check`, `clippy -D warnings`, `cargo test --workspace
   --all-features`, the corpus report, the emitter-expectation check, a package
   build and a check of the license files, an sdist build in a clean environment, a short
-  fuzz smoke run of each target, the Python suite and the wheel build. The benchmark
+  fuzz smoke run of each target, the Python suite, the ingest tool's tests and the wheel build. The benchmark
   suite and the two release workflows run by hand or on a version tag.
 
 ## Reference pages

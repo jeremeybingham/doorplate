@@ -320,7 +320,7 @@ sets and are not promised for yours. Method, every other figure and the caveats:
 | **Geocode benchmark** | Accuracy on one-line, uppercase, comma-free US street addresses from an outside data set (60,522 in the `dev` split) | `python benchmarks/accuracy.py` | Not redistributable: download it into `local-data/` | Maintainers; the check that a rule fix generalizes |
 | **Speed** | Addresses per second: Python (`speed_python.py`), batches and pandas, Polars and DuckDB frames (`bench_batch.py`), Rust (`speed_rust.py`, criterion) | the scripts in `benchmarks/` | Committed, invented addresses | Anyone; absolute figures belong to one machine, so read ratios |
 | **Size and memory** | Wheel, binary and installed size; import time; resident memory, against usaddress | `python benchmarks/size_memory.py` | None | Anyone |
-| **Checks on private data** | Rule changes and releases on real data: the Netsyms address database, the National Address Database sample, Florida records | `tools/netsyms/`, `tools/compare/` | `local-data/`, never published | Maintainers |
+| **Checks on private data** | Rule changes and releases on real data: the Netsyms address database, the National Address Database sample, Florida records | `tools/harness/`, `tools/compare/` | `local-data/`, never published | Maintainers |
 
 Two things that look like benchmarks are not: the **golden corpus** (`tests/corpus/`) is a regression set that
 doorplate passes by construction, and **usaddress's own test files** are usaddress's regression tests (it

@@ -6,7 +6,7 @@
 
 The suite generator (step 3 of #75) needs street counts for every ZIP code, which the 1,000,000-row
 sample cannot give. The 42 GB text file is never written to disk: `7z x -so` pipes it through a named
-pipe into DuckDB, which keeps the columns of `tools/netsyms/nad_score.py` and writes
+pipe into DuckDB, which keeps the columns of `tools/harness/nad_score.py` and writes
 `local-data/nad-2026/nad_r24.parquet` (git-ignored; row-level NAD data stays in `local-data/`,
 docs/data-policy.md). This library formats and parses; it does not validate that an address exists.
 """

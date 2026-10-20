@@ -8,7 +8,8 @@ and none of the data below is used to claim otherwise.
 ## Principles
 
 1. **`local-data/` is git-ignored and stays that way.** Source files, extracts, samples,
-   profiles and reports live there. Never commit anything from it.
+   profiles and reports live there. Never commit anything from it. A private source's
+   ingest spec (`tools/ingest/README.md`), notice and inventory live there with its data.
 2. **Aggregate numbers and our own fixes ship; source rows do not.** Counts, rates and
    scores can be published. Rows, street names, house numbers, coordinates and
    personal names cannot, in commits, issues, pull requests, docs or comments. The one
@@ -17,7 +18,9 @@ and none of the data below is used to claim otherwise.
 3. **Examples are invented.** A corpus case, a doc example or a bug report uses an
    invented address of the same shape (`CONTRIBUTING.md#sharing-messy-data`).
 4. **Never print personal names** from private data, in a terminal log that is pasted
-   anywhere or in an agent transcript that is shared.
+   anywhere or in an agent transcript that is shared. Reader errors count: DuckDB's
+   messages quote the rows they failed on, so scripts that read private files print only
+   the error's type (as `tools/ingest/ingest.py` does).
 5. **Every addition to the shipped data cites a source** (`docs/usps-pub28-notes.md`,
    `docs/places.md`, `docs/packs/`), and the source's terms allow the use.
 
@@ -66,7 +69,7 @@ list, and is subject to state statutes that prohibit that use. We treat it as fo
   aggregates), citing NAD as the source. Because NAD is public domain, it can serve as the
   public confirming source itself; keep a threshold written down for any new rule.
 - **What we have done with it** (2026-10-19, aggregate results only; scripts in
-  `tools/netsyms/`, results in issue #29):
+  `tools/harness/`, results in issue #29):
   - *Profile:* 99,226,272 records in 47 jurisdictions (no HI, MI, MS, NH, NV or PR); fill rates
     for each column and state; 95 `NAD_Source` values.
   - *Place names:* 89,490 community and neighborhood names (`Uninc_Comm`, `Nbrhd_Comm`) differ
@@ -75,7 +78,7 @@ list, and is subject to state statutes that prohibit that use. We treat it as fo
     data**; the gap is area words and neighborhood labels no address database holds (the area-word
     rule, #62, came from that triage instead).
   - *Scorecard:* a 1,000,000-row random sample scored against NAD's labeled parts
-    (`tools/netsyms/nad_score.py`). It confirmed the parser against labeled data and found one
+    (`tools/harness/nad_score.py`). It confirmed the parser against labeled data and found one
     bug, fixed with corpus `rg-207` to `rg-211`: a trailing directional equal to the city's first
     word (`MAIN ST WEST` / `WEST POINT`) was dropped as a copy of the city.
   - *Evaluated and not used:* NAD's `Addr_Type`, `AddrClass`, `Lifecycle` and `DeliverTyp`

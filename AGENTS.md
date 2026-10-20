@@ -59,6 +59,7 @@ cargo test --workspace --all-features
 # Python (in a virtualenv with maturin and pytest)
 cd crates/doorplate-py && maturin develop --release && cd ../..
 pytest crates/doorplate-py/tests
+pytest tools/ingest tools/harness   # the ingest tool (Python 3.11+) and the harness
 
 # The benchmark suite (needs usaddress; the extension built with --release)
 python benchmarks/suite.py all
@@ -90,4 +91,6 @@ Plain `cargo test` needs no Python. Rust 1.80 or later; the Python extension nee
 - `crates/doorplate/data/`: the Pub 28 tables, the national place list and state packs.
 - `tests/corpus/`: the golden corpus. `examples/`: runnable examples.
 - `docs/`: design notes and the sources of every rule. `tools/`: verification, fuzzing,
-  corpus, comparison and the Netsyms harness (`tools/netsyms/`, offline, private data). `benchmarks/`: speed, accuracy and size scripts, and the benchmark suite (`benchmarks/suite.py`, its data in `benchmarks/suite/v1/`, which is frozen; its generator, `tools/benchsuite/`, needs private data).
+  corpus, comparison, the harness (`tools/harness/`, offline, private data) and the
+  ingest tool that turns any address source into one record format (`tools/ingest/`; specs for
+  private sources live with their data in `local-data/`). `benchmarks/`: speed, accuracy and size scripts, and the benchmark suite (`benchmarks/suite.py`, its data in `benchmarks/suite/v1/`, which is frozen; its generator, `tools/benchsuite/`, needs private data).

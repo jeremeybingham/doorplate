@@ -50,6 +50,7 @@ cargo test --workspace --all-features
 # Python (in a virtualenv with maturin and pytest; `uv venv` and `uv pip install` are fine)
 cd crates/doorplate-py && maturin develop --release && cd ../..
 pytest crates/doorplate-py/tests
+pytest tools/ingest tools/harness   # the ingest tool (Python 3.11+) and the harness
 ```
 
 Rust 1.80 or later; the Python extension needs 1.83. Plain `cargo test` needs no Python.
@@ -127,7 +128,7 @@ notebook, so they cannot go stale silently.
 Maintainers only. The release issue for a version (#44 for 0.3.0) is the checklist; the steps, in order:
 
 1. **Figures.** If the parser or the tables changed since the figures were taken, rerun `benchmarks/suite.py all` (and `benchmarks/suite.py compare --suite local-data/benchsuite/twin` for the private twin), `benchmarks/accuracy.py` and the speed and size scripts, and update the figures in `docs/benchmarks.md` and in the package READMEs that quote them (`CLAUDE.md` lists the four READMEs). The suite's `v1` files are never edited; a rebuilt suite is `v2`.
-2. **Checks on private data.** One full Netsyms run on the release commit, compared with the previous one (`tools/netsyms/README.md`), and `tools/compare/oneline_fl.py` and `tools/netsyms/nad_score.py` as regression checks. Ask before extracting the database or starting the run.
+2. **Checks on private data.** One full Netsyms run on the release commit, compared with the previous one (`tools/harness/README.md`), and `tools/compare/oneline_fl.py` and `tools/harness/nad_score.py` as regression checks. Ask before extracting the database or starting the run.
 3. **CHANGELOG.** Rename `[Unreleased]` to the version and the date, add an empty `[Unreleased]` above it, and say when keys changed (store the key prefix, re-parse to re-key).
 4. **One pull request for the references, made last.** The workspace version and the `doorplate` dependency version in `Cargo.toml` (and `Cargo.lock`, with `cargo update -w`), the "Alpha release" notice in the four READMEs, and the docs that say which version is current. Leave history alone (older CHANGELOG entries, the `k1` notes in `docs/key-format.md`). CI and the wheel builds must be green on the merge commit. Optionally start the "Benchmark suite" workflow from the Actions tab, and run "Release crates.io" (a dry run: it packages `doorplate` and stops) and "Release PyPI" (it builds the wheels and the sdist and stops) by hand first.
 5. **Tag.** Tag the merge commit `vX.Y.Z`; the tag must equal the workspace version, and the crates.io job fails if it does not. Pushing a `v*` tag runs both release workflows. The `crates-io` and the `pypi` environments each need a manual approval before anything is published. crates.io gets `doorplate`, then `doorplate-cli` (the repository secret `CARGO_REGISTRY_TOKEN`); PyPI gets the abi3 wheels and the sdist through trusted publishing (no token).
