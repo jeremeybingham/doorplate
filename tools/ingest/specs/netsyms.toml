@@ -1,0 +1,28 @@
+# The Netsyms sample (docs/data-policy.md; tools/netsyms/README.md), US rows only.
+# Same inputs as tools/netsyms/run.py: line 1 is number + street, line 2 street2, and the
+# ZIP is zipcode plus `-plus4` when there is one. For the full database, point `sqlite`
+# at the extracted file and the query at the `addresses` table (its id is `rowid`).
+source = "netsyms"
+output = "local-data/netsyms-2026/records.parquet"
+
+[inputs.netsyms]
+sqlite = "local-data/netsyms-2026/sample.sqlite"
+query = """
+SELECT src_rowid, number, street, street2, city, state, zipcode, plus4, source
+FROM sample WHERE country = 'US'
+"""
+
+[[roles]]
+role = "address"
+sql = """
+SELECT
+    src_rowid                                   AS record_id,
+    source                                      AS provider,
+    concat_ws(' ', nullif(trim(number), ''), nullif(trim(street), '')) AS line1,
+    street2                                     AS line2,
+    city                                        AS city,
+    state                                       AS state,
+    CASE WHEN nullif(trim(plus4), '') IS NULL THEN zipcode
+         ELSE concat(trim(zipcode), '-', trim(plus4)) END AS zip
+FROM netsyms
+"""

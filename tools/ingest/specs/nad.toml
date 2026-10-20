@@ -1,0 +1,34 @@
+# The National Address Database sample (docs/data-policy.md; local-data/README.md).
+# Same inputs as tools/netsyms/nad_score.py: line 1 is AddNo_Full + StNam_Full, line 2
+# SubAddress, and the parts NAD labels become label_* columns.
+source = "nad"
+output = "local-data/nad-2026/records.parquet"
+
+[inputs.nad]
+files = ["local-data/nad-2026/sample1m.parquet"]
+sql = "SELECT * FROM read_parquet('local-data/nad-2026/sample1m.parquet', file_row_number = true)"
+
+[[roles]]
+role = "address"
+sql = """
+SELECT
+    file_row_number           AS record_id,
+    NAD_Source                AS provider,
+    concat_ws(' ', nullif(trim(AddNo_Full), ''), nullif(trim(StNam_Full), '')) AS line1,
+    SubAddress                AS line2,
+    Post_City                 AS city,
+    State                     AS state,
+    Zip_Code                  AS zip,
+    AddNum_Pre                AS label_number_prefix,
+    Add_Number                AS label_number,
+    AddNum_Suf                AS label_number_suffix,
+    St_PreDir                 AS label_predir,
+    St_PreTyp                 AS label_pretype,
+    St_Name                   AS label_name,
+    St_PosTyp                 AS label_type,
+    St_PosDir                 AS label_postdir,
+    St_PosMod                 AS label_postmod,
+    Unit                      AS label_unit,
+    Building                  AS label_building
+FROM nad
+"""
