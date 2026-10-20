@@ -11,7 +11,9 @@ aggregate numbers leave `local-data/`, and nothing is committed from it.
 | `run.py` | Prints a plan; with `--confirm` parses the rows in chunks and writes a run directory. `--input` reads a `records.parquet` (any source, in row-offset chunks); `--db` reads the Netsyms SQLite directly |
 | `analyze.py` | Summarizes a finished run: totals, warning codes, states, roles, last-line rows, providers, place gaps |
 | `compare.py` | Compares two runs (before and after a rule change): totals, warning codes, states |
-| `test_run.py` | Tests on invented rows (`pytest tools/netsyms`) |
+| `label_score.py` | Scores any records file that has `label_*` columns against our parse, or against another file's labels paired by `pair_id` (counts only) |
+| `nad_score.py` | The NAD scorecard: makes the NAD sample, then runs `label_score.py` on it |
+| `test_run.py`, `test_label_score.py` | Tests on invented rows (`pytest tools/netsyms`) |
 | `SCHEMA.md` | The artifacts' columns and the comparison rules (copied into every run) |
 
 ## Safe by default
@@ -75,22 +77,51 @@ Rerun the harness on the same database (a new run id), then `python tools/netsym
 5. For a rule on one-line input, also run `tools/compare/city_diff.py` on the geocode splits and `tools/compare/oneline_fl.py` (`benchmarks/README.md`).
 6. Full Netsyms runs (about 20 minutes) only after a batch of rules and on the release commit. Ask before any extraction, full run or download.
 
-## The NAD scorecard (`nad_score.py`)
+## Label scoring (`label_score.py`, and `nad_score.py` for NAD)
 
-The National Address Database labels the parts of each address (`docs/data-policy.md`), which the
-Netsyms rows do not. `nad_score.py` draws a random 1,000,000-row sample of the NAD text file (one
-pass, about 3 minutes, `--make-sample --confirm`), parses `AddNo_Full` + `StNam_Full` as line 1 and
-`SubAddress` as line 2, and compares our predirectional, postdirectional, suffix and unit with NAD's
-wherever NAD has a non-empty label. It prints counts only. Run it after a street or unit rule changes:
+Some sources label the parts of each address (NAD, the NC voter snapshot), which the Netsyms
+rows do not. `label_score.py` parses a records file (`tools/ingest/`) and compares our
+predirectional, postdirectional, suffix, unit, house number and street name with the labels
+wherever a label is present. It prints counts only, per source and role: the rows labeled, the
+rows where we differ, the top (label -> ours) pairs for the lexicon fields, the top shapes
+(letters `a`, digits `9`) for the others, and the top states. Like `run.py`, it prints a plan
+until `--confirm`.
+
+```sh
+python tools/netsyms/label_score.py local-data/nad-2026/records.parquet --confirm
+```
+
+**Same address in two forms.** With `--labels OTHER.parquet`, the labels come from another file and
+rows are paired by `(role, pair_id)` (ids unique in both files). Our parse of the first file's
+one-line form is scored against the other file's labels, and reported as a pair score. For the
+NC voter file, the as-entered street of the current file against the county-entered parts of
+the March snapshot:
+
+```sh
+python tools/netsyms/label_score.py local-data/nc-voter-2026/records_current.parquet \
+    --labels local-data/nc-voter-2026/records_snapshot.parquet --confirm
+```
+
+The files can be months apart, so a voter who moved would show as a disagreement. Pairs whose
+ZIP codes differ are dropped and counted (`--any-zip` keeps them). On a 50,000-row slice that
+guard dropped 2.8% of pairs and cut the disagreement rates by about two thirds.
+
+**NAD.** `nad_score.py` draws a random 1,000,000-row sample of the NAD text file (one pass, about 3
+minutes, `--make-sample --confirm`), builds its records with `tools/ingest/specs/nad.toml` when
+they are missing, and runs `label_score.py` on the four fields it always scored. Run it after a
+street or unit rule changes:
 
 ```sh
 python tools/netsyms/nad_score.py --make-sample --confirm   # once; writes local-data/nad-2026/sample1m.parquet
 python tools/netsyms/nad_score.py
 ```
 
-Read it with care: many providers put the suffix inside the name and leave the type empty (those rows
-are skipped, since NAD has no label to compare), and `Unit` is spelled out (`Apartment 4`). On
-the 2026-10-19 sample (NAD r24, seed 7) we differ from a labeled value in 0.11% of suffixes, 0.69% of
-predirectionals, 0.14% of postdirectionals (0.50% before the city-copy fix, #29) and 3.7% of units
-(mostly a spelled-out designator, a lone letter, or a bare number after a one-word street).
-
+Read the figures with care: many providers put the suffix inside the name and leave the type empty
+(those rows are skipped, since there is no label to compare), and `Unit` is spelled out
+(`Apartment 4`). On the 2026-10-19 sample (NAD r24, seed 7) we differ from a labeled value in 0.11% of
+suffixes, 0.69% of predirectionals, 0.14% of postdirectionals (0.50% before the city-copy fix, #29)
+and 3.6% of units (mostly a spelled-out designator, a lone letter, or a bare number after a
+one-word street). `label_score.py` reproduces the previous `nad_score.py` exactly on this sample
+(212,150 / 72,054 / 915,429 / 132,763 labeled; 1,473 / 100 / 976 / 4,805 differing) in 15 seconds
+instead of 2 minutes. A source's labels are its providers' choices, not ground truth: a
+disagreement is a question, not a bug count.

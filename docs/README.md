@@ -44,7 +44,7 @@ New to the project? Read the [project README](../README.md), then
 | [`benchmarks/README.md`](../benchmarks/README.md) | How to run every benchmark, and which one answers which question |
 | [`benchmark-suite.md`](benchmark-suite.md) | The benchmark suite's specification: what it holds, how it was built and audited, the rules that keep it fair |
 | [`benchmarks/suite/README.md`](../benchmarks/suite/README.md), [`MANIFEST.md`](../benchmarks/suite/v1/MANIFEST.md) | The suite's data folder, and the composition and checksums of `v1` |
-| [`tools/netsyms/README.md`](../tools/netsyms/README.md), [`SCHEMA.md`](../tools/netsyms/SCHEMA.md) | The harness (parse-rule comparisons, the pre-release full run on private data, and runs on any ingested source) and the columns of a run |
+| [`tools/netsyms/README.md`](../tools/netsyms/README.md), [`SCHEMA.md`](../tools/netsyms/SCHEMA.md) | The harness (parse-rule comparisons, the pre-release full run on private data, runs on any ingested source, and scoring against labeled parts) and the columns of a run |
 | [`tools/ingest/README.md`](../tools/ingest/README.md) | The record format every address source is turned into, and how to write a spec for a source (issue #93) |
 
 ## Test data
