@@ -33,7 +33,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 HERE = Path(__file__).resolve().parent
-SCHEMA_VERSION = 5
+SCHEMA_VERSION = 7
 REQUIRED = ["zipcode", "number", "street", "street2", "city", "state", "plus4", "country", "source"]
 GB = 1 << 30
 # The columns of a row as the checks see it (tools/ingest/README.md has their meaning).
@@ -178,10 +178,11 @@ def street_text(a):
 
 
 def _load_forms():
-    """Every suffix and directional spelling mapped to its standard abbreviation, read from
-    the shipped tables (crates/doorplate/data/), so `ST` and `STREET` compare equal."""
+    """Every suffix, directional and unit designator spelling mapped to its standard
+    abbreviation, read from the shipped tables (crates/doorplate/data/), so `ST` and `STREET`,
+    or `STE` and `SUITE`, compare equal."""
     canon = {}
-    for name in ("suffixes.toml", "directionals.toml"):
+    for name in ("suffixes.toml", "directionals.toml", "units.toml"):
         abbr = None
         for line in (ROOT / "crates" / "doorplate" / "data" / name).read_text().splitlines():
             m = re.match(r'abbr = "([^"]+)"', line)
@@ -236,25 +237,32 @@ def street_ok(line1, line2, number, a):
 
 
 def _load_states():
-    """Every state's code, name and aliases as upper-case tokens, from the shipped table.
-    Read with regular expressions, like `_load_forms`: the harness runs on Python 3.10."""
-    out = {}
+    """Every state's forms from the shipped table: the code, name and aliases as whole strings
+    (`NEW YORK`), and as upper-case tokens (`NEW`, `YORK`, `NY`). Read with regular expressions,
+    like `_load_forms`: the harness runs on Python 3.10."""
+    whole, tokens = {}, {}
     code = None
+
+    def add(text):
+        whole[code].add(" ".join(text.upper().split()))
+        tokens[code] |= set(re.findall(r"[A-Z0-9]+", text.upper()))
+
     for line in (ROOT / "crates" / "doorplate" / "data" / "states.toml").read_text().splitlines():
         m = re.match(r'(code|name) = "([^"]+)"', line)
         if m and m.group(1) == "code":
             code = m.group(2)
-            out[code] = set(re.findall(r"[A-Z0-9]+", code.upper()))
+            whole[code], tokens[code] = set(), set()
+            add(code)
         elif m and code:
-            out[code] |= set(re.findall(r"[A-Z0-9]+", m.group(2).upper()))
+            add(m.group(2))
         m = re.match(r"aliases = \[(.*)\]", line)
         if m and code:
             for alias in re.findall(r'"([^"]+)"', m.group(1)):
-                out[code] |= set(re.findall(r"[A-Z0-9]+", alias.upper()))
-    return out
+                add(alias)
+    return whole, tokens
 
 
-STATE_FORMS = _load_states()
+STATE_NAMES, STATE_FORMS = _load_states()
 
 
 def crossed_boundary(last_line, a):
@@ -268,6 +276,12 @@ def crossed_boundary(last_line, a):
         return True
     text = (last_line or "")
     return any(z and z not in text for z in (a.zip5, a.zip4))
+
+
+def state_same(source_state, parsed):
+    """The source state equals the parsed one, spelled as a code, a name (`NEW YORK`) or an alias."""
+    n = norm(source_state)
+    return n == (parsed or "") or n in STATE_NAMES.get(parsed or "", ())
 
 
 def plus4_of(zipc):
@@ -347,7 +361,7 @@ def process_chunk(rows, present, fields_many, parse_many):
                 src_number = f"{label_number} {line2}" if FRACTION.fullmatch((line2 or "").strip()) else label_number
                 if compact(src_number) != compact(a.street_number):
                     mism.append("number")
-            if "state" in have and norm(rstate) != (a.state or ""):
+            if "state" in have and not state_same(rstate, a.state):
                 mism.append("state")
             if "zip" in have:
                 if (rzip or "")[:5] != (a.zip5 or ""):
