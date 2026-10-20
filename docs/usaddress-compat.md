@@ -6,7 +6,9 @@ something similar and something different: it parses with rules and a place list
 and also standardizes (Pub 28, RESO), builds a key and a slug, and reports
 diagnostics. This page is for people who already use usaddress, or who want to
 compare the two. Accuracy and speed numbers are in
-[`benchmarks.md`](benchmarks.md).
+[`benchmarks.md`](benchmarks.md); the fair comparison is the benchmark suite
+([`benchmark-suite.md`](benchmark-suite.md)), which scores both libraries on the
+same labeled addresses.
 
 ## Output in usaddress's shape
 
@@ -24,14 +26,26 @@ What differs:
 
 - Tokens the parser could not place have no label and are left out of `tag()`;
   `unparsed` and a warning report them (usaddress labels every token).
+- `parse_tokens` cuts a few strings into different tokens from `usaddress.parse`: a
+  `#` stuck to its value (`#4`, `#7-C`) stays one token here and is two there, a comma
+  with no space after it (`Ct,Mabank,TX`) is cut differently, and a lone comma is a token
+  here and none there ([issue 78](https://github.com/jeremeybingham/doorplate/issues/78)).
+  Compare the two by character span, as the scripts below and the benchmark suite do,
+  not by token index.
 - usaddress's `AddressNumberSuffix` (`214 B`) and number ranges (`5240;5220`) are
   kept in `AddressNumber` or left out. Its intersection, landmark, `CornerOf`,
   country, recipient and `NotAddress` labels are not modeled: that text goes to
-  `unparsed`. A trailing `USA` is ignored with `country_ignored`, and an
+  `unparsed`. A trailing `USA`, `US` or `UNITED STATES` is ignored with
+  `country_ignored` (the fields are right; only the token has no label), and an
   intersection raises `intersection_detected`.
 - A highway's route is `StreetName` and its prefix and state are
   `StreetNamePreType`, as in usaddress. A rural, highway contract or military line
-  uses the `USPSBoxGroup*` and `USPSBox*` labels.
+  uses the `USPSBoxGroup*` and `USPSBox*` labels. usaddress labels the same lines
+  differently: `PSC 1650 BOX 10` is `SubaddressType` and `SubaddressIdentifier` there,
+  `UNIT 2050 BOX 4190` is `OccupancyType` and `OccupancyIdentifier`, and
+  `GENERAL DELIVERY` is `LandmarkName` (here, `USPSBoxType`). `CMR` boxes, an older
+  type the current Pub 28 does not list, are not read as military here
+  ([issue 77](https://github.com/jeremeybingham/doorplate/issues/77)).
 - Not in usaddress: `default_state` (a state hint for input with no state), the
   Pub 28 and RESO output, the match key and slug, byte spans, `place` and warnings.
 
@@ -62,7 +76,7 @@ two `OccupancyIdentifier` tokens).
 
 | Area | usaddress | doorplate |
 |---|---|---|
-| Install and call | `pip install`; `parse`, `tag` | Rust crate, CLI and a Python package (`parse`, `parse_many`, `tag`, `parse_tokens`); abi3 wheels for Linux, macOS and Windows |
+| Install and call | `pip install`; `parse`, `tag` | Rust crate, CLI and a Python package (`parse`, `parse_fields`, `parse_many`, `parse_fields_many`, `tag`, `parse_tokens`); abi3 wheels for Linux, macOS and Windows |
 | Token labels | `parse()` | `to_usaddress_tags()`; `parse_tokens()` in Python |
 | Joined components and type | `tag()` returns a dict and `Street Address` / `PO Box` / `Ambiguous`; raises `RepeatedLabelError` | `tag()`, `address_type()`; a repeated label is reported, not an error |
 | Input forms | One string | One string or fields (`line1`, `line2`, city, state, ZIP) |
@@ -72,31 +86,34 @@ two `OccupancyIdentifier` tokens).
 | Rare address shapes | Basic | Rural and highway routes, military, general delivery, dual, second unit |
 | Customization | Retrain with parserator on your own labels | Fixed at compile time |
 | Intersections, landmarks, `CornerOf`, country, recipient names | Labeled | Not modeled; text goes to `unparsed`. A trailing country is ignored with `country_ignored` and an intersection raises `intersection_detected` |
-| Display casing, long form | Keeps input case | Uppercase only |
-| Batch and dataframes | Loop yourself | `parse_many` (parallel; GIL released in Python); `pandas.parse_column` and `polars.parse_column` helpers (optional extras) |
+| Display casing, long form | Keeps input case | `to_usps()` is uppercase (Pub 28); `to_display()` is mixed case and `to_long()` spells words out, for showing an address to a person (neither is a Pub 28 form) |
+| Batch and dataframes | Loop yourself | `parse_many` and `parse_fields_many` (parallel; GIL released in Python); `doorplate.pandas.parse_column`, `doorplate.polars.parse_column` and the DuckDB functions `doorplate_parse` and `doorplate_parse_fields` (optional extras); `doorplate parse-file` for CSV files |
 
 ## How the two are compared
 
 `tools/compare/compare_usaddress.py` runs both parsers on the same strings and
-scores them by the same rules. `doorplate` produces usaddress's labels with
+scores them by the same rules; `benchmarks/suite.py` (the benchmark suite) uses the
+same rules on its own labeled addresses. `doorplate` produces usaddress's labels with
 `doorplate parse --usaddress`, built from the component spans without re-parsing.
 
 ```sh
 cargo build --release -p doorplate-cli
-python tools/compare/compare_usaddress.py gold tests/external/usaddress/*.xml --out report.md
-python tools/compare/compare_usaddress.py raw data.csv --column address \
-    [--line2 C --city C --state C --zip C] [--no-header] --out report.md
-python tools/compare/compare_usaddress.py tag tests/external/usaddress/*.xml --out tag-report.md
+python tools/compare/compare_usaddress.py --out report.md gold tests/external/usaddress/*.xml
+python tools/compare/compare_usaddress.py --out report.md raw data.csv --column address \
+    [--line2 C --city C --state C --zip C] [--no-header]
+python tools/compare/compare_usaddress.py --out tag-report.md tag tests/external/usaddress/*.xml
 ```
 
-`gold` scores labeled files, `raw` reports agreement on unlabeled data, and `tag`
-compares the joined dicts of `tag()` with `usaddress.tag()` and the address types.
+`--out` goes before the mode. `gold` scores labeled files, `raw` reports agreement on
+unlabeled data, and `tag` compares the joined dicts of `tag()` with `usaddress.tag()`
+and the address types.
 usaddress's labeled test files are vendored in `tests/external/usaddress/` (MIT).
 
 ### Scoring rules
 
-- Tokens are compared one by one; tokens with no letter or digit (`-`, `&`) are
-  not scored.
+- Tokens are compared one by one, found by character span in the input (so a
+  different cut, such as `#4` against `#` and `4`, does not misalign the rest); tokens
+  with no letter or digit (`-`, `&`) are not scored.
 - **Out of scope:** addresses whose gold labels include `Recipient`,
   `LandmarkName`, `CornerOf`, `IntersectionSeparator`, `NotAddress`,
   `CountryName`, `SubaddressType`, `SubaddressIdentifier`, `StreetNamePreModifier`
@@ -110,6 +127,12 @@ usaddress's labeled test files are vendored in `tests/external/usaddress/` (MIT)
   reported too.
 - **Training overlap:** addresses listed in `tests/external/usaddress/in_training.txt`
   (made by `tools/compare/training_overlap.py`) are reported apart.
+- **The benchmark suite** reports two headline figures for each library instead of
+  leaving addresses out: *shared labels* (the addresses whose gold labels both libraries
+  model, the out-of-scope rule above) and *all records* (nothing left out, so a label only
+  one library models counts as wrong for the other). A gold `CountryName` that doorplate
+  drops on purpose, with `country_ignored`, counts as handled for doorplate. Details:
+  [`benchmark-suite.md`](benchmark-suite.md), "Scoring".
 
 ### Why usaddress's own tests are not a contest
 
@@ -117,12 +140,13 @@ usaddress's CI asserts the labels in its test files on every release, and its
 comments say new formats go in both training and test data. So it scores about
 100% on them even where an address is not in its training files. Those numbers
 say how close doorplate comes to usaddress's behavior, not which is more
-accurate. A blind comparison needs labels neither parser has seen
-([`benchmarks.md`](benchmarks.md) uses a public geocoding benchmark).
+accurate. A blind comparison needs labels neither parser has seen: the benchmark
+suite ([`benchmark-suite.md`](benchmark-suite.md)) is built for that, and
+[`benchmarks.md`](benchmarks.md) also uses a public geocoding benchmark.
 
 ### How closely `tag()` agrees
 
-On the strings of usaddress's test files that use only labels doorplate models
+Rerun on 0.3.0 (2026-10-20; the same numbers as before). On the strings of usaddress's test files that use only labels doorplate models
 (8,108 addresses, 6,658 of them in usaddress's training files), the joined dicts
 are identical on 8,043 of 8,103 compared (99.3%), and the address type on 99.8%.
 The 60 dicts that differ are boundary choices: `SAINT JOHN W ST` (the `W` in the
