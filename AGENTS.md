@@ -59,7 +59,7 @@ cargo test --workspace --all-features
 # Python (in a virtualenv with maturin and pytest)
 cd crates/doorplate-py && maturin develop --release && cd ../..
 pytest crates/doorplate-py/tests
-pytest tools/ingest                 # the ingest tool (Python 3.11+)
+pytest tools/ingest tools/netsyms   # the ingest tool (Python 3.11+) and the harness
 
 # The benchmark suite (needs usaddress; the extension built with --release)
 python benchmarks/suite.py all

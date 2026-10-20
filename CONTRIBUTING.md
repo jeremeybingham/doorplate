@@ -50,7 +50,7 @@ cargo test --workspace --all-features
 # Python (in a virtualenv with maturin and pytest; `uv venv` and `uv pip install` are fine)
 cd crates/doorplate-py && maturin develop --release && cd ../..
 pytest crates/doorplate-py/tests
-pytest tools/ingest                 # the ingest tool (Python 3.11+)
+pytest tools/ingest tools/netsyms   # the ingest tool (Python 3.11+) and the harness
 ```
 
 Rust 1.80 or later; the Python extension needs 1.83. Plain `cargo test` needs no Python.

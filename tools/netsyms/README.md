@@ -1,15 +1,17 @@
 # Netsyms harness
 
-Parses the US rows of the Netsyms address database with doorplate and keeps artifacts for
-analysis later, in a fresh session if need be. Everything runs offline; the database and
+Parses address sources with doorplate (the US rows of the Netsyms database, or any source
+turned into records by `tools/ingest/`) and keeps artifacts for analysis later, in a fresh
+session if need be. Everything runs offline; the database and
 every artifact live in the git-ignored `local-data/`. Read `docs/data-policy.md` first: only
 aggregate numbers leave `local-data/`, and nothing is committed from it.
 
 | Script | Does |
 |---|---|
-| `run.py` | Prints a plan; with `--confirm` parses the rows in rowid chunks and writes a run directory |
-| `analyze.py` | Summarizes a finished run: totals, warning codes, states, sources, place gaps |
+| `run.py` | Prints a plan; with `--confirm` parses the rows in chunks and writes a run directory. `--input` reads a `records.parquet` (any source, in row-offset chunks); `--db` reads the Netsyms SQLite directly |
+| `analyze.py` | Summarizes a finished run: totals, warning codes, states, roles, last-line rows, providers, place gaps |
 | `compare.py` | Compares two runs (before and after a rule change): totals, warning codes, states |
+| `test_run.py` | Tests on invented rows (`pytest tools/netsyms`) |
 | `SCHEMA.md` | The artifacts' columns and the comparison rules (copied into every run) |
 
 ## Safe by default
@@ -23,6 +25,19 @@ python tools/netsyms/run.py --db local-data/netsyms-2026/sample.sqlite --table s
 python tools/netsyms/run.py --db local-data/netsyms-2026/sample.sqlite --table sample --confirm    # run
 python tools/netsyms/analyze.py <run-id>
 ```
+
+Any other source goes through `tools/ingest/` first, then `--input`. The checks run only on
+the fields a role has, rows with a `last_line` are parsed as one joined string and counted
+apart (`last_line_rows`, `last_line_crossed`; #93 option A), and the artifacts are broken down
+by `source`, `role` and `provider`:
+
+```sh
+python tools/ingest/ingest.py tools/ingest/specs/netsyms.toml --confirm
+python tools/netsyms/run.py --input local-data/netsyms-2026/records.parquet --confirm
+```
+
+On the sample, a run from the Netsyms records and a direct `--db` run give the same totals,
+warning codes and per-state counts (`compare.py` shows no change).
 
 The full run (after the archive is extracted, which needs a separate go-ahead):
 

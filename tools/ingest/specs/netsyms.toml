@@ -1,5 +1,6 @@
 # The Netsyms sample (docs/data-policy.md; tools/netsyms/README.md), US rows only.
-# Same inputs as tools/netsyms/run.py: line 1 is number + street, line 2 street2, and the
+# Same inputs as tools/netsyms/run.py: line 1 is number + street (`label_number` is the
+# number field, which step 2's number and street checks use), line 2 street2, and the
 # ZIP is zipcode plus `-plus4` when there is one. For the full database, point `sqlite`
 # at the extracted file and the query at the `addresses` table (its id is `rowid`).
 source = "netsyms"
@@ -19,6 +20,7 @@ SELECT
     src_rowid                                   AS record_id,
     source                                      AS provider,
     concat_ws(' ', nullif(trim(number), ''), nullif(trim(street), '')) AS line1,
+    nullif(trim(number), '')                    AS label_number,
     street2                                     AS line2,
     city                                        AS city,
     state                                       AS state,

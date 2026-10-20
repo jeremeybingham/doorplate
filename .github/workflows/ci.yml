@@ -84,8 +84,8 @@ jobs:
           pip install maturin pytest usaddress pandas polars duckdb pyarrow nbclient nbformat ipykernel
           maturin develop --manifest-path crates/doorplate-py/Cargo.toml
           pytest crates/doorplate-py/tests -q
-      - name: Test the ingest tool (tools/ingest, Python 3.11+)
+      - name: Test the ingest tool and the harness (tools/ingest, tools/netsyms; Python 3.11+)
         if: matrix.python != '3.10'
         run: |
           . .venv/bin/activate
-          pytest tools/ingest -q
+          pytest tools/ingest tools/netsyms -q

@@ -32,7 +32,7 @@ an empty value becomes null.
 | `provider` | A group within the source worth breaking results down by (the original provider in an aggregate, a license type) |
 | `line2` | Second line: unit, building, care-of |
 | `city`, `state`, `zip` | The last line in separate fields; `zip` may carry `-plus4` |
-| `last_line` | City, state and ZIP in one field, for sources that store them that way. Step 2 joins it to the street lines and parses the whole string, and counts parses whose city, state or ZIP use words from outside `last_line` (#93, option A) |
+| `last_line` | City, state and ZIP in one field, for sources that store them that way. `tools/netsyms/run.py` joins it to the street lines and parses the whole string, and counts parses whose city, state or ZIP use words from outside `last_line` (#93, option A) |
 | `label_number_prefix`, `label_number`, `label_number_suffix` | The house number and its prefix and suffix (a half, a letter) as the source labels them |
 | `label_predir`, `label_pretype`, `label_name`, `label_type`, `label_postdir`, `label_postmod` | The street parts as labeled: predirectional, pre-type (`US HIGHWAY`), name, type (suffix), postdirectional, post-modifier (`EXT`) |
 | `label_unit_type`, `label_unit`, `label_building` | Unit designator and number, building |

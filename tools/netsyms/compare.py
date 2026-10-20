@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compare two Netsyms runs: how the class counts changed.
+"""Compare two runs of tools/netsyms/run.py: how the class counts changed.
 
     python tools/netsyms/compare.py BEFORE AFTER [--top 15] [--partial]
 
@@ -25,7 +25,7 @@ import duckdb
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_ROOT = ROOT / "local-data" / "netsyms-runs"
 FIELDS = ["rows", "with_warnings", "no_result", "flagged", "m_number", "m_state", "m_zip5",
-          "m_zip4", "m_city", "m_unit", "m_street"]
+          "m_zip4", "m_city", "m_unit", "m_street", "last_line_rows", "last_line_crossed", "m_boundary"]
 
 
 def open_run(arg, partial):
@@ -62,23 +62,32 @@ def main(argv=None):
         notes.append(f"schema versions differ ({ma.get('schema_version')} vs {mb.get('schema_version')}):"
                      " columns whose rule changed (see SCHEMA.md) are not comparable")
     ia, ib = ma["input"], mb["input"]
-    if (ia["size"], ia["rowid_min"], ia["rowid_max"], ia["country"]) != \
+    if ia.get("kind", "netsyms-sqlite") != ib.get("kind", "netsyms-sqlite"):
+        notes.append("the runs read different kinds of input (SQLite and records): they are like for like"
+                     " only when the row totals are equal")
+    elif (ia["size"], ia["rowid_min"], ia["rowid_max"], ia["country"]) != \
             (ib["size"], ib["rowid_min"], ib["rowid_max"], ib["country"]):
-        notes.append("the runs read different input (size, rowid range or country)")
+        notes.append("the runs read different input (size, row range or country)")
     if ma["options"]["chunk_rowids"] != mb["options"]["chunk_rowids"]:
         notes.append("chunk sizes differ (the totals are still comparable)")
     con = duckdb.connect()
     for name, run in (("a", ra), ("b", rb)):
         for t in ("agg_state_source", "agg_warnings"):
             con.execute(f"create view {name}_{t} as select * from read_parquet('{run / t}/*.parquet')")
-    ta = con.sql("select " + ", ".join(f"coalesce(sum({f}),0)" for f in FIELDS) + " from a_agg_state_source").fetchone()
-    tb = con.sql("select " + ", ".join(f"coalesce(sum({f}),0)" for f in FIELDS) + " from b_agg_state_source").fetchone()
+    cols = [{r[0] for r in con.sql(f"describe {n}_agg_state_source").fetchall()} for n in "ab"]
+    fields = [f for f in FIELDS if f in cols[0] or f in cols[1]]
+
+    def totals(name, have):
+        return con.sql("select " + ", ".join(f"coalesce(sum({f}),0)" if f in have else "0" for f in fields)
+                       + f" from {name}_agg_state_source").fetchone()
+
+    ta, tb = totals("a", cols[0]), totals("b", cols[1])
     out = [f"# Compare {ma['run_id']} -> {mb['run_id']}", "",
            f"- before: commit `{ma['git_commit'][:10]}`, doorplate {ma['doorplate_version']}, data `{ma['data_tables_sha256'][:10]}`",
            f"- after:  commit `{mb['git_commit'][:10]}`, doorplate {mb['doorplate_version']}, data `{mb['data_tables_sha256'][:10]}`"]
     out += [f"- **Note:** {n}" for n in notes]
     out += ["", "## Totals", "", "| | before | after | change | after, share of rows |", "|---|---|---|---|---|"]
-    for f, a, b in zip(FIELDS, ta, tb):
+    for f, a, b in zip(fields, ta, tb):
         out.append(f"| {f.replace('m_', 'mismatch ') if f.startswith('m_') else f} | {a:,} | {b:,} | {delta(a, b)} | "
                    f"{pct(b, tb[0]) if f != 'rows' else ''} |")
     rows = con.sql("""select code, coalesce(a.n,0) a, coalesce(b.n,0) b from
