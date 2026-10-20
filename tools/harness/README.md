@@ -91,6 +91,11 @@ runs, so `123 N OAK ST` is `9 a a a`. The input text comes from the records file
 manifest, joined to the flagged rows by `(source, role, record_id)`; a `--db` run has no text, so it
 gets the leftover shapes only. Counts only, so the report can be quoted (`docs/data-policy.md`).
 
+For a source that groups its rows (FMCSA's country, Netsyms's original provider), a provider table
+comes first and `--provider NAME` reports one provider alone (`shapes-NAME.md`), so foreign rows do
+not hide a source's US findings. The `unit` mismatch runs only for roles with a `label_unit` (a
+source that says its line 2 is a unit); elsewhere line 2 holds attention lines and building names.
+
 `--before RUN` adds, per source and role, what changed between two runs of the same input: the
 totals, the warning codes and the leftover shapes that moved most. Use it as the "before and after"
 of a rule PR. The list is a set of questions, not a bug count: each fix still needs an invented

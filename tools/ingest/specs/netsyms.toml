@@ -1,6 +1,6 @@
 # The Netsyms sample (docs/data-policy.md; tools/harness/README.md), US rows only.
-# Same inputs as tools/harness/run.py: line 1 is number + street (`label_number` is the
-# number field, which step 2's number and street checks use), line 2 street2, and the
+# Same inputs as tools/harness/run.py: line 1 is number + street (`label_number` and `label_unit` are
+# the number and street2 fields, which step 2's number, street and unit checks use), line 2 street2, and the
 # ZIP is zipcode plus `-plus4` when there is one. For the full database, point `sqlite`
 # at the extracted file and the query at the `addresses` table (its id is `rowid`).
 source = "netsyms"
@@ -22,6 +22,7 @@ SELECT
     concat_ws(' ', nullif(trim(number), ''), nullif(trim(street), '')) AS line1,
     nullif(trim(number), '')                    AS label_number,
     street2                                     AS line2,
+    nullif(trim(street2), '')                   AS label_unit,
     city                                        AS city,
     state                                       AS state,
     CASE WHEN nullif(trim(plus4), '') IS NULL THEN zipcode

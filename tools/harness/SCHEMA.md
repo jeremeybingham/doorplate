@@ -1,4 +1,4 @@
-# Run artifacts (schema version 4)
+# Run artifacts (schema version 5)
 
 Written by `tools/harness/run.py`, read by `tools/harness/analyze.py` and `compare.py`. The
 folder is private (docs/data-policy.md): aggregate numbers may leave it, nothing else.
@@ -20,7 +20,7 @@ A row whose parse returns no result (no address text) is counted as `no_result`.
 
 ## Comparison rules (the `mismatches` codes)
 
-Schema version 4 changes the `street` rule for PO boxes, rural routes, general delivery and military boxes (below); on those rows `m_street` of version 3 flagged nearly every one. Schema version 3 added `role`, `provider` and the last-line counts, and runs the checks per field:
+Schema version 5 runs the `unit` check only for roles that have `label_unit` (a source that says its line 2 is a unit): in sources whose line 2 holds attention lines and building names, `m_unit` of version 4 and earlier counted every line 2 as a missing unit. Schema version 4 changed the `street` rule for PO boxes, rural routes, general delivery and military boxes (below); on those rows `m_street` of version 3 flagged nearly every one. Schema version 3 added `role`, `provider` and the last-line counts, and runs the checks per field:
 a check runs for a role only when some row of that role has the field (the manifest's
 `input.fields_present`). Schema version 2 changed the `street` rule; runs of version 1 are not
 comparable on `m_street`. The counts of version 2 and 3 are the same for the same Netsyms rows.
@@ -36,7 +36,7 @@ with everything but letters and digits removed.
 | `zip5` | the first five characters of `zip` differ from the parsed `zip5` | `zip` |
 | `zip4` | `zip` carries a plus-4 (`12345-6789`) and it differs from the parsed `zip4` | `zip` |
 | `city` | `compact(city)` differs from `compact(parsed city)` (the parser keeps the city as written, upper-cased) | `city` |
-| `unit` | the source has a `line2` but the parse has no unit, or the reverse | `line2` |
+| `unit` | the source has a `line2` but the parse has no unit, or the reverse | `label_unit` |
 | `street` | a word of `line1` (less the house number) is not accounted for in the parse (a street part, unit, building, attention or unparsed text), or a parsed street word came from none of `line1`, `line2` and the house number. Suffix and directional spellings are compared by their standard abbreviation (`ST` equals `STREET`), and a standardized highway name (`US HWY 377`, `US HIGHWAY 377`) is equal to itself. The house number is `label_number`, or the parsed `street_number` when the role has no label. When the parse found a PO box, rural route, general delivery or military box, the words that name the form (`PO`, `BOX`, `RR`, `HC`, `ROUTE`, ...) and its numbers count as accounted for | always |
 | `boundary` | a `last_line` row whose parsed city, state or ZIP use words that are not in `last_line` (the state by any of its spellings): the parse took them from the street lines, so joining lost the line boundary | `last_line` rows |
 

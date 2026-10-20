@@ -30,7 +30,7 @@ def count(rows, present):
 
 def test_split_row_agrees():
     t = count([row("1", "123 OAK HOLLOW DR", "STE 4", "AUSTIN", "TX", "78701", number="123")],
-              ["city", "label_number", "line2", "state", "zip"])
+              ["city", "label_number", "label_unit", "line2", "state", "zip"])
     assert t["rows"] == 1 and t["flagged"] == 0
 
 
@@ -80,3 +80,11 @@ def test_street_check_accepts_po_boxes_and_rural_routes():
     # A real street change is still caught: the street words the parse dropped.
     a = parse_fields(line1="123 OAK ST", city="MIAMI", state="FL", zip="33101")
     assert not run.street_ok("123 ELM ST", None, "123", a)
+
+
+def test_unit_check_runs_only_where_line2_is_a_unit():
+    rows = [row("1", "123 OAK HOLLOW DR", "ATTN FRONT OFFICE", "AUSTIN", "TX", "78701")]
+    # A role whose line 2 is attention text (no `label_unit`): no unit mismatch.
+    assert count(rows, ["city", "line2", "state", "zip"])["m_unit"] == 0
+    # A role that says its line 2 is a unit: the missing unit is a mismatch.
+    assert count(rows, ["city", "label_unit", "line2", "state", "zip"])["m_unit"] == 1

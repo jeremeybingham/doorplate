@@ -78,3 +78,27 @@ def test_older_schema_is_refused(run_dir):
     (run_dir / "manifest.json").write_text(json.dumps(m))
     with pytest.raises(SystemExit):
         sr.main([str(run_dir)])
+
+
+def test_provider_table_and_filter(tmp_path):
+    recs = tmp_path / "records.parquet"
+    con = duckdb.connect()
+    con.execute("create table t (record_id varchar, source varchar, role varchar, provider varchar, "
+                "line1 varchar, city varchar, state varchar, zip varchar)")
+    con.executemany("insert into t values (?,?,?,?,?,?,?,?)", [
+        ("1", "inv", "site", "US", "7 OAK AVE", "MIAMI", "FL", "33101"),
+        ("2", "inv", "site", "US", "8 OAK AVE", "MIAMI", "FL", "33101"),
+        ("3", "inv", "site", "CA", "9 OAK AVE", "TORONTO", "ON", "M5V 2T6")])
+    con.execute(f"copy t to '{recs}' (format parquet)")
+    root = tmp_path / "runs"
+    res = subprocess.run(
+        [sys.executable, str(HERE / "run.py"), "--input", str(recs), "--out-root", str(root), "--run-id", "r",
+         "--workers", "1", "--min-free-gb", "0", "--confirm"], capture_output=True, text=True)
+    assert res.returncode == 0, res.stdout + res.stderr
+    run = root / "r"
+    sr.main([str(run)])
+    text = (run / "shapes.md").read_text()
+    assert "### Providers" in text and "| US | 2 |" in text and "| CA | 1 |" in text
+    sr.main([str(run), "--provider", "CA"])
+    only = (run / "shapes-CA.md").read_text()
+    assert "1 rows" in only and "### Providers" not in only and "provider `CA` only" in only

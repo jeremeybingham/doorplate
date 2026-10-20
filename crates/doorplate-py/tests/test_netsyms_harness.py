@@ -61,7 +61,7 @@ def test_run_resume_and_analysis(db, tmp_path):
     r = root / "r1"
     assert (r / "DONE").exists()
     manifest = json.loads((r / "manifest.json").read_text())
-    assert manifest["input"]["table"] == "addresses" and manifest["schema_version"] == 4
+    assert manifest["input"]["table"] == "addresses" and manifest["schema_version"] == 5
     totals = json.loads((r / "DONE").read_text())
     assert totals["rows"] == 5  # the Canadian row is out of scope
     for sub in ("agg_state_source", "agg_warnings", "agg_triples", "flagged", "chunk_status"):
@@ -116,7 +116,7 @@ def test_records_input_matches_the_sqlite_run(db, tmp_path):
                     [(i + 1, *r) for i, r in enumerate(ROWS)])
     con.execute(f"""copy (select rid::varchar AS record_id, 'netsyms' AS source, 'address' AS role,
         source AS provider, concat_ws(' ', nullif(trim(number), ''), nullif(trim(street), '')) AS line1,
-        nullif(trim(number), '') AS label_number, nullif(street2, '') AS line2, city, state,
+        nullif(trim(number), '') AS label_number, nullif(street2, '') AS line2, nullif(street2, '') AS label_unit, city, state,
         CASE WHEN nullif(trim(plus4), '') IS NULL THEN zipcode ELSE concat(zipcode, '-', plus4) END AS zip
         from src where country = 'US') to '{recs}' (format parquet)""")
     root = tmp_path / "runs"

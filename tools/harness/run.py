@@ -33,14 +33,14 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 HERE = Path(__file__).resolve().parent
-SCHEMA_VERSION = 4
+SCHEMA_VERSION = 5
 REQUIRED = ["zipcode", "number", "street", "street2", "city", "state", "plus4", "country", "source"]
 GB = 1 << 30
 # The columns of a row as the checks see it (tools/ingest/README.md has their meaning).
 COLS = ["record_id", "source", "role", "provider", "line1", "line2", "city", "state", "zip",
         "last_line", "label_number"]
 # Columns whose presence in a role decides which consistency checks run on its rows.
-PRESENT = ["line2", "city", "state", "zip", "last_line", "label_number"]
+PRESENT = ["line2", "city", "state", "zip", "last_line", "label_number", "label_unit"]
 
 
 def parse_args(argv=None):
@@ -152,7 +152,7 @@ def inspect(args):
         sys.exit(f"table {args.table!r} lacks columns {missing}; has {cols}")
     lo, hi = con.execute(f"select min(rowid), max(rowid) from {args.table}").fetchone()
     con.close()
-    return lo, hi, {"address": ["city", "label_number", "line2", "state", "zip"]}
+    return lo, hi, {"address": ["city", "label_number", "label_unit", "line2", "state", "zip"]}
 
 
 def plan(args, lo, hi):
@@ -357,7 +357,9 @@ def process_chunk(rows, present, fields_many, parse_many):
                     mism.append("zip4")
             if "city" in have and compact(rcity) != compact(a.city):
                 mism.append("city")
-            if "line2" in have and bool(line2) != bool(a.unit_type or a.unit_number):
+            # Only where the source says its line 2 is a unit: elsewhere it holds attention lines,
+            # building names and care-of text, and "has a line 2 but no unit" is no mismatch.
+            if "label_unit" in have and bool(line2) != bool(a.unit_type or a.unit_number):
                 mism.append("unit")
             if not street_ok(line1, line2, label_number if "label_number" in have else a.street_number, a):
                 mism.append("street")

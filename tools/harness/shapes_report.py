@@ -14,6 +14,10 @@ For each source and role in the run it reports, as counts only:
 - the style of the inputs that fail (case, unit forms, commas, spelled-out types), beside the
   style of all inputs (a sample of each), reusing `line_styles` of tools/benchsuite/shapes.py.
 
+For a source that groups its rows (FMCSA's country, Netsyms's original provider), a table of the
+providers comes first, and `--provider NAME` reports one provider alone (`shapes-NAME.md`): a
+source's foreign or odd rows then do not hide its US findings.
+
 With `--before RUN` it also shows what changed between two runs of the same input (the warning
 codes, the unparsed share and the shapes whose counts moved most), for a rule's before/after.
 
@@ -56,21 +60,22 @@ def open_run(arg, partial):
     if not (run / "DONE").exists() and not partial:
         sys.exit(f"{run} has no DONE marker (incomplete); resume it, or pass --partial")
     manifest = json.loads((run / "manifest.json").read_text())
-    if manifest.get("schema_version") not in (3, 4):
-        sys.exit(f"{run}: schema_version {manifest.get('schema_version')} has no role column (it needs 3 or 4); "
+    if manifest.get("schema_version") not in (3, 4, 5):
+        sys.exit(f"{run}: schema_version {manifest.get('schema_version')} has no role column (it needs 3 to 5); "
                  "rerun with the current tools/harness/run.py")
     return run, manifest
 
 
-def connect(run, manifest):
+def connect(run, manifest, provider=None):
     """A DuckDB connection with views over the run's artifacts and, when there is a records
     file, over its input text. Returns (connection, has_text)."""
     import duckdb
 
     con = duckdb.connect()
     con.execute(MACRO)
+    where = f" where provider = '{provider.replace(chr(39), chr(39) * 2)}'" if provider else ""
     for t in ("agg_state_source", "agg_warnings", "flagged"):
-        con.execute(f"create view {t} as select * from read_parquet('{run / t}/*.parquet')")
+        con.execute(f"create view {t} as select * from read_parquet('{run / t}/*.parquet'){where}")
     inp = manifest["input"]
     rec = Path(inp["path"])
     has_text = inp.get("kind") == "records" and rec.exists()
@@ -80,8 +85,8 @@ def connect(run, manifest):
             print(f"note: {rec.name} has changed size since the run; input shapes may not match", file=sys.stderr)
         have = {r[0] for r in con.execute(f"describe select * from read_parquet('{rec}')").fetchall()}
         cols = ", ".join(c if c in have else f"NULL AS {c}" for c in
-                         ("source", "role", "record_id", "line1", "line2", "last_line"))
-        con.execute(f"create view recs as select {cols} from read_parquet('{rec}')")
+                         ("source", "role", "record_id", "provider", "line1", "line2", "last_line"))
+        con.execute(f"create view recs as select {cols} from read_parquet('{rec}'){where}")
     return con, has_text
 
 
@@ -108,6 +113,21 @@ def totals(con, source, role):
     t["unparsed"] = con.execute("select count(*) from flagged where source = ? and role = ? "
                                 "and unparsed is not null", [source, role]).fetchone()[0]
     return t
+
+
+def provider_table(con, source, role, top):
+    """The providers (a country, a license type, an original data provider) with the most rows."""
+    rows = con.execute(
+        "select provider, sum(rows) n, 100.0 * sum(with_warnings) / sum(rows), 100.0 * sum(flagged) / sum(rows) "
+        "from agg_state_source where source = ? and role = ? group by 1 order by 2 desc", [source, role]).fetchall()
+    if len(rows) < 2:
+        return []
+    out = ["### Providers (use `--provider NAME` to report one alone)", ""]
+    out += md_table(["provider", "rows", "with a warning", "flagged"],
+                    [(p or "(none)", int(n), w, f) for p, n, w, f in rows[:top]])
+    if len(rows) > top:
+        out.append(f"\n({len(rows) - top:,} more providers)")
+    return out + [""]
 
 
 def warning_counts(con, source, role):
@@ -167,6 +187,7 @@ def section(con, source, role, has_text, top, sample):
         out += ["Mismatches (rows): " + ", ".join(f"{k} {v:,} ({100 * v / n:.2f}%)" for k, v in mism), ""]
     if t.get("last_line_rows"):
         out += [f"Last-line rows: {t['last_line_rows']:,}, boundary crossings {t.get('last_line_crossed', 0):,}.", ""]
+    out += provider_table(con, source, role, top)
     ranked = sorted(warns.items(), key=lambda kv: -kv[1])
     out += ["### Warning codes", ""] + md_table(
         ["code", "rows", "share of rows"], [(c, k, 100 * k / n) for c, k in ranked[:top]]) + [""]
@@ -222,6 +243,7 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("run", help="run id (under local-data/netsyms-runs/) or a path")
     ap.add_argument("--before", help="an earlier run of the same input, for the change section")
+    ap.add_argument("--provider", help="report only this provider (a country, say), for sources that group rows")
     ap.add_argument("--top", type=int, default=10)
     ap.add_argument("--sample", type=int, default=200_000, help="rows per style sample (default 200,000)")
     ap.add_argument("--partial", action="store_true", help="allow a run without a DONE marker")
@@ -229,12 +251,13 @@ def main(argv=None):
     args = ap.parse_args(argv)
     run, manifest = open_run(args.run, args.partial)
     try:
-        con, has_text = connect(run, manifest)
+        con, has_text = connect(run, manifest, args.provider)
         out = [f"# Shapes: run {manifest['run_id']}", "",
                f"- commit `{manifest['git_commit'][:10]}`{' (dirty tree)' if manifest['git_dirty'] else ''}, "
                f"doorplate {manifest['doorplate_version']}, data tables `{manifest['data_tables_sha256'][:12]}`",
                f"- input `{Path(manifest['input']['path']).name}` ({manifest['input'].get('kind', 'records')})"
-               + ("" if has_text else "; no input text to join, so shapes are of the leftovers only"), "",
+               + ("" if has_text else "; no input text to join, so shapes are of the leftovers only")
+               + (f"; provider `{args.provider}` only" if args.provider else ""), "",
                "Counts only. A shape turns letters into `a` and digits into `9` and collapses runs. A "
                "warning or a leftover is a question about the parser or about the source, not a verdict "
                "on either. Rule changes found here go through the rule-PR loop "
@@ -242,7 +265,7 @@ def main(argv=None):
         prev = None
         if args.before:
             brun, bman = open_run(args.before, args.partial)
-            bcon, bhas = connect(brun, bman)
+            bcon, bhas = connect(brun, bman, args.provider)
             prev = {k: (totals(bcon, *k), warning_counts(bcon, *k), unparsed_shapes(bcon, *k, bhas))
                     for k in keys(bcon)}
             out += [f"- compared with run {bman['run_id']} (commit `{bman['git_commit'][:10]}`)", ""]
@@ -256,7 +279,7 @@ def main(argv=None):
     except Exception as e:  # DuckDB messages can quote rows (docs/data-policy.md)
         sys.exit(f"shapes report failed: {type(e).__name__}")
     text = "\n".join(out) + "\n"
-    dest = args.out or run / "shapes.md"
+    dest = args.out or run / ("shapes.md" if not args.provider else f"shapes-{''.join(ch for ch in args.provider if ch.isalnum())}.md")
     dest.write_text(text)
     print(text)
     return 0
