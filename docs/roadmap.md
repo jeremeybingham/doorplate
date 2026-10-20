@@ -19,8 +19,7 @@ some, see [Sharing messy data](../CONTRIBUTING.md#sharing-messy-data).
 
 ### Warnings that say why
 
-A numeric confidence score is not planned (see "Not planned"). What replaces it is making the
-warnings do that work (issue #102):
+Making the warnings say how far to trust a parse (issue #102):
 
 - a table of how reliable each warning is, measured on labeled data (the National Address
   Database sample, the NC voter snapshot) with `tools/harness/label_score.py`, so a reader
@@ -89,9 +88,5 @@ More outside data (hand-labeled real data and a second national source) is wante
 - **Address validation or deliverability.** That needs postal-service-certified data.
 - **Geocoding, fuzzy matching, address correction.**
 - **International addresses.**
-- **A confidence score.** The parser's own signals (warnings, the uncertain decisions it
-  records) barely rank rows by their chance of a label disagreement (AUC 0.56 to 0.57, where 0.5
-  is chance), 78.7% of the disagreements carry no warning at all, and the available labels cannot validate a calibrated
-  probability (issue #4, closed). The warnings carry the uncertainty instead.
 - **A machine-learned model.** The parser is rules plus place data on purpose, so a fix is a
   rule or a line of data, and the same input gives the same output.

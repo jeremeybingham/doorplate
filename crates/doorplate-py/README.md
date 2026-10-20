@@ -56,8 +56,6 @@ dp.parse("281 EVELYN DR DOTHAN", default_state="AL").city     # "DOTHAN"
   `parse_many` that element is `None`. Anything else comes back with `warnings`.
 - `default_state` is a lookup hint for input with no state; it never fills `state`.
   A value that is not a US state, DC or territory raises `ValueError`.
-- `confidence` is reserved and always `None`: no score is computed, and the field is to be
-  removed. The warnings carry the uncertainty.
 
 ## Install
 
@@ -98,7 +96,7 @@ has the components (`street_number`, `street_dir_prefix`, `street_name`,
 `second_unit_type`, `second_unit_number`, `po_box`, `attention`, `building`, `city`,
 `state`, `zip5`, `zip4`, `military_post_office`), the structured shapes (`highway`,
 `rural_route`, `military`, `place`, plain dicts), `general_delivery`, `warnings`
-(stable snake_case codes), `unparsed`, `input` and `confidence`, and the methods
+(stable snake_case codes), `unparsed` and `input`, and the methods
 `key(unit=False)`, `slug()`, `to_usps(max_line=None)`, `to_display()`, `to_long()`,
 `to_reso()`, `to_usaddress_tags()`, `tag()`, `address_type()`, `repeated_labels()` and
 `to_dict()`.

@@ -64,7 +64,7 @@ pub(crate) enum Tag {
 
 /// An uncertain rule that settled a boundary. Warnings report what went
 /// wrong; these record what the tagger had to judge on a parse that may have
-/// none. Kept as the input for a possible future confidence score.
+/// none. Internal: tests and the corpus tools read them.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum Decision {
     /// The city is a line or comma segment of its own (`..., MIAMI`).
@@ -87,7 +87,7 @@ pub(crate) enum Decision {
 }
 
 impl Decision {
-    /// Stable snake_case identifier, read by the calibration tools.
+    /// Stable snake_case identifier, read by the corpus tools.
     #[cfg(feature = "corpus")]
     pub(crate) const fn code(self) -> &'static str {
         match self {

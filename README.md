@@ -347,8 +347,7 @@ The specification of the suite and the rules that keep it fair: [`docs/benchmark
   addresses. Recipient lines, landmarks and street corners are not modeled; text
   it cannot place goes to `unparsed` with a warning. `USA` after an address is
   ignored, and an intersection (`MAIN ST & 1ST AVE`) is reported, not keyed.
-- It has no learned model and no confidence score. The `confidence` field is reserved,
-  always `None`, and is to be removed; the warnings carry the uncertainty.
+- It has no learned model.
 - The shipped tables are fixed at compile time. If it misparses an address, report
   the input so the tables or rules can be fixed; a user-extensible layer of aliases
   and places is not part of this release.
@@ -358,9 +357,7 @@ The specification of the suite and the rules that keep it fair: [`docs/benchmark
 The next work, roughly in this order, depends on what real data shows:
 
 - **Warnings that say why.** A table of how reliable each warning is, measured on
-  labeled data, and named warnings for known ambiguities, in place of a numeric
-  confidence score (on labeled data a score would add little beyond the warnings; see the
-  roadmap).
+  labeled data, and named warnings for known ambiguities (see the roadmap).
 - **Customization packs.** A way to add your own spellings, places, ZIPs and
   state-specific readings without editing the shipped tables, loaded at run time. Not
   in this release; examples of what you would add are the best input.
