@@ -61,7 +61,7 @@ def test_run_resume_and_analysis(db, tmp_path):
     r = root / "r1"
     assert (r / "DONE").exists()
     manifest = json.loads((r / "manifest.json").read_text())
-    assert manifest["input"]["table"] == "addresses" and manifest["schema_version"] == 2
+    assert manifest["input"]["table"] == "addresses" and manifest["schema_version"] == 3
     totals = json.loads((r / "DONE").read_text())
     assert totals["rows"] == 5  # the Canadian row is out of scope
     for sub in ("agg_state_source", "agg_warnings", "agg_triples", "flagged", "chunk_status"):
@@ -76,7 +76,7 @@ def test_run_resume_and_analysis(db, tmp_path):
         [sys.executable, str(TOOLS / "analyze.py"), str(r)], capture_output=True, text=True, check=True
     ).stdout
     assert "| rows | 5 |" in out
-    # A suffix spelled out in the source is not a street mismatch (schema version 2).
+    # A suffix spelled out in the source is not a street mismatch (schema version 2 and later).
     assert "| street | 0 |" in out
     assert (r / "summary.md").exists() and (r / "place_gaps.parquet").exists()
 
@@ -102,3 +102,33 @@ def test_compare_two_runs(db, tmp_path):
     assert "| rows | 5 | 5 | +0 |" in out
     assert (root / "b" / "compare-a-vs-b.md").exists()
     assert "different input" not in out
+
+
+def test_records_input_matches_the_sqlite_run(db, tmp_path):
+    """`--input` on records built like tools/ingest/specs/netsyms.toml gives the same totals
+    as `--db` (#93, step 2)."""
+    import duckdb
+
+    recs = tmp_path / "records.parquet"
+    con = duckdb.connect()
+    con.execute("create table src (rid integer, number varchar, street varchar, street2 varchar, city varchar, state varchar, zipcode varchar, plus4 varchar, country varchar, source varchar)")
+    con.executemany("insert into src values (?,?,?,?,?,?,?,?,?,?)",
+                    [(i + 1, *r) for i, r in enumerate(ROWS)])
+    con.execute(f"""copy (select rid::varchar AS record_id, 'netsyms' AS source, 'address' AS role,
+        source AS provider, concat_ws(' ', nullif(trim(number), ''), nullif(trim(street), '')) AS line1,
+        nullif(trim(number), '') AS label_number, nullif(street2, '') AS line2, city, state,
+        CASE WHEN nullif(trim(plus4), '') IS NULL THEN zipcode ELSE concat(zipcode, '-', plus4) END AS zip
+        from src where country = 'US') to '{recs}' (format parquet)""")
+    root = tmp_path / "runs"
+    run(db, root, "--run-id", "direct", "--confirm")
+    res = subprocess.run(
+        [sys.executable, str(TOOLS / "run.py"), "--input", str(recs), "--out-root", str(root),
+         "--run-id", "rec", "--chunk-rowids", "2", "--workers", "2", "--min-free-gb", "0", "--confirm"],
+        capture_output=True, text=True)
+    assert res.returncode == 0, res.stdout + res.stderr
+    out = subprocess.run(
+        [sys.executable, str(TOOLS / "compare.py"), str(root / "direct"), str(root / "rec")],
+        capture_output=True, text=True, check=True).stdout
+    totals = out.split("## Totals")[1].split("##")[0]
+    changes = [ln.split("|")[4].strip() for ln in totals.splitlines() if ln.startswith("| ") and "---" not in ln][1:]
+    assert changes and set(changes) == {"+0"}, changes

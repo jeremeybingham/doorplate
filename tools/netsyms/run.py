@@ -227,14 +227,21 @@ def street_ok(line1, line2, number, a):
 
 
 def _load_states():
-    """Every state's code, name and aliases as upper-case tokens, from the shipped table."""
-    import tomllib
-
+    """Every state's code, name and aliases as upper-case tokens, from the shipped table.
+    Read with regular expressions, like `_load_forms`: the harness runs on Python 3.10."""
     out = {}
-    with open(ROOT / "crates" / "doorplate" / "data" / "states.toml", "rb") as f:
-        for st in tomllib.load(f)["state"]:
-            out[st["code"]] = {t for t in re.findall(r"[A-Z0-9]+", " ".join(
-                [st["code"], st["name"], *st.get("aliases", [])]).upper())}
+    code = None
+    for line in (ROOT / "crates" / "doorplate" / "data" / "states.toml").read_text().splitlines():
+        m = re.match(r'(code|name) = "([^"]+)"', line)
+        if m and m.group(1) == "code":
+            code = m.group(2)
+            out[code] = set(re.findall(r"[A-Z0-9]+", code.upper()))
+        elif m and code:
+            out[code] |= set(re.findall(r"[A-Z0-9]+", m.group(2).upper()))
+        m = re.match(r"aliases = \[(.*)\]", line)
+        if m and code:
+            for alias in re.findall(r'"([^"]+)"', m.group(1)):
+                out[code] |= set(re.findall(r"[A-Z0-9]+", alias.upper()))
     return out
 
 
