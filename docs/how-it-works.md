@@ -12,14 +12,15 @@ formats see the reference pages listed at the end.
    state, ZIP and the less common shapes below), each with its position in the
    original text.
 2. **Normalized output** in USPS Publication 28 form and RESO Data Dictionary 2.0
-   field names.
+   field names, mixed-case and spelled-out display forms for showing an address to a
+   person (not Pub 28 forms), and usaddress-shaped labels.
 3. **Identifiers for databases**: a stable match key and a URL-safe slug.
 4. **Diagnostics**: warnings and the text it could not place, so bulk users can
    send doubtful rows to review.
 
-It is a Rust library with no runtime dependencies, a command-line tool and a
-Python package (PyO3, abi3 wheels for Python 3.10 and later). Nothing is
-downloaded at run time.
+It is a Rust library with no runtime dependencies, a command-line tool (which
+also parses CSV files) and a Python package (PyO3, abi3 wheels for Python 3.10 and
+later, with pandas, Polars and DuckDB helpers). Nothing is downloaded at run time.
 
 **What it does not do.** It formats and parses; it does not validate. Pub 28
 formatting is not the same as a deliverable address, and real validation needs
@@ -37,7 +38,7 @@ raw input
   -> classify   token shapes and longest-match lexicon lookups
   -> tagger     rules and place lookups
   -> assemble   ParsedAddress, component spans, warnings
-  -> emitters   USPS, RESO, key, slug, usaddress tags (read-only)
+  -> emitters   USPS, RESO, key, slug, display and long forms, usaddress tags (read-only)
 
 Lexicons (Pub 28 tables, national places, state packs) are read by classify, the
 tagger and assemble.
@@ -63,7 +64,7 @@ tagger and assemble.
 6. **emitters** read the parsed address and nothing else. They never re-parse
    and never change it.
 
-With separate fields (`parse_fields`), each field is tagged on its own and the
+With separate fields (`parse_fields`, or `parse_fields_many` for columns), each field is tagged on its own and the
 field is a strong signal: the city field is the city. When city, state and ZIP
 are all empty, `line1` and `line2` are read like one line, so a street line plus
 a `CITY, ST ZIP` line still works.
@@ -73,7 +74,8 @@ a `CITY, ST ZIP` line still works.
 - **Deterministic.** The same input gives the same output on every platform.
 - **Never panics on input.** Parsing always returns a `ParsedAddress` with
   diagnostics. Only input with no address text at all is an error. Property tests
-  and fuzz targets check this.
+  and fuzz targets check this, and a full run over the 146.6 million US rows of the
+  Netsyms address database (see Testing) parsed every row.
 - **Spans are preserved.** Components keep their byte range in the original
   input (and the field, for separate fields).
 - **Lexicons behind one interface.** The tagger never reads a table directly:
@@ -220,16 +222,18 @@ crates/
     data/                   suffixes, directionals, units, states, special (.toml);
                             places/ (national list) and packs/fl/ (Florida)
     src/                    clean, tokenize, classify, tagger/, assemble, parser, input,
-                            place, lexicon, types, emit/{key,usps,reso,slug,usaddress}, corpus
+                            place, lexicon, country, intersection, types,
+                            emit/{key,usps,reso,slug,display,usaddress}, corpus
     tests/                  corpus, property tests, usaddress score floor
     benches/                criterion benchmarks
   doorplate-cli/            the `doorplate` binary
   doorplate-py/             PyO3 bindings, the Python package, its tests
 tests/corpus/               golden corpus (JSONL) and its baseline
 tests/external/usaddress/   usaddress's labeled test files (MIT, vendored)
-tools/                      corpus emitter expectations, usaddress comparison, place list, Pub 28 checks
-benchmarks/                 accuracy, speed and size scripts
-examples/                   notebook, Polars and pandas pipelines, sample data
+tools/                      corpus emitter expectations, usaddress comparison, place list, Pub 28 checks,
+                            the Netsyms harness (netsyms/) and the benchmark suite generator (benchsuite/)
+benchmarks/                 the benchmark suite (suite.py, suite/v1/) and the accuracy, speed and size scripts
+examples/                   notebook, Polars, pandas and DuckDB pipelines, sample data
 fuzz/                       cargo-fuzz targets (nightly)
 docs/                       this page and the references below
 ```
@@ -250,13 +254,27 @@ docs/                       this page and the references below
   fall below a recorded score.
 - **Fuzzing** (cargo-fuzz, nightly): `parse` (with a `default_state` hint) and
   `parse_fields`, each running every emitter on the result.
-- **Python tests**: the wrapper, type stubs, `parse_many`, the dataframe helpers,
-  the examples. **Wheels** are built and tested for Linux, macOS and Windows.
+- **Python tests**: the wrapper, type stubs, `parse_many`, the dataframe and DuckDB
+  helpers, the examples (including the notebook). **Wheels** are built and tested for
+  Linux, macOS and Windows.
+- **Benchmark suite** (`benchmarks/suite.py`): 19,586 labeled addresses that neither
+  library was made from, scored for doorplate and usaddress under a fixed 4-CPU, 8 GB
+  profile. It measures accuracy and holds both libraries' blind spots on purpose, so it
+  is a benchmark and not a regression test, and a score on it is never a reason to change
+  a rule on its own (`benchmark-suite.md`).
+- **Checks on private data** (maintainers; only counts leave `local-data/`): a before and
+  after comparison on a sample of the Netsyms address database for every parse-rule
+  change, a full run over its 146.6 million US rows before a release (no panics, no failed
+  rows, warning and mismatch counts compared with the previous run), the National Address
+  Database scorecard, and a one-line Florida check (`tools/netsyms/README.md`,
+  `benchmarks/README.md`, `data-policy.md`).
 - **Pub 28 check**: `tools/pub28/verify.py` compares the tables with the live
   Publication 28 pages and runs every Appendix F example through the parser.
 - **CI**: `cargo fmt --check`, `clippy -D warnings`, `cargo test --workspace
   --all-features`, the corpus report, the emitter-expectation check, a package
-  build, the Python suite and the wheel build.
+  build and a check of the license files, an sdist build in a clean environment, a short
+  fuzz smoke run of each target, the Python suite and the wheel build. The benchmark
+  suite and the two release workflows run by hand or on a version tag.
 
 ## Reference pages
 
@@ -268,5 +286,7 @@ docs/                       this page and the references below
 | [`places.md`](places.md) | The national place list: sources, licenses, coverage |
 | [`packs/fl.md`](packs/fl.md) | The Florida pack |
 | [`usaddress-compat.md`](usaddress-compat.md) | usaddress-shaped output, label mapping, migration |
-| [`benchmarks.md`](benchmarks.md) | Accuracy, speed and size |
+| [`benchmarks.md`](benchmarks.md) | Accuracy, speed and size: the results |
+| [`benchmark-suite.md`](benchmark-suite.md) | The benchmark suite: what it holds, how it was built, the rules that keep it fair |
+| [`data-policy.md`](data-policy.md) | What data the project uses, what may be committed, and what may be said about data that is not ours to publish |
 | [`roadmap.md`](roadmap.md) | Planned work and what data would help |
