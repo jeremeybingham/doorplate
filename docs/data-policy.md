@@ -8,7 +8,8 @@ and none of the data below is used to claim otherwise.
 ## Principles
 
 1. **`local-data/` is git-ignored and stays that way.** Source files, extracts, samples,
-   profiles and reports live there. Never commit anything from it.
+   profiles and reports live there. Never commit anything from it. A private source's
+   ingest spec (`tools/ingest/README.md`), notice and inventory live there with its data.
 2. **Aggregate numbers and our own fixes ship; source rows do not.** Counts, rates and
    scores can be published. Rows, street names, house numbers, coordinates and
    personal names cannot, in commits, issues, pull requests, docs or comments. The one
@@ -17,7 +18,9 @@ and none of the data below is used to claim otherwise.
 3. **Examples are invented.** A corpus case, a doc example or a bug report uses an
    invented address of the same shape (`CONTRIBUTING.md#sharing-messy-data`).
 4. **Never print personal names** from private data, in a terminal log that is pasted
-   anywhere or in an agent transcript that is shared.
+   anywhere or in an agent transcript that is shared. Reader errors count: DuckDB's
+   messages quote the rows they failed on, so scripts that read private files print only
+   the error's type (as `tools/ingest/ingest.py` does).
 5. **Every addition to the shipped data cites a source** (`docs/usps-pub28-notes.md`,
    `docs/places.md`, `docs/packs/`), and the source's terms allow the use.
 
