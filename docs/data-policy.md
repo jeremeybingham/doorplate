@@ -36,6 +36,7 @@ and none of the data below is used to claim otherwise.
 | Geocode benchmark (`test`, `dev`, `train`) | `local-data/geocode-benchmark/` | **No** | No license stated. Only aggregate scores ship (`docs/benchmarks.md`). |
 | National Address Database (NAD) r24, text file | `local-data/nad-2026/`; anonymized rows in `benchmarks/suite/` | **Anonymized rows in the benchmark suite only** (see below) | Work of the US federal government, no copyright (17 U.S.C. § 105); the metadata says it is available for re-use without limitation or restriction |
 | Netsyms Address Database 2026-05 | `local-data/netsyms-2026/` | **No** (see below) | No formal license; see the next section |
+| Messy-address sources (2026-10-20): NC voter files (current and a labeled snapshot), FMCSA company census, Texas TDLR licenses, FCC amateur licenses, IRS exempt organizations | `local-data/<source>/` | **No** (aggregates only) | Public records or open data published by the agency; each folder's `NOTICE.md` records provenance and terms. Several hold names with addresses: names are never printed |
 | Florida exports with names, the labeled Florida sample, comparison reports | `local-data/` | **No** | Private; contain personal names or rows |
 
 ## The National Address Database (NAD)
@@ -152,6 +153,28 @@ and never committed; `docs/benchmarks.md` publishes scores only. Which splits we
 while the rules were written is recorded there: `test` was read, `dev` and `train` were
 not, and `dev`'s most common error classes have since been listed. Fix against `train`
 and check on `dev` (issue #29).
+
+## How much real data the parser has been checked against
+
+doorplate is rule-based: nothing is trained on this data, and every rule cites a source. The real
+addresses are used to **test** it: the harness (`tools/harness/`) parses them, counts the warnings
+and the unparsed remainders, and ranks the failure shapes, and the labeled sources score the
+parts we return. As of 2026-10-20, about **198 million rows** have been parsed in total, from
+these public or open sources (aggregate counts only; the totals overlap, so they are an upper
+bound on distinct addresses):
+
+| Source | Rows parsed |
+|---|---|
+| Netsyms Address Database (US rows) | 146.6 million |
+| NC voter file (current; and a snapshot with the address in labeled parts) | 16.2 million; 20.9 million |
+| FMCSA company census | 9.0 million |
+| IRS exempt organizations | 2.0 million |
+| FCC amateur licenses | 1.7 million |
+| National Address Database (a 1-million-row sample of 99.2 million) | 1.0 million |
+| Texas TDLR licenses | 0.2 million |
+
+`tools/ingest/inventory.py` regenerates the counts from the run records in `local-data/`
+(`local-data/INVENTORY.md`, private; the counts here may be quoted).
 
 ## Private rows and personal data
 

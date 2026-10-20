@@ -86,3 +86,12 @@ Only counts are printed and stored. An error from the SQL itself (a misspelled c
 shown; any other error is reported by its type only, because DuckDB's messages quote the
 source rows they failed on, and those can hold names (`docs/data-policy.md`). When writing
 a spec, look at column names and counts (`DESCRIBE`, `count(*)`), never at rows.
+
+## What is in `local-data/`
+
+`python tools/ingest/inventory.py` reads the `records.json` beside every records file and the
+manifest and `DONE` of every harness run, and writes `local-data/INVENTORY.md` (private, counts
+only): the record files with their rows by role, the runs with their flagged shares, and the
+rows examined (the latest complete run per input file; `--exclude TEXT` leaves out runs whose
+input path contains TEXT, such as a sample inside a full database). `local-data/README.md` and each
+folder's `NOTICE.md` and `INVENTORY.md` hold what each source is, where it came from and its terms.
