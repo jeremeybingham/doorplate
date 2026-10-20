@@ -33,7 +33,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 HERE = Path(__file__).resolve().parent
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 4
 REQUIRED = ["zipcode", "number", "street", "street2", "city", "state", "plus4", "country", "source"]
 GB = 1 << 30
 # The columns of a row as the checks see it (tools/ingest/README.md has their meaning).
@@ -207,10 +207,16 @@ def words(text):
     return Counter(out)
 
 
+# Words that name a PO box, rural route, general delivery or military box (`PO BOX 12`, `RR 2 BOX 5`):
+# they are the form, not street words, so they are accounted for when the parse found that form.
+FORM_WORDS = words("PO P O POST OFFICE BOX POBOX RR HC HCR RURAL ROUTE HIGHWAY CONTRACT GENERAL DELIVERY GD "
+                   "PSC CMR UNIT APO FPO DPO")
+
+
 def street_ok(line1, line2, number, a):
     """True when every word of the source street (line 1 without the house number) is
-    accounted for in the parse (as a street part, unit, building, attention or unparsed text)
-    and every parsed street word came from the source street, its second line or the number
+    accounted for in the parse (as a street part, unit, building, attention, PO box, rural
+    route, military box or unparsed text) and every parsed street word came from the source street, its second line or the number
     (junk in the number field, such as `NULL`, is flagged by the `number` mismatch, not here).
     Spelled-out suffixes and standardized highway names are equal, so only real changes to
     the street remain."""
@@ -223,6 +229,9 @@ def street_ok(line1, line2, number, a):
     elsewhere = words(" ".join(x for x in (
         a.unit_type, a.unit_number, a.second_unit_type, a.second_unit_number, a.unparsed,
         a.building, a.attention, a.po_box) if x))
+    if a.po_box or a.rural_route or a.general_delivery or a.military:
+        forms = [str(v) for d in (a.rural_route, a.military) if d for v in d.values()]
+        elsewhere = elsewhere + FORM_WORDS + words(" ".join(forms))
     return not (src - (parsed + elsewhere)) and not (parsed - (src + words(line2) + num))
 
 

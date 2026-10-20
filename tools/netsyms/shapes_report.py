@@ -56,8 +56,8 @@ def open_run(arg, partial):
     if not (run / "DONE").exists() and not partial:
         sys.exit(f"{run} has no DONE marker (incomplete); resume it, or pass --partial")
     manifest = json.loads((run / "manifest.json").read_text())
-    if manifest.get("schema_version") != 3:
-        sys.exit(f"{run}: schema_version {manifest.get('schema_version')} has no role column; "
+    if manifest.get("schema_version") not in (3, 4):
+        sys.exit(f"{run}: schema_version {manifest.get('schema_version')} has no role column (it needs 3 or 4); "
                  "rerun with the current tools/netsyms/run.py")
     return run, manifest
 

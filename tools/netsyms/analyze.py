@@ -36,7 +36,7 @@ def main(argv=None):
     if not (run / "manifest.json").exists():
         sys.exit(f"{run} is not a run directory")
     manifest = json.loads((run / "manifest.json").read_text())
-    if manifest.get("schema_version") not in (1, 2, 3):
+    if manifest.get("schema_version") not in (1, 2, 3, 4):
         sys.exit(f"unsupported schema_version {manifest.get('schema_version')}")
     complete = (run / "DONE").exists()
     if not complete and not args.partial:

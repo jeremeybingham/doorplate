@@ -68,3 +68,15 @@ def test_records_chunks_by_row_offset(tmp_path):
     con = duckdb.connect()
     got = run.fetch_records(con, A, 3, 7)
     assert sorted(r[0] for r in got) == ["3", "4", "5", "6"]
+
+
+def test_street_check_accepts_po_boxes_and_rural_routes():
+    from doorplate import parse_fields
+
+    for text in ("PO BOX 123", "P.O. BOX 77B", "RR 2 BOX 45", "HC 63 BOX 4", "GENERAL DELIVERY",
+                 "PSC 1234 BOX 5"):
+        a = parse_fields(line1=text, city="MIAMI", state="FL", zip="33101")
+        assert run.street_ok(text, None, "", a), text
+    # A real street change is still caught: the street words the parse dropped.
+    a = parse_fields(line1="123 OAK ST", city="MIAMI", state="FL", zip="33101")
+    assert not run.street_ok("123 ELM ST", None, "123", a)
