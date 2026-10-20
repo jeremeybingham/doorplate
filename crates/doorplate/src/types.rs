@@ -618,12 +618,11 @@ impl fmt::Display for Warning {
 pub struct Diagnostics {
     pub warnings: Vec<Warning>,
     pub unparsed: Option<String>,
-    /// Reserved: a calibrated probability (0.0 to 1.0) that the whole parse
-    /// is right. Always `None`: this version does not compute a score.
+    /// Reserved and always `None`; to be removed in 0.4.0.
     pub confidence: Option<f32>,
     pub library_version: &'static str,
-    /// The uncertain rules that settled a boundary, the input of a possible
-    /// future confidence score.
+    /// The uncertain rules that settled a boundary. Internal: tests and the
+    /// corpus tools read them through `decision_codes`.
     pub(crate) decisions: Vec<Decision>,
 }
 

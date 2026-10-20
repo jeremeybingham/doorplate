@@ -56,7 +56,6 @@ dp.parse("281 EVELYN DR DOTHAN", default_state="AL").city     # "DOTHAN"
   `parse_many` that element is `None`. Anything else comes back with `warnings`.
 - `default_state` is a lookup hint for input with no state; it never fills `state`.
   A value that is not a US state, DC or territory raises `ValueError`.
-- `confidence` is reserved and always `None`: no score is computed.
 
 ## Install
 
@@ -97,7 +96,7 @@ has the components (`street_number`, `street_dir_prefix`, `street_name`,
 `second_unit_type`, `second_unit_number`, `po_box`, `attention`, `building`, `city`,
 `state`, `zip5`, `zip4`, `military_post_office`), the structured shapes (`highway`,
 `rural_route`, `military`, `place`, plain dicts), `general_delivery`, `warnings`
-(stable snake_case codes), `unparsed`, `input` and `confidence`, and the methods
+(stable snake_case codes), `unparsed` and `input`, and the methods
 `key(unit=False)`, `slug()`, `to_usps(max_line=None)`, `to_display()`, `to_long()`,
 `to_reso()`, `to_usaddress_tags()`, `tag()`, `address_type()`, `repeated_labels()` and
 `to_dict()`.
@@ -273,7 +272,7 @@ on 4 CPUs, 8 GB. These are measurements on a few data sets, not promises for you
 - [How it works](https://github.com/jeremeybingham/doorplate/blob/main/docs/how-it-works.md),
   [benchmarks](https://github.com/jeremeybingham/doorplate/blob/main/docs/benchmarks.md)
   and the [roadmap](https://github.com/jeremeybingham/doorplate/blob/main/docs/roadmap.md)
-  (a confidence score and customization packs are planned).
+  (customization packs and a table of how reliable each warning is are planned).
 - [Examples](https://github.com/jeremeybingham/doorplate/tree/main/examples): a
   notebook tour (rare shapes, place data, pandas, Polars, DuckDB, the command line) and a pipeline for each
   DataFrame library.

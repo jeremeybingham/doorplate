@@ -7,6 +7,10 @@ change to what an input produces needs a new key version.
 
 ## [Unreleased]
 
+- Planned for 0.4.0: the reserved `confidence` field, always `None`, is removed (issue #102). The
+  roadmap now lists a table of how reliable each warning is and named warnings for known
+  ambiguities in its place.
+
 - For maintainers: the harness moved from `tools/netsyms/` to `tools/harness/` and reads any address source (`run.py --input`), with an ingest tool (`tools/ingest/`) that turns a source into one record format, `label_score.py` (scores the parse against labeled parts, or against another file's labels) and `shapes_report.py` (a ranked list of failure shapes). The run artifacts are schema version 4.
 
 ## [0.3.0] - 2026-10-19

@@ -82,7 +82,7 @@ two `OccupancyIdentifier` tokens).
 | Input forms | One string | One string or fields (`line1`, `line2`, city, state, ZIP) |
 | Default state | None | `default_state` hint, `--default-state` |
 | Normalized output | None (see `usaddress-scourgify`) | USPS Pub 28, RESO, key, slug |
-| Diagnostics, spans, confidence | None (CRF marginals only) | Warnings, unparsed text, byte spans, `place`; `confidence` is reserved and always `None` |
+| Diagnostics and spans | None (CRF marginals only) | Warnings, unparsed text, byte spans, `place` |
 | Rare address shapes | Basic | Rural and highway routes, military, general delivery, dual, second unit |
 | Customization | Retrain with parserator on your own labels | Fixed at compile time |
 | Intersections, landmarks, `CornerOf`, country, recipient names | Labeled | Not modeled; text goes to `unparsed`. A trailing country is ignored with `country_ignored` and an intersection raises `intersection_detected` |

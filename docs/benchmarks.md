@@ -336,7 +336,6 @@ model on its first call, so its memory after import understates it.
   purpose, and those tokens are out of scope in the scoring.
 - The speed figures are for one machine with the GIL released where noted.
   Relative numbers hold up better than absolute ones.
-- Confidence scores are not measured: `confidence` is always `None`.
 
 ## Rerunning
 

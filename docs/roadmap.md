@@ -17,20 +17,16 @@ some, see [Sharing messy data](../CONTRIBUTING.md#sharing-messy-data).
 
 ## Planned
 
-### Confidence score
+### Warnings that say why
 
-`Diagnostics::confidence` is reserved and always `None`. The goal is a calibrated
-probability that the whole parse is right: of the addresses scored 0.9, about 90% are
-right on a labeled set the rules were not tuned on. The tagger already records the
-uncertain decisions it makes (a city found by comma or by suffix, a state with no ZIP, a
-bare unit, ...) as the input for a score. What is missing is **labeled data at scale**:
+Making the warnings say how far to trust a parse (issue #102):
 
-- messy addresses with correct, hand-checked answers, especially the rare paths
-  (`unparsed_remainder`, `missing_street_number`, bare units, cities found by suffix);
-- structured sources that keep line 1, line 2, city, state and ZIP in separate columns,
-  which give automatic labels for those components.
-
-A score ships only if its calibration holds on held-out data; otherwise it stays `None`.
+- a table of how reliable each warning is, measured on labeled data (the National Address
+  Database sample, the NC voter snapshot) with `tools/harness/label_score.py`, so a reader
+  knows which codes mean "wrong" and which mean nothing about the parse;
+- named warnings where the parser knows it is guessing, starting with a lone letter after the
+  house number (`123 A MAIN ST`: a number suffix or a street named `A MAIN`);
+- removing the reserved `confidence` field, which is always `None`, in 0.4.0.
 
 ### Customization packs
 

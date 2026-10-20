@@ -88,3 +88,19 @@ def test_unit_check_runs_only_where_line2_is_a_unit():
     assert count(rows, ["city", "line2", "state", "zip"])["m_unit"] == 0
     # A role that says its line 2 is a unit: the missing unit is a mismatch.
     assert count(rows, ["city", "label_unit", "line2", "state", "zip"])["m_unit"] == 1
+
+
+def test_state_check_accepts_names_and_aliases():
+    for src in ("NY", "NEW YORK", "New York", "N.Y."):
+        assert run.state_same(src, "NY"), src
+    assert not run.state_same("NJ", "NY") and not run.state_same("NEW JERSEY", "NY")
+    rows = [row("1", "123 OAK HOLLOW DR", None, "BUFFALO", "NEW YORK", "14201")]
+    assert count(rows, ["city", "state", "zip"])["m_state"] == 0
+
+
+def test_street_check_compares_unit_designators_by_abbreviation():
+    from doorplate import parse_fields
+
+    for text in ("123 MAIN ST, SUITE 4", "123 MAIN ST, APARTMENT 4", "123 MAIN ST, FLOOR 3", "123 MAIN ST, STE 4"):
+        a = parse_fields(line1=text, city="MIAMI", state="FL", zip="33101")
+        assert run.street_ok(text, None, "123", a), text
