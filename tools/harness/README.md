@@ -1,4 +1,4 @@
-# Netsyms harness
+# Harness
 
 Parses address sources with doorplate (the US rows of the Netsyms database, or any source
 turned into records by `tools/ingest/`) and keeps artifacts for analysis later, in a fresh
@@ -14,7 +14,7 @@ aggregate numbers leave `local-data/`, and nothing is committed from it.
 | `label_score.py` | Scores any records file that has `label_*` columns against our parse, or against another file's labels paired by `pair_id` (counts only) |
 | `nad_score.py` | The NAD scorecard: makes the NAD sample, then runs `label_score.py` on it |
 | `shapes_report.py` | The worklist for a run: warning rates, the share with an `unparsed` remainder, and the top failure shapes per source and role; with `--before RUN`, what changed |
-| `test_run.py`, `test_label_score.py`, `test_shapes_report.py` | Tests on invented rows (`pytest tools/netsyms`) |
+| `test_run.py`, `test_label_score.py`, `test_shapes_report.py` | Tests on invented rows (`pytest tools/harness`) |
 | `SCHEMA.md` | The artifacts' columns and the comparison rules (copied into every run) |
 
 ## Safe by default
@@ -24,9 +24,9 @@ directory, disk used and budget, commit) and exits. Start with the small sample:
 
 ```sh
 pip install "doorplate[duckdb]"        # DuckDB and PyArrow, for the artifacts and analysis
-python tools/netsyms/run.py --db local-data/netsyms-2026/sample.sqlite --table sample              # plan
-python tools/netsyms/run.py --db local-data/netsyms-2026/sample.sqlite --table sample --confirm    # run
-python tools/netsyms/analyze.py <run-id>
+python tools/harness/run.py --db local-data/netsyms-2026/sample.sqlite --table sample              # plan
+python tools/harness/run.py --db local-data/netsyms-2026/sample.sqlite --table sample --confirm    # run
+python tools/harness/analyze.py <run-id>
 ```
 
 Any other source goes through `tools/ingest/` first, then `--input`. The checks run only on
@@ -36,7 +36,7 @@ by `source`, `role` and `provider`:
 
 ```sh
 python tools/ingest/ingest.py tools/ingest/specs/netsyms.toml --confirm
-python tools/netsyms/run.py --input local-data/netsyms-2026/records.parquet --confirm
+python tools/harness/run.py --input local-data/netsyms-2026/records.parquet --confirm
 ```
 
 On the sample, a run from the Netsyms records and a direct `--db` run give the same totals,
@@ -45,7 +45,7 @@ warning codes and per-state counts (`compare.py` shows no change).
 The full run (after the archive is extracted, which needs a separate go-ahead):
 
 ```sh
-nohup python tools/netsyms/run.py --db local-data/netsyms-2026/<extracted>.sqlite \
+nohup python tools/harness/run.py --db local-data/netsyms-2026/<extracted>.sqlite \
     --table addresses --confirm > local-data/netsyms-runs/run.out 2>&1 &
 tail -f local-data/netsyms-runs/*/progress.log
 ```
@@ -67,20 +67,20 @@ the commit, doorplate version, data-table hash and the input fingerprint the run
 
 ## After a rule change
 
-Rerun the harness on the same database (a new run id), then `python tools/netsyms/compare.py <before> <after>`. The report lists how the totals, warning codes and per-state flagged counts moved, and warns when the two runs are not like for like (a different schema version, input or chunk size). Schema version 2 changed the `street` rule, so compare version-2 runs with each other.
+Rerun the harness on the same database (a new run id), then `python tools/harness/compare.py <before> <after>`. The report lists how the totals, warning codes and per-state flagged counts moved, and warns when the two runs are not like for like (a different schema version, input or chunk size). Schema version 2 changed the `street` rule, so compare version-2 runs with each other.
 
 ## A rule PR, step by step
 
 1. Environment (once): `uv venv venv`, activate it, `uv pip install maturin pytest usaddress pandas polars duckdb pyarrow nbclient nbformat ipykernel`, then `maturin develop --release` in `crates/doorplate-py`. Rebuild after every Rust change.
 2. Change the rule. Add corpus cases with invented addresses (`tests/corpus/README.md`); `tools/corpus/emit_expect.py` fills the emitter expectations from the spec, so teach it any change to the key. Add a row to `docs/usps-pub28-notes.md`. Rerun the corpus test with `UPDATE_CORPUS_BASELINE=1` and commit `tests/corpus/passing.txt`.
-3. Compare on the sample (about 2 to 3 minutes a run): `python tools/netsyms/run.py --db local-data/netsyms-2026/sample.sqlite --table sample --run-id NAME --confirm`, then `python tools/netsyms/compare.py BEFORE NAME`. Keep the previous run as BEFORE; old `sample-*` runs can be deleted. The comparison catches side effects the corpus does not (a designator rule once turned `FRONT ST` into a unit).
+3. Compare on the sample (about 2 to 3 minutes a run): `python tools/harness/run.py --db local-data/netsyms-2026/sample.sqlite --table sample --run-id NAME --confirm`, then `python tools/harness/compare.py BEFORE NAME`. Keep the previous run as BEFORE; old `sample-*` runs can be deleted. The comparison catches side effects the corpus does not (a designator rule once turned `FRONT ST` into a unit).
 4. The `flagged/` Parquet files of a run keep each row's key and parsed components, so DuckDB can diff two runs row by row (rows whose key changed, new `unparsed_remainder` rows). Look at shapes (letters `a`, digits `9`) and counts, never at street names (`docs/data-policy.md`).
 5. For a rule on one-line input, also run `tools/compare/city_diff.py` on the geocode splits and `tools/compare/oneline_fl.py` (`benchmarks/README.md`).
 6. Full Netsyms runs (about 20 minutes) only after a batch of rules and on the release commit. Ask before any extraction, full run or download.
 
 ## The worklist (`shapes_report.py`)
 
-`python tools/netsyms/shapes_report.py RUN_ID` turns a finished run into a ranked list of failure
+`python tools/harness/shapes_report.py RUN_ID` turns a finished run into a ranked list of failure
 **shapes** and writes it to `shapes.md` in the run directory. For each source and role it gives the
 rows, the share with a warning, with an `unparsed` remainder and with each mismatch; the warning
 codes by rate; for the rows with an `unparsed` remainder, the shape of the input and of the
@@ -107,7 +107,7 @@ rows where we differ, the top (label -> ours) pairs for the lexicon fields, the 
 until `--confirm`.
 
 ```sh
-python tools/netsyms/label_score.py local-data/nad-2026/records.parquet --confirm
+python tools/harness/label_score.py local-data/nad-2026/records.parquet --confirm
 ```
 
 **Same address in two forms.** With `--labels OTHER.parquet`, the labels come from another file and
@@ -117,7 +117,7 @@ NC voter file, the as-entered street of the current file against the county-ente
 the March snapshot:
 
 ```sh
-python tools/netsyms/label_score.py local-data/nc-voter-2026/records_current.parquet \
+python tools/harness/label_score.py local-data/nc-voter-2026/records_current.parquet \
     --labels local-data/nc-voter-2026/records_snapshot.parquet --confirm
 ```
 
@@ -131,8 +131,8 @@ they are missing, and runs `label_score.py` on the four fields it always scored.
 street or unit rule changes:
 
 ```sh
-python tools/netsyms/nad_score.py --make-sample --confirm   # once; writes local-data/nad-2026/sample1m.parquet
-python tools/netsyms/nad_score.py
+python tools/harness/nad_score.py --make-sample --confirm   # once; writes local-data/nad-2026/sample1m.parquet
+python tools/harness/nad_score.py
 ```
 
 Read the figures with care: many providers put the suffix inside the name and leave the type empty

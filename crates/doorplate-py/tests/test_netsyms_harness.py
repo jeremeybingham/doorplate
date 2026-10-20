@@ -1,4 +1,4 @@
-"""tools/netsyms/run.py and analyze.py on a tiny database of invented rows:
+"""tools/harness/run.py and analyze.py on a tiny database of invented rows:
 the plan writes nothing, a run is resumable and deterministic, the artifacts
 have the documented shape, and the analysis reads them. Skips without DuckDB
 and PyArrow."""
@@ -13,7 +13,7 @@ import pytest
 pytest.importorskip("duckdb")
 pytest.importorskip("pyarrow")
 
-TOOLS = Path(__file__).resolve().parents[3] / "tools" / "netsyms"
+TOOLS = Path(__file__).resolve().parents[3] / "tools" / "harness"
 
 ROWS = [
     ("7", "MAIN STREET", "", "MIAMI", "FL", "33101", "", "US", "t/one"),

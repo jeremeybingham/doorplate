@@ -267,7 +267,7 @@ docs/                       this page and the references below
   after comparison on a sample of the Netsyms address database for every parse-rule
   change, a full run over its 146.6 million US rows before a release (no panics, no failed
   rows, warning and mismatch counts compared with the previous run), the National Address
-  Database scorecard, and a one-line Florida check (`tools/netsyms/README.md`,
+  Database scorecard, and a one-line Florida check (`tools/harness/README.md`,
   `benchmarks/README.md`, `data-policy.md`).
 - **Pub 28 check**: `tools/pub28/verify.py` compares the tables with the live
   Publication 28 pages and runs every Appendix F example through the parser.

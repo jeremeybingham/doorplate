@@ -1,6 +1,6 @@
-"""Tests for tools/netsyms/shapes_report.py on invented rows (no private data).
+"""Tests for tools/harness/shapes_report.py on invented rows (no private data).
 
-    pytest tools/netsyms
+    pytest tools/harness
 """
 import subprocess
 import sys

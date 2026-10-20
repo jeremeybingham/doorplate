@@ -1,5 +1,5 @@
 # The National Address Database sample (docs/data-policy.md; local-data/README.md).
-# Same inputs as tools/netsyms/nad_score.py: line 1 is AddNo_Full + StNam_Full, line 2
+# Same inputs as tools/harness/nad_score.py: line 1 is AddNo_Full + StNam_Full, line 2
 # SubAddress, and the parts NAD labels become label_* columns.
 source = "nad"
 output = "local-data/nad-2026/records.parquet"

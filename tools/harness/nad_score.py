@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Score doorplate against the labeled parts of the National Address Database (NAD).
-(A thin wrapper: the scoring is tools/netsyms/label_score.py on the NAD records.)
+(A thin wrapper: the scoring is tools/harness/label_score.py on the NAD records.)
 
-    python tools/netsyms/nad_score.py --make-sample --confirm     # one pass over the NAD text file (about 3 minutes)
-    python tools/netsyms/nad_score.py                              # score the saved sample
+    python tools/harness/nad_score.py --make-sample --confirm     # one pass over the NAD text file (about 3 minutes)
+    python tools/harness/nad_score.py                              # score the saved sample
 
 The NAD text file (`local-data/nad-2026/extracted/TXT/NAD_r24.txt`, see docs/data-policy.md) labels
 each address's parts: number prefix and suffix, street predirectional, name, type and postdirectional,

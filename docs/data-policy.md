@@ -69,7 +69,7 @@ list, and is subject to state statutes that prohibit that use. We treat it as fo
   aggregates), citing NAD as the source. Because NAD is public domain, it can serve as the
   public confirming source itself; keep a threshold written down for any new rule.
 - **What we have done with it** (2026-10-19, aggregate results only; scripts in
-  `tools/netsyms/`, results in issue #29):
+  `tools/harness/`, results in issue #29):
   - *Profile:* 99,226,272 records in 47 jurisdictions (no HI, MI, MS, NH, NV or PR); fill rates
     for each column and state; 95 `NAD_Source` values.
   - *Place names:* 89,490 community and neighborhood names (`Uninc_Comm`, `Nbrhd_Comm`) differ
@@ -78,7 +78,7 @@ list, and is subject to state statutes that prohibit that use. We treat it as fo
     data**; the gap is area words and neighborhood labels no address database holds (the area-word
     rule, #62, came from that triage instead).
   - *Scorecard:* a 1,000,000-row random sample scored against NAD's labeled parts
-    (`tools/netsyms/nad_score.py`). It confirmed the parser against labeled data and found one
+    (`tools/harness/nad_score.py`). It confirmed the parser against labeled data and found one
     bug, fixed with corpus `rg-207` to `rg-211`: a trailing directional equal to the city's first
     word (`MAIN ST WEST` / `WEST POINT`) was dropped as a copy of the city.
   - *Evaluated and not used:* NAD's `Addr_Type`, `AddrClass`, `Lifecycle` and `DeliverTyp`

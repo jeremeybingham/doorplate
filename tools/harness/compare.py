@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Compare two runs of tools/netsyms/run.py: how the class counts changed.
+"""Compare two runs of tools/harness/run.py: how the class counts changed.
 
-    python tools/netsyms/compare.py BEFORE AFTER [--top 15] [--partial]
+    python tools/harness/compare.py BEFORE AFTER [--top 15] [--partial]
 
 BEFORE and AFTER are run ids (under local-data/netsyms-runs/) or paths. Reads the
 aggregates only (see SCHEMA.md), offline, with DuckDB, and prints a Markdown report

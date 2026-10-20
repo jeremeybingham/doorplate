@@ -2,8 +2,8 @@
 """Parse an address source with doorplate and store artifacts for later analysis.
 Offline, resumable, nothing is committed.
 
-    python tools/netsyms/run.py --input local-data/nc-voter-2026/records_current.parquet
-    python tools/netsyms/run.py --db local-data/netsyms-2026/sample.sqlite --table sample
+    python tools/harness/run.py --input local-data/nc-voter-2026/records_current.parquet
+    python tools/harness/run.py --db local-data/netsyms-2026/sample.sqlite --table sample
 
 `--input` reads the record format of tools/ingest (any source, one file per source).
 `--db` reads the Netsyms SQLite columns directly (the original path, kept to check that
@@ -11,7 +11,7 @@ the Netsyms records give the same numbers).
 
 Without `--confirm` it only prints the plan (input, row range, chunks, paths, disk
 budget) and exits. With it, it writes a run directory under
-`local-data/netsyms-runs/<run-id>/` (see tools/netsyms/README.md and SCHEMA.md).
+`local-data/netsyms-runs/<run-id>/` (see tools/harness/README.md and SCHEMA.md).
 
 The input stays in `local-data/` and is never copied into the repository. See
 docs/data-policy.md: only aggregate numbers leave the run directory. This library
@@ -604,7 +604,7 @@ def main(argv=None):
 def readme_run(manifest):
     return f"""# Run {manifest['run_id']}
 
-A doorplate parse of an address source (tools/netsyms/run.py). **Private: do not commit anything in this folder**
+A doorplate parse of an address source (tools/harness/run.py). **Private: do not commit anything in this folder**
 (docs/data-policy.md). Only aggregate numbers leave it.
 
 - `manifest.json`: what was run (commit, doorplate version, data hash, input fingerprint, options).
@@ -619,7 +619,7 @@ Open with DuckDB (offline):
     import duckdb
     duckdb.sql("select * from read_parquet('agg_state_source/*.parquet') limit 5").show()
 
-Then: `python tools/netsyms/analyze.py {manifest['run_id']}` from the repository root.
+Then: `python tools/harness/analyze.py {manifest['run_id']}` from the repository root.
 To continue an interrupted run, repeat the original command with `--run-id {manifest['run_id']}`.
 """
 

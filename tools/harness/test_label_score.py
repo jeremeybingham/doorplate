@@ -1,6 +1,6 @@
-"""Tests for tools/netsyms/label_score.py on invented rows (no private data).
+"""Tests for tools/harness/label_score.py on invented rows (no private data).
 
-    pytest tools/netsyms
+    pytest tools/harness
 """
 import sys
 from pathlib import Path

@@ -24,7 +24,7 @@ There are three kinds of measure here, and they answer different questions.
 | Speed of batches and of pandas, Polars and DuckDB frames | `python crates/doorplate-py/benchmarks/bench_batch.py [N]` | the extension; the frame libraries |
 | Rust speed (criterion) and a CSV file run | `python benchmarks/speed_rust.py [--csv FILE --column NAME]` | Rust |
 | Package size, import time, resident memory | `python benchmarks/size_memory.py` | the CLI; the extension; `maturin`; `uv` |
-| Release and rule-PR checks on private data (Netsyms, NAD, Florida) | `tools/netsyms/`, `tools/compare/` | `local-data/` (maintainers only) |
+| Release and rule-PR checks on private data (Netsyms, NAD, Florida) | `tools/harness/`, `tools/compare/` | `local-data/` (maintainers only) |
 
 Two things that look like benchmarks are not. The **golden corpus** (`tests/corpus/`, run by
 `cargo test` or `doorplate corpus test`) is a regression set that doorplate passes by construction, so
@@ -151,8 +151,8 @@ not published as accuracy.
 
 | Tool | Does | Read |
 |---|---|---|
-| `tools/netsyms/` (`run.py`, `analyze.py`, `compare.py`) | Parses the US rows of the Netsyms database (a 12-second sample comparison per rule; a full run of about 20 minutes on the release commit) and compares two runs | [`tools/netsyms/README.md`](../tools/netsyms/README.md) |
-| `tools/netsyms/nad_score.py` | Scores doorplate against the labeled columns of the National Address Database sample | `tools/netsyms/README.md` |
+| `tools/harness/` (`run.py`, `analyze.py`, `compare.py`) | Parses the US rows of the Netsyms database (a 12-second sample comparison per rule; a full run of about 20 minutes on the release commit) and compares two runs | [`tools/harness/README.md`](../tools/harness/README.md) |
+| `tools/harness/nad_score.py` | Scores doorplate against the labeled columns of the National Address Database sample | `tools/harness/README.md` |
 | `tools/compare/compare_usaddress.py` | The token-by-token comparison with usaddress that `suite.py` and `accuracy.py` use; also runs on any labeled XML or CSV | its docstring |
 | `tools/compare/oneline_fl.py`, `city_diff.py` | The one-line Florida check and the cities gained and lost (above) | above |
 | `tools/benchsuite/` | The suite's generator, label audit and inventories; rebuilds the suite from private data | [`docs/benchmark-suite.md`](../docs/benchmark-suite.md) |

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Summarize a run directory (tools/netsyms/run.py).
+"""Summarize a run directory (tools/harness/run.py).
 
-    python tools/netsyms/analyze.py RUN_ID_OR_PATH [--top 20]
+    python tools/harness/analyze.py RUN_ID_OR_PATH [--top 20]
 
 Reads `manifest.json`, the aggregates and the flagged rows (see SCHEMA.md) with
 DuckDB, offline, and writes into the run directory:

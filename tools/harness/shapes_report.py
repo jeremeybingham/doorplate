@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""The worklist: a ranked list of failure shapes for a run of tools/netsyms/run.py (#93, step 4).
+"""The worklist: a ranked list of failure shapes for a run of tools/harness/run.py (#93, step 4).
 
-    python tools/netsyms/shapes_report.py RUN_ID_OR_PATH [--before RUN] [--top 10]
+    python tools/harness/shapes_report.py RUN_ID_OR_PATH [--before RUN] [--top 10]
 
 For each source and role in the run it reports, as counts only:
 
@@ -24,7 +24,7 @@ run directory. Counts only (never a row), so it may be quoted under docs/data-po
 library formats and parses; it does not validate that an address exists or can receive mail.
 
 This does not train the parser. Each shape is a question; a fix still needs a source for its
-rule (docs/usps-pub28-notes.md) and goes through the rule-PR loop in tools/netsyms/README.md.
+rule (docs/usps-pub28-notes.md) and goes through the rule-PR loop in tools/harness/README.md.
 """
 import argparse
 import json
@@ -58,7 +58,7 @@ def open_run(arg, partial):
     manifest = json.loads((run / "manifest.json").read_text())
     if manifest.get("schema_version") not in (3, 4):
         sys.exit(f"{run}: schema_version {manifest.get('schema_version')} has no role column (it needs 3 or 4); "
-                 "rerun with the current tools/netsyms/run.py")
+                 "rerun with the current tools/harness/run.py")
     return run, manifest
 
 
@@ -238,7 +238,7 @@ def main(argv=None):
                "Counts only. A shape turns letters into `a` and digits into `9` and collapses runs. A "
                "warning or a leftover is a question about the parser or about the source, not a verdict "
                "on either. Rule changes found here go through the rule-PR loop "
-               "(tools/netsyms/README.md); every rule needs a source.", ""]
+               "(tools/harness/README.md); every rule needs a source.", ""]
         prev = None
         if args.before:
             brun, bman = open_run(args.before, args.partial)

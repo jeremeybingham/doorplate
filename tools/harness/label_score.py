@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Score doorplate against the labeled parts of any records file (#93, step 3).
 
-    python tools/netsyms/label_score.py local-data/nad-2026/records.parquet               # the plan
-    python tools/netsyms/label_score.py local-data/nad-2026/records.parquet --confirm
-    python tools/netsyms/label_score.py local-data/nc-voter-2026/records_current.parquet \\
+    python tools/harness/label_score.py local-data/nad-2026/records.parquet               # the plan
+    python tools/harness/label_score.py local-data/nad-2026/records.parquet --confirm
+    python tools/harness/label_score.py local-data/nc-voter-2026/records_current.parquet \\
         --labels local-data/nc-voter-2026/records_snapshot.parquet --confirm
 
 A records file (tools/ingest/README.md) may carry `label_*` columns: the parts a source stores

@@ -1,6 +1,6 @@
 # Run artifacts (schema version 4)
 
-Written by `tools/netsyms/run.py`, read by `tools/netsyms/analyze.py` and `compare.py`. The
+Written by `tools/harness/run.py`, read by `tools/harness/analyze.py` and `compare.py`. The
 folder is private (docs/data-policy.md): aggregate numbers may leave it, nothing else.
 
 ## How rows are parsed

@@ -1,6 +1,6 @@
-"""Tests for tools/netsyms/run.py on invented rows (no private data).
+"""Tests for tools/harness/run.py on invented rows (no private data).
 
-    pytest tools/netsyms
+    pytest tools/harness
 """
 import sys
 from pathlib import Path

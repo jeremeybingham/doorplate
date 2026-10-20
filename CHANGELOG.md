@@ -7,6 +7,8 @@ change to what an input produces needs a new key version.
 
 ## [Unreleased]
 
+- For maintainers: the harness moved from `tools/netsyms/` to `tools/harness/` and reads any address source (`run.py --input`), with an ingest tool (`tools/ingest/`) that turns a source into one record format, `label_score.py` (scores the parse against labeled parts, or against another file's labels) and `shapes_report.py` (a ranked list of failure shapes). The run artifacts are schema version 4.
+
 ## [0.3.0] - 2026-10-19
 
 Still an alpha. The match key moves to `k2`, and a batch of parsing
