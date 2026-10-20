@@ -69,6 +69,9 @@ def parse_args(argv=None):
     ap.add_argument("--any-zip", action="store_true",
                     help="with --labels: also score pairs whose ZIP codes differ (by default they are dropped: "
                          "the two files may be months apart, and a voter who moved is not a disagreement)")
+    ap.add_argument("--any-number", action="store_true",
+                    help="with --labels: score the other fields even when the house numbers differ (by default "
+                         "they are skipped: a voter who moved within a ZIP code has another street, not a disagreement)")
     ap.add_argument("--limit", type=int, help="score only about this many rows (a test slice)")
     ap.add_argument("--chunk-rows", type=int, default=200_000)
     ap.add_argument("--top", type=int, default=8)
@@ -117,10 +120,13 @@ class Result:
         self.states = defaultdict(Counter)   # (src, role, field) -> state
         self.dropped = Counter()             # (src, role) -> pairs dropped for a different ZIP
         self.pairs_seen = Counter()          # (src, role) -> pairs joined
+        self.other_number = Counter()        # (src, role) -> pairs whose other fields were skipped (number differs)
 
 
-def compare(row, lab, a, fields, canon, res):
-    """Count one parsed row against its labels. `lab` maps label column to its value."""
+def compare(row, lab, a, fields, canon, res, guard_number=False):
+    """Count one parsed row against its labels. `lab` maps label column to its value. With
+    `guard_number`, a row whose labeled house number differs from ours is counted for the
+    `number` field only (the other fields would compare two different addresses)."""
     src, role, state = row[1] or "", row[2] or "", norm_state(row[7])
     key = (src, role)
     c = res.c[key]
@@ -141,6 +147,18 @@ def compare(row, lab, a, fields, canon, res):
             else:
                 res.shapes[key + (field,)][(shape(want), shape(got))] += 1
 
+    if "number" in fields and strip(lab.get("label_number")):
+        want = "".join(strip(lab.get(k)) for k in ("label_number_prefix", "label_number", "label_number_suffix"))
+        differ = compact(want) != compact(a.street_number)
+        count("number", True, differ, want, a.street_number or "")
+        if differ and guard_number:
+            res.other_number[key] += 1
+            return
+    elif guard_number and strip(lab.get("label_number")):
+        want = "".join(strip(lab.get(k)) for k in ("label_number_prefix", "label_number", "label_number_suffix"))
+        if compact(want) != compact(a.street_number):
+            res.other_number[key] += 1
+            return
     for field, col, ours in (("predirectional", "label_predir", a.street_dir_prefix),
                              ("postdirectional", "label_postdir", a.street_dir_suffix),
                              ("suffix", "label_type", a.street_suffix)):
@@ -154,9 +172,6 @@ def compare(row, lab, a, fields, canon, res):
         raw = strip(lab.get("label_unit"))
         # Differ when the source labels a unit and we found none (spelled-out types are not compared).
         count("unit", bool(raw), not a.unit_number, raw, a.unit_number or "")
-    if "number" in fields and strip(lab.get("label_number")):
-        want = "".join(strip(lab.get(k)) for k in ("label_number_prefix", "label_number", "label_number_suffix"))
-        count("number", True, compact(want) != compact(a.street_number), want, a.street_number or "")
     if "name" in fields and strip(lab.get("label_name")):
         name = strip(lab.get("label_name"))
         pre = strip(lab.get("label_pretype"))
@@ -232,7 +247,8 @@ def score(args):
                 if not r[nb + len(LABELS)] and not args.any_zip:
                     res.dropped[(b[1] or "", b[2] or "")] += 1
                     continue
-            compare(b, dict(zip(LABELS, r[nb:nb + len(LABELS)])), a, fields, canon, res)
+            compare(b, dict(zip(LABELS, r[nb:nb + len(LABELS)])), a, fields, canon, res,
+                    guard_number=bool(args.labels) and not args.any_number)
         if limit_left is not None and limit_left <= 0:
             break
     return res, fields, n
@@ -246,7 +262,9 @@ def render(res, fields, top, mode):
         out += [f"## {src} / {role}{' (paired labels)' if mode == 'pair' else ''}: "
                 f"{c['rows']:,} rows scored" + (f", {c['no result']:,} with no result" if c["no result"] else ""), "",
                 *([f"{res.pairs_seen[key]:,} pairs joined, {res.dropped[key]:,} dropped for a different ZIP "
-                   "(a move between the files, not a disagreement)", ""] if mode == "pair" else []),
+                   "(a move between the files, not a disagreement); "
+                   f"{res.other_number[key]:,} more have another house number: counted for `number` only", ""]
+                  if mode == "pair" else []),
                 "| field | labeled | we differ | share |", "|---|---|---|---|"]
         for f in fields:
             n, d = c[f"{f}: labeled"], c[f"{f}: differ"]

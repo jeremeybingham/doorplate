@@ -19,8 +19,11 @@ prints the plan (inputs and their sizes, roles, output) and exits.
 ## The record format (version 1)
 
 One Parquet file per source, `records.parquet`, every column a string or null. Values
-are trimmed at the ends (inner spacing is kept, since that is part of what we test) and
-an empty value becomes null.
+are trimmed at the ends (inner spacing is kept, since that is part of what we test), NUL bytes
+(fixed-width padding) are dropped, and an empty value becomes null. A spec that joins fields
+with `concat_ws` or filters on `IS NOT NULL` sees the raw values, so it should clean them itself
+(`nullif(trim(replace(x, chr(0), '')), '')`); a pad of NULs once made 16.9 million empty mailing
+addresses look present.
 
 | Column | Meaning |
 |---|---|

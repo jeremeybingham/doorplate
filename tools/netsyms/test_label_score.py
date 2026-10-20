@@ -60,6 +60,8 @@ def test_pair_score_uses_the_other_files_labels(tmp_path):
         ("c", "cur", "site", "1 A ST", None, "MIAMI", "FL", "33101", "p3", None, None, None, None, None, None),
         ("d", "cur", "site", "2 A ST", None, "MIAMI", "FL", "33101", "p3", None, None, None, None, None, None),
         ("e", "cur", "site", "7 MAIN ST", None, "MIAMI", "FL", "33101", "p4", None, None, None, None, None, None),
+        # Same ZIP, another house number: a voter who moved down the road.
+        ("f", "cur", "site", "8 MAIN ST", None, "MIAMI", "FL", "33101", "p5", None, None, None, None, None, None),
     ], COLS)
     write(snap, [
         ("a", "snap", "site", None, None, None, None, "33101", "p1", "12", "W", "MAIN", "ST", None, None),
@@ -67,15 +69,20 @@ def test_pair_score_uses_the_other_files_labels(tmp_path):
         ("c", "snap", "site", None, None, None, None, "33101", "p3", "1", None, "A", "ST", None, None),
         # A voter who moved: same id, another ZIP. Dropped unless --any-zip.
         ("e", "snap", "site", None, None, None, None, "90210", "p4", "5", "N", "FAR", "WAY", None, None),
+        ("f", "snap", "site", None, None, None, None, "33101", "p5", "80", "N", "MAIN", "ST", None, None),
     ], COLS)
     res, _ = scored(str(cur), "--labels", str(snap))
     c = res.c[("cur", "site")]
-    assert c["rows"] == 2  # p3 is not unique in cur
-    assert c["predirectional: labeled"] == 2 and c["predirectional: differ"] == 1
+    assert c["rows"] == 3  # p3 is not unique in cur; p5 moved down the road
+    assert c["predirectional: labeled"] == 2 and c["predirectional: differ"] == 1  # p5 is skipped
+    assert c["number: labeled"] == 3 and c["number: differ"] == 1
+    assert res.other_number[("cur", "site")] == 1
     assert c["name: labeled"] == 2 and c["name: differ"] == 0
-    assert res.pairs_seen[("cur", "site")] == 3 and res.dropped[("cur", "site")] == 1
+    assert res.pairs_seen[("cur", "site")] == 4 and res.dropped[("cur", "site")] == 1
     res, _ = scored(str(cur), "--labels", str(snap), "--any-zip")
-    assert res.c[("cur", "site")]["rows"] == 3
+    assert res.c[("cur", "site")]["rows"] == 4
+    res, _ = scored(str(cur), "--labels", str(snap), "--any-number")
+    assert res.c[("cur", "site")]["predirectional: labeled"] == 3
 
 
 def test_shape_collapses_runs():

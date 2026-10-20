@@ -7,8 +7,8 @@
 
 A spec names the source, its inputs and one SQL query per role (for example
 `residential` and `mailing`); the queries map the source's columns to the record
-columns. This script runs them with DuckDB, trims every value (empty becomes
-null), checks the columns, and writes `records.parquet` and `records.json`
+columns. This script runs them with DuckDB, trims every value (NUL bytes, which fixed-width
+exports use as padding, are dropped; empty becomes null), checks the columns, and writes `records.parquet` and `records.json`
 beside each other. Paths in a spec are relative to the repository root.
 
 Specs for private sources live with their data in `local-data/`; the ones in
@@ -146,7 +146,7 @@ def role_query(role, sql, got, limit):
         if c == "role":
             cols.append(f"'{role}' AS role")
         elif c in got:
-            cols.append(f"nullif(trim(CAST(\"{c}\" AS VARCHAR)), '') AS {c}")
+            cols.append(f"nullif(trim(replace(CAST(\"{c}\" AS VARCHAR), chr(0), '')), '') AS {c}")
         else:
             cols.append(f"CAST(NULL AS VARCHAR) AS {c}")
     lim = f" LIMIT {int(limit)}" if limit else ""

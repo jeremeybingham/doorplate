@@ -125,3 +125,15 @@ def test_sqlite_input(tmp_path):
     assert ingest.main([str(spec), "--confirm"]) == 0
     assert [r[1:4] for r in read(tmp_path / "records.parquet")] == [("1", "a", "1 MAIN ST")]
     assert not list(tmp_path.glob(".ingest_tmp_*"))
+
+
+def test_nul_padding_is_dropped(tmp_path, csv_source):
+    """Fixed-width exports pad with NUL bytes: a field of only NULs is empty, and NULs around
+    a value are not part of it."""
+    spec = write_spec(tmp_path, csv_source, [
+        ("site", "SELECT id AS record_id, chr(0) AS line1, '7 OAK ST' || chr(0) || chr(0) AS line2 "
+                 "FROM s WHERE id = '1'")])
+    assert ingest.main([str(spec), "--confirm"]) == 0
+    row = read(tmp_path / "records.parquet")[0]
+    cols = ingest.COLUMNS
+    assert dict(zip(cols, row))["line1"] is None and dict(zip(cols, row))["line2"] == "7 OAK ST"
