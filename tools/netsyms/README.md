@@ -13,7 +13,8 @@ aggregate numbers leave `local-data/`, and nothing is committed from it.
 | `compare.py` | Compares two runs (before and after a rule change): totals, warning codes, states |
 | `label_score.py` | Scores any records file that has `label_*` columns against our parse, or against another file's labels paired by `pair_id` (counts only) |
 | `nad_score.py` | The NAD scorecard: makes the NAD sample, then runs `label_score.py` on it |
-| `test_run.py`, `test_label_score.py` | Tests on invented rows (`pytest tools/netsyms`) |
+| `shapes_report.py` | The worklist for a run: warning rates, the share with an `unparsed` remainder, and the top failure shapes per source and role; with `--before RUN`, what changed |
+| `test_run.py`, `test_label_score.py`, `test_shapes_report.py` | Tests on invented rows (`pytest tools/netsyms`) |
 | `SCHEMA.md` | The artifacts' columns and the comparison rules (copied into every run) |
 
 ## Safe by default
@@ -76,6 +77,24 @@ Rerun the harness on the same database (a new run id), then `python tools/netsym
 4. The `flagged/` Parquet files of a run keep each row's key and parsed components, so DuckDB can diff two runs row by row (rows whose key changed, new `unparsed_remainder` rows). Look at shapes (letters `a`, digits `9`) and counts, never at street names (`docs/data-policy.md`).
 5. For a rule on one-line input, also run `tools/compare/city_diff.py` on the geocode splits and `tools/compare/oneline_fl.py` (`benchmarks/README.md`).
 6. Full Netsyms runs (about 20 minutes) only after a batch of rules and on the release commit. Ask before any extraction, full run or download.
+
+## The worklist (`shapes_report.py`)
+
+`python tools/netsyms/shapes_report.py RUN_ID` turns a finished run into a ranked list of failure
+**shapes** and writes it to `shapes.md` in the run directory. For each source and role it gives the
+rows, the share with a warning, with an `unparsed` remainder and with each mismatch; the warning
+codes by rate; for the rows with an `unparsed` remainder, the shape of the input and of the
+leftover; for the top three warning codes, the shapes of their inputs; and the style of the failing
+inputs (case, unit forms, commas, spelled-out types: `line_styles` of `tools/benchsuite/shapes.py`)
+beside the style of all inputs. A shape turns letters into `a` and digits into `9` and collapses
+runs, so `123 N OAK ST` is `9 a a a`. The input text comes from the records file in the run's
+manifest, joined to the flagged rows by `(source, role, record_id)`; a `--db` run has no text, so it
+gets the leftover shapes only. Counts only, so the report can be quoted (`docs/data-policy.md`).
+
+`--before RUN` adds, per source and role, what changed between two runs of the same input: the
+totals, the warning codes and the leftover shapes that moved most. Use it as the "before and after"
+of a rule PR. The list is a set of questions, not a bug count: each fix still needs an invented
+corpus case, a source for the rule (`docs/usps-pub28-notes.md`), the rule and a comparison.
 
 ## Label scoring (`label_score.py`, and `nad_score.py` for NAD)
 
