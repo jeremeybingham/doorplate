@@ -172,7 +172,7 @@ con.sql("SELECT doorplate_parse_fields(line1, line2, city, state, zip).key FROM 
 rel = dd.parse_column(con.table("addresses"), "address", connection=con)   # input columns + addr_* columns, lazy
 ```
 
-`doorplate_parse` returns a STRUCT of VARCHAR fields (`columns` defaults to the same list as the other helpers; `AVAILABLE_COLUMNS` has the rest) and NULL for a NULL, blank or no-address-text row. Each row is parsed once however many fields you read, in batches of 2,048 rows that Rust parses in parallel with the GIL released. Choose only the columns you need: building every column costs more (about 154,000 addresses/s with all 15 against 238,000 with 7). `parse_column` stays lazy, so it works on tables larger than memory. Pass `connection=` unless the relation came from `duckdb.sql(...)`.
+`doorplate_parse` returns a STRUCT of VARCHAR fields (`columns` defaults to the same list as the other helpers; `AVAILABLE_COLUMNS` has the rest) and NULL for a NULL, blank or no-address-text row. Each row is parsed once however many fields you read, in batches of 2,048 rows that Rust parses in parallel with the GIL released. Choose only the columns you need: building every column costs more (about 110,000 addresses/s with all 15 against 157,000 with 7, on 4 CPUs). `parse_column` stays lazy, so it works on tables larger than memory. Pass `connection=` unless the relation came from `duckdb.sql(...)`.
 
 **Polars by hand** (when you want other fields):
 
