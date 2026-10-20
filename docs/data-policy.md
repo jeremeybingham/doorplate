@@ -36,7 +36,7 @@ and none of the data below is used to claim otherwise.
 | Geocode benchmark (`test`, `dev`, `train`) | `local-data/geocode-benchmark/` | **No** | No license stated. Only aggregate scores ship (`docs/benchmarks.md`). |
 | National Address Database (NAD) r24, text file | `local-data/nad-2026/`; anonymized rows in `benchmarks/suite/` | **Anonymized rows in the benchmark suite only** (see below) | Work of the US federal government, no copyright (17 U.S.C. § 105); the metadata says it is available for re-use without limitation or restriction |
 | Netsyms Address Database 2026-05 | `local-data/netsyms-2026/` | **No** (see below) | No formal license; see the next section |
-| Messy-address sources (2026-10-20): NC voter files (current and a labeled snapshot), FMCSA company census, Texas TDLR licenses, FCC amateur licenses, IRS exempt organizations, a California unclaimed property trial file | `local-data/<source>/` | **No** (aggregates only) | Public records or open data published by the agency; each folder's `NOTICE.md` records provenance and terms (the California file's terms are not yet checked). Several hold names with addresses: names are never printed |
+| Messy-address sources (2026-10-20): NC voter files (current and a labeled snapshot), FMCSA company census, Texas TDLR licenses, FCC amateur licenses, IRS exempt organizations | `local-data/<source>/` | **No** (aggregates only) | Public records or open data published by the agency; each folder's `NOTICE.md` records provenance and terms. Several hold names with addresses: names are never printed |
 | Florida exports with names, the labeled Florida sample, comparison reports | `local-data/` | **No** | Private; contain personal names or rows |
 
 ## The National Address Database (NAD)
@@ -159,7 +159,7 @@ and check on `dev` (issue #29).
 doorplate is rule-based: nothing is trained on this data, and every rule cites a source. The real
 addresses are used to **test** it: the harness (`tools/harness/`) parses them, counts the warnings
 and the unparsed remainders, and ranks the failure shapes, and the labeled sources score the
-parts we return. As of 2026-10-20, about **200 million rows** have been parsed in total, from
+parts we return. As of 2026-10-20, about **198 million rows** have been parsed in total, from
 these public or open sources (aggregate counts only; the totals overlap, so they are an upper
 bound on distinct addresses):
 
@@ -168,7 +168,6 @@ bound on distinct addresses):
 | Netsyms Address Database (US rows) | 146.6 million |
 | NC voter file (current; and a snapshot with the address in labeled parts) | 16.2 million; 20.9 million |
 | FMCSA company census | 9.0 million |
-| California unclaimed property (trial file) | 3.5 million |
 | IRS exempt organizations | 2.0 million |
 | FCC amateur licenses | 1.7 million |
 | National Address Database (a 1-million-row sample of 99.2 million) | 1.0 million |

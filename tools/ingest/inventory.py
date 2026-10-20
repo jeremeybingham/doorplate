@@ -2,7 +2,7 @@
 """One table of what is in `local-data/`: the record files and the harness runs, with row counts.
 
     python tools/ingest/inventory.py                       # prints the tables and writes local-data/INVENTORY.md
-    python tools/ingest/inventory.py --exclude ca-unclaimed --exclude sample.sqlite
+    python tools/ingest/inventory.py --exclude netsyms-2026/records --exclude nad-2026
 
 It reads the `records.json` written beside every `records*.parquet` (tools/ingest) and the
 `manifest.json` and `DONE` of every run under `local-data/netsyms-runs/` (tools/harness), and prints:
