@@ -26,6 +26,7 @@ imply otherwise in docs or code comments.
 | The benchmark suite: what it holds and the rules that keep it fair (it is not a work list) | [`docs/benchmark-suite.md`](docs/benchmark-suite.md); data in [`benchmarks/suite/`](benchmarks/suite/README.md) |
 | How the parser works | [`docs/how-it-works.md`](docs/how-it-works.md) |
 | What is planned and what is not | [`docs/roadmap.md`](docs/roadmap.md) |
+| Every page of documentation, by topic, and which pages to check when you change something | [`docs/README.md`](docs/README.md) |
 | What data may be used and committed | [`docs/data-policy.md`](docs/data-policy.md) |
 
 Parsing never raises on odd input: it returns a `ParsedAddress` with `warnings` (stable
@@ -40,6 +41,13 @@ Report security problems privately ([`SECURITY.md`](SECURITY.md)); conduct is co
 changes, and the rules for code. The golden corpus
 ([`tests/corpus/README.md`](tests/corpus/README.md)) is the regression suite; every
 parsing bug fixed gets a case. Open issues are the backlog.
+
+**Documentation.** [`docs/README.md`](docs/README.md) indexes all the documentation by topic and has
+a table of what to check when you change something. Look at it before you finish a
+change: find the thing you changed in that table and update every page in its row in the
+same change (a rule, a key, a warning code, an API or CLI option, a figure, the layout or
+the build commands all have related pages). When you add, rename or remove a page, update
+the index and the table above.
 
 ## Build and test
 
@@ -66,8 +74,8 @@ Plain `cargo test` needs no Python. Rust 1.80 or later; the Python extension nee
 - All lexicon access goes through the `Lexicons` interface. No state-specific logic in the tagger.
 - The canonical key format is a public contract. A change to what an input produces
   needs a new version prefix (`k3`) and an update to `docs/key-format.md`; never edit
-  `k2` in place. `k2` is not released until 0.3.0 is tagged: until then key-affecting
-  changes go into `k2` (the list is issue #44).
+  `k2` in place. `k2` was released with 0.3.0 and is frozen: a key-affecting change is a
+  `k3`, and the project wants more outside data before it makes one.
 - Every USPS or RESO rule implemented must be traceable to a source in `docs/`
   (`docs/usps-pub28-notes.md`, `docs/reso-mapping.md`).
 - Private data (local exports, the geocode benchmark, the Netsyms database) stays in

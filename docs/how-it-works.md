@@ -280,6 +280,7 @@ docs/                       this page and the references below
 
 | Page | Contents |
 |---|---|
+| [`README.md`](README.md) | The index of all the documentation, by topic, and what to check when you change something |
 | [`key-format.md`](key-format.md) | The `k2` key and the slug: the contract |
 | [`reso-mapping.md`](reso-mapping.md) | RESO Data Dictionary field mapping |
 | [`usps-pub28-notes.md`](usps-pub28-notes.md) | The source of every table and parser rule |
