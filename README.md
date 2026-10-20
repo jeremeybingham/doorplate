@@ -356,19 +356,20 @@ The specification of the suite and the rules that keep it fair: [`docs/benchmark
 
 The next work, roughly in this order, depends on what real data shows:
 
-- **Warnings that say why.** A table of how reliable each warning is, measured on
-  labeled data, and named warnings for known ambiguities (see the roadmap).
-- **Customization packs.** A way to add your own spellings, places, ZIPs and
-  state-specific readings without editing the shipped tables, loaded at run time. Not
-  in this release; examples of what you would add are the best input.
-- **More state packs.** Florida is the first curated pack. Others start from real data
-  for that state.
+- **Fixes that do not change keys, in 0.3.x patches.** An in-care-of line written with a `%`,
+  Queens-style hyphenated house numbers, a table of how reliable each warning is and named
+  warnings for known ambiguities, line-2 diagnostics, and `--version` provenance.
+- **0.4.0: a `k3` and a breaking cleanup.** Key-affecting rules are held and cut together so
+  stored keys are re-keyed once; the cleanup folds the Florida pack into the core and removes an
+  unused reserved field.
+- **A custom layer.** A way to add your own spellings, places, ZIPs and state-specific readings
+  without editing the shipped tables, loaded at run time. Not in this release; examples of what
+  you would add are the best input.
+- **State data beyond Florida.** A state's data starts from real data for that state.
 - **More address shapes and rules.** Named buildings without a building word, a few
   highway and unit forms, and more (the gaps are listed in the roadmap).
 - **More output.** A columnar result for DataFrames (the display and long forms and
   the batch call for pre-split fields are in).
-- **Stable key versions.** A `k2` as the parser settles; the key policy is in
-  [`docs/key-format.md`](docs/key-format.md).
 
 The details, and what is deliberately not planned (validation, geocoding, international
 addresses), are in [`docs/roadmap.md`](docs/roadmap.md).

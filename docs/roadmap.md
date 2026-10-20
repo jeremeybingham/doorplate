@@ -17,71 +17,70 @@ some, see [Sharing messy data](../CONTRIBUTING.md#sharing-messy-data).
 
 ## Planned
 
-### Warnings that say why
+Priorities come from a review of the open issues (issue #103). The rule for versions: a change
+that does not alter a key ships in a 0.3.x patch; changes that alter keys or break the API are
+held and batched into one 0.4.0, because every `k3` re-keys stored keys and every breaking
+change costs a version.
 
-Making the warnings say how far to trust a parse (issue #102):
+### Next, in 0.3.x patches (no key change)
 
-- a table of how reliable each warning is, measured on labeled data (the National Address
-  Database sample, the NC voter snapshot) with `tools/harness/label_score.py`, so a reader
-  knows which codes mean "wrong" and which mean nothing about the parse;
-- named warnings where the parser knows it is guessing, starting with a lone letter after the
-  house number (`123 A MAIN ST`: a number suffix or a street named `A MAIN`);
-- removing the reserved `confidence` field, which is always `None`, in 0.4.0.
+- **`% NAME` as an attention line** (issue #97): an in-care-of line written with a percent sign
+  is left as an unparsed remainder today. It is the largest single unparsed shape found on real
+  data.
+- **Queens-style hyphenated house numbers** (#99): stop warning `multiple_addresses` on
+  `21-77 31ST ST` when the place is in Queens.
+- **Warnings that say how far to trust a parse** (#102): a table of how reliable each warning is,
+  measured on labeled data with `tools/harness/label_score.py`, and named warnings where the parser
+  knows it is guessing, starting with a lone letter after the house number (`123 A MAIN ST`).
+- **Line-2 diagnostics** (#45): say when a second line is skipped as a copy, merged into the
+  street or kept as a building name.
+- **Provenance** (#85): `doorplate --version`, and the library version in the command's JSON.
+- **Profiling** (#90): a time-boxed look at where the time and memory go, and any easy gains that
+  change no output.
+- **A columnar or Arrow result for DataFrames** (#24), after profiling: reading attributes from
+  Python objects is most of the time in a pandas or Polars pipeline. A Polars expression namespace
+  only if there is demand. Done so far: `to_display()`, `to_long()` and `parse_fields_many`.
+- **An anonymizing tool** (#105) for sharing messy data without sharing the data.
 
-### Customization packs
+### 0.4.0: the `k3` and the breaking cleanup
 
-A way to add your own spellings, places, ZIPs and state-scoped readings without editing
-the shipped tables: an add-only layer in the state-pack format, loaded at run time,
-validated on load, deterministic, and reported in the output so stored keys can be tied to
-the layer in use. Today the tables are fixed at compile time, and a misparse is fixed by
-reporting it. The design is settled; it waits for real examples of what people need to add
-(a local community the place list lacks, a street spelling, a state-specific suffix).
+Held on purpose and cut together (issue #89 is the list of key changes, each needing a source and
+evidence). `k2` started with 0.3.0; the route-number and box rules are in
+[`key-format.md`](key-format.md).
 
-### More state packs
+- **Key-affecting rules:** `CR` read as CIRCLE and `CTY HWY` as COUNTY HIGHWAY in every state (today
+  only in Florida); a letter after a hyphenated house number (#100); a spaced letter after a rural
+  route box (#95); Queens-style numbers and their unhyphenated twins keyed the same; Puerto Rico
+  shapes (#92); state-specific road conventions such as Texas `RR` and county road names (#8);
+  Florida place gaps (#11); the geocode benchmark's place-name gap (#29); and `CMR` only if a real
+  case shows up (#77, decided: left out for now).
+- **Breaking cleanup:** fold the Florida pack into the core as built-in state data, which drops the
+  `state-fl` Cargo feature and renames `data/packs/` to `data/states/` (#101), and remove the reserved
+  `confidence` field (#102).
 
-Florida is the first curated pack. Another state's pack starts from real data for that
-state. Known candidates: `RR` as Ranch Road in Texas, `PR 462` (a Texas private road or a
-Puerto Rico road), county road names such as `LEE ROAD 2004`, Queens-style hyphenated house
-numbers, and Puerto Rico urbanizations.
+### Later, waiting on data or demand
 
-### More shapes and rules
-
-Known gaps that are not tied to a state:
-
-- named buildings without a building word (`THE GARRETT`, `UPTOWN SQUARE`);
-- highway modifiers before a city on one line (`NORTH HIGHWAY 71 BUSINESS LOWELL`);
-- a comma after a directional (`3324 N, ANDREWS AVE`);
-- a PO box on line 2 beside a street with no number;
-- a unit followed by business words (`STE 903 BLU SPA`);
-- `possibly_truncated` firing on some complete units.
-
-Whether to model more of what usaddress labels (recipient and name lines, landmarks,
-street corners with cross-street fields) is open; today that text goes to `unparsed`.
-
-### More output
-
-- Done: `to_display()` and `to_long()` (display only, not Pub 28) and the batch call for
-  pre-split fields (`parse_fields_many`).
-- A columnar or Arrow result for DataFrames (issue #24): reading attributes from Python
-  objects is most of the time in a pandas or Polars pipeline.
-- A Polars expression namespace, if there is demand.
-
-### The key
-
-`k2` starts with 0.3.0 and collects the key-affecting changes found with the data on hand (the
-plan and checklist are issue #44; the key drops leading zeros from route numbers and keeps them in box numbers).
-More outside data (hand-labeled real data and a second national source) is wanted before any `k3`.
-
-### Data and benchmarks
-
-- A benchmark built from a national address source (NAD or similar), rendered in several
-  styles and compared per state and per shape, to find parser bugs and place-list gaps.
-- A cleaner blind test: a hand-labeled sample of real messy data in the shapes people
-  actually have.
-- More of the `parse` slowdown (issue #14 was mostly fixed in 0.2.0): about 8% of an
-  earlier build's speed is still spread across allocation in the place keys and `Vec` growth.
-- The pack infrastructure: report a pack's version in the output, and require a golden
-  corpus per pack in CI.
+- **A custom layer** (#3): a way to add your own spellings, places, ZIPs and state-scoped readings
+  without editing the shipped tables, loaded at run time, validated on load, deterministic, and
+  reported in the output so stored keys can be tied to the layer in use. Today the tables are fixed
+  at compile time, and a misparse is fixed by reporting it. The design is settled; it waits for real
+  examples of what people need to add (a local community the place list lacks, a street spelling).
+- **State data beyond Florida:** a state's data starts from real data for that state (#7 adds the
+  state data version to the output and a golden corpus per state in CI). Candidates: `RR` as Ranch
+  Road in Texas, `PR 462`, county road names such as `LEE ROAD 2004`, and Puerto Rico urbanizations (#8).
+- **More shapes and rules.** Known gaps that are not tied to a state: named buildings without a
+  building word (`THE GARRETT`, `UPTOWN SQUARE`); highway modifiers before a city on one line
+  (`NORTH HIGHWAY 71 BUSINESS LOWELL`); a comma after a directional (`3324 N, ANDREWS AVE`); a PO box
+  on line 2 beside a street with no number; a unit followed by business words (`STE 903 BLU SPA`);
+  and `possibly_truncated` firing on some complete units.
+- **usaddress compatibility** (#9, decided): the address-structure labels (#35) and a drop-in module
+  (#36) proceed when someone needs them. Recipient and name lines, landmarks and street corners stay
+  out of scope; that text goes to `unparsed`.
+- **Data and benchmarks:** a benchmark built from a national address source rendered in several styles
+  and compared per state and per shape; a cleaner blind test, a hand-labeled sample of real messy data
+  in the shapes people actually have; per-state street-pattern counts to decide the state rules (#53);
+  and more of the `parse` slowdown (about 8% of an earlier build's speed is still spread across
+  allocation in the place keys and `Vec` growth).
 
 ## Not planned
 
