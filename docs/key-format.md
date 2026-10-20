@@ -104,8 +104,10 @@ USPS rule.
 ## No key
 
 `key()` returns `None` when there is nothing to key on: no street, PO Box,
-route, military line or general delivery, or a placeholder such as `NO SITUS`
-(`Placeholder` warning).
+route, military line or general delivery, a placeholder such as `NO SITUS`
+(`Placeholder` warning), or an intersection (`MAIN ST & 1ST AVE`,
+`IntersectionDetected` warning), because the first street alone would match every
+address on it.
 
 ## Stability
 
@@ -120,8 +122,8 @@ of the key and may change with parser improvements.
   produces it and cannot compute it. The segment layout is the same as `k2`; `k2` exists
   because 0.3.0 changes how some inputs are read, and a changed reading changes the key
   (the changes are listed in the changelog).
-- **`k2`** (this page) starts with 0.3.0. Until 0.3.0 is tagged `k2` still takes key-affecting
-  changes; after that it is frozen. More outside data is wanted before any `k3`.
+- **`k2`** (this page) starts with 0.3.0, released 2026-10-20, and is frozen from there: a change
+  to what an input produces now needs `k3`. More outside data is wanted before any `k3`.
 
 ## Slug
 

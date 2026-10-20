@@ -89,6 +89,15 @@ notices, update every README it touches in the same pull request. Use absolute
 links in the three crate READMEs, since crates.io and PyPI do not resolve relative
 ones, and keep the statement that the library does not validate deliverability.
 
+## Documentation
+
+`docs/README.md` indexes all the documentation by topic, and ends with a table of what to
+check when you change something: a parse rule, a key, a warning code, the API or a CLI
+option, a figure, the layout, the build commands, a version number. Before you open a pull
+request, find your change in that table and update every page in its row in the same pull
+request; the pull request checklist asks for it. If you add, rename or remove a page,
+update the index (and the table in `AGENTS.md`) too.
+
 ## Agent instructions
 
 `AGENTS.md` is the tool-neutral guide for AI coding agents (it is also useful as a map of
