@@ -61,7 +61,7 @@ def test_run_resume_and_analysis(db, tmp_path):
     r = root / "r1"
     assert (r / "DONE").exists()
     manifest = json.loads((r / "manifest.json").read_text())
-    assert manifest["input"]["table"] == "addresses" and manifest["schema_version"] == 5
+    assert manifest["input"]["table"] == "addresses" and manifest["schema_version"] == 7
     totals = json.loads((r / "DONE").read_text())
     assert totals["rows"] == 5  # the Canadian row is out of scope
     for sub in ("agg_state_source", "agg_warnings", "agg_triples", "flagged", "chunk_status"):
