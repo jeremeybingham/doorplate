@@ -56,7 +56,8 @@ dp.parse("281 EVELYN DR DOTHAN", default_state="AL").city     # "DOTHAN"
   `parse_many` that element is `None`. Anything else comes back with `warnings`.
 - `default_state` is a lookup hint for input with no state; it never fills `state`.
   A value that is not a US state, DC or territory raises `ValueError`.
-- `confidence` is reserved and always `None`: no score is computed.
+- `confidence` is reserved and always `None`: no score is computed, and the field is to be
+  removed. The warnings carry the uncertainty.
 
 ## Install
 
@@ -273,7 +274,7 @@ on 4 CPUs, 8 GB. These are measurements on a few data sets, not promises for you
 - [How it works](https://github.com/jeremeybingham/doorplate/blob/main/docs/how-it-works.md),
   [benchmarks](https://github.com/jeremeybingham/doorplate/blob/main/docs/benchmarks.md)
   and the [roadmap](https://github.com/jeremeybingham/doorplate/blob/main/docs/roadmap.md)
-  (a confidence score and customization packs are planned).
+  (customization packs and a table of how reliable each warning is are planned).
 - [Examples](https://github.com/jeremeybingham/doorplate/tree/main/examples): a
   notebook tour (rare shapes, place data, pandas, Polars, DuckDB, the command line) and a pipeline for each
   DataFrame library.

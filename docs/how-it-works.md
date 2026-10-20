@@ -97,7 +97,8 @@ number), `po_box`, `rural_route` (RR or HC, route, box), `general_delivery`,
 `military` and `military_post_office`, `attention`, `building`, city, state, ZIP5,
 ZIP+4, `place`, `diagnostics` and `source` (the original text and the spans).
 `Diagnostics` holds the warnings, the unparsed remainder, the library version and
-`confidence`, which is reserved and always `None`.
+`confidence`, which is reserved, always `None`, and to be removed (the warnings carry
+the uncertainty).
 
 Warnings have a stable snake_case `code()` meant for a database column:
 `unparsed_remainder`, `ambiguous_token`, `placeholder`, `missing_street_number`,
