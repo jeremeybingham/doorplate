@@ -1,6 +1,8 @@
 # RESO field mapping (Data Dictionary 2.0)
 
-Implemented by `crates/doorplate/src/emit/reso.rs` (`ParsedAddress::to_reso`).
+Implemented by `crates/doorplate/src/emit/reso.rs` (`ParsedAddress::to_reso`). In
+Python it is `parse(s).to_reso()` (a dict of the non-empty fields), and the
+`reso` object in the JSON of `doorplate parse`.
 
 This maps a parse to RESO field names and shapes. It does not validate
 deliverability, and it does not check values against any server's lookups.
@@ -8,8 +10,10 @@ deliverability, and it does not check values against any server's lookups.
 ## Source and version
 
 - **RESO Data Dictionary 2.0**, Property resource, group *Location / Address*:
-  `https://dd.reso.org/DD2.0/Property/<FieldName>/`. The site footer reads
-  "Generated October 12, 2026"; the pages were read on 2026-10-15.
+  `https://dd.reso.org/DD2.0/Property/<FieldName>/`. The pages were first read on
+  2026-10-15 (the site footer read "Generated October 12, 2026") and the field table
+  below was checked against them again on 2026-10-20 (footer "Generated October 19,
+  2026"): every type, maximum length, lookup status and field status is unchanged.
 - Lookups: `https://dd.reso.org/DD2.0/lookups/StreetDirection/`,
   `.../StreetSuffix/`, `.../StateOrProvince/`, `.../Country/`.
 - Release overview: `https://dd.reso.org/DD2.0/about/release-guide/`.
@@ -17,7 +21,7 @@ deliverability, and it does not check values against any server's lookups.
   cuts a value; `ResoAddress::length_overruns()` reports the ones that exceed.
 
 The emitter targets the fixed set in the table below. A newer Data Dictionary
-(2.1 is a draft) needs this file rechecked, and a change of target is a
+(2.1 is still listed on `dd.reso.org` as a draft, "in development", on 2026-10-20) needs this file rechecked, and a change of target is a
 change to this document and to `reso.rs` together.
 
 ## Field table
@@ -103,7 +107,11 @@ conventions, so these are choices, not facts from the Data Dictionary.
 ## Verification status
 
 - Field names, types, lengths, lookups and the two example values were read
-  from the pages listed above on 2026-10-15.
+  from the pages listed above on 2026-10-15; the types, lengths, lookup statuses
+  and statuses of the 16 fields in this document were read again on 2026-10-20 and
+  match (the lookup value lists and the example values were not read again).
+- The emitter's output for each shape in "Shapes with no field of their own" was
+  run again on 0.3.0 and matches the table.
 - Tests: `emit/reso.rs` unit tests and the `reso` expectations in
   `tests/corpus/reso.jsonl`. The corpus values were written from this table,
   not copied from emitter output.

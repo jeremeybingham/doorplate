@@ -122,7 +122,8 @@ no places or no ZIPs.
   row whose comparison key the pack already has, as a name or a variant, is
   the pack's and is skipped; the national list adds the rest. For Florida
   that is 405 Census places the pack lacks (`TRINITY`, `CITRUS SPRINGS`,
-  ... all CDPs), taking its places from 665 to 1,070. The Census's
+  ... all CDPs). The pack itself has 665 places and, since version 2026.10.5, 62
+  added communities (727 in all); with the national rows Florida has 1,132. The Census's
   `Everglades` is renamed `EVERGLADES CITY` by the builder (`CENSUS_NAMES`
   in `build_us.py`), the pack's name, so it is the pack's place and not a
   second one. The pack's 1,473 ZIPs are untouched (GeoNames is the source of
@@ -137,7 +138,8 @@ no places or no ZIPs.
   `Lexicons::place`, `zip_places`, `places` and `is_place` cover all 52. So
   the Florida behaviors work everywhere: a city on a line with no commas, a
   street versus a city before a ZIP, a city run into the street, a cut-off
-  city completed from the ZIP, and the place from the ZIP.
+  city completed from the ZIP, and the place from the ZIP. A `default_state`
+  hint looks a city up in the hinted state's places.
   `zip_city_mismatch` stays limited to states with a curated pack
   (`Lexicons::has_pack`), because the list names one place per
   ZIP, and its place equals the written city on only 75.8% of the
@@ -147,10 +149,11 @@ The tables are packed records in `OUT_DIR`, read with `include_bytes!`
 (`emit_places` in `build.rs` has the layout), not tables of `&str`. A
 `&str` table costs a pointer and a relocation per string: the first version
 added 13.4 MB to the `doorplate` binary. Packed, the national list adds **2.9
-MB** (stripped release binary 1.57 MB without it, 4.49 MB with it; the
-tables are 3.1 MB before linking: names 0.53, keys 0.87, index 0.68, rows
-0.45, ZIPs 0.37, and 0.2 for the any-state name index that `is_place`
-uses). `build.rs` takes about 2 seconds more.
+MB** (stripped release binary 1.57 MB without it, 4.49 MB with it, as measured when
+the list was added; the tables are 3.1 MB before linking: names 0.53, keys 0.87,
+index 0.68, rows 0.45, ZIPs 0.37, and 0.2 for the any-state name index that
+`is_place` uses). `build.rs` takes about 2 seconds more. The 0.3.0 command-line tool,
+with the list, the Florida pack and the rules added since, is 4.64 MB stripped.
 
 ## Coverage
 
