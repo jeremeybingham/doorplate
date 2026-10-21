@@ -229,13 +229,15 @@ crates/
     benches/                criterion benchmarks
   doorplate-cli/            the `doorplate` binary
   doorplate-py/             PyO3 bindings, the Python package, its tests
+  doorplate-wasm/           the core compiled to WebAssembly for the demo page (not published; shares
+                            the command-line tool's json.rs)
 tests/corpus/               golden corpus (JSONL) and its baseline
 tests/external/usaddress/   usaddress's labeled test files (MIT, vendored)
 tools/                      corpus emitter expectations, usaddress comparison, place list, Pub 28 checks,
                             the harness (harness/), the ingest tool that turns any address source
                             into one record format (ingest/) and the benchmark suite generator (benchsuite/)
 benchmarks/                 the benchmark suite (suite.py, suite/v1/) and the accuracy, speed and size scripts
-site/                       the blog (Jekyll), published to GitHub Pages by .github/workflows/pages.yml
+site/                       the blog and the live demo (Jekyll), published to GitHub Pages by .github/workflows/pages.yml
 examples/                   notebook, Polars, pandas and DuckDB pipelines, sample data
 fuzz/                       cargo-fuzz targets (nightly)
 docs/                       this page and the references below
@@ -278,7 +280,8 @@ docs/                       this page and the references below
   build and a check of the license files, an sdist build in a clean environment, a short
   fuzz smoke run of each target, the Python suite, the ingest tool's tests and the wheel build. The benchmark
   suite and the two release workflows run by hand or on a version tag; the Pages workflow
-  runs when `site/` changes on `main`.
+  runs when `site/` or the parser changes on `main`. CI also builds `doorplate-wasm` for
+  `wasm32-unknown-unknown`, so a change to the core cannot break the demo.
 
 ## Reference pages
 
