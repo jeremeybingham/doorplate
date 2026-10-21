@@ -142,8 +142,10 @@ patch releases ([the roadmap](roadmap.md)).
   the corpus key expectations (`tests/corpus/keys.jsonl`, `tools/corpus/emit_expect.py`) rewritten
   from the spec.
 
-**When to cut it.** Not decided: the bar (how many changes, or how much new evidence) is an open
-question in the backlog review (issue #103).
+**When to cut it.** The owner's call at each release (decided 2026-10-20, issue #103). There is no count
+or evidence threshold: the project is one person's and has no users yet, so the call is made from how
+smoothly the held `version:K` items progress and what else turns up (new data sources, new findings)
+in the meantime.
 
 ## Version history
 
