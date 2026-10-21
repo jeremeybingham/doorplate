@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["crates/doorplate", "crates/doorplate-cli", "crates/doorplate-py"]
+members = ["crates/doorplate", "crates/doorplate-cli", "crates/doorplate-py", "crates/doorplate-wasm"]
 
 [workspace.package]
 version = "0.3.0"

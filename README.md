@@ -17,6 +17,9 @@ match key, a URL-safe slug, and diagnostics. A Rust library with a Python packag
 command-line tool (abi3 wheels for Python 3.10 and later); no runtime dependencies, no data
 to download, no machine-learned model, and parsing never panics.
 
+**[Try it in your browser](https://jeremeybingham.github.io/doorplate/demo/)**: type an address and watch it
+be taken apart, with the output, as you type. The parser runs on your machine; nothing is sent anywhere.
+
 This library formats and parses; it **does not validate** that an address exists or can
 receive mail. Pub 28 formatting is not deliverability, and validation needs
 postal-service-certified data; warnings such as `zip_city_mismatch` are hints about the

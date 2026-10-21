@@ -49,7 +49,7 @@ def test_whole_struct_is_null_for_blank_rows(con):
 def test_columns_and_default_state():
     c = duckdb.connect()
     dd.register(c, "p", columns=["city", "state"], default_state="AL")
-    got = c.sql("select p('281 Evelyn Dr Dothan')").fetchone()[0]
+    got = c.sql("select p('281 Evelyn Dr Dothan')").fetchall()[0][0]
     a = uap.parse("281 Evelyn Dr Dothan", default_state="AL")
     assert got == {"city": a.city, "state": a.state}
     with pytest.raises(ValueError, match="unknown column"):

@@ -38,7 +38,7 @@ def main(out=None):
     flagged = con.sql(
         "select count(*) from (select doorplate_parse(address).warnings w from oneline)"
         " where w <> ''"
-    ).fetchone()[0]
+    ).fetchall()[0][0]
     print(f"{flagged} row(s) with warnings")
 
     # 3. Pre-split columns.

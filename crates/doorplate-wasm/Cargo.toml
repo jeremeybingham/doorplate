@@ -1,0 +1,21 @@
+[package]
+name = "doorplate-wasm"
+description = "doorplate compiled to WebAssembly for the live demo page (not published)"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+rust-version.workspace = true
+publish = false
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+doorplate = { workspace = true }
+serde_json = { version = "1", features = ["preserve_order"] }
+
+[lints]
+workspace = true

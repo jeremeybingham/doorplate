@@ -4,6 +4,11 @@ Published from this folder by `.github/workflows/pages.yml` (Pages source:
 GitHub Actions, which the repository already uses) on every push to `main` that changes
 `site/`. It can also be started by hand from the Actions tab.
 
+- `demo/index.html` is the live demo (#117): the parser compiled to WebAssembly, run in the visitor's
+  browser. `doorplate.wasm` is not in the repository; the Pages workflow builds it from
+  `crates/doorplate-wasm` (`cargo build -p doorplate-wasm --target wasm32-unknown-unknown --release`).
+  To try the page locally, build it, copy it to `site/demo/doorplate.wasm` and serve the folder (a
+  `file:` URL cannot load it). The page sends nothing anywhere; keep it so.
 - `_posts/YYYY-MM-DD-title.md` is a published post.
 - `_drafts/` is **not built**. To publish a draft, move it to `_posts/` and
   give it a date prefix in the file name.

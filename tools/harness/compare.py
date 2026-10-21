@@ -79,7 +79,7 @@ def main(argv=None):
 
     def totals(name, have):
         return con.sql("select " + ", ".join(f"coalesce(sum({f}),0)" if f in have else "0" for f in fields)
-                       + f" from {name}_agg_state_source").fetchone()
+                       + f" from {name}_agg_state_source").fetchall()[0]
 
     ta, tb = totals("a", cols[0]), totals("b", cols[1])
     out = [f"# Compare {ma['run_id']} -> {mb['run_id']}", "",
