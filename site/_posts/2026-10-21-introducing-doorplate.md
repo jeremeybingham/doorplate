@@ -16,6 +16,11 @@ with real, messy addresses and with people who use it.
 *doorplate parses and formats addresses. It does not validate that an address exists or
 can receive mail.*
 
+**[Try it in your browser](https://jeremeybingham.github.io/doorplate/demo/).** Type an address and
+watch doorplate take it apart as you type: each part is colored by what the parser decided it is,
+with the warnings, the USPS and RESO output and the match key beside it. The parser runs on your
+machine as WebAssembly, so nothing you type is sent anywhere.
+
 ## What it is
 
 ```python
