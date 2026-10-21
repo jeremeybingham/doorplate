@@ -135,7 +135,7 @@ Maintainers only. The release issue for a version (#44 for 0.3.0) is the checkli
 5. **Tag.** Tag the merge commit `vX.Y.Z`; the tag must equal the workspace version, and the crates.io job fails if it does not. Pushing a `v*` tag runs both release workflows. The `crates-io` and the `pypi` environments each need a manual approval before anything is published. crates.io gets `doorplate`, then `doorplate-cli` (the repository secret `CARGO_REGISTRY_TOKEN`); PyPI gets the abi3 wheels and the sdist through trusted publishing (no token).
 6. **After.** Check the crates.io and PyPI pages and install the new version in a clean environment.
 
-The project page is built by GitHub Actions (Pages is enabled with that source). A blog draft lives on the unmerged branch `blog-draft` (`site/`): merging it replaces the README-based page with the blog home, and the post stays unpublished in `_drafts/` until it is moved to `_posts/`.
+The project page is the blog in `site/` (Jekyll), built and deployed by `.github/workflows/pages.yml` on every push to `main` that changes `site/` (Pages is enabled with the "GitHub Actions" source). A post in `site/_posts/` is published; `site/_drafts/` is not built. Posts follow the rules in [`site/README.md`](site/README.md): invented addresses, aggregate numbers only, and the statement that the library does not validate deliverability.
 
 ## License
 
