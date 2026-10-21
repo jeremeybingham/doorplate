@@ -12,6 +12,11 @@ change to what an input produces needs a new key version.
   in `unparsed` with an `unparsed_remainder` warning (64% of the rows of the IRS exempt-organization
   extract), and `IN` was left over from `IN CARE OF`. Keys do not change (issue #97).
 
+- Warnings: a hyphenated house number with a larger second part (`21-77 31ST ST`) no longer raises
+  `multiple_addresses` when the place resolves to Queens County, New York, where the part before the
+  hyphen is the cross street. Ranges elsewhere (`1204-1206 MAIN ST`, and in Manhattan) still warn. The
+  number and the key do not change (issue #99; the twin `2177 31ST ST` keys apart: #109).
+
 - Documentation: a Disclaimer section in the four READMEs (provided as is, no warranty, use at your own
   risk, not a validator, not affiliated with the US Postal Service, RESO or DataMade).
 

@@ -9,10 +9,39 @@
 //! with a curated pack: the national list names one place per ZIP, and many
 //! ZIPs are used by several, so the warning would fire too often elsewhere.
 
+use crate::classify::{house_number, NumberShape};
 use crate::lexicon::{Lexicons, MatchKind, ZipPlaces};
 use crate::types::{ParsedAddress, Place, PlaceMatch, PlaceSource, Warning};
 
 pub(crate) fn resolve(addr: &mut ParsedAddress, lex: &Lexicons, hint: Option<&'static str>) {
+    resolve_place(addr, lex, hint);
+    queens_number(addr);
+}
+
+/// In Queens the part of a house number before the hyphen is the cross street
+/// (`21-77 31ST ST`), so a hyphenated number whose second part is larger is
+/// one address, not a range of two. The tagger raises `multiple_addresses`
+/// for it before the place is known; this takes the warning back when the
+/// place's county is Queens and the range was the warning's only cause (a list
+/// or a second house number would have left text unparsed). The number and the
+/// key are not touched.
+fn queens_number(addr: &mut ParsedAddress) {
+    let queens = addr
+        .place
+        .as_ref()
+        .is_some_and(|m| m.place.state() == "NY" && m.place.county() == "QUEENS");
+    let range = addr
+        .street_number
+        .as_deref()
+        .is_some_and(|n| house_number(n) == Some(NumberShape::Range));
+    if queens && range && addr.diagnostics.unparsed.is_none() {
+        addr.diagnostics
+            .warnings
+            .retain(|w| *w != Warning::MultipleAddresses);
+    }
+}
+
+fn resolve_place(addr: &mut ParsedAddress, lex: &Lexicons, hint: Option<&'static str>) {
     let zip = addr.zip5.as_deref().and_then(|z| lex.zip_places(z));
     // The state written on the address wins; with none, the ZIP's.
     // With neither a state nor a known ZIP, the parser's `default_state`.
