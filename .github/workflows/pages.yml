@@ -5,7 +5,14 @@ name: Pages
 on:
   push:
     branches: [main]
-    paths: ["site/**", ".github/workflows/pages.yml"]
+    # The demo page runs the parser, so a change to it, to the wasm crate or to
+    # the JSON builder it shares with the command-line tool rebuilds the site.
+    paths:
+      - "site/**"
+      - ".github/workflows/pages.yml"
+      - "crates/doorplate/**"
+      - "crates/doorplate-wasm/**"
+      - "crates/doorplate-cli/src/json.rs"
   workflow_dispatch:
 
 permissions:
@@ -23,6 +30,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@v2
+      - name: Build the parser for the demo page (site/demo/doorplate.wasm)
+        run: |
+          cargo build -p doorplate-wasm --target wasm32-unknown-unknown --release
+          cp target/wasm32-unknown-unknown/release/doorplate_wasm.wasm site/demo/doorplate.wasm
       - uses: actions/configure-pages@v5
       - uses: actions/jekyll-build-pages@v1
         with:
