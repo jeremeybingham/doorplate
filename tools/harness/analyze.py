@@ -54,7 +54,7 @@ def main(argv=None):
              ("zip4", "m_zip4"), ("city", "m_city"), ("unit", "m_unit"), ("street", "m_street"),
              ("last-line rows", "last_line_rows"), ("last-line boundary crossings", "last_line_crossed")]
     pairs = [(n, c) for n, c in pairs if c in have]
-    tot = con.sql("select " + ", ".join(f"sum({c})" for _, c in pairs) + " from agg_state_source").fetchone()
+    tot = con.sql("select " + ", ".join(f"sum({c})" for _, c in pairs) + " from agg_state_source").fetchall()[0]
     names = [n for n, _ in pairs]
     out = [f"# Run {manifest['run_id']}: summary", "",
            f"- commit `{manifest['git_commit'][:10]}`{' (dirty tree)' if manifest['git_dirty'] else ''},"
@@ -100,7 +100,7 @@ def main(argv=None):
         from agg_triples where place = '' and city <> '' group by 1,2,3""")
     gaps.write_parquet(str(run / "place_gaps.parquet"))
     g = con.sql("select count(*), coalesce(sum(n_rows),0) from (select sum(n) n_rows from agg_triples "
-                "where place = '' and city <> '' group by state, zip5, city)").fetchone()
+                "where place = '' and city <> '' group by state, zip5, city)").fetchall()[0]
     out.extend(["", "## Place gaps", "",
                 f"{g[0]:,} distinct (state, zip5, city) triples, {g[1]:,} rows, have no place found "
                 "(`place_gaps.parquet` in the run directory, private)."])
