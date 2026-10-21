@@ -277,6 +277,16 @@ impl Piece<'_> {
         }
         let ia = a + lead;
         let ib = ia + inner.len();
+        // `%JOHN SMITH`: a leading percent sign (in care of) is a word of its
+        // own. `100%` and `50%OFF` mid-word are untouched.
+        if inner.len() > 1
+            && inner.starts_with('%')
+            && inner[1..].chars().next().is_some_and(char::is_alphabetic)
+        {
+            self.emit("%".to_string(), ia, ia + 1, paren);
+            self.sub(ia + 1, ib, a, b, paren, next_numeric, lex);
+            return;
+        }
         // Split around '#'.
         if inner.contains('#') {
             let mut s = ia;
@@ -687,6 +697,14 @@ mod tests {
             ["21ST", "3RD", "11", "ST", "101ST"]
         );
         assert_eq!(toks("409722ST"), ["409722ST"]);
+    }
+
+    #[test]
+    fn percent_sign_in_care_of() {
+        assert_eq!(toks("%JOHN SMITH"), ["%", "JOHN", "SMITH"]);
+        assert_eq!(toks("% JOHN"), ["%", "JOHN"]);
+        assert_eq!(toks("100% MAIN"), ["100%", "MAIN"]);
+        assert_eq!(toks("%1"), ["%1"]);
     }
 
     #[test]

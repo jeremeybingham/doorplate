@@ -7,6 +7,11 @@ change to what an input produces needs a new key version.
 
 ## [Unreleased]
 
+- Parsing: an in-care-of line written with a percent sign (`% JOHN SMITH`, `%JOHN SMITH`) and `IN CARE OF NAME`
+  are read as the attention line, in line 2 and in one-line input alike. Before, the `% NAME` text stayed
+  in `unparsed` with an `unparsed_remainder` warning (64% of the rows of the IRS exempt-organization
+  extract), and `IN` was left over from `IN CARE OF`. Keys do not change (issue #97).
+
 - Documentation: a Disclaimer section in the four READMEs (provided as is, no warranty, use at your own
   risk, not a validator, not affiliated with the US Postal Service, RESO or DataMade).
 
