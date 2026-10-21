@@ -1,26 +1,253 @@
-<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>doorplate demo (spike)</title>
+---
+layout: page
+title: Try doorplate
+description: Type a US address and watch doorplate break it into parts, with the output it writes, on every keystroke. It runs in your browser.
+permalink: /demo/
+---
+
+<p>
+  Type or paste a US address. doorplate reads it as you type, colors each part by what it decided
+  the part is, and shows what it writes: the components, the USPS and RESO output, a match key and
+  warnings. One line, any style; there are examples below the box.
+</p>
+<p class="dp-note">
+  The parser runs in your browser as WebAssembly. Nothing you type is sent anywhere.
+  doorplate parses and formats addresses; it does not validate that an address exists or can
+  receive mail.
+</p>
+
+<div id="dp-app" hidden>
+  <label for="dp-q" class="dp-label">Address</label>
+  <input id="dp-q" type="text" autocomplete="off" autocapitalize="off" spellcheck="false"
+         placeholder="123 north main street apt 4, Miami FL 33101">
+  <p class="dp-examples">
+    Try:
+    <span id="dp-ex"></span>
+  </p>
+
+  <h2>How doorplate reads it</h2>
+  <div id="dp-view" class="dp-view" aria-live="polite"></div>
+  <div id="dp-legend" class="dp-legend"></div>
+
+  <div id="dp-problems"></div>
+
+  <h2>Components</h2>
+  <table class="dp-table"><tbody id="dp-comps"></tbody></table>
+
+  <h2>Output</h2>
+  <table class="dp-table"><tbody id="dp-out"></tbody></table>
+  <details>
+    <summary>RESO Data Dictionary 2.0 fields</summary>
+    <table class="dp-table"><tbody id="dp-reso"></tbody></table>
+  </details>
+</div>
+<p id="dp-status" class="dp-note">Loading the parser (about 1.4 MB)…</p>
+
+<p class="dp-note">
+  The same parser is the <a href="https://pypi.org/project/doorplate/">Python package</a>, the
+  <a href="https://crates.io/crates/doorplate">Rust crate</a> and the
+  <a href="https://crates.io/crates/doorplate-cli">command-line tool</a>.
+  doorplate is an alpha. If it gets an address wrong,
+  <a href="https://github.com/jeremeybingham/doorplate/issues/new?template=misparse-or-messy-data.md">open an issue</a>
+  with the address (anonymize private data first). Provided as is, with no warranty; see the
+  <a href="https://github.com/jeremeybingham/doorplate#disclaimer">Disclaimer</a>.
+</p>
+
 <style>
-body{font:16px/1.5 system-ui,sans-serif;max-width:46rem;margin:2rem auto;padding:0 1rem}
-input{width:100%;font:inherit;padding:.5rem;box-sizing:border-box}
-#view{font:1.1rem/1.9 ui-monospace,monospace;white-space:pre-wrap;margin:1rem 0;min-height:2rem}
-#view span{border-radius:3px;padding:1px 3px}
-pre{background:#f4f4f4;padding:.75rem;overflow:auto;font-size:.8rem}
-</style></head><body>
-<h1>doorplate demo (spike)</h1>
-<input id="q" autocomplete="off" spellcheck="false" value="123 north main street apt 4, Miami FL 33101" aria-label="Address">
-<div id="view"></div>
-<pre id="out">loading…</pre>
+  .dp-note { font-size: .9rem; color: #6a6a6a; }
+  .dp-label { font-weight: 600; display: block; margin-bottom: .25rem; }
+  #dp-q { width: 100%; box-sizing: border-box; font: inherit; padding: .6rem .75rem; border: 1px solid #888; border-radius: 4px; }
+  .dp-examples { font-size: .85rem; margin: .5rem 0 0; }
+  .dp-examples button { font: inherit; font-size: .85rem; margin: 0 .25rem .25rem 0; padding: .1rem .5rem; border: 1px solid #aaa; border-radius: 1rem; background: transparent; color: inherit; cursor: pointer; }
+  .dp-examples button:hover { background: rgba(128, 128, 128, .15); }
+  .dp-view { font: 1.05rem/1 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: pre-wrap; word-break: break-word; margin: .5rem 0; min-height: 3.2rem; padding-top: .3rem; }
+  .dp-chip { display: inline-block; margin: 0 .1rem .5rem; padding: .15rem .35rem .1rem; border-radius: 4px; text-align: center; vertical-align: top; white-space: pre; }
+  .dp-chip b { display: block; font-weight: 600; }
+  .dp-chip i { display: block; font: normal .62rem/1.3 system-ui, sans-serif; letter-spacing: .02em; text-transform: uppercase; opacity: .8; }
+  .dp-gap { display: inline-block; margin: 0 .05rem; vertical-align: top; white-space: pre; opacity: .6; padding-top: .15rem; }
+  .dp-legend { display: flex; flex-wrap: wrap; gap: .25rem .5rem; font-size: .75rem; margin-bottom: 1rem; }
+  .dp-legend span { padding: .05rem .4rem; border-radius: 3px; }
+  .dp-table { width: 100%; font-size: .9rem; }
+  .dp-table th { width: 11rem; text-align: left; font-weight: 600; vertical-align: top; }
+  .dp-table td { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; word-break: break-all; }
+  @media (max-width: 520px) { .dp-table th { width: 6.5rem; } }
+  .dp-problem { padding: .5rem .75rem; margin: .5rem 0; border-left: 4px solid; border-radius: 3px; font-size: .9rem; }
+  .dp-warn { background: rgba(230, 160, 0, .15); border-color: #e6a000; }
+  .dp-bad { background: rgba(220, 50, 50, .13); border-color: #dc3232; }
+  .dp-g-number { background: #cfe5ff; color: #0b2a4a; }
+  .dp-g-dir { background: #e1d8ff; color: #2a1a5e; }
+  .dp-g-street { background: #cdeec8; color: #123a10; }
+  .dp-g-suffix { background: #a9deb0; color: #0e3a14; }
+  .dp-g-unit { background: #ffdca6; color: #4a2a00; }
+  .dp-g-special { background: #f1e2a4; color: #3d3200; }
+  .dp-g-note { background: #dcdcdc; color: #222; }
+  .dp-g-city { background: #ffd0dc; color: #55111f; }
+  .dp-g-state { background: #fbb3c8; color: #55111f; }
+  .dp-g-zip { background: #f59ab5; color: #4a0d1d; }
+  .dp-g-unparsed { background: #ffc9c9; color: #5a0000; outline: 2px dashed #c00; outline-offset: -2px; }
+  @media (prefers-color-scheme: dark) {
+    .dp-note { color: #aaa; }
+    .dp-g-number { background: #1d3d63; color: #d6e8ff; }
+    .dp-g-dir { background: #3a2f6b; color: #e6deff; }
+    .dp-g-street { background: #1f4a1c; color: #d6f5d1; }
+    .dp-g-suffix { background: #2a5c33; color: #d6f5d9; }
+    .dp-g-unit { background: #5e3a0a; color: #ffe8c6; }
+    .dp-g-special { background: #54480f; color: #fbefc0; }
+    .dp-g-note { background: #444; color: #eee; }
+    .dp-g-city { background: #5e2433; color: #ffdce5; }
+    .dp-g-state { background: #6e2a3e; color: #ffdce5; }
+    .dp-g-zip { background: #7e2f48; color: #ffdce5; }
+    .dp-g-unparsed { background: #5a1a1a; color: #ffd6d6; outline-color: #ff7b7b; }
+  }
+</style>
+
+{% raw %}
 <script>
-const COLORS={StreetNumber:"#cde7ff",StreetDirPrefix:"#e0d4ff",StreetDirSuffix:"#e0d4ff",StreetName:"#d4f5d0",StreetSuffix:"#bfe9b8",UnitType:"#ffe3b8",UnitNumber:"#ffd28a",City:"#ffd1dc",State:"#fbb9c9",Zip5:"#f7a1b8",Attention:"#e6e6e6"};
-let ex,enc=new TextEncoder(),dec=new TextDecoder();
-function parse(s){const b=enc.encode(s),p=ex.alloc(b.length);new Uint8Array(ex.memory.buffer,p,b.length).set(b);
- const n=ex.parse(p,b.length);ex.dealloc(p,b.length);return JSON.parse(dec.decode(new Uint8Array(ex.memory.buffer,ex.result_ptr(),n)));}
-function esc(t){return t.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]))}
-function render(){const s=q.value,r=parse(s);let h="",i=0;
- for(const c of (r.spans||[]).slice().sort((a,b)=>a.start-b.start)){if(c.start<i)continue;h+=esc(s.slice(i,c.start));
-  h+=`<span style="background:${COLORS[c.component]||"#ddd"}" title="${c.component}">${esc(s.slice(c.start,c.end))}</span>`;i=c.end}
- view.innerHTML=h+esc(s.slice(i));out.textContent=JSON.stringify(r,null,1);}
-WebAssembly.instantiateStreaming(fetch("doorplate.wasm"),{}).then(({instance})=>{ex=instance.exports;q.addEventListener("input",render);render();window.ready=true});
-</script></body></html>
+(function () {
+  // Component -> [label, color group].
+  var KINDS = {
+    StreetNumber: ["Number", "number"], StreetDirPrefix: ["Direction", "dir"], StreetName: ["Street", "street"],
+    StreetSuffix: ["Suffix", "suffix"], StreetDirSuffix: ["Direction", "dir"], Highway: ["Highway", "street"],
+    UnitType: ["Unit", "unit"], UnitNumber: ["Unit no.", "unit"], SecondUnitType: ["Unit 2", "unit"],
+    SecondUnitNumber: ["Unit 2 no.", "unit"], PoBox: ["PO box", "special"], RuralRoute: ["Rural route", "special"],
+    GeneralDelivery: ["General delivery", "special"], Military: ["Military", "special"],
+    MilitaryPostOffice: ["Military post office", "special"], Attention: ["Attention", "note"],
+    Building: ["Building", "note"], City: ["City", "city"], State: ["State", "state"], Zip5: ["ZIP", "zip"],
+    Zip4: ["ZIP+4", "zip"], Unparsed: ["Not placed", "unparsed"]
+  };
+  var LEGEND = [["number", "Number"], ["dir", "Direction"], ["street", "Street name"], ["suffix", "Suffix"],
+    ["unit", "Unit"], ["special", "PO box, route, military"], ["note", "Attention, building"],
+    ["city", "City"], ["state", "State"], ["zip", "ZIP"], ["unparsed", "Not placed"]];
+  var EXAMPLES = ["123 north main street apt 4, Miami FL 33101", "% ACME CORP, 21-77 31st st, flushing ny 11354",
+    "PO BOX 123 ORLANDO FL 32801", "RR 2 BOX 152 ocala fl 34482", "1204 e. 5th ave suite 200 austin tx 78701",
+    "123 main st orlando 32801", "4417 4417 N OAK AVE, TAMPA FL"];
+  var WARNINGS = {
+    missing_city: "No city found.", missing_state: "No state found.", missing_zip: "No ZIP code found.",
+    unparsed_remainder: "Some text could not be placed (shown in red).",
+    multiple_addresses: "Looks like more than one address or a range of house numbers.",
+    missing_street_number: "No house number.", missing_street_name: "No street name.",
+    zero_street_number: "The house number is zero.", ambiguous_street_number: "The house number could be read two ways.",
+    dual_address: "A street address and a PO box.", possibly_truncated: "The text looks cut off.",
+    missing_unit_number: "A unit word with no number.", invalid_zip: "The ZIP code is not valid.",
+    zip_city_mismatch: "The ZIP code does not match the city.", intersection_detected: "Looks like an intersection.",
+    non_standard_abbreviation: "A non-standard abbreviation was read.", placeholder: "A placeholder instead of an address.",
+    country_ignored: "A trailing country was dropped.", default_state_applied: "A default state was used.",
+    ambiguous_token: "A word could be read two ways.", unknown_state: "The state is not recognized."
+  };
+  var COMP_LABELS = { street_number: "Street number", street_dir_prefix: "Predirectional", street_name: "Street name",
+    street_suffix: "Suffix", street_dir_suffix: "Postdirectional", highway: "Highway", unit_type: "Unit type",
+    unit_number: "Unit number", second_unit_type: "Second unit type", second_unit_number: "Second unit number",
+    po_box: "PO box", rural_route: "Rural route", general_delivery: "General delivery", military: "Military box",
+    military_post_office: "Military post office", attention: "Attention", building: "Building", city: "City",
+    state: "State", zip5: "ZIP", zip4: "ZIP+4" };
+
+  var enc = new TextEncoder(), dec = new TextDecoder(), wasm;
+  var q = document.getElementById("dp-q");
+
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+  function parse(s) {
+    var b = enc.encode(s), p = wasm.alloc(b.length);
+    new Uint8Array(wasm.memory.buffer, p, b.length).set(b);
+    var n = wasm.parse(p, b.length);
+    wasm.dealloc(p, b.length);
+    return JSON.parse(dec.decode(new Uint8Array(wasm.memory.buffer, wasm.result_ptr(), n)));
+  }
+  function rows(tbody, pairs) {
+    tbody.textContent = "";
+    pairs.forEach(function (p) {
+      var tr = el("tr");
+      tr.appendChild(el("th", null, p[0]));
+      tr.appendChild(el("td", null, p[1]));
+      tbody.appendChild(tr);
+    });
+    if (!pairs.length) { var tr = el("tr"); tr.appendChild(el("td", null, "—")); tbody.appendChild(tr); }
+  }
+
+  function renderView(s, r) {
+    var view = document.getElementById("dp-view");
+    view.textContent = "";
+    var spans = (r.spans || []).slice().sort(function (a, b) { return a.start - b.start || b.end - a.end; });
+    var at = 0;
+    spans.forEach(function (c) {
+      if (c.start < at) return;
+      if (c.start > at) view.appendChild(el("span", "dp-gap", s.slice(at, c.start)));
+      var k = KINDS[c.component] || [c.component, "note"];
+      var chip = el("span", "dp-chip dp-g-" + k[1]);
+      chip.title = k[0];
+      chip.appendChild(el("b", null, s.slice(c.start, c.end)));
+      chip.appendChild(el("i", null, k[0]));
+      view.appendChild(chip);
+      at = c.end;
+    });
+    if (at < s.length) view.appendChild(el("span", "dp-gap", s.slice(at)));
+  }
+
+  function renderProblems(r) {
+    var box = document.getElementById("dp-problems");
+    box.textContent = "";
+    if (r.error) { box.appendChild(el("div", "dp-problem dp-bad", r.error.charAt(0).toUpperCase() + r.error.slice(1) + ".")); return; }
+    (r.warnings || []).forEach(function (w) {
+      var d = el("div", "dp-problem dp-warn");
+      d.appendChild(el("code", null, w));
+      d.appendChild(document.createTextNode(" " + (WARNINGS[w] || "")));
+      box.appendChild(d);
+    });
+  }
+
+  function render() {
+    var s = q.value, r = parse(s);
+    renderView(s, r);
+    renderProblems(r);
+    var comps = [];
+    var c = r.components || {};
+    Object.keys(c).forEach(function (k) { comps.push([COMP_LABELS[k] || k, String(c[k])]); });
+    if (r.unparsed) comps.push(["Not placed", r.unparsed]);
+    rows(document.getElementById("dp-comps"), comps);
+    var out = [];
+    if (r.usps) {
+      out.push(["USPS line 1", r.usps.line1]);
+      if (r.usps.line2) out.push(["USPS line 2", r.usps.line2]);
+      if (r.usps.last_line) out.push(["USPS last line", r.usps.last_line]);
+    }
+    if (r.key) out.push(["Match key", r.key]);
+    if (r.slug) out.push(["Slug", r.slug]);
+    if (r.place) out.push(["Place", [r.place.name, r.place.state, r.place.county && r.place.county + " county", r.place.source && "(" + r.place.source + ")"].filter(Boolean).join(" ")]);
+    rows(document.getElementById("dp-out"), out);
+    var reso = [];
+    Object.keys(r.reso || {}).forEach(function (k) { reso.push([k, String(r.reso[k])]); });
+    rows(document.getElementById("dp-reso"), reso);
+  }
+
+  var legend = document.getElementById("dp-legend");
+  LEGEND.forEach(function (l) { legend.appendChild(el("span", "dp-g-" + l[0], l[1])); });
+  var ex = document.getElementById("dp-ex");
+  EXAMPLES.forEach(function (t) {
+    var b = el("button", null, t.length > 34 ? t.slice(0, 32) + "…" : t);
+    b.type = "button"; b.title = t;
+    b.addEventListener("click", function () { q.value = t; render(); q.focus(); });
+    ex.appendChild(b);
+  });
+
+  var status = document.getElementById("dp-status");
+  WebAssembly.instantiateStreaming(fetch("doorplate.wasm"), {}).catch(function () {
+    // A server that does not send application/wasm.
+    return fetch("doorplate.wasm").then(function (r) { return r.arrayBuffer(); })
+      .then(function (b) { return WebAssembly.instantiate(b, {}); });
+  }).then(function (m) {
+    wasm = m.instance.exports;
+    q.value = EXAMPLES[0];
+    q.addEventListener("input", render);
+    document.getElementById("dp-app").hidden = false;
+    status.hidden = true;
+    render();
+  }).catch(function () {
+    status.textContent = "The parser could not be loaded. This page needs a browser with WebAssembly.";
+  });
+})();
+</script>
+{% endraw %}
