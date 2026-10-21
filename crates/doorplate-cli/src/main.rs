@@ -33,7 +33,9 @@ const USAGE: &str = "usage:
                                  --default-state: look cities up in ST when the
                                  input names no state (a hint, never a fill)
   doorplate corpus test [--dir DIR] [--verbose] [--update-baseline]
-                                 run the golden corpus (default dir: tests/corpus)";
+                                 run the golden corpus (default dir: tests/corpus)
+  doorplate --version | -V       print the version (the library's, as recorded in the JSON)
+  doorplate --help | -h          print this text";
 
 fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().skip(1).collect();
@@ -41,6 +43,15 @@ fn main() -> ExitCode {
         Some("parse") => parse_cmd(&args[1..]),
         Some("parse-file") => parse_file_cmd(&args[1..]),
         Some("corpus") => corpus_cmd(&args[1..]),
+        Some("--version" | "-V") => {
+            // The library's version, the same one `parse` records in its JSON.
+            println!("doorplate {}", doorplate::VERSION);
+            Ok(ExitCode::SUCCESS)
+        }
+        Some("--help" | "-h" | "help") => {
+            println!("{USAGE}");
+            Ok(ExitCode::SUCCESS)
+        }
         _ => Err(CliError::Usage(String::new())),
     };
     match result {

@@ -38,6 +38,7 @@ fn parse_prints_one_json_line() {
     assert_eq!(v["usps"]["line1"], "123 N MAIN ST APT 4");
     assert_eq!(v["usps"]["last_line"], "MIAMI FL 33101");
     assert_eq!(v["key"], "k2:S|123|N|MAIN|ST||FL|33101");
+    assert_eq!(v["provenance"]["library_version"], doorplate::VERSION);
     assert_eq!(v["reso"]["City"], "MIAMI");
     assert_eq!(v["warnings"], serde_json::json!([]));
 }
@@ -148,4 +149,28 @@ fn corpus_test_reports_a_regression_and_a_malformed_corpus() {
     std::fs::write(tmp.join("c.jsonl"), "not json\n").expect("write");
     assert_eq!(cli(&["corpus", "test", "--dir", dir], "").2, 2);
     std::fs::remove_dir_all(&tmp).ok();
+}
+
+#[test]
+fn version_flag_prints_the_library_version() {
+    for flag in ["--version", "-V"] {
+        let (out, err, code) = cli(&[flag], "");
+        assert_eq!(code, 0, "{flag}");
+        assert_eq!(out.trim(), format!("doorplate {}", doorplate::VERSION));
+        assert!(err.is_empty());
+    }
+}
+
+#[test]
+fn help_prints_the_usage_and_succeeds() {
+    for flag in ["--help", "-h"] {
+        let (out, err, code) = cli(&[flag], "");
+        assert_eq!(code, 0, "{flag}");
+        assert!(out.starts_with("usage:"));
+        assert!(err.is_empty());
+    }
+    // No command at all is still a usage error.
+    let (_, err, code) = cli(&[], "");
+    assert_eq!(code, 1);
+    assert!(err.contains("usage:"));
 }

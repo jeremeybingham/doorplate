@@ -29,7 +29,6 @@ change costs a version.
   knows it is guessing, starting with a lone letter after the house number (`123 A MAIN ST`).
 - **Line-2 diagnostics** (#45): say when a second line is skipped as a copy, merged into the
   street or kept as a building name.
-- **Provenance** (#85): `doorplate --version`, and the library version in the command's JSON.
 - **Profiling** (#90): a time-boxed look at where the time and memory go, and any easy gains that
   change no output.
 - **A columnar or Arrow result for DataFrames** (#24), after profiling: reading attributes from

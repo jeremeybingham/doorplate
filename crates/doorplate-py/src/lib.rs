@@ -406,6 +406,10 @@ impl PyParsedAddress {
         d.set_item("slug", a.slug())?;
         d.set_item("usps", a.to_usps(py, None)?)?;
         d.set_item("reso", a.to_reso(py)?)?;
+        // The same group the command-line JSON carries (#85).
+        let provenance = PyDict::new(py);
+        provenance.set_item("library_version", a.inner.diagnostics.library_version)?;
+        d.set_item("provenance", provenance)?;
         Ok(d)
     }
 

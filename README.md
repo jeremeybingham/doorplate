@@ -252,7 +252,8 @@ state hint.
 ### Command line
 
 ```sh
-doorplate parse "123 N Main St, Miami FL 33101" --pretty     # JSON: components, output, key, warnings
+doorplate parse "123 N Main St, Miami FL 33101" --pretty     # JSON: components, output, key, warnings, provenance
+doorplate --version                                          # the library version, also in the JSON as provenance.library_version
 doorplate parse-file in.csv --column address -o out.csv      # appends addr_* columns
 doorplate parse "281 EVELYN DR DOTHAN" --default-state AL
 doorplate parse "123 N Main St, Miami FL 33101" --display    # mixed case; --long spells words out (not Pub 28)
@@ -359,9 +360,9 @@ The specification of the suite and the rules that keep it fair: [`docs/benchmark
 
 The next work, roughly in this order, depends on what real data shows:
 
-- **Fixes that do not change keys, in 0.3.x patches.** An in-care-of line written with a `%`,
-  Queens-style hyphenated house numbers, a table of how reliable each warning is and named
-  warnings for known ambiguities, line-2 diagnostics, and `--version` provenance.
+- **Fixes that do not change keys, in 0.3.x patches.** A table of how reliable each warning is and
+  named warnings for known ambiguities, and line-2 diagnostics. (The `%` in-care-of line, Queens-style
+  house numbers and `--version` provenance are in the changelog.)
 - **0.4.0: a `k3` and a breaking cleanup.** Key-affecting rules are held and cut together so
   stored keys are re-keyed once; the cleanup folds the Florida pack into the core and removes an
   unused reserved field.
