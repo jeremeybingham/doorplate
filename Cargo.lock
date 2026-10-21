@@ -231,6 +231,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "doorplate-wasm"
+version = "0.3.0"
+dependencies = [
+ "doorplate",
+ "serde_json",
+]
+
+[[package]]
 name = "either"
 version = "1.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>doorplate demo (spike)</title>
+<style>
+body{font:16px/1.5 system-ui,sans-serif;max-width:46rem;margin:2rem auto;padding:0 1rem}
+input{width:100%;font:inherit;padding:.5rem;box-sizing:border-box}
+#view{font:1.1rem/1.9 ui-monospace,monospace;white-space:pre-wrap;margin:1rem 0;min-height:2rem}
+#view span{border-radius:3px;padding:1px 3px}
+pre{background:#f4f4f4;padding:.75rem;overflow:auto;font-size:.8rem}
+</style></head><body>
+<h1>doorplate demo (spike)</h1>
+<input id="q" autocomplete="off" spellcheck="false" value="123 north main street apt 4, Miami FL 33101" aria-label="Address">
+<div id="view"></div>
+<pre id="out">loading…</pre>
+<script>
+const COLORS={StreetNumber:"#cde7ff",StreetDirPrefix:"#e0d4ff",StreetDirSuffix:"#e0d4ff",StreetName:"#d4f5d0",StreetSuffix:"#bfe9b8",UnitType:"#ffe3b8",UnitNumber:"#ffd28a",City:"#ffd1dc",State:"#fbb9c9",Zip5:"#f7a1b8",Attention:"#e6e6e6"};
+let ex,enc=new TextEncoder(),dec=new TextDecoder();
+function parse(s){const b=enc.encode(s),p=ex.alloc(b.length);new Uint8Array(ex.memory.buffer,p,b.length).set(b);
+ const n=ex.parse(p,b.length);ex.dealloc(p,b.length);return JSON.parse(dec.decode(new Uint8Array(ex.memory.buffer,ex.result_ptr(),n)));}
+function esc(t){return t.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]))}
+function render(){const s=q.value,r=parse(s);let h="",i=0;
+ for(const c of (r.spans||[]).slice().sort((a,b)=>a.start-b.start)){if(c.start<i)continue;h+=esc(s.slice(i,c.start));
+  h+=`<span style="background:${COLORS[c.component]||"#ddd"}" title="${c.component}">${esc(s.slice(c.start,c.end))}</span>`;i=c.end}
+ view.innerHTML=h+esc(s.slice(i));out.textContent=JSON.stringify(r,null,1);}
+WebAssembly.instantiateStreaming(fetch("doorplate.wasm"),{}).then(({instance})=>{ex=instance.exports;q.addEventListener("input",render);render();window.ready=true});
+</script></body></html>

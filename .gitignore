@@ -16,3 +16,4 @@ dist/
 /fuzz/artifacts
 /fuzz/corpus
 /fuzz/runs
+site/demo/*.wasm
