@@ -56,7 +56,13 @@ def main(out: str | None = None) -> pd.DataFrame:
         f"{d['line1'] or ''}, {d['last_line']}" if a and (d := a.to_display()) else None
         for a in rows
     ]
+    # 7. Store the parser version beside the keys: the key prefix names the key
+    #    format, the version names the parser release that wrote it. The command-line
+    #    tool prints the same version (`doorplate --version`).
+    version = next(a.to_dict()["provenance"]["library_version"] for a in rows if a)
+    split["parser_version"] = version
     print(split)
+    print(f"keys written by doorplate {version}")
 
     if out:
         parsed.to_csv(out, index=False)

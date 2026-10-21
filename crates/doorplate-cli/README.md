@@ -28,7 +28,8 @@ Rust 1.80 or later.
 ## Usage
 
 ```sh
-doorplate parse "123 N Main St, Miami FL 33101" --pretty     # JSON: components, output, key, warnings
+doorplate parse "123 N Main St, Miami FL 33101" --pretty     # JSON: components, output, key, warnings, provenance
+doorplate --version                                          # the library version, also in the JSON as provenance.library_version
 doorplate parse "123 N. Main St #4, miami, fl 33101" --usps  # Pub 28 lines
 doorplate parse-file in.csv --column address -o out.csv      # appends addr_* columns
 doorplate parse --line1 "412 N HARBOR ST" --line2 "APT 3B" --city Tampa --state FL --zip 33602   # pre-split fields

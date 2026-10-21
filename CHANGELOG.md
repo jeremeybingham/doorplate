@@ -7,6 +7,11 @@ change to what an input produces needs a new key version.
 
 ## [Unreleased]
 
+- Provenance (issue #85): `doorplate --version` (and `-V`) prints the library version, `--help` (and `-h`) prints
+  the usage and exits 0, and the JSON from `doorplate parse` and Python's `to_dict()` carry
+  `provenance.library_version`. A new key in the output, not a change to any value or key. The state data
+  version (#7) will join the same `provenance` group.
+
 - Parsing: an in-care-of line written with a percent sign (`% JOHN SMITH`, `%JOHN SMITH`) and `IN CARE OF NAME`
   are read as the attention line, in line 2 and in one-line input alike. Before, the `% NAME` text stayed
   in `unparsed` with an `unparsed_remainder` warning (64% of the rows of the IRS exempt-organization
