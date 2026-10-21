@@ -217,6 +217,7 @@ permalink: /demo/
     if (r.key) out.push(["Match key", r.key]);
     if (r.slug) out.push(["Slug", r.slug]);
     if (r.place) out.push(["Place", [r.place.name, r.place.state, r.place.county && r.place.county + " county", r.place.source && "(" + r.place.source + ")"].filter(Boolean).join(" ")]);
+    if (r.provenance) out.push(["Parser version", r.provenance.library_version]);
     rows(document.getElementById("dp-out"), out);
     var reso = [];
     Object.keys(r.reso || {}).forEach(function (k) { reso.push([k, String(r.reso[k])]); });
