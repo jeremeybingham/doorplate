@@ -53,6 +53,11 @@ class Display(TypedDict):
     zip: str | None
     last_line: str
 
+class Provenance(TypedDict):
+    """Which release produced the result; more keys may join it (#7)."""
+
+    library_version: str
+
 class ParsedAddressDict(TypedDict):
     input: str
     street_number: str | None
@@ -86,6 +91,7 @@ class ParsedAddressDict(TypedDict):
     slug: str | None
     usps: Usps
     reso: dict[str, str]
+    provenance: Provenance
 
 class ParsedAddress:
     """A parsed address. Read-only. Formats and parses; it does not validate

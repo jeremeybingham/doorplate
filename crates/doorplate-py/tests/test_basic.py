@@ -43,6 +43,11 @@ def test_absent_components_are_none_and_confidence_is_reserved():
     assert a.library_version == uap.__version__
 
 
+def test_to_dict_carries_the_library_version():
+    d = uap.parse("123 N Main St, Miami FL 33101").to_dict()
+    assert d["provenance"] == {"library_version": uap.__version__}
+
+
 def test_dict_shapes():
     assert uap.parse("22200 SR 60, Lake Wales FL 33898").highway == {
         "state": None, "prefix": "STATE ROAD", "route": "60", "name": "STATE ROAD 60",
