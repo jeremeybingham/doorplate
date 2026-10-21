@@ -24,11 +24,6 @@ change costs a version.
 
 ### Next, in 0.3.x patches (no key change)
 
-- **`% NAME` as an attention line** (issue #97): an in-care-of line written with a percent sign
-  is left as an unparsed remainder today. It is the largest single unparsed shape found on real
-  data.
-- **Queens-style hyphenated house numbers** (#99): stop warning `multiple_addresses` on
-  `21-77 31ST ST` when the place is in Queens.
 - **Warnings that say how far to trust a parse** (#102): a table of how reliable each warning is,
   measured on labeled data with `tools/harness/label_score.py`, and named warnings where the parser
   knows it is guessing, starting with a lone letter after the house number (`123 A MAIN ST`).

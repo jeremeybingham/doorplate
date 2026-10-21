@@ -132,7 +132,7 @@ finding about the parse, not a statement that the address is wrong.
 - **Shapes with no RESO field are folded in.** Highway routes, general delivery,
   military lines and second units have fields in `ParsedAddress`; the RESO emitter
   writes them into `StreetName` or `UnitNumber` (`docs/reso-mapping.md`).
-- **Attention lines are a field** (`ATTN`, `C/O`) and are not written by any
+- **Attention lines are a field** (`ATTN`, `C/O`, `% NAME`) and are not written by any
   emitter.
 - **A trailing country is ignored.** `USA`, `US` or `UNITED STATES` after the
   address is dropped with `country_ignored`; other countries are not recognized.
