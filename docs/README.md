@@ -61,6 +61,7 @@ New to the project? Read the [project README](../README.md), then
 | [`CONTRIBUTING.md`](../CONTRIBUTING.md) | Reporting a misparse, sharing messy data, building and testing, fixing a bug, data changes, the READMEs, releasing |
 | [`AGENTS.md`](../AGENTS.md), [`CLAUDE.md`](../CLAUDE.md) | The tool-neutral guide for AI agents (also a map of the repository), and our own process for Claude Code |
 | [`CHANGELOG.md`](../CHANGELOG.md) | What changed in each release, and when keys changed |
+| [`site/README.md`](../site/README.md) | The blog (Jekyll, published to GitHub Pages): how to publish a post and the rules for what a post may show |
 | [`roadmap.md`](roadmap.md) | What is planned, what depends on what, and what is deliberately not planned |
 | [`CODE_OF_CONDUCT.md`](../CODE_OF_CONDUCT.md), [`SECURITY.md`](../SECURITY.md) | Conduct and reporting a vulnerability |
 | [`.github/pull_request_template.md`](../.github/pull_request_template.md), [`.github/ISSUE_TEMPLATE/`](../.github/ISSUE_TEMPLATE/misparse-or-messy-data.md) | The pull request checklist and the misparse issue template |

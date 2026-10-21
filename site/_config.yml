@@ -1,0 +1,13 @@
+title: doorplate
+description: Notes on building doorplate, an open-source US address parser in Rust with Python bindings.
+url: https://jeremeybingham.github.io
+baseurl: /doorplate
+theme: minima
+plugins:
+  - jekyll-seo-tag
+  - jekyll-sitemap
+  - jekyll-feed
+github_username: jeremeybingham
+# Files that are not site content.
+exclude:
+  - README.md

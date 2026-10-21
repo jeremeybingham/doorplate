@@ -232,9 +232,10 @@ crates/
 tests/corpus/               golden corpus (JSONL) and its baseline
 tests/external/usaddress/   usaddress's labeled test files (MIT, vendored)
 tools/                      corpus emitter expectations, usaddress comparison, place list, Pub 28 checks,
-                            the Netsyms harness (netsyms/), the ingest tool that turns any address source
+                            the harness (harness/), the ingest tool that turns any address source
                             into one record format (ingest/) and the benchmark suite generator (benchsuite/)
 benchmarks/                 the benchmark suite (suite.py, suite/v1/) and the accuracy, speed and size scripts
+site/                       the blog (Jekyll), published to GitHub Pages by .github/workflows/pages.yml
 examples/                   notebook, Polars, pandas and DuckDB pipelines, sample data
 fuzz/                       cargo-fuzz targets (nightly)
 docs/                       this page and the references below
@@ -276,7 +277,8 @@ docs/                       this page and the references below
   --all-features`, the corpus report, the emitter-expectation check, a package
   build and a check of the license files, an sdist build in a clean environment, a short
   fuzz smoke run of each target, the Python suite, the ingest tool's tests and the wheel build. The benchmark
-  suite and the two release workflows run by hand or on a version tag.
+  suite and the two release workflows run by hand or on a version tag; the Pages workflow
+  runs when `site/` changes on `main`.
 
 ## Reference pages
 
