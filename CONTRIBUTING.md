@@ -88,7 +88,8 @@ CLI options, install instructions, feature flags, minimum Rust or Python version
 warning codes, the key format, benchmark figures, or the alpha and help-wanted
 notices, update every README it touches in the same pull request. Use absolute
 links in the three crate READMEs, since crates.io and PyPI do not resolve relative
-ones, and keep the statement that the library does not validate deliverability.
+ones, and keep the statement that the library does not validate deliverability and the
+Disclaimer section.
 
 ## Documentation
 
