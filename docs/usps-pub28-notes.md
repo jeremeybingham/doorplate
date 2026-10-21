@@ -251,7 +251,7 @@ than it gains.
 | Business and building names on line 2 or 3, or in the address position of line 1 | Dropped with `unparsed_remainder` (a building word keeps `building`) | Not in the key; about 48% and 25% of the leftovers in the Florida DBPR files (class E) |
 | A trailing number in the street (`SHORE ROAD 20`) | A unit, as before | Ambiguous and state-specific; waits for the state-pattern pass (#53) |
 | A highway modifier before a city on one line, a PO Box on line 2 beside a street with no number | As before | No volume in the data on hand (#10) |
-| `CMR 1234 BOX 56, APO AE 09012` (a community mail room box) | Read as a street, not as `military` (`PSC` and `UNIT` are military) | `CMR` is an older type that the current Pub 28 does not list (section 238.1), and the only evidence for it is the benchmark suite's own templates. Recognizing it would turn a street key into a military key (a `k3` change, #89), so it waits for a real case or a Department of Defense or USPS document that still uses it (decided 2026-10-20, #77) |
+| `CMR 1234 BOX 56, APO AE 09012` (a community mail room box) | Read as a street, not as `military` (`PSC` and `UNIT` are military) | `CMR` is an older type that the current Pub 28 does not list (section 238.1), and the only evidence for it is the benchmark suite's own templates. Recognizing it would turn a street key into a military key (a `k3` change, held: see `key-format.md`, "Changing the key"), so it waits for a real case or a Department of Defense or USPS document that still uses it (decided 2026-10-20, #77) |
 
 ### Rules from the Pub 28 re-check
 

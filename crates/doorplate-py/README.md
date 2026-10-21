@@ -265,6 +265,21 @@ on 4 CPUs, 8 GB. These are measurements on a few data sets, not promises for you
 [benchmarks](https://github.com/jeremeybingham/doorplate/blob/main/docs/benchmarks.md); how to rerun them:
 [`benchmarks/README.md`](https://github.com/jeremeybingham/doorplate/blob/main/benchmarks/README.md).
 
+## Disclaimer
+
+doorplate is provided "as is", without warranty of any kind, under the [MIT](https://github.com/jeremeybingham/doorplate/blob/main/LICENSE-MIT) or
+[Apache-2.0](https://github.com/jeremeybingham/doorplate/blob/main/LICENSE-APACHE) license at your option; the license text is what governs. In plain
+terms: **use it at your own risk.** Nothing here guarantees that a parse, a warning, a match key
+or a figure is correct, complete or fit for your purpose. Accuracy and speed numbers are
+measurements on particular datasets, not promises for yours. doorplate parses and formats
+addresses; it does **not validate** that an address exists or can receive mail, and Pub 28
+formatting is not certified validation. Check its output before you rely on it for anything with
+legal, financial, safety or delivery consequences.
+
+doorplate is an independent project. It is not affiliated with, endorsed by or certified by the
+US Postal Service, RESO, DataMade (the authors of usaddress) or any data source it cites; those
+names are used only to say what the output follows or is compared with.
+
 ## More
 
 - [Project README](https://github.com/jeremeybingham/doorplate#readme): what it does,

@@ -27,7 +27,9 @@ formatting is not the same as a deliverable address, and real validation needs
 postal-service-certified data. It does not geocode, match fuzzily, correct
 addresses or handle international addresses. When the place list finds a city
 for an address, the parsed `city` stays what the input said and the match is
-reported beside it (`place`).
+reported beside it (`place`). It is provided as is, without
+warranty, and you use it at your own risk (see the Disclaimer in the
+[project README](../README.md)).
 
 ## The pipeline
 

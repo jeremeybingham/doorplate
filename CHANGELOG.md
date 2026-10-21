@@ -7,6 +7,9 @@ change to what an input produces needs a new key version.
 
 ## [Unreleased]
 
+- Documentation: a Disclaimer section in the four READMEs (provided as is, no warranty, use at your own
+  risk, not a validator, not affiliated with the US Postal Service, RESO or DataMade).
+
 - Planned for 0.4.0: the reserved `confidence` field, always `None`, is removed (issue #102). The
   roadmap now lists a table of how reliable each warning is and named warnings for known
   ambiguities in its place.

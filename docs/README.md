@@ -91,11 +91,11 @@ the same pull request. The pull request template asks for it.
 | How private data is used, or what leaves `local-data/` | [`data-policy.md`](data-policy.md); [`tools/harness/README.md`](../tools/harness/README.md); [`tools/ingest/README.md`](../tools/ingest/README.md) |
 | The golden corpus format or the way it runs | [`tests/corpus/README.md`](../tests/corpus/README.md); [`how-it-works.md`](how-it-works.md) ("Testing") |
 | Build commands, the repository layout, the CI jobs or the release steps | [`AGENTS.md`](../AGENTS.md); [`CLAUDE.md`](../CLAUDE.md); [`CONTRIBUTING.md`](../CONTRIBUTING.md); [`how-it-works.md`](how-it-works.md) ("Repository layout" and "Testing") |
-| A version number or the alpha notice | The four READMEs; `Cargo.toml`; [`CHANGELOG.md`](../CHANGELOG.md); the references pull request in [`CONTRIBUTING.md`](../CONTRIBUTING.md) ("Releasing") |
+| A version number, the alpha notice or the disclaimer | The four READMEs; `Cargo.toml`; [`CHANGELOG.md`](../CHANGELOG.md); the references pull request in [`CONTRIBUTING.md`](../CONTRIBUTING.md) ("Releasing") |
 | Adding, renaming or removing a documentation page | This index; the "Using the library" table in [`AGENTS.md`](../AGENTS.md); [`how-it-works.md`](how-it-works.md) ("Reference pages") |
 
 The four READMEs are the project README and the three package pages (PyPI, crates.io
 for the library, crates.io for the command). They are published as they are, so their
 links are absolute in the three crate READMEs, and each keeps the statement that the
-library does not validate deliverability ([`CONTRIBUTING.md`](../CONTRIBUTING.md),
+library does not validate deliverability and the Disclaimer section ([`CONTRIBUTING.md`](../CONTRIBUTING.md),
 "Package pages and READMEs").

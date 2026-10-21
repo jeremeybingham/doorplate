@@ -44,8 +44,9 @@ change costs a version.
 
 ### 0.4.0: the `k3` and the breaking cleanup
 
-Held on purpose and cut together (issue #89 is the list of key changes, each needing a source and
-evidence). `k2` started with 0.3.0; the route-number and box rules are in
+Held on purpose and cut together: the held list is the `version:K` label on the issues, and the
+process and what a `k3` needs are in [`key-format.md`](key-format.md) ("Changing the key"). Each
+change needs a source and evidence. `k2` started with 0.3.0; the route-number and box rules are in
 [`key-format.md`](key-format.md).
 
 - **Key-affecting rules:** `CR` read as CIRCLE and `CTY HWY` as COUNTY HIGHWAY in every state (today

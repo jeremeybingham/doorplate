@@ -116,6 +116,35 @@ the parse is a function of the shipped tables and rules: a bug fix that changes 
 an input produces is a key change and needs `k3`. The slug and `place` are not part
 of the key and may change with parser improvements.
 
+## Changing the key
+
+**What counts as key-affecting.** Anything that changes what an input parses to in the parts
+the key reads: the number, directionals, street name, suffix, state, ZIP and unit. That includes
+place data (the national list or a state's data) that changes where the street ends and the city
+starts on a line with no commas. It does not include `city` or `place` reporting alone, new
+warnings, new output fields, or labels added to the usaddress emitter only. When unsure, compare
+the keys of a representative sample before and after: `tools/harness/compare.py` counts what
+changed.
+
+**Holding policy.** A new key version makes every stored key re-key and is a breaking change, so
+key-affecting changes are held and cut together as one version, not shipped one by one. A finding
+that would change a key is not merged: its issue is labeled `version:K` and waits. The held list is
+that label: [issues labeled `version:K`](https://github.com/jeremeybingham/doorplate/issues?q=is%3Aissue+is%3Aopen+label%3Aversion%3AK).
+Changes that do not alter a key (a new warning, a new output field, tooling, docs) ship as usual in
+patch releases ([the roadmap](roadmap.md)).
+
+**What a new key version needs.**
+
+- an evidence base for each change (counts and a source, not a guess);
+- a measured before and after: the golden corpus, a run over the large local sources (how many keys
+  change, by class), and the benchmark suite with its private twin;
+- this page updated, a CHANGELOG note that keys changed (store the prefix, re-parse to re-key), and
+  the corpus key expectations (`tests/corpus/keys.jsonl`, `tools/corpus/emit_expect.py`) rewritten
+  from the spec.
+
+**When to cut it.** Not decided: the bar (how many changes, or how much new evidence) is an open
+question in the backlog review (issue #103).
+
 ## Version history
 
 - **`k1`** was the key of versions 0.1.0 and 0.2.0. It is retired: the library no longer
@@ -123,7 +152,8 @@ of the key and may change with parser improvements.
   because 0.3.0 changes how some inputs are read, and a changed reading changes the key
   (the changes are listed in the changelog).
 - **`k2`** (this page) starts with 0.3.0, released 2026-10-20, and is frozen from there: a change
-  to what an input produces now needs `k3`. More outside data is wanted before any `k3`.
+  to what an input produces now needs `k3`. Key-affecting changes found since are held for it (see
+  "Changing the key").
 
 ## Slug
 

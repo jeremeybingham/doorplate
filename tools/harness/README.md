@@ -101,6 +101,30 @@ totals, the warning codes and the leftover shapes that moved most. Use it as the
 of a rule PR. The list is a set of questions, not a bug count: each fix still needs an invented
 corpus case, a source for the rule (`docs/usps-pub28-notes.md`), the rule and a comparison.
 
+## Reading a run: triage first
+
+A shape in the report is a question, not a bug. Before chasing one, sort it:
+
+1. **Out of scope?** A source can mix in addresses the parser is not for: the federal carrier
+   census has Canadian and Mexican rows, and every one of them is flagged. Report the in-scope
+   part alone with `shapes_report.py RUN --provider US`.
+2. **Source noise?** Line 2 often holds attention lines, building names and place names, not a
+   unit. The checks only run on the fields a role really has (`SCHEMA.md`: the `unit` check needs
+   `label_unit`), and a pair check drops movers (a different ZIP or house number between the two
+   files).
+3. **A flaw in a check?** The harness's own checks have been wrong before: PO box and rural route
+   words counted as street mismatches, a spelled-out unit (`SUITE`) against its abbreviation
+   (`STE`), a state spelled out (`NEW YORK`). Each fix bumped the schema version. When a mismatch
+   rate looks implausible, break it down by address type and shape before blaming the parser.
+4. **A parser question?** Reproduce it with an invented address of the same shape. If it does not
+   reproduce, it is a property of the source. If it does, find a source for the rule
+   (`docs/usps-pub28-notes.md`), then follow the rule PR steps above.
+
+Some results look like failures and are by design: `missing_street_number` on a street with no
+house number (`COUNTY ROAD 12`, `MAIN STREET`), and `multiple_addresses` on two house numbers on
+one line (`123 456 MAIN ST`, see the rule row in `docs/usps-pub28-notes.md`). Look at shapes and
+counts, never at rows (`docs/data-policy.md`).
+
 ## Label scoring (`label_score.py`, and `nad_score.py` for NAD)
 
 Some sources label the parts of each address (NAD, the NC voter snapshot), which the Netsyms
