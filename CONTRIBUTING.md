@@ -126,7 +126,7 @@ notebook, so they cannot go stale silently.
 
 ## Releasing
 
-Maintainers only. The release issue for a version (#44 for 0.3.0) is the checklist; the steps, in order:
+Maintainers only. The release issue for a version (#44 for 0.3.0, #133 for 0.3.1) is the checklist; the steps, in order:
 
 1. **Figures.** If the parser or the tables changed since the figures were taken, rerun `benchmarks/suite.py all` (and `benchmarks/suite.py compare --suite local-data/benchsuite/twin` for the private twin), `benchmarks/accuracy.py` and the speed and size scripts, and update the figures in `docs/benchmarks.md` and in the package READMEs that quote them (`CLAUDE.md` lists the four READMEs). The suite's `v1` files are never edited; a rebuilt suite is `v2`.
 2. **Checks on private data.** One full Netsyms run on the release commit, compared with the previous one (`tools/harness/README.md`), and `tools/compare/oneline_fl.py` and `tools/harness/nad_score.py` as regression checks. Ask before extracting the database or starting the run.

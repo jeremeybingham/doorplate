@@ -27,6 +27,11 @@ pinned and use all 14 threads where they use threads at all.
 Rust 1.91, Python 3.13 (speed and size runs in a virtual environment),
 doorplate 0.3.0 (measured on `main` from 9f09030 on, while the library's version string still said 0.2.0) and usaddress 0.5.16, built with `--release`.
 
+**Rerun on 0.3.1 (2026-10-22): every figure on this page matched, so none was retaken.** Accuracy is identical
+(the suite, its private twin, the geocode splits, usaddress's test files and the golden corpus; the suite's data
+checksum is unchanged). Speed is within 2% of 0.3.0 in an alternating A/B of the two builds (the suite's speed
+track varies by about 10% from run to run on its own); package and import sizes are unchanged.
+
 ## In short
 
 | | doorplate | usaddress |
