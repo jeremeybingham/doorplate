@@ -90,7 +90,8 @@ def test_the_command_refuses_without_an_allowlist_and_outside_local_data(tmp_pat
     answers.write_text(json.dumps(ANSWER) + "\n")
     out = answers.parent / "answers-full.md"
     with pytest.raises(SystemExit) as e:
-        export.main([str(answers), "--full", "--out", str(out)])
+        # an explicit missing allowlist: the default one is the maintainer's real file in local-data/
+        export.main([str(answers), "--full", "--out", str(out), "--allow", str(answers.parent / "full-ok.txt")])
     assert "no source is cleared" in str(e.value)
     (answers.parent / "full-ok.txt").write_text("irs-eo-bmf mask=line2\n")
     with pytest.raises(SystemExit) as e:
