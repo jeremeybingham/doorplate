@@ -2,6 +2,7 @@
 """The shape-only export: what may leave `local-data/` from a review (#122).
 
     python tools/review/export.py [ANSWERS.jsonl] [--out local-data/review/shapes.jsonl] [--with-source]
+    python tools/review/export.py --full [ANSWERS.jsonl] [--out local-data/review/answers-full.md]
 
 Reads the answers file and writes one line per standing answer (an undone answer is dropped),
 with every address and every note reduced to its shape: letters become `a`, digits `9`, runs
@@ -31,6 +32,8 @@ from server import DEFAULT_ANSWERS, load_answers, read_jsonl  # noqa: E402
 from shape import clip, shape  # noqa: E402
 
 DEFAULT_OUT = DEFAULT_ANSWERS.with_name("shapes.jsonl")
+DEFAULT_FULL = DEFAULT_ANSWERS.with_name("answers-full.md")
+DEFAULT_ALLOW = DEFAULT_ANSWERS.with_name("full-ok.txt")
 CODE = re.compile(r"^[a-z][a-z0-9_]*$")  # a warning code or a component name
 
 
@@ -81,15 +84,41 @@ def safe(a, with_source=False):
     return out
 
 
+def write_full(answers, args):
+    import full
+
+    out = args.out if args.out != DEFAULT_OUT else DEFAULT_FULL
+    if "local-data" not in out.resolve().parts:
+        sys.exit(f"{out} is outside local-data/: the full-text export must stay there (docs/data-policy.md)")
+    try:
+        allowed = full.load_allowlist(args.allow)
+    except ValueError as e:
+        sys.exit(str(e))
+    if not allowed:
+        sys.exit(f"no source is cleared for the full-text export: list one per line in {args.allow} "
+                 "(for example `irs-eo-bmf  mask=line2`)")
+    text, counts, skipped = full.build(answers, allowed)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(text, encoding="utf-8")
+    print(f"wrote {sum(counts.values())} answer(s) to {out}: {counts}")
+    if skipped:
+        print(f"skipped {len(skipped)} source(s) not in {args.allow.name}")
+    return 0
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("answers", nargs="?", type=Path, default=DEFAULT_ANSWERS)
     ap.add_argument("--out", type=Path, default=DEFAULT_OUT)
     ap.add_argument("--with-source", action="store_true", help="keep the source name (a private source may not be named)")
+    ap.add_argument("--full", action="store_true", help="the full-text export for the sources in full-ok.txt (stays in local-data/)")
+    ap.add_argument("--allow", type=Path, default=DEFAULT_ALLOW, help="the allowlist for --full (default local-data/review/full-ok.txt)")
     args = ap.parse_args(argv)
     if not args.answers.exists():
         sys.exit(f"no answers at {args.answers}")
     answers = list(load_answers(args.answers).values())
+    if args.full:
+        return write_full(answers, args)
     args.out.parent.mkdir(parents=True, exist_ok=True)
     with args.out.open("w", encoding="utf-8") as f:
         for a in answers:
