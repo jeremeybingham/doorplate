@@ -54,9 +54,11 @@ def build(con, args):
     sql = f"""
     with joined as (
       select f.source, f.role, f.provider, f.record_id, coalesce(f.warnings, '') as warnings,
-             r.line1, r.line2, r.last_line, {sr.INPUT_SHAPE} as input_shape
+             r.line1, r.line2, r.last_line, x.city, x.state, x.zip, {sr.INPUT_SHAPE} as input_shape
       from flagged f join recs r
         on f.source = r.source and f.role = r.role and f.record_id = r.record_id
+      left join recx x
+        on f.source = x.source and f.role = x.role and f.record_id = x.record_id
       where {' and '.join(where)}
       qualify row_number() over (partition by f.source, f.role, f.record_id order by r.line1) = 1
     ), ranked as (
@@ -65,14 +67,15 @@ def build(con, args):
                                 order by hash(record_id || '|' || ?)) as nth
       from joined
     )
-    select source, role, provider, record_id, warnings, line1, line2, last_line, input_shape, size, nth
+    select source, role, provider, record_id, warnings, line1, line2, last_line, city, state, zip,
+           input_shape, size, nth
     from ranked where nth <= ? and size >= ?
     order by nth, size desc, input_shape, hash(record_id || '|' || ?)
     limit ?"""
     seed = str(args.seed)
     rows = con.execute(sql, params + [seed, args.per_shape, args.min_cluster, seed, args.limit]).fetchall()
     cols = ["source", "role", "provider", "record_id", "warnings", "line1", "line2", "last_line",
-            "input_shape", "size", "nth"]
+            "city", "state", "zip", "input_shape", "size", "nth"]
     return [dict(zip(cols, r)) for r in rows]
 
 
@@ -80,7 +83,7 @@ def entry(seq, r):
     """One queue line. Empty fields are left out; `id` names the record across runs."""
     e = {"seq": seq, "id": f"{r['source']}|{r['role']}|{r['record_id']}",
          "source": r["source"], "role": r["role"], "record_id": r["record_id"]}
-    for k in ("provider", "line1", "line2", "last_line"):
+    for k in ("provider", "line1", "line2", "city", "state", "zip", "last_line"):
         if r[k]:
             e[k] = r[k]
     e["cluster"] = {"shape": sr.clip(r["input_shape"]), "warnings": r["warnings"], "size": r["size"]}
@@ -106,6 +109,11 @@ def main(argv=None):
     if not has_text:
         sys.exit("this run has no records file to join (a --db run); the review needs the input text. "
                  "Rerun it with `run.py --input records.parquet`.")
+    # `recs` of shapes_report has the street lines; the card also shows city, state and ZIP.
+    rec = manifest["input"]["path"]
+    have = {r[0] for r in con.execute(f"describe select * from read_parquet('{rec}')").fetchall()}
+    cols = ", ".join(c if c in have else f"NULL AS {c}" for c in ("source", "role", "record_id", "city", "state", "zip"))
+    con.execute(f"create view recx as select {cols} from read_parquet('{rec}')")
     try:
         rows = build(con, args)
     except Exception as e:  # DuckDB's messages can quote rows (docs/data-policy.md)

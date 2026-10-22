@@ -1,0 +1,239 @@
+#!/usr/bin/env python3
+"""The review server: shows one hard address at a time and records what a person says (#122).
+
+    python tools/review/server.py [QUEUE.jsonl] [--answers local-data/review/answers.jsonl]
+                                  [--wasm PATH] [--port 8765]
+
+Run `tools/review/sample.py` first. Open the printed address (127.0.0.1 only) in a browser.
+For each row the page shows the parse and the warnings, and you choose a verdict:
+
+- `right`: the parse is correct (the warning was noise);
+- `corrected`: wrong, and here is a string that should parse to the same door (typed in the
+  box, which starts as the original joined into one line, and re-parsed as you type);
+- `unclear`: wrong, and I can't tell what it should be;
+- `junk`: not an address (a name, a placeholder, a phone number);
+- `noise`: the source cut it off or mangled it;
+- `skip`: not now.
+
+Every answer is appended to the answers file, one JSON object per line; an undo appends a
+marker, so the file is never rewritten. Answers already given are not shown again, so a session
+can stop and resume. The parser is the doorplate WebAssembly build (`cargo build -p doorplate-wasm
+--target wasm32-unknown-unknown --release`), run by the page: the server needs only the standard
+library and sends nothing anywhere.
+
+The queue and the answers hold real addresses and stay in `local-data/` (docs/data-policy.md).
+`tools/review/export.py` writes the shape-only version that may be shared.
+This library formats and parses; it does not validate that an address exists or can receive mail.
+"""
+import argparse
+import json
+import sys
+import threading
+import webbrowser
+from datetime import datetime, timezone
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+ROOT = HERE.parents[1]
+DEFAULT_QUEUE = ROOT / "local-data" / "review" / "queue.jsonl"
+DEFAULT_ANSWERS = ROOT / "local-data" / "review" / "answers.jsonl"
+DEFAULT_WASM = ROOT / "target" / "wasm32-unknown-unknown" / "release" / "doorplate_wasm.wasm"
+BUILD_WASM = "cargo build -p doorplate-wasm --target wasm32-unknown-unknown --release"
+VERDICTS = ("right", "corrected", "unclear", "junk", "noise", "skip")
+MAX_BODY = 64 * 1024
+INPUT_KEYS = ("line1", "line2", "city", "state", "zip", "last_line", "provider")
+
+
+def read_jsonl(path):
+    if not Path(path).exists():
+        return []
+    out = []
+    for line in Path(path).read_text(encoding="utf-8").splitlines():
+        if line.strip():
+            out.append(json.loads(line))
+    return out
+
+
+def load_answers(path):
+    """The standing answers, by queue id, in the order given. An undo marker removes the latest
+    answer for its id."""
+    answers = {}
+    for a in read_jsonl(path):
+        if a.get("undo"):
+            answers.pop(a["undo"], None)
+        else:
+            answers.pop(a["id"], None)
+            answers[a["id"]] = a
+    return answers
+
+
+class Review:
+    """The queue, the answers file and the rules for one answer. No HTTP in here, so it is testable."""
+
+    def __init__(self, queue, answers_path):
+        self.queue = read_jsonl(queue)
+        self.answers_path = Path(answers_path)
+        self.lock = threading.Lock()
+
+    def stats(self):
+        answered = load_answers(self.answers_path)
+        by = {}
+        for a in answered.values():
+            by[a["verdict"]] = by.get(a["verdict"], 0) + 1
+        ids = {e["id"] for e in self.queue}
+        done = sum(1 for i in answered if i in ids)
+        return {"total": len(self.queue), "answered": done, "by_verdict": by}
+
+    def next_item(self):
+        answered = load_answers(self.answers_path)
+        for e in self.queue:
+            if e["id"] not in answered:
+                return e
+        return None
+
+    def answer(self, body):
+        """Validate and append one answer. Raises ValueError on a bad request."""
+        by_id = {e["id"]: e for e in self.queue}
+        item = by_id.get(body.get("id"))
+        if item is None:
+            raise ValueError("unknown id")
+        verdict = body.get("verdict")
+        if verdict not in VERDICTS:
+            raise ValueError("unknown verdict")
+        corrected = (body.get("corrected") or "").strip()
+        if verdict == "corrected" and not corrected:
+            raise ValueError("a corrected answer needs the corrected string")
+        rec = {"ts": datetime.now(timezone.utc).isoformat(timespec="seconds"), "id": item["id"],
+               "seq": item["seq"], "source": item["source"], "role": item["role"],
+               "input": {k: item[k] for k in INPUT_KEYS if k in item}, "cluster": item.get("cluster"),
+               "verdict": verdict, "note": (body.get("note") or "").strip()[:2000]}
+        if verdict == "corrected":
+            rec["corrected"] = corrected[:1000]
+        for k in ("parse", "corrected_parse"):  # summaries the page computed with the same parser
+            v = body.get(k)
+            if isinstance(v, dict) and len(json.dumps(v)) <= 20000:
+                rec[k] = v
+        self._append(rec)
+        return rec
+
+    def undo(self):
+        """Take back the latest standing answer. Returns its id, or None."""
+        with self.lock:
+            answered = load_answers(self.answers_path)
+            if not answered:
+                return None
+            last = list(answered)[-1]
+            self._write({"undo": last, "ts": datetime.now(timezone.utc).isoformat(timespec="seconds")})
+            return last
+
+    def _append(self, rec):
+        with self.lock:
+            self._write(rec)
+
+    def _write(self, rec):
+        self.answers_path.parent.mkdir(parents=True, exist_ok=True)
+        with self.answers_path.open("a", encoding="utf-8") as f:
+            f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+
+
+def make_handler(review, wasm_path):
+    page = (HERE / "page.html").read_bytes()
+
+    class Handler(BaseHTTPRequestHandler):
+        server_version = "doorplate-review"
+
+        def log_message(self, *a):  # no request log: paths and bodies hold addresses
+            pass
+
+        def _send(self, code, body, ctype="application/json"):
+            if isinstance(body, (dict, list)):
+                body = json.dumps(body, ensure_ascii=False).encode("utf-8")
+            self.send_response(code)
+            self.send_header("Content-Type", ctype)
+            self.send_header("Content-Length", str(len(body)))
+            self.send_header("Cache-Control", "no-store")
+            self.end_headers()
+            self.wfile.write(body)
+
+        def _local(self):
+            # Only a page loaded from this machine may talk to the server (DNS rebinding).
+            host = (self.headers.get("Host") or "").rsplit(":", 1)[0].strip("[]")
+            if host not in ("127.0.0.1", "localhost", "::1"):
+                self._send(403, {"error": "forbidden"})
+                return False
+            return True
+
+        def do_GET(self):
+            if not self._local():
+                return
+            path = self.path.split("?")[0]
+            if path == "/":
+                self._send(200, page, "text/html; charset=utf-8")
+            elif path == "/doorplate.wasm":
+                if not Path(wasm_path).exists():
+                    self._send(404, {"error": f"build the parser first: {BUILD_WASM}"})
+                else:
+                    self._send(200, Path(wasm_path).read_bytes(), "application/wasm")
+            elif path == "/api/next":
+                self._send(200, {"item": review.next_item(), "stats": review.stats()})
+            elif path == "/api/stats":
+                self._send(200, review.stats())
+            else:
+                self._send(404, {"error": "not found"})
+
+        def do_POST(self):
+            if not self._local():
+                return
+            path = self.path.split("?")[0]
+            try:
+                n = int(self.headers.get("Content-Length") or 0)
+                if n > MAX_BODY:
+                    raise ValueError("body too large")
+                body = json.loads(self.rfile.read(n) or b"{}")
+                if path == "/api/answer":
+                    review.answer(body)
+                    self._send(200, {"ok": True, "stats": review.stats()})
+                elif path == "/api/undo":
+                    self._send(200, {"undone": review.undo(), "stats": review.stats()})
+                else:
+                    self._send(404, {"error": "not found"})
+            except (ValueError, json.JSONDecodeError) as e:
+                self._send(400, {"error": str(e)})
+
+    return Handler
+
+
+def serve(review, wasm_path, port):
+    return ThreadingHTTPServer(("127.0.0.1", port), make_handler(review, wasm_path))
+
+
+def main(argv=None):
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("queue", nargs="?", type=Path, default=DEFAULT_QUEUE)
+    ap.add_argument("--answers", type=Path, default=DEFAULT_ANSWERS)
+    ap.add_argument("--wasm", type=Path, default=DEFAULT_WASM)
+    ap.add_argument("--port", type=int, default=8765)
+    ap.add_argument("--open", action="store_true", help="open the page in the default browser")
+    args = ap.parse_args(argv)
+    if not args.queue.exists():
+        sys.exit(f"no queue at {args.queue}; build one with tools/review/sample.py RUN --confirm")
+    if not args.wasm.exists():
+        sys.exit(f"{args.wasm} is missing; build the parser first:\n  {BUILD_WASM}")
+    review = Review(args.queue, args.answers)
+    s = review.stats()
+    httpd = serve(review, args.wasm, args.port)
+    url = f"http://127.0.0.1:{args.port}/"
+    print(f"{s['answered']} of {s['total']} answered; answers go to {args.answers}")
+    print(f"open {url}   (Ctrl-C to stop)")
+    if args.open:
+        webbrowser.open(url)
+    try:
+        httpd.serve_forever()
+    except KeyboardInterrupt:
+        print("\nstopped")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

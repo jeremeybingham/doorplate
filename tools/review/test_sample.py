@@ -84,6 +84,7 @@ def test_queue_has_one_row_per_group_first_biggest_group_first(tmp_path):
     for e in q:
         assert e["id"] == f"inv|site|{e['record_id']}"
         assert e["line1"] and e["source"] == "inv" and e["cluster"]["warnings"]
+        assert e["state"] in ("FL", "IL") and e["zip"] and e["city"]
 
 
 def test_seed_is_repeatable_and_limit_applies(tmp_path):

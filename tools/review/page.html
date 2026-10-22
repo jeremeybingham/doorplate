@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>doorplate review</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { font: 16px/1.5 system-ui, sans-serif; max-width: 52rem; margin: 1rem auto 4rem; padding: 0 1rem; }
+  header { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; flex-wrap: wrap; }
+  h1 { font-size: 1.1rem; margin: 0; }
+  .muted { opacity: .7; font-size: .85rem; }
+  .card { border: 1px solid #8886; border-radius: 6px; padding: .75rem 1rem; margin: .75rem 0; }
+  .field { display: flex; gap: .75rem; align-items: flex-start; margin: .25rem 0; }
+  .fname { width: 3.5rem; flex: none; font-size: .75rem; opacity: .65; padding-top: .45rem; text-transform: uppercase; }
+  .line { font: 1rem/1 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: pre-wrap; word-break: break-word; }
+  .chip { display: inline-block; margin: 0 .1rem .35rem; padding: .15rem .35rem .1rem; border-radius: 4px; text-align: center; vertical-align: top; white-space: pre; }
+  .chip b { display: block; font-weight: 600; }
+  .chip i { display: block; font: normal .6rem/1.3 system-ui, sans-serif; letter-spacing: .02em; text-transform: uppercase; opacity: .8; }
+  .gap { display: inline-block; margin: 0 .05rem; vertical-align: top; white-space: pre; opacity: .6; padding-top: .15rem; }
+  .warn { display: inline-block; font: .8rem ui-monospace, monospace; background: #e6a00026; border-left: 3px solid #e6a000; padding: 0 .4rem; margin: .15rem .25rem 0 0; }
+  .kv { font-size: .85rem; margin-top: .35rem; word-break: break-all; }
+  .kv code { font-family: ui-monospace, monospace; }
+  textarea, input[type=text] { width: 100%; box-sizing: border-box; font: inherit; padding: .5rem; border: 1px solid #888; border-radius: 4px; background: transparent; color: inherit; }
+  button { font: inherit; padding: .35rem .7rem; border: 1px solid #888; border-radius: 4px; background: transparent; color: inherit; cursor: pointer; }
+  button:hover { background: #8882; }
+  button kbd { font: .7rem ui-monospace, monospace; opacity: .65; margin-left: .35rem; }
+  .row { display: flex; flex-wrap: wrap; gap: .5rem; margin: .5rem 0; }
+  .ok { color: #1a7f37; } .bad { color: #c62828; }
+  @media (prefers-color-scheme: dark) { .ok { color: #5fd97d; } .bad { color: #ff8a80; } }
+  .g-number { background: #cfe5ff; color: #0b2a4a; } .g-dir { background: #e1d8ff; color: #2a1a5e; }
+  .g-street { background: #cdeec8; color: #123a10; } .g-suffix { background: #a9deb0; color: #0e3a14; }
+  .g-unit { background: #ffdca6; color: #4a2a00; } .g-special { background: #f1e2a4; color: #3d3200; }
+  .g-note { background: #dcdcdc; color: #222; } .g-city { background: #ffd0dc; color: #55111f; }
+  .g-state { background: #fbb3c8; color: #55111f; } .g-zip { background: #f59ab5; color: #4a0d1d; }
+  .g-unparsed { background: #ffc9c9; color: #5a0000; outline: 2px dashed #c00; outline-offset: -2px; }
+  @media (prefers-color-scheme: dark) {
+    .g-number { background: #1d3d63; color: #d6e8ff; } .g-dir { background: #3a2f6b; color: #e6deff; }
+    .g-street { background: #1f4a1c; color: #d6f5d1; } .g-suffix { background: #2a5c33; color: #d6f5d9; }
+    .g-unit { background: #5e3a0a; color: #ffe8c6; } .g-special { background: #54480f; color: #fbefc0; }
+    .g-note { background: #444; color: #eee; } .g-city { background: #5e2433; color: #ffdce5; }
+    .g-state { background: #6e2a3e; color: #ffdce5; } .g-zip { background: #7e2f48; color: #ffdce5; }
+    .g-unparsed { background: #5a1a1a; color: #ffd6d6; outline-color: #ff7b7b; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>doorplate review</h1>
+  <span class="muted" id="progress">loading…</span>
+</header>
+<p class="muted">Local only: nothing leaves this machine. doorplate parses and formats addresses; it does not validate that an address exists or can receive mail.</p>
+
+<div id="done" class="card" hidden>The queue is finished. Run <code>tools/review/export.py</code> for the shape-only file.</div>
+
+<div id="app" hidden>
+  <div class="card">
+    <div class="muted" id="cluster"></div>
+    <div id="orig"></div>
+    <div id="origwarn"></div>
+    <div class="kv" id="origkv"></div>
+  </div>
+
+  <div class="card">
+    <label for="fix"><b>A string that should parse to the same door</b> <span class="muted">(starts as the original in one line; edit it, Enter saves it as a correction)</span></label>
+    <input type="text" id="fix" autocomplete="off" spellcheck="false">
+    <div class="line" id="fixview" style="margin-top:.5rem"></div>
+    <div id="fixwarn"></div>
+    <div class="kv" id="fixkv"></div>
+  </div>
+
+  <div class="row">
+    <button data-v="right">Parse is right<kbd>1</kbd></button>
+    <button data-v="corrected" id="bcorr">Save correction<kbd>2 / Enter</kbd></button>
+    <button data-v="unclear">I can't tell<kbd>3</kbd></button>
+    <button data-v="junk">Not an address<kbd>4</kbd></button>
+    <button data-v="noise">Source noise<kbd>5</kbd></button>
+    <button data-v="skip">Skip<kbd>6</kbd></button>
+    <button id="undo">Undo last<kbd>u</kbd></button>
+  </div>
+  <label for="note" class="muted">Note (optional)</label>
+  <input type="text" id="note" autocomplete="off">
+  <p class="muted"><b>Parse is right</b>: the warning was noise. <b>Save correction</b>: it is wrong, and the string above is a better one.
+  <b>I can't tell</b>: wrong, and I don't know what it should be. <b>Not an address</b>: a name, a placeholder, a number.
+  <b>Source noise</b>: the source cut it off or mangled it.</p>
+</div>
+
+<script>
+(function () {
+  var KINDS = {
+    StreetNumber: ["Number", "number"], StreetDirPrefix: ["Direction", "dir"], StreetName: ["Street", "street"],
+    StreetSuffix: ["Suffix", "suffix"], StreetDirSuffix: ["Direction", "dir"], Highway: ["Highway", "street"],
+    UnitType: ["Unit", "unit"], UnitNumber: ["Unit no.", "unit"], SecondUnitType: ["Unit 2", "unit"],
+    SecondUnitNumber: ["Unit 2 no.", "unit"], PoBox: ["PO box", "special"], RuralRoute: ["Rural route", "special"],
+    GeneralDelivery: ["General delivery", "special"], Military: ["Military", "special"],
+    MilitaryPostOffice: ["Military post office", "special"], Attention: ["Attention", "note"],
+    Building: ["Building", "note"], City: ["City", "city"], State: ["State", "state"], Zip5: ["ZIP", "zip"],
+    Zip4: ["ZIP+4", "zip"], Unparsed: ["Not placed", "unparsed"]
+  };
+  var enc = new TextEncoder(), dec = new TextDecoder(), wasm, item, origParse;
+  var $ = function (id) { return document.getElementById(id); };
+
+  function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; }
+  function call(fn, text) {
+    var b = enc.encode(text), p = wasm.alloc(b.length);
+    new Uint8Array(wasm.memory.buffer, p, b.length).set(b);
+    var n = wasm[fn](p, b.length);
+    wasm.dealloc(p, b.length);
+    return JSON.parse(dec.decode(new Uint8Array(wasm.memory.buffer, wasm.result_ptr(), n)));
+  }
+  function api(path, body) {
+    return fetch(path, body === undefined ? {} : { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
+      .then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.error || r.status); return j; }); });
+  }
+
+  // The row as the harness parsed it: pre-split fields, or the street lines and last line joined.
+  function parseItem(it) {
+    if (it.last_line) {
+      var t = [it.line1, it.line2, it.last_line].filter(Boolean).join(", ");
+      return { parse: call("parse", t), fields: [[null, t]] };
+    }
+    var f = { line1: it.line1, line2: it.line2, city: it.city, state: it.state, zip: it.zip };
+    return { parse: call("parse_fields", JSON.stringify(f)),
+             fields: ["line1", "line2", "city", "state", "zip"].filter(function (k) { return f[k]; }).map(function (k) { return [k, f[k]]; }) };
+  }
+  function oneLine(it) {
+    if (it.last_line) return [it.line1, it.line2, it.last_line].filter(Boolean).join(", ");
+    var last = [it.state, it.zip].filter(Boolean).join(" ");
+    return [it.line1, it.line2, it.city, last].filter(Boolean).join(", ");
+  }
+
+  function chips(box, text, spans) {
+    box.textContent = "";
+    var at = 0;
+    spans.slice().sort(function (a, b) { return a.start - b.start || b.end - a.end; }).forEach(function (c) {
+      if (c.start < at) return;
+      if (c.start > at) box.appendChild(el("span", "gap", text.slice(at, c.start)));
+      var k = KINDS[c.component] || [c.component, "note"], chip = el("span", "chip g-" + k[1]);
+      chip.appendChild(el("b", null, text.slice(c.start, c.end)));
+      chip.appendChild(el("i", null, k[0]));
+      box.appendChild(chip); at = c.end;
+    });
+    if (at < text.length) box.appendChild(el("span", "gap", text.slice(at)));
+  }
+  function warnings(box, r) {
+    box.textContent = "";
+    if (r.error) { box.appendChild(el("span", "warn bad", r.error)); return; }
+    (r.warnings || []).forEach(function (w) { box.appendChild(el("span", "warn", w)); });
+  }
+  function kv(box, r) {
+    box.textContent = "";
+    if (r.error) return;
+    var u = r.usps || {};
+    var bits = [["key", r.key], ["USPS", [u.line1, u.line2, u.last_line].filter(Boolean).join(" / ")], ["not placed", r.unparsed]];
+    bits.forEach(function (b) {
+      if (!b[1]) return;
+      box.appendChild(el("span", "muted", b[0] + " ")); box.appendChild(el("code", null, b[1])); box.appendChild(document.createTextNode("   "));
+    });
+  }
+  function summary(r) {
+    if (r.error) return { error: r.error };
+    return { key: r.key, warnings: r.warnings, unparsed: r.unparsed, components: r.components, usps: r.usps,
+             library_version: r.provenance && r.provenance.library_version };
+  }
+
+  function show(it, stats) {
+    $("progress").textContent = stats.answered + " of " + stats.total + " answered";
+    if (!it) { $("app").hidden = true; $("done").hidden = false; return; }
+    $("done").hidden = true; $("app").hidden = false;
+    item = it;
+    var c = it.cluster || {};
+    $("cluster").textContent = "Shape group of " + c.size + " row(s): " + c.shape + "   [" + (c.warnings || "no warnings") + "]   " + it.source + " / " + it.role;
+    var p = parseItem(it); origParse = p.parse;
+    var orig = $("orig"); orig.textContent = "";
+    p.fields.forEach(function (f) {
+      var row = el("div", "field"), box = el("div", "line");
+      row.appendChild(el("div", "fname", f[0] || "input")); row.appendChild(box); orig.appendChild(row);
+      var spans = (p.parse.spans || []).filter(function (s) { return s.field === f[0]; });
+      chips(box, f[1], spans);
+    });
+    warnings($("origwarn"), p.parse); kv($("origkv"), p.parse);
+    $("fix").value = oneLine(it); $("note").value = "";
+    renderFix(); $("fix").focus(); $("fix").select();
+  }
+  function renderFix() {
+    var t = $("fix").value, r = t.trim() ? call("parse", t) : { error: "empty" };
+    chips($("fixview"), t, r.spans || []); warnings($("fixwarn"), r); kv($("fixkv"), r);
+    if (!r.error) {
+      var clean = !(r.warnings || []).length && !r.unparsed, same = origParse && origParse.key === r.key;
+      var m = el("span", clean ? "ok" : "bad", clean ? "parses cleanly" : "still has warnings");
+      $("fixkv").appendChild(m);
+      $("fixkv").appendChild(document.createTextNode("   " + (same ? "same key as the original parse" : "different key from the original parse")));
+    }
+    return r;
+  }
+
+  function send(verdict) {
+    if (!item) return;
+    var body = { id: item.id, verdict: verdict, note: $("note").value, parse: summary(origParse) };
+    if (verdict === "corrected") {
+      body.corrected = $("fix").value;
+      body.corrected_parse = summary(call("parse", body.corrected));
+    }
+    api("/api/answer", body).then(function () { return api("/api/next"); })
+      .then(function (j) { show(j.item, j.stats); })
+      .catch(function (e) { alert("not saved: " + e.message); });
+  }
+
+  document.querySelectorAll("button[data-v]").forEach(function (b) { b.addEventListener("click", function () { send(b.dataset.v); }); });
+  $("undo").addEventListener("click", undo);
+  function undo() { api("/api/undo", {}).then(function () { return api("/api/next"); }).then(function (j) { show(j.item, j.stats); }); }
+  $("fix").addEventListener("input", renderFix);
+  $("fix").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); send("corrected"); } if (e.key === "Escape") e.target.blur(); });
+  $("note").addEventListener("keydown", function (e) { if (e.key === "Escape") e.target.blur(); });
+  document.addEventListener("keydown", function (e) {
+    if (/^(INPUT|TEXTAREA)$/.test(document.activeElement.tagName) || e.ctrlKey || e.metaKey || e.altKey) return;
+    var v = { "1": "right", "2": "corrected", "3": "unclear", "4": "junk", "5": "noise", "6": "skip" }[e.key];
+    if (v) { e.preventDefault(); send(v); }
+    else if (e.key === "u") undo();
+    else if (e.key === "f") { e.preventDefault(); $("fix").focus(); }
+  });
+
+  fetch("/doorplate.wasm").then(function (r) { if (!r.ok) throw new Error("the parser is not built"); return r.arrayBuffer(); })
+    .then(function (b) { return WebAssembly.instantiate(b, {}); })
+    .then(function (m) { wasm = m.instance.exports; return api("/api/next"); })
+    .then(function (j) { show(j.item, j.stats); })
+    .catch(function (e) { $("progress").textContent = "error: " + e.message; });
+})();
+</script>
+</body>
+</html>
