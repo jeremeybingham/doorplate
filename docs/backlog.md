@@ -10,15 +10,21 @@ Releases are staged so each one can be proven on its own:
 
 | Milestone | What it is | Gate |
 |---|---|---|
-| **0.3.x** (`0.3.2`, ...) | Key-neutral patches: warnings, diagnostics, docs | A row-by-row key comparison with the last release shows zero differences |
-| **0.4.0** | The foundation: the architecture (state data folded into the core, an extension-ready lexicon) and the breaking API cleanup. The key stays `k2` | The same zero-difference comparison against the last 0.3.x release |
+| **0.4.0** | The foundation: the key-neutral fixes (warnings, diagnostics, small rule fixes), the architecture (state data folded into the core, an extension-ready lexicon) and the breaking API cleanup. The key stays `k2` | A row-by-row key comparison with 0.3.1 shows **zero differences** |
 | **0.5.0** | The `k3`: every key-affecting parser rule, cut together | The measured before and after in [`key-format.md`](key-format.md) ("Changing the key") |
 | **Later** | Wanted, not planned for a release: new API surface, anything waiting on demand or a decision | |
 | **Tooling** | Harness, review tool, benchmarks, CI: never shipped, never closed | |
 
-After 0.3.2, `main` is the 0.4 line; a critical 0.3.x fix goes on a `release/0.3` branch cut from the last 0.3
-tag. Nothing waits open "for the k3": key-affecting work merges to `main` once 0.4.0 is out. The trackers
-(`tracker` label) list the order inside a release: #138 (0.4.0) and #139 (0.5.0).
+`main` is the 0.4 line now: there is no 0.3.2. The project has no users, so a release is not made for a minor fix;
+those wait for 0.4.0. **A 0.3.x patch needs a very good reason:** a correctness bug in shipped output that matters
+(a wrong key, a panic on valid input: the never-panic rule), a security or supply-chain problem, or a broken
+published artifact (a wheel that does not install, a crate that does not build). It goes on a `release/0.3` branch
+cut from the `v0.3.1` tag, with the full release checklist. Nothing waits open "for the k3": key-affecting work
+merges to `main` once 0.4.0 is out. The trackers (`tracker` label) list the order inside a release: #138 (0.4.0)
+and #139 (0.5.0).
+
+Inside 0.4.0 the key-neutral fixes go first, in small pull requests, each with its row-by-row key comparison with
+0.3.1, so a key change is caught the day it is made and not at the release.
 
 **The comparison.** Install the released version in a throwaway environment, parse whole records files with both
 builds (`parse_fields_many`) and compare `a.key()` row by row, by source. "Key-neutral" is a claim about this
