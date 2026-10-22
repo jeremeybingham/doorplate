@@ -202,7 +202,7 @@ dependencies = [
 
 [[package]]
 name = "doorplate"
-version = "0.3.1"
+version = "0.4.0-dev"
 dependencies = [
  "criterion",
  "doorplate",
@@ -215,7 +215,7 @@ dependencies = [
 
 [[package]]
 name = "doorplate-cli"
-version = "0.3.1"
+version = "0.4.0-dev"
 dependencies = [
  "csv",
  "doorplate",
@@ -224,7 +224,7 @@ dependencies = [
 
 [[package]]
 name = "doorplate-py"
-version = "0.3.1"
+version = "0.4.0-dev"
 dependencies = [
  "doorplate",
  "pyo3",
@@ -232,7 +232,7 @@ dependencies = [
 
 [[package]]
 name = "doorplate-wasm"
-version = "0.3.1"
+version = "0.4.0-dev"
 dependencies = [
  "doorplate",
  "serde_json",

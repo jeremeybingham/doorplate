@@ -15,7 +15,8 @@ Releases are staged so each one can be proven on its own:
 | **Later** | Wanted, not planned for a release: new API surface, anything waiting on demand or a decision | |
 | **Tooling** | Harness, review tool, benchmarks, CI: never shipped, never closed | |
 
-`main` is the 0.4 line now: there is no 0.3.2. The project has no users, so a release is not made for a minor fix;
+`main` is the 0.4 line now and carries the version `0.4.0-dev` (a build from `main` never reports a released
+version; the release pull request sets `0.4.0`): there is no 0.3.2. The project has no users, so a release is not made for a minor fix;
 those wait for 0.4.0. **A 0.3.x patch needs a very good reason:** a correctness bug in shipped output that matters
 (a wrong key, a panic on valid input: the never-panic rule), a security or supply-chain problem, or a broken
 published artifact (a wheel that does not install, a crate that does not build). It goes on a `release/0.3` branch
