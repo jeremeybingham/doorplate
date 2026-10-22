@@ -7,20 +7,37 @@ change to what an input produces needs a new key version.
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-10-22
+
+A patch release: `doorplate --version`, the care-of line with a percent sign, and a quieter warning for Queens
+house numbers. The key format stays `k2`, but **one correction changes the keys of some inputs** (the
+second entry below): inputs with a `%` care-of line or `IN CARE OF` that 0.3.0 keyed wrongly. If you stored keys for
+addresses like those, re-parse them; no other input's key changed (measured against the released 0.3.0 over
+about 19 million rows from five sources).
+
 - Provenance (issue #85): `doorplate --version` (and `-V`) prints the library version, `--help` (and `-h`) prints
   the usage and exits 0, and the JSON from `doorplate parse` and Python's `to_dict()` carry
-  `provenance.library_version`. A new key in the output, not a change to any value or key. The state data
+  `provenance.library_version`. A new field in the output, not a change to any existing value or match key. The state data
   version (#7) will join the same `provenance` group.
 
 - Parsing: an in-care-of line written with a percent sign (`% JOHN SMITH`, `%JOHN SMITH`) and `IN CARE OF NAME`
   are read as the attention line, in line 2 and in one-line input alike. Before, the `% NAME` text stayed
   in `unparsed` with an `unparsed_remainder` warning (64% of the rows of the IRS exempt-organization
-  extract), and `IN` was left over from `IN CARE OF`. Keys do not change (issue #97).
+  extract), and `IN` was left over from `IN CARE OF`.
+
+  **Keys changed for these inputs.** In 0.3.0 the leftover text pushed the tail of line 1 (a unit, a floor)
+  into the street name, so the street part of the key was wrong (`MAIN ST 5TH FL` instead of `MAIN`, `ST`); now it
+  is right, so the key differs from 0.3.0's. Compared with the released 0.3.0 row by row: 172,455 of the
+  1,975,975 IRS rows (8.7%), 799 of 5,929,426 NY corporation rows, 59 of 9,038,491 FMCSA rows and 18 of
+  1,676,974 FCC rows get a different key, and every one has a `%` care-of marker or `IN CARE OF`; no key changed in
+  the Netsyms sample (1,138,982 rows) or the Texas file (211,009). This is a one-off correction under `k2`, not a new
+  key version (`docs/key-format.md`, "Version history"). Issue #97. An earlier version of this entry said keys do
+  not change; that was wrong.
 
 - Warnings: a hyphenated house number with a larger second part (`21-77 31ST ST`) no longer raises
   `multiple_addresses` when the place resolves to Queens County, New York, where the part before the
-  hyphen is the cross street. Ranges elsewhere (`1204-1206 MAIN ST`, and in Manhattan) still warn. The
-  number and the key do not change (issue #99; the twin `2177 31ST ST` keys apart: #109).
+  hyphen is the cross street. Ranges elsewhere (`1204-1206 MAIN ST`, and in Manhattan) still warn. Only the
+  warning changes; the number and the key do not (issue #99; the twin `2177 31ST ST` keys apart: #109).
 
 - Documentation: a Disclaimer section in the four READMEs (provided as is, no warranty, use at your own
   risk, not a validator, not affiliated with the US Postal Service, RESO or DataMade).

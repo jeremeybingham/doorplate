@@ -155,7 +155,12 @@ in the meantime.
   (the changes are listed in the changelog).
 - **`k2`** (this page) starts with 0.3.0, released 2026-10-20, and is frozen from there: a change
   to what an input produces now needs `k3`. Key-affecting changes found since are held for it (see
-  "Changing the key").
+  "Changing the key"). **One exception: 0.3.1** (2026-10-22) corrected the keys of inputs with a `%` care-of
+  line or `IN CARE OF` (issue #97). 0.3.0 left the care-of text over, which pushed the tail of line 1 into the street
+  name, so those keys were wrong; they were corrected under `k2` instead of waiting for `k3`, by the owner's
+  call, because the project has no users yet. Measured against 0.3.0 over about 19 million rows: 172,455 of the
+  1,975,975 IRS rows, 799 NY, 59 FMCSA and 18 FCC rows changed, all of them inputs with such a line, and no
+  other input changed. This is an exception to the freeze, recorded here so the history is accurate. If you stored `k2` keys from 0.3.0 for addresses like these, re-parse them.
 
 ## Slug
 
