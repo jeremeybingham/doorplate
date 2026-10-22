@@ -75,6 +75,31 @@ The test (`test_export.py`) checks that nothing but shapes, codes and names come
 It is not anonymized text, so it does not replace the anonymizing tool of #105 for sharing a
 real-looking row (a later version can use it).
 
+## The full-text export (`export.py --full`): for the maintainer's own session
+
+A shape is often not enough to see a rule: which words were deleted, and what the note says. For the
+sources the owner has cleared, `--full` writes `local-data/review/answers-full.md`: the original
+lines, the parse, the corrected string and its parse, the note verbatim, and a word-level description
+of the edit (`deleted leading "ACME LLC"`). It reads `local-data/review/full-ok.txt`, one source per
+line:
+
+```
+irs-eo-bmf    mask=line2     # the care-of name field is reduced to its shape
+fmcsa-census                 # nothing masked
+```
+
+- **Only listed sources are written;** with none listed, nothing is. The default stays shape-only.
+- **`mask=`** names input fields (`line1`, `line2`, `city`, `state`, `zip`, `last_line`) whose words become
+  their shape everywhere in that row's entry: the lines, the parse, the correction, the note and the edit
+  description. Words that also appear in an unmasked field (`SMITH` in a street name), and address
+  vocabulary (`C/O`, `ATTN`, `PO BOX`, `APT`), are kept, so a street line and a care-of marker stay
+  readable while a name does not.
+- **It stays in `local-data/`:** the command refuses an output path outside it. Reading the file in a
+  Claude Code session sends its text to the model provider, which is why it is an exception to
+  `docs/data-policy.md` and why each source is cleared by hand.
+- **Write-back stays shapes:** what is learned goes into issues, pull requests and docs as counts,
+  shapes and invented examples.
+
 ## What it is not
 
 Nothing is trained on the answers. A person's opinion of "the same door" is a lead, not ground truth.

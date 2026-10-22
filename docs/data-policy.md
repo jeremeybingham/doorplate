@@ -20,7 +20,13 @@ and none of the data below is used to claim otherwise.
 4. **A person's answers are private data too.** `tools/review/` records real addresses the reviewer
    saw; they stay in `local-data/review/`. Only its shape-only export (`tools/review/export.py`:
    shapes, codes and component names, no values) may leave, and the review tool reads harness runs of
-   real sources, never the benchmark suite or the geocode splits.
+   real sources, never the benchmark suite or the geocode splits. **One exception, by the owner's
+   choice:** for the sources the owner lists in `local-data/review/full-ok.txt` (a public federal file,
+   with its name-bearing fields masked), `export.py --full` writes the answers in full text for the
+   maintainer's own Claude Code session to read. Reading a file in a session sends its text to the
+   model provider, so each source is cleared by hand and the file stays in `local-data/`; do not share
+   the transcript unedited. What that session writes to issues, pull requests and docs stays counts,
+   shapes and invented examples.
 5. **Never print personal names** from private data, in a terminal log that is pasted
    anywhere or in an agent transcript that is shared. Reader errors count: DuckDB's
    messages quote the rows they failed on, so scripts that read private files print only
