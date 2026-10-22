@@ -19,10 +19,12 @@ some, see [Sharing messy data](../CONTRIBUTING.md#sharing-messy-data).
 
 Releases are staged, decided on 2026-10-22 (issue #103): each release can then be proven on its own. The
 rules for the labels, the milestones and the order are in [`backlog.md`](backlog.md). A change that does not
-alter a key ships in a 0.3.x patch; the architecture and the breaking API changes come next, with the key
-unchanged; the key-affecting rules are cut together after that, because every `k3` re-keys stored keys.
+alter a key is safe to merge any time; the architecture and the breaking API changes come first, with the key
+unchanged; the key-affecting rules are cut together after that, because every `k3` re-keys stored keys. There is
+no 0.3.2: with no users, a release is not made for a minor fix (a 0.3.x patch needs a very good reason, see
+[`backlog.md`](backlog.md)).
 
-### Next: 0.3.2 (no key change)
+### First, inside 0.4.0: the key-neutral fixes
 
 - **Warnings that say how far to trust a parse** (#102): a table of how reliable each warning is, measured
   on labeled data, and named warnings where the parser knows it is guessing, starting with a lone letter after
@@ -34,7 +36,7 @@ unchanged; the key-affecting rules are cut together after that, because every `k
 ### 0.4.0: the foundation (the key stays `k2`)
 
 The architecture and the breaking cleanup, done once, so the core is close to final. The gate: a row-by-row key
-comparison with the last 0.3.x release shows zero differences. The order is in #138:
+comparison with 0.3.1 shows zero differences. The order is in #138:
 
 - **Profiling** first (#90), as a baseline.
 - **State data:** fold the Florida pack into the core as built-in state data, dropping the `state-fl` Cargo

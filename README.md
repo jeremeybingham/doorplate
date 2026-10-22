@@ -360,7 +360,7 @@ The specification of the suite and the rules that keep it fair: [`docs/benchmark
 
 The next work, roughly in this order, depends on what real data shows:
 
-- **Fixes that do not change keys, in 0.3.x patches.** A table of how reliable each warning is and
+- **Fixes that do not change keys, first in 0.4.0.** A table of how reliable each warning is and
   named warnings for known ambiguities, and line-2 diagnostics. (The `%` in-care-of line, Queens-style
   house numbers and `--version` provenance are in the changelog.)
 - **0.4.0: the foundation.** The architecture and the breaking cleanup, done once with the key
