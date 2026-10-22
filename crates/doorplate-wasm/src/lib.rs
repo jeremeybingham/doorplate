@@ -12,7 +12,7 @@
 
 use std::cell::RefCell;
 
-use doorplate::{ParsedAddress, Parser};
+use doorplate::{FieldName, Fields, ParseError, ParsedAddress, Parser};
 use serde_json::{json, Value};
 
 // The command-line tool's JSON builder, compiled in as is (it needs only
@@ -32,14 +32,36 @@ fn utf16(s: &str, i: usize) -> usize {
     s.get(..i).map_or(0, |p| p.encode_utf16().count())
 }
 
+fn field_name(f: Option<FieldName>) -> Value {
+    match f {
+        None => Value::Null,
+        Some(FieldName::Line1) => json!("line1"),
+        Some(FieldName::Line2) => json!("line2"),
+        Some(FieldName::City) => json!("city"),
+        Some(FieldName::State) => json!("state"),
+        Some(FieldName::Zip) => json!("zip"),
+    }
+}
+
+/// Each component's range, in UTF-16 units of the text it indexes: the input
+/// for one line, or the named field for `parse_fields` (`field` says which).
 fn spans(a: &ParsedAddress) -> Vec<Value> {
-    let text = &a.source.original;
     a.source
         .spans
         .iter()
         .map(|c| {
+            let text = match c.span.field {
+                None => a.source.original.as_str(),
+                Some(f) => a
+                    .source
+                    .fields
+                    .as_ref()
+                    .and_then(|x| x.get(f))
+                    .unwrap_or_default(),
+            };
             json!({
                 "component": format!("{:?}", c.component),
+                "field": field_name(c.span.field),
                 "start": utf16(text, c.span.start),
                 "end": utf16(text, c.span.end),
             })
@@ -47,8 +69,8 @@ fn spans(a: &ParsedAddress) -> Vec<Value> {
         .collect()
 }
 
-fn run(input: &str) -> String {
-    let v = match PARSER.with(|p| p.parse(input)) {
+fn record(result: Result<ParsedAddress, ParseError>, input: &str) -> String {
+    let v = match result {
         Ok(a) => {
             let mut v = json::record(&a);
             if let Value::Object(m) = &mut v {
@@ -59,6 +81,35 @@ fn run(input: &str) -> String {
         Err(e) => json!({ "input": input, "error": e.to_string() }),
     };
     v.to_string()
+}
+
+fn run(input: &str) -> String {
+    record(PARSER.with(|p| p.parse(input)), input)
+}
+
+/// `{"line1": ..., "line2": ..., "city": ..., "state": ..., "zip": ...}`, any
+/// of them missing or null, as `Parser::parse_fields` takes them.
+fn run_fields(json_text: &str) -> String {
+    let Ok(Value::Object(m)) = serde_json::from_str::<Value>(json_text) else {
+        return json!({ "input": "", "error": "fields must be a JSON object" }).to_string();
+    };
+    let get = |k: &str| m.get(k).and_then(Value::as_str).map(str::to_string);
+    let fields = Fields {
+        line1: get("line1"),
+        line2: get("line2"),
+        city: get("city"),
+        state: get("state"),
+        zip: get("zip"),
+    };
+    record(PARSER.with(|p| p.parse_fields(&fields)), "")
+}
+
+fn store(out: String) -> usize {
+    RESULT.with(|r| {
+        let mut r = r.borrow_mut();
+        *r = out.into_bytes();
+        r.len()
+    })
 }
 
 /// Reserve `len` bytes for the page to write its input into.
@@ -87,12 +138,17 @@ pub unsafe extern "C" fn dealloc(ptr: *mut u8, len: usize) {
 #[no_mangle]
 pub unsafe extern "C" fn parse(ptr: *const u8, len: usize) -> usize {
     let bytes = std::slice::from_raw_parts(ptr, len);
-    let out = run(&String::from_utf8_lossy(bytes));
-    RESULT.with(|r| {
-        let mut r = r.borrow_mut();
-        *r = out.into_bytes();
-        r.len()
-    })
+    store(run(&String::from_utf8_lossy(bytes)))
+}
+
+/// Like [`parse`], for pre-split fields given as a JSON object (UTF-8).
+///
+/// # Safety
+/// `ptr` must point to `len` initialized bytes.
+#[no_mangle]
+pub unsafe extern "C" fn parse_fields(ptr: *const u8, len: usize) -> usize {
+    let bytes = std::slice::from_raw_parts(ptr, len);
+    store(run_fields(&String::from_utf8_lossy(bytes)))
 }
 
 #[no_mangle]
@@ -162,6 +218,43 @@ mod tests {
         );
         assert!(got.contains(&("City".into(), "ZÜRICH".into())), "{got:?}");
         assert!(got.contains(&("Zip5".into(), "11354".into())), "{got:?}");
+    }
+
+    #[test]
+    fn fields_spans_index_their_own_field() {
+        let fields = r#"{"line1": "123 N MAIN ST", "line2": "% JOHN SMITH", "city": "MIAMI", "state": "FL", "zip": "33101"}"#;
+        let v: Value = serde_json::from_str(&run_fields(fields)).unwrap();
+        assert_eq!(v["key"], "k2:S|123|N|MAIN|ST||FL|33101");
+        let by_field = |f: &str, c: &str| {
+            v["spans"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .find(|s| s["field"] == f && s["component"] == c)
+                .cloned()
+        };
+        let att = by_field("line2", "Attention").unwrap();
+        assert_eq!(
+            (att["start"].as_u64(), att["end"].as_u64()),
+            (Some(0), Some(12))
+        );
+        let city = by_field("city", "City").unwrap();
+        assert_eq!(
+            (city["start"].as_u64(), city["end"].as_u64()),
+            (Some(0), Some(5))
+        );
+        assert!(by_field("line1", "StreetName").is_some());
+    }
+
+    #[test]
+    fn fields_accept_missing_and_null_and_reject_non_objects() {
+        let v: Value =
+            serde_json::from_str(&run_fields(r#"{"line1": "1 A ST", "city": null}"#)).unwrap();
+        assert!(v.get("error").is_none());
+        let v: Value = serde_json::from_str(&run_fields("[1]")).unwrap();
+        assert_eq!(v["error"], "fields must be a JSON object");
+        let v: Value = serde_json::from_str(&run_fields("{}")).unwrap();
+        assert_eq!(v["error"], "address input is empty");
     }
 
     #[test]
