@@ -363,9 +363,10 @@ The next work, roughly in this order, depends on what real data shows:
 - **Fixes that do not change keys, in 0.3.x patches.** A table of how reliable each warning is and
   named warnings for known ambiguities, and line-2 diagnostics. (The `%` in-care-of line, Queens-style
   house numbers and `--version` provenance are in the changelog.)
-- **0.4.0: a `k3` and a breaking cleanup.** Key-affecting rules are held and cut together so
-  stored keys are re-keyed once; the cleanup folds the Florida pack into the core and removes an
-  unused reserved field.
+- **0.4.0: the foundation.** The architecture and the breaking cleanup, done once with the key
+  unchanged: the Florida pack folded into the core as built-in state data, an extension-ready core, the
+  unused reserved field removed, and a review of every public name.
+- **0.5.0: a `k3`.** The key-affecting rules are cut together, so stored keys are re-keyed once.
 - **A custom layer.** A way to add your own spellings, places, ZIPs and state-specific readings
   without editing the shipped tables, loaded at run time. Not in this release; examples of what
   you would add are the best input.
