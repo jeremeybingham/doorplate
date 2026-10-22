@@ -91,6 +91,8 @@ runs, so `123 N OAK ST` is `9 a a a`. The input text comes from the records file
 manifest, joined to the flagged rows by `(source, role, record_id)`; a `--db` run has no text, so it
 gets the leftover shapes only. Counts only, so the report can be quoted (`docs/data-policy.md`).
 
+To see what the failing rows actually are, and to say what the right answer is, `tools/review/` draws a few rows from each of the biggest shapes of a run and shows them to a person (`tools/review/README.md`, issue #122).
+
 For a source that groups its rows (FMCSA's country, Netsyms's original provider), a provider table
 comes first and `--provider NAME` reports one provider alone (`shapes-NAME.md`), so foreign rows do
 not hide a source's US findings. The `unit` mismatch runs only for roles with a `label_unit` (a

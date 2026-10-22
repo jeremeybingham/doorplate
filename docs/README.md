@@ -45,6 +45,7 @@ New to the project? Read the [project README](../README.md), then
 | [`benchmark-suite.md`](benchmark-suite.md) | The benchmark suite's specification: what it holds, how it was built and audited, the rules that keep it fair |
 | [`benchmarks/suite/README.md`](../benchmarks/suite/README.md), [`MANIFEST.md`](../benchmarks/suite/v1/MANIFEST.md) | The suite's data folder, and the composition and checksums of `v1` |
 | [`tools/harness/README.md`](../tools/harness/README.md), [`SCHEMA.md`](../tools/harness/SCHEMA.md) | The harness (parse-rule comparisons, the pre-release full run on private data, runs on any ingested source, scoring against labeled parts, and the shapes worklist) and the columns of a run |
+| [`tools/review/README.md`](../tools/review/README.md) | The review tool: a local page that shows the hard addresses of a harness run to a person, records the verdicts and corrections, and writes a shape-only export that may be shared |
 | [`tools/ingest/README.md`](../tools/ingest/README.md) | The record format every address source is turned into, how to write a spec for a source, and `inventory.py`, the table of what is in `local-data/` (issue #93) |
 
 ## Test data
@@ -89,7 +90,7 @@ the same pull request. The pull request template asks for it.
 | Accuracy or speed figures, or the benchmark scripts | [`benchmarks.md`](benchmarks.md); [`benchmarks/README.md`](../benchmarks/README.md); the figures in the four READMEs that quote them; [`CHANGELOG.md`](../CHANGELOG.md). The suite's `v1` files are never edited: a fix is a `v2` |
 | The benchmark suite (its generator, scoring or composition) | [`benchmark-suite.md`](benchmark-suite.md); [`benchmarks/README.md`](../benchmarks/README.md); [`benchmarks/suite/README.md`](../benchmarks/suite/README.md); [`benchmarks.md`](benchmarks.md) |
 | Place data or a state pack | [`places.md`](places.md) or [`packs/fl.md`](packs/fl.md); [`data-policy.md`](data-policy.md); [`NOTICE`](../NOTICE) when a source needs credit; [`how-it-works.md`](how-it-works.md) (the lexicon layers) |
-| How private data is used, or what leaves `local-data/` | [`data-policy.md`](data-policy.md); [`tools/harness/README.md`](../tools/harness/README.md); [`tools/ingest/README.md`](../tools/ingest/README.md) |
+| How private data is used, or what leaves `local-data/` | [`data-policy.md`](data-policy.md); [`tools/harness/README.md`](../tools/harness/README.md); [`tools/ingest/README.md`](../tools/ingest/README.md); [`tools/review/README.md`](../tools/review/README.md) |
 | The golden corpus format or the way it runs | [`tests/corpus/README.md`](../tests/corpus/README.md); [`how-it-works.md`](how-it-works.md) ("Testing") |
 | Build commands, the repository layout, the CI jobs or the release steps | [`AGENTS.md`](../AGENTS.md); [`CLAUDE.md`](../CLAUDE.md); [`CONTRIBUTING.md`](../CONTRIBUTING.md); [`how-it-works.md`](how-it-works.md) ("Repository layout" and "Testing") |
 | A version number, the alpha notice or the disclaimer | The four READMEs; `Cargo.toml`; [`CHANGELOG.md`](../CHANGELOG.md); the references pull request in [`CONTRIBUTING.md`](../CONTRIBUTING.md) ("Releasing") |
