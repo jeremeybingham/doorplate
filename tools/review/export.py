@@ -67,6 +67,8 @@ def safe(a, with_source=False):
     out["components"] = component_shapes(p.get("components"))
     out["unparsed"] = shape(p["unparsed"]) if p.get("unparsed") else None
     out["key"] = key_shape(p.get("key"))
+    if a["verdict"] == "right":
+        out["warning"] = a.get("warning") if a.get("warning") in ("fair", "noise") else None
     if a["verdict"] == "corrected":
         out["corrected"] = clip(shape(a.get("corrected") or ""), 120)
         out["corrected_warnings"] = codes(c.get("warnings"))

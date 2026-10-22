@@ -33,7 +33,7 @@ def review(tmp_path):
 
 def test_next_stats_and_resume(review, tmp_path):
     assert review.next_item()["id"] == "inv|site|1"
-    review.answer({"id": "inv|site|1", "verdict": "right"})
+    review.answer({"id": "inv|site|1", "verdict": "right", "warning": "fair"})
     assert review.next_item()["id"] == "inv|site|2"
     assert review.stats() == {"total": 2, "answered": 1, "by_verdict": {"right": 1}}
     # a new session over the same files resumes where the last one stopped
@@ -50,6 +50,17 @@ def test_a_corrected_answer_needs_the_string_and_keeps_the_page_parses(review):
     assert rec["parse"] == {"key": "k2:old"} and rec["corrected_parse"] == {"key": "k2:new"}
     assert rec["note"] == "the number twice"
     assert rec["input"]["line1"] == "123 456 QUINCEWOOD ST" and rec["cluster"]["size"] == 3
+
+
+def test_a_right_parse_says_whether_the_warning_was_fair(review):
+    # the parse and the warning are separate judgments: both must be given
+    for body in ({"id": "inv|site|1", "verdict": "right"}, {"id": "inv|site|1", "verdict": "right", "warning": "maybe"}):
+        with pytest.raises(ValueError):
+            review.answer(body)
+    assert review.answer({"id": "inv|site|1", "verdict": "right", "warning": "fair"})["warning"] == "fair"
+    assert review.answer({"id": "inv|site|2", "verdict": "right", "warning": "noise"})["warning"] == "noise"
+    # other verdicts carry no warning verdict
+    assert "warning" not in review.answer({"id": "inv|site|2", "verdict": "junk", "warning": "noise"})
 
 
 def test_bad_requests_are_refused(review):
@@ -97,7 +108,7 @@ def test_http_flow(http):
     assert get(http + "/doorplate.wasm").headers["Content-Type"] == "application/wasm"
     j = json.load(get(http + "/api/next"))
     assert j["item"]["id"] == "inv|site|1" and j["stats"]["total"] == 2
-    j = json.load(post(http + "/api/answer", {"id": "inv|site|1", "verdict": "right"}))
+    j = json.load(post(http + "/api/answer", {"id": "inv|site|1", "verdict": "right", "warning": "noise"}))
     assert j["stats"]["answered"] == 1
     assert json.load(get(http + "/api/next"))["item"]["id"] == "inv|site|2"
     assert json.load(post(http + "/api/undo", {}))["undone"] == "inv|site|1"

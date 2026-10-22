@@ -62,6 +62,14 @@ def test_every_string_is_a_shape_a_code_or_a_name():
         assert name.match(s) or shaped.match(s), s
 
 
+def test_a_right_parse_keeps_its_warning_verdict():
+    a = dict(ANSWER, verdict="right", warning="fair")
+    out = export.safe(a)
+    assert out["verdict"] == "right" and out["warning"] == "fair" and "corrected" not in out
+    assert export.safe(dict(a, warning="JOHN SMITH"))["warning"] is None
+    assert "warning" not in export.safe(ANSWER)
+
+
 def test_free_text_cannot_pass_as_a_warning_code():
     a = dict(ANSWER, parse=dict(ANSWER["parse"], warnings=["JOHN SMITH", "missing_zip"]))
     assert export.safe(a)["warnings"] == ["missing_zip"]

@@ -43,12 +43,18 @@ type, and says whether the string parses cleanly and whether it keys the same as
 
 | Key | Verdict | Meaning |
 |---|---|---|
-| `1` | `right` | The parse is right; the warning was noise |
-| `2` or Enter in the box | `corrected` | It is wrong, and the string in the box is a better one |
-| `3` | `unclear` | It is wrong, and I can't tell what it should be |
-| `4` | `junk` | Not an address (a name, a placeholder, a number) |
-| `5` | `noise` | The source cut it off or mangled it |
-| `6` | `skip` | Not now |
+| `1` | `right`, warning `fair` | The components are right, and the warning rightly flags something doubtful (a true range, a cut-off line) |
+| `2` | `right`, warning `noise` | The components are right and there is nothing to flag |
+| `3` or Enter in the box | `corrected` | It is wrong, and the string in the box is a better one |
+| `4` | `unclear` | It is wrong, and I can't tell what it should be |
+| `5` | `junk` | Not an address (a name, a placeholder, a number) |
+| `6` | `noise` | The source cut it off or mangled it |
+| `7` | `skip` | Not now |
+
+A correct parse and a fair warning are separate judgments, so a right parse always says which: a
+true range of house numbers is `right` with a `fair` warning; a fine parse with a spurious warning
+is `right` with a `noise` warning (a candidate for a warning rule to change, #102).
+| `f` | edit | Jump to the correction box (it is not focused, so the number keys choose a verdict); Escape leaves it |
 | `u` | undo | Take back the last answer |
 
 Answers go to `local-data/review/answers.jsonl`, one object per line: the time, the id, the input, the

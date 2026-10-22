@@ -7,7 +7,9 @@
 Run `tools/review/sample.py` first. Open the printed address (127.0.0.1 only) in a browser.
 For each row the page shows the parse and the warnings, and you choose a verdict:
 
-- `right`: the parse is correct (the warning was noise);
+- `right`: the parse is correct. A second answer says whether the warning was `fair` (it
+  rightly flags something doubtful, such as a true range of house numbers) or `noise` (the
+  parse is fine and there is nothing to flag);
 - `corrected`: wrong, and here is a string that should parse to the same door (typed in the
   box, which starts as the original joined into one line, and re-parsed as you type);
 - `unclear`: wrong, and I can't tell what it should be;
@@ -41,6 +43,7 @@ DEFAULT_ANSWERS = ROOT / "local-data" / "review" / "answers.jsonl"
 DEFAULT_WASM = ROOT / "target" / "wasm32-unknown-unknown" / "release" / "doorplate_wasm.wasm"
 BUILD_WASM = "cargo build -p doorplate-wasm --target wasm32-unknown-unknown --release"
 VERDICTS = ("right", "corrected", "unclear", "junk", "noise", "skip")
+WARNING_VERDICTS = ("fair", "noise")  # for a `right` parse: was the warning justified?
 MAX_BODY = 64 * 1024
 INPUT_KEYS = ("line1", "line2", "city", "state", "zip", "last_line", "provider")
 
@@ -101,6 +104,9 @@ class Review:
         verdict = body.get("verdict")
         if verdict not in VERDICTS:
             raise ValueError("unknown verdict")
+        warning = body.get("warning")
+        if verdict == "right" and warning not in WARNING_VERDICTS:
+            raise ValueError("a right parse needs a warning verdict: fair or noise")
         corrected = (body.get("corrected") or "").strip()
         if verdict == "corrected" and not corrected:
             raise ValueError("a corrected answer needs the corrected string")
@@ -108,6 +114,8 @@ class Review:
                "seq": item["seq"], "source": item["source"], "role": item["role"],
                "input": {k: item[k] for k in INPUT_KEYS if k in item}, "cluster": item.get("cluster"),
                "verdict": verdict, "note": (body.get("note") or "").strip()[:2000]}
+        if verdict == "right":
+            rec["warning"] = warning
         if verdict == "corrected":
             rec["corrected"] = corrected[:1000]
         for k in ("parse", "corrected_parse"):  # summaries the page computed with the same parser
