@@ -25,7 +25,7 @@ imply otherwise in docs or code comments.
 | Accuracy and speed, and how to rerun them | [`docs/benchmarks.md`](docs/benchmarks.md), [`benchmarks/README.md`](benchmarks/README.md) (every benchmark and which to run) |
 | The benchmark suite: what it holds and the rules that keep it fair (it is not a work list) | [`docs/benchmark-suite.md`](docs/benchmark-suite.md); data in [`benchmarks/suite/`](benchmarks/suite/README.md) |
 | How the parser works | [`docs/how-it-works.md`](docs/how-it-works.md) |
-| What is planned and what is not | [`docs/roadmap.md`](docs/roadmap.md) |
+| What is planned and what is not | [`docs/roadmap.md`](docs/roadmap.md); how issues are organized: [`docs/backlog.md`](docs/backlog.md) |
 | Every page of documentation, by topic, and which pages to check when you change something | [`docs/README.md`](docs/README.md) |
 | What data may be used and committed | [`docs/data-policy.md`](docs/data-policy.md) |
 
@@ -40,7 +40,7 @@ Report security problems privately ([`SECURITY.md`](SECURITY.md)); conduct is co
 [`CONTRIBUTING.md`](CONTRIBUTING.md): reporting a misparse, fixing a parsing bug, data
 changes, and the rules for code. The golden corpus
 ([`tests/corpus/README.md`](tests/corpus/README.md)) is the regression suite; every
-parsing bug fixed gets a case. Open issues are the backlog.
+parsing bug fixed gets a case. Open issues are the backlog (organized as `docs/backlog.md` says).
 
 **Documentation.** [`docs/README.md`](docs/README.md) indexes all the documentation by topic and has
 a table of what to check when you change something. Look at it before you finish a

@@ -297,4 +297,5 @@ docs/                       this page and the references below
 | [`benchmarks.md`](benchmarks.md) | Accuracy, speed and size: the results |
 | [`benchmark-suite.md`](benchmark-suite.md) | The benchmark suite: what it holds, how it was built, the rules that keep it fair |
 | [`data-policy.md`](data-policy.md) | What data the project uses, what may be committed, and what may be said about data that is not ours to publish |
+| [`backlog.md`](backlog.md) | How the issues are organized: the release plan, the labels and milestones, the key comparison |
 | [`roadmap.md`](roadmap.md) | Planned work and what data would help |
