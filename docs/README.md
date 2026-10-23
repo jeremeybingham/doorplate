@@ -23,6 +23,7 @@ New to the project? Read the [project README](../README.md), then
 | Page | What it covers |
 |---|---|
 | [`how-it-works.md`](how-it-works.md) | The pipeline, the principles, the warnings, the lexicon layers, the tests |
+| [`warnings.md`](warnings.md) | What each warning tells you, in two groups, and how often rows that carry it disagree with labeled data |
 | [`key-format.md`](key-format.md) | The match key (`k2`) and the slug: the contract, and when a key changes |
 | [`reso-mapping.md`](reso-mapping.md) | The RESO Data Dictionary 2.0 field mapping |
 | [`usps-pub28-notes.md`](usps-pub28-notes.md) | The USPS Publication 28 rules: the source of every table and parser rule, and what was left as it is on purpose |
@@ -86,7 +87,7 @@ the same pull request. The pull request template asks for it.
 |---|---|
 | A parse rule or a table in `crates/doorplate/data/` | [`usps-pub28-notes.md`](usps-pub28-notes.md) (a row with its source); a golden-corpus case and `passing.txt`; [`how-it-works.md`](how-it-works.md) if the behavior it describes changed; [`CHANGELOG.md`](../CHANGELOG.md). If an input's key changes, the key row below |
 | What an input's key is | [`key-format.md`](key-format.md) (a new version, never an edit in place); `tests/corpus/keys.jsonl` and `tools/corpus/emit_expect.py`; the four READMEs; [`how-it-works.md`](how-it-works.md); [`CHANGELOG.md`](../CHANGELOG.md) |
-| A warning code | [`how-it-works.md`](how-it-works.md) (the list); the four READMEs; the stubs in `crates/doorplate-py/python/doorplate/__init__.pyi` |
+| A warning code | [`how-it-works.md`](how-it-works.md) (the list); [`warnings.md`](warnings.md) (the meaning and the measured rate; regenerate with `label_score.py --by-warning`); the four READMEs; the stubs in `crates/doorplate-py/python/doorplate/__init__.pyi` |
 | The API, a CLI flag or an output form (a function, a method, a field, a column) | The four READMEs; an example in `examples/` ([`examples/README.md`](../examples/README.md)); [`how-it-works.md`](how-it-works.md); [`usaddress-compat.md`](usaddress-compat.md) (its feature table); [`reso-mapping.md`](reso-mapping.md) if RESO output changed; [`CHANGELOG.md`](../CHANGELOG.md) |
 | Output labels in usaddress's shape (`tag`, `parse_tokens`) | [`usaddress-compat.md`](usaddress-compat.md) and the Python README's "Coming from usaddress" |
 | The RESO output | [`reso-mapping.md`](reso-mapping.md) (the table and the choices) and `tests/corpus/reso.jsonl` |

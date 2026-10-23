@@ -55,8 +55,8 @@ a.diagnostics.state_data_version; // Some("2026.10.5") for Florida, None for a s
   state hint. It is a lookup hint, never a fill: `state` stays empty and
   `missing_state` still fires.
 - Only input with no address text at all is an error; anything else comes back as a
-  `ParsedAddress` with warnings (stable snake_case codes) and the text it could not
-  place.
+  `ParsedAddress` with warnings (stable snake_case codes; [what each one tells you, and how often
+  it is wrong](https://github.com/jeremeybingham/doorplate/blob/main/docs/warnings.md)) and the text it could not place.
 
 Addresses arrive in different shapes. Whole lines, split columns, PO boxes, rural routes, military and
 general delivery, units on a second line, and rows with gaps all go through the same calls:

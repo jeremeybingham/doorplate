@@ -126,9 +126,9 @@ words. The mapping above goes into the documentation as the reference.
 
 ## Warning codes
 
-The 25 codes are stable snake_case strings from `Warning::code`, and `Warning` is `#[non_exhaustive]`: new codes
-may be added in a minor release, and consumers must not treat the set as closed. The table of how reliable each
-warning is (#102) and any new codes come with the parser rules of 0.4.0's second phase. **Keep** the names.
+The 26 codes are stable snake_case strings from `Warning::code`, and `Warning` is `#[non_exhaustive]`: new codes
+may be added in a minor release, and consumers must not treat the set as closed. How reliable each
+code is, measured: [`warnings.md`](warnings.md). New codes come with the parser rules of 0.4.0's second phase. **Keep** the names.
 
 ## The key and the slug
 
@@ -156,13 +156,13 @@ none of this applies, which is why the breaking changes above are made now and w
   change). The key comparison with 0.3.1 must show zero
   differences after them.
 - **Decided elsewhere:** `confidence` (#136, done); the state data version (#7, done).
-- **0.4.0, phase 2 (the parser rules):** the reliability table and new warnings (#102), and anything that alters a key.
+- **0.4.0, phase 2 (the parser rules):** anything that alters a key.
 
 ## Is it stable enough for a beta?
 
 The answer (updated 2026-10-23, when the `k3` was folded into 0.4.0): **not after the foundation phase, yes at 0.4.0
 once the `k3` is in.** After the foundation phase the Rust, Python and CLI surfaces above are
-settled except for three things that are still moving: the custom layer (#3, whose interface #137 settled), the
-warning set and its reliability table (#102), and the key itself (the `k3`, still to come in phase 2). The beta notice should
+settled except for two things that are still moving: the custom layer (#3, whose interface #137 settled) and
+the key itself (the `k3`, still to come in phase 2). The beta notice should
 wait for the `k3`: a beta that changes its key afterwards is not a beta. The alpha notice in the four READMEs
 stays until then.

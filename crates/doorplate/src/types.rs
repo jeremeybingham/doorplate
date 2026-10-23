@@ -568,12 +568,18 @@ pub enum Warning {
     /// A second address line was kept as the building name (`YORKTOWNE
     /// PLAZA`), a component no emitter prints (#45).
     SecondLineBuilding,
+    /// One letter after the house number was read into the street name
+    /// (`123 A MAIN ST` is street `A MAIN`). The text alone cannot say
+    /// whether the letter is the number's suffix (`123A`) or the start of the
+    /// name; the parser guessed the name (#102). A letter that is a
+    /// directional, or the whole street name (`123 A ST`), is not reported.
+    AmbiguousNumberLetter,
 }
 
 impl Warning {
     /// Every variant, in declaration order. Add new variants here too; the
     /// golden-corpus runner checks expected warning codes against this list.
-    pub const ALL: [Warning; 25] = [
+    pub const ALL: [Warning; 26] = [
         Warning::UnparsedRemainder,
         Warning::AmbiguousToken,
         Warning::Placeholder,
@@ -599,6 +605,7 @@ impl Warning {
         Warning::SecondLineSkipped,
         Warning::SecondLineInStreet,
         Warning::SecondLineBuilding,
+        Warning::AmbiguousNumberLetter,
     ];
 
     /// Stable snake_case identifier. Part of the public contract: never
@@ -630,6 +637,7 @@ impl Warning {
             Warning::SecondLineSkipped => "second_line_skipped",
             Warning::SecondLineInStreet => "second_line_in_street",
             Warning::SecondLineBuilding => "second_line_building",
+            Warning::AmbiguousNumberLetter => "ambiguous_number_letter",
         }
     }
 }

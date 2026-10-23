@@ -73,7 +73,7 @@ k2:S|123|N|MAIN|ST||FL|33101
 - **Any shape of address.** Street addresses with directionals, suffixes, units and a second unit; PO boxes;
   rural and highway-contract routes; military and general delivery; highways with a state or county prefix;
   intersections and care-of lines are recognized and set apart. Missing pieces (no ZIP, no state, no commas)
-  parse, with a warning that says what is missing.
+  parse, with a warning that says what is missing ([what each warning tells you](docs/warnings.md)).
 - **One line or separate fields.** `parse` takes a single string; `parse_fields` takes `line1`, `line2`, `city`,
   `state` and `zip` as your data has them, in whatever combination is filled in.
 - **Output you can load.** Components, USPS Publication 28 lines, RESO Data Dictionary 2.0 fields, a display

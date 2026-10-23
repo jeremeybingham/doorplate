@@ -53,6 +53,14 @@ change to what an input produces needs a new key version.
 
 ### Added
 
+- **A warning for a letter after the house number that was read into the street name** (#102): `ambiguous_number_letter`
+  for `123 A MAIN ST` (street `A MAIN`), where the letter may be the number's suffix (`123A`). The reading is not changed
+  and no key moves. It is not raised when the letter is stuck to the number, is a directional, is the whole street name
+  or is the `U` of `U S ROUTE`.
+- **`docs/warnings.md`: what each warning tells you** (#102), in two groups (look at these rows; informational), with
+  the measured rate at which rows that carry each code disagree with labeled data (a 1M-row NAD sample, and the NC voter
+  pair for the unit), and `label_score.py --by-warning` to regenerate it.
+
 - **Three warnings for a second address line that is used or dropped without a component of its own** (#45):
   `second_line_skipped` (a copy of the end of line 1 or of the city, or a line of no-data markers, dropped),
   `second_line_in_street` (line 2 joined the street that line 1 began: a route, a suffix or a directional) and

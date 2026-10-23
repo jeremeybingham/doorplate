@@ -64,7 +64,7 @@ doorplate parse-file addresses.csv --column address --default-state FL -o parsed
 
 Every input column is kept, and the new `addr_` columns are the components (`street_number`, `street_name`,
 `unit_number`, `city`, `state`, `zip5`, ...), the shapes (`po_box`, `rural_route`, `military`, `general_delivery`),
-`place`, the USPS lines, `key`, `key_unit`, `slug`, `warnings` (stable codes joined by commas) and `unparsed`. PO
+`place`, the USPS lines, `key`, `key_unit`, `slug`, `warnings` (stable codes joined by commas; [what each tells you](https://github.com/jeremeybingham/doorplate/blob/main/docs/warnings.md)) and `unparsed`. PO
 boxes, routes, military addresses and street addresses can share one file. A blank row, or a row with no address
 text, is written with empty new columns and counted on standard error instead of stopping the run. Without `-o`
 the CSV goes to standard output, so it composes with other tools. On a Florida file with five address columns it
