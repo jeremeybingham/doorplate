@@ -39,14 +39,11 @@ and those keys are frozen as the baseline for phase 2. What was done (#138):
 
 ### 0.4.0, phase 2: the `k3`
 
-After the checkpoint, the evidence first, then the rules, cut together: the list is the `version:K` label, and the
-process and what a `k3` needs are in [`key-format.md`](key-format.md) ("Changing the key"). Each change needs a
+The checkpoint passed on 2026-10-23. Phase 2 is the rules below, cut together; the list is closed (no new rules are
+sought: [`backlog.md`](backlog.md), "Scope of phase 2"). The process and what a `k3` needs are in [`key-format.md`](key-format.md) ("Changing the key"). Each change needs a
 source and evidence. The order is in #138. `k2` started with 0.3.0; the route-number and box rules are in
 [`key-format.md`](key-format.md).
 
-- **Evidence first, tooling and research, no release:** the review tool's comparison mode and a second source
-  (#132), the per-state street-pattern counts that decide #8 (#53), less noise in the harness's scorers (#112), and
-  the research items (#131, #92). Without them the rules are tuned on one file.
 - **Warnings that say how far to trust a parse** (#102): a table of how reliable each warning is, measured
   on labeled data, and named warnings where the parser knows it is guessing, starting with a lone letter after
   the house number (`123 A MAIN ST`).
@@ -61,11 +58,15 @@ source and evidence. The order is in #138. `k2` started with 0.3.0; the route-nu
   Queens-style numbers and their unhyphenated twins keyed the same (#109).
 - **`CR` and `CTY`** read as CIRCLE and COUNTY nationally, not only in Florida (#108), and the Florida data's
   scoped readings applied on pre-split input (#110).
-- **State and place data:** state-specific road conventions such as Texas `RR` and county road names (#8), Florida
-  place gaps (#11), the geocode benchmark's place-name gap (#29), Puerto Rico shapes (#92); `CMR` only if a real case
-  shows up (#77, decided: left out for now).
 
 ### Later, waiting on data or demand
+
+- **State-dependent rules and the reading that feeds them** (moved out of the 0.4.0 cut on 2026-10-23 to keep phase 2
+  to the rules already listed): state road conventions such as Texas `RR`, `PR 462` and county road names (#8),
+  Florida place gaps (#11), the geocode benchmark's place-name gap (#29), Puerto Rico and the uncited parts of Pub 28
+  (#92), with the per-state counts that decide them (#53); `CMR` only if a real case shows up (#77, decided: left out).
+- **Tooling that finds new things** (Tooling milestone): the review tool's comparison mode and second source (#132),
+  less noise in the harness's scorers (#112). Built when a listed rule needs them.
 
 - **A custom layer** (#3): a way to add your own spellings, places, ZIPs and state-scoped readings
   without editing the shipped tables, loaded at run time, validated on load, deterministic, and

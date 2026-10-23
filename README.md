@@ -364,8 +364,7 @@ The next work, roughly in this order, depends on what real data shows:
 - **0.4.0, the foundation, then a `k3`.** One release in two phases. First the architecture and the breaking
   cleanup, done with the key unchanged (the Florida state data folded into the core as built-in state data, an
   extension-ready core, the unused reserved field removed, a review of every public name, `parse_tokens` cut like
-  usaddress, and the parser about 30% faster); a checkpoint proves no key moved. Then the evidence (a second review
-  source, per-state counts) and the parser rules together: a table of how reliable each warning is, line-2
+  usaddress, and the parser about 30% faster); a checkpoint proves no key moved. Then the parser rules together: a table of how reliable each warning is, line-2
   diagnostics, and the key-affecting fixes cut as a `k3`, so stored keys are re-keyed once.
 - **A custom layer.** A way to add your own spellings, places, ZIPs and state-specific readings
   without editing the shipped tables, loaded at run time. Not in this release; examples of what

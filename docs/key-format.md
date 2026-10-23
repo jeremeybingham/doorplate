@@ -147,10 +147,9 @@ Changes that do not alter a key (a new warning, a new output field, tooling, doc
   from the spec.
 
 **When to cut it.** With 0.4.0 (decided 2026-10-23, issue #138: first planned as 0.5.0, then folded into 0.4.0
-because the project has no users). The evidence-first work (a second review source, the per-state counts) comes
-before the rules, and the owner's call decides when the held `version:K` items are enough. There is no count or
-evidence threshold: the project is one person's, so the call is made from how smoothly the items progress and
-what else turns up (new data sources, new findings) in the meantime.
+because the project has no users). The list of rules is closed (`backlog.md`, "Scope of phase 2"), so the cut is
+when they are done. There is no count or evidence threshold: the project is one person's, so the call is made from
+how smoothly the items progress.
 
 ## Version history
 
