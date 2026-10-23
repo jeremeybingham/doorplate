@@ -45,14 +45,12 @@ what a `k3` needs are in [`key-format.md`](key-format.md) ("Changing the key"). 
 evidence. The order is in #139. `k2` started with 0.3.0; the route-number and box rules are in
 [`key-format.md`](key-format.md).
 
-- **Warnings and diagnostics, moved from 0.4.0 (2026-10-23; parsing is left to 0.5.0):**
-- **Warnings that say how far to trust a parse** (#102): a table of how reliable each warning is, measured
+- **Moved from 0.4.0 (2026-10-23), the warnings and diagnostics:** warnings that say how far to trust a parse** (#102): a table of how reliable each warning is, measured
   on labeled data, and named warnings where the parser knows it is guessing, starting with a lone letter after
   the house number (`123 A MAIN ST`).
 - **Line-2 diagnostics** (#45): say when a second line is skipped as a copy, merged into the street or kept as a
   building name; and the `%` care-of line leaving a copy or a number-led name unparsed (#126).
-- **A county written as the city** (#113), and a `VILLAGE OF` prefix (#68) if its keys do not change.
-  The `parse_tokens` token cuts (#78) too.
+- **A county written as the city** (#113), a `VILLAGE OF` prefix (#68), and the `parse_tokens` token cuts (#78).
 - **From the first review of real rows (#125):** care-of text welded to the street (#127); units left in the street
   name (#128); spelled-out numbers (#129); lines with no street (#130); floor forms (#114).
 - **Number forms:** a letter after a hyphenated house number (#100); a spaced letter after a rural route box (#95);
