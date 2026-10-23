@@ -618,8 +618,6 @@ impl fmt::Display for Warning {
 pub struct Diagnostics {
     pub warnings: Vec<Warning>,
     pub unparsed: Option<String>,
-    /// Reserved and always `None`; to be removed in 0.4.0.
-    pub confidence: Option<f32>,
     pub library_version: &'static str,
     /// The uncertain rules that settled a boundary. Internal: tests and the
     /// corpus tools read them through `decision_codes`.
@@ -653,7 +651,6 @@ impl Default for Diagnostics {
         Self {
             warnings: Vec::new(),
             unparsed: None,
-            confidence: None,
             library_version: VERSION,
             decisions: Vec::new(),
         }

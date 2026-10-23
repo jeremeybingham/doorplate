@@ -35,11 +35,12 @@ def test_parse_components_and_formats():
     assert a.input == "123 north main street apt 4, Miami FL 33101"
 
 
-def test_absent_components_are_none_and_confidence_is_reserved():
+def test_absent_components_are_none():
     a = uap.parse("PO Box 12, Tampa FL 33601")
     assert a.po_box == "12" and a.street_name is None and a.highway is None
     assert a.address_type() == "po_box"
-    assert a.confidence is None
+    assert not hasattr(a, "confidence")
+    assert "confidence" not in a.to_dict()
     assert a.library_version == uap.__version__
 
 
