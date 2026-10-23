@@ -37,7 +37,7 @@ track varies by about 10% from run to run on its own); package and import sizes 
 | | doorplate | usaddress |
 |---|---|---|
 | Benchmark suite, `natural` stratum (16,001), whole address (coarse) | 98.3% | 96.1% |
-| Benchmark suite, whole suite (19,586), whole address (coarse) | 92.2% | 85.5% |
+| Benchmark suite, whole suite (19,586), whole address (coarse) | 92.3% | 85.5% |
 | Geocode benchmark, dev split, whole address (coarse) | 94.4% | 88.1% |
 | usaddress's own test files, whole address (coarse) | 99.2% | 100.0% |
 | Addresses per second, one thread, benchmark suite inputs (`parse_tokens` / `usaddress.parse`) | 33,862 | 9,142 |
@@ -64,10 +64,10 @@ said 0.2.0 when it was run), usaddress 0.5.16.
 |---|---|---|---|
 | `natural` stratum, shared labels | 15,472 | 98.6% (98.4 to 98.8) | 96.4% (96.1 to 96.7) |
 | `natural` stratum, all records | 16,001 | 98.3% (98.1 to 98.5) | 96.1% (95.8 to 96.4) |
-| Whole suite, shared labels | 18,401 | 94.7% (94.4 to 95.1) | 87.9% (87.4 to 88.4) |
-| Whole suite, all records | 19,586 | 92.2% (91.8 to 92.6) | 85.5% (85.0 to 86.0) |
+| Whole suite, shared labels | 18,401 | 94.9% (94.5 to 95.2) | 87.9% (87.4 to 88.4) |
+| Whole suite, all records | 19,586 | 92.3% (91.9 to 92.7) | 85.5% (85.0 to 86.0) |
 | `hard` stratum | 2,585 | 54.3% (52.4 to 56.2) | 18.3% (16.9 to 19.8) |
-| `hand` stratum | 1,000 | 92.3% (90.5 to 93.8) | 89.1% (87.0 to 90.9) |
+| `hand` stratum | 1,000 | 94.3% (92.7 to 95.6) | 89.1% (87.0 to 90.9) |
 
 - **Which row to read.** `natural` is a random draw of NAD rows by state population, written in the styles
   below; it is the estimate for ordinary input. `hard` holds, for each blind-spot class of either library, the
@@ -78,7 +78,7 @@ said 0.2.0 when it was run), usaddress 0.5.16.
   (a number prefix, a street premodifier, a recipient line, landmarks and corners, a country). **All records**
   count such a label as wrong for doorplate, so its blind spots stay in the figure. A trailing `USA` is not
   counted against doorplate: it drops the word and says so with `country_ignored`.
-- **Paired, all records:** both right on 16,075, only doorplate on 1,981, only usaddress on 671, neither on 859.
+- **Paired, all records:** both right on 16,095, only doorplate on 1,981, only usaddress on 651, neither on 859.
 - Tokens right (coarse): doorplate 98.6%, usaddress 96.8%.
 
 By how the record is written (all strata, whole address right):
@@ -120,7 +120,7 @@ lettered house-number suffix. usaddress's are the unit-identifier and trailing-d
 and general delivery, and the strong drop with no commas.
 
 **The private twin.** The same recipe with a seed that is not published builds a second suite in `local-data/`.
-Scored the same way: `natural` 98.1% against 95.7%, `hard` 53.9% against 18.3%, `hand` 92.3% against 89.1%, all
+Scored the same way: `natural` 98.1% against 95.7%, `hard` 53.9% against 18.3%, `hand` 94.3% against 89.1%, all
 within the public figures' intervals or 0.4 points of them, so nothing here has been tuned to the public set.
 Compare the two at each release.
 

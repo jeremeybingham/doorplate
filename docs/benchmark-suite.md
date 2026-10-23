@@ -222,9 +222,9 @@ but the place names). Labels come from the templates, never from a parser. The c
 checks that the labeled tokens are the tokens `usaddress.tokenize` finds in the string and that no string is
 in an exclusion file or repeats, and the shapes and one expansion of each were read a second time. The
 hand stratum includes forms doorplate does not model (intersections, a recipient, `USA`), at the rates the
-shapes give them. Two parsers cut some of these strings into tokens differently (doorplate keeps `#D` as one
-token where usaddress cuts `#` and `D`; a comma with no space after it is cut differently), so the runner
-scores by character spans, as `tools/compare/compare_usaddress.py` does, never by token index.
+shapes give them. The runner scores by character spans, as `tools/compare/compare_usaddress.py` does, never by token index, so a
+score does not depend on how a parser cuts the text. (Before 0.4.0 doorplate cut some strings into different tokens
+from usaddress, such as `#D` as one token; `v1` was built and scored that way and stays as it is.)
 
 ### Exclusions
 

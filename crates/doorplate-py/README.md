@@ -242,10 +242,8 @@ objects is now most of the time, so pick columns when you can. Pre-split columns
 | (none) | `parse(s, default_state="FL")`: a state hint for input with no state |
 
 Tokens that cannot be placed are left out of `tag()`, and some usaddress labels
-(landmarks, corners, recipients) are not modeled. `parse_tokens` also cuts a few strings into different tokens
-from `usaddress.parse` (`#4` stays one token, and a comma with no space after it ends a token differently), so
-compare labels by character span, not by token index
-([issue 78](https://github.com/jeremeybingham/doorplate/issues/78)). The mapping and the differences:
+(landmarks, corners, recipients) are not modeled. `parse_tokens` cuts the input into the same tokens as
+`usaddress.parse` (`#` apart from its value, a comma ends a token, a lone comma is none). The mapping and the differences:
 [usaddress compatibility](https://github.com/jeremeybingham/doorplate/blob/main/docs/usaddress-compat.md).
 
 ## Accuracy and speed

@@ -26,12 +26,15 @@ What differs:
 
 - Tokens the parser could not place have no label and are left out of `tag()`;
   `unparsed` and a warning report them (usaddress labels every token).
-- `parse_tokens` cuts a few strings into different tokens from `usaddress.parse`: a
-  `#` stuck to its value (`#4`, `#7-C`) stays one token here and is two there, a comma
-  with no space after it (`Ct,Mabank,TX`) is cut differently, and a lone comma is a token
-  here and none there ([issue 78](https://github.com/jeremeybingham/doorplate/issues/78)).
-  Compare the two by character span, as the scripts below and the benchmark suite do,
-  not by token index.
+- `parse_tokens` cuts the input into the same tokens as `usaddress.parse` (since 0.4.0,
+  [issue 78](https://github.com/jeremeybingham/doorplate/issues/78)): `#` and `&` are
+  tokens of their own, trailing `. , ; )` stay on the token (`Ct,`), a lone comma is no
+  token, leading punctuation such as a `-` is dropped, and `&amp;` and `&#38;` are read as
+  `&`. It was checked token for token against `usaddress.tokenize` on the 8,108 strings of
+  usaddress's own test files and the 56,835 inputs of the benchmark suite (no difference).
+  One difference is left: pre-split fields are tokenized one field at a time, so the commas
+  that would sit between the fields are not there. The scripts below still compare by
+  character span, which does not depend on the cut.
 - usaddress's `AddressNumberSuffix` (`214 B`) and number ranges (`5240;5220`) are
   kept in `AddressNumber` or left out. Its intersection, landmark, `CornerOf`,
   country, recipient and `NotAddress` labels are not modeled: that text goes to

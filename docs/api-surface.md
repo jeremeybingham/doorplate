@@ -83,7 +83,8 @@ words. The mapping above goes into the documentation as the reference.
    usaddress-shaped `tag()` output, so it belongs with it.
 4. `parse_many` and `parse_fields_many` return `None` for an empty input, where Rust returns `Err(EmptyInput)`.
    `parse` raises `ParseError`.
-5. `parse_tokens` cuts tokens differently from `usaddress.parse` (`#value`, commas): #78.
+5. `parse_tokens` cut tokens differently from `usaddress.parse` (`#value`, commas): #78. The difference was in the
+   emitter, not the tokenizer, so no key can change; it is made right in 0.4.0.
 6. `key(unit=False)` in Python is `key(KeyOptions)` in Rust.
 7. `to_usps()` returns `line1`, `line2`, `last_line`; the helper columns are `usps_line1`, `usps_line2`,
    `usps_last_line`.
@@ -96,7 +97,7 @@ words. The mapping above goes into the documentation as the reference.
 | `ParsedAddress` attributes and methods | **Keep** |
 | `repeated_labels()` | **Keep** (a convenience beside `tag()`; moving it would break Python for no gain) |
 | `None` for an empty input in the batch calls | **Keep, document** (the batch must not stop at one empty cell) |
-| `parse_tokens` | **Later: #78** (0.5.0, with the other parsing changes) |
+| `parse_tokens` | **Done (#78): cuts the input into the tokens of `usaddress.tokenize`** (0.4.0, breaking for code that relied on the old cuts; no key or parse change) |
 | Helper columns and the `addr_` prefix | **Keep** (names match the attributes; the prefix keeps columns apart) |
 | Type stubs | **Keep in step**: any change above updates `__init__.pyi` in the same change |
 
@@ -155,7 +156,7 @@ none of this applies, which is why the breaking changes above are made now and w
   change). The key comparison with 0.3.1 must show zero
   differences after them.
 - **Decided elsewhere:** `confidence` (#136, done); the state data version (#7, done).
-- **0.5.0:** `parse_tokens` (#78), the reliability table and new warnings (#102), and anything that alters a key.
+- **0.5.0:** the reliability table and new warnings (#102), and anything that alters a key.
 
 ## Is it stable enough for a beta?
 

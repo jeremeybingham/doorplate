@@ -286,25 +286,68 @@ fn field_index(f: FieldName) -> usize {
     FIELD_ORDER.iter().position(|&g| g == f).unwrap_or(0)
 }
 
-/// Whitespace-delimited tokens of `text`, with byte offsets.
+/// The tokens of `text` with byte offsets, cut as `usaddress.tokenize` cuts
+/// them (its regex `\(*\b[^\s,;#&()]+[.,;)\n]*|[#&]`): a run of characters
+/// other than whitespace, `, ; # & ( )`, with the opening parentheses before
+/// it and the `. , ; ) newline` after it kept on the token, starting at a
+/// word boundary (so leading punctuation such as a `-` is dropped); `#` and `&`
+/// are tokens of their own; a lone comma is no token (#78).
 fn tokens(text: &str, field: Option<FieldName>, out: &mut Vec<UsaddressTag>) {
-    let mut start = None;
-    for (i, c) in text.char_indices().chain([(text.len(), ' ')]) {
-        match (c.is_whitespace(), start) {
-            (false, None) => start = Some(i),
-            (true, Some(s)) => {
-                out.push(UsaddressTag {
-                    text: text[s..i].to_string(),
-                    span: Span {
-                        field,
-                        start: s,
-                        end: i,
-                    },
-                    label: None,
-                });
-                start = None;
+    let chars: Vec<(usize, char)> = text.char_indices().collect();
+    let is_word = |k: Option<usize>| {
+        k.and_then(|k| chars.get(k))
+            .is_some_and(|&(_, c)| c.is_alphanumeric() || c == '_')
+    };
+    let in_run = |c: char| !c.is_whitespace() && !matches!(c, ',' | ';' | '#' | '&' | '(' | ')');
+    let at = |k: usize| chars.get(k).map_or(text.len(), |&(b, _)| b);
+    let push = |from: usize, to: usize, out: &mut Vec<UsaddressTag>| {
+        out.push(UsaddressTag {
+            text: text[at(from)..at(to)].to_string(),
+            span: Span {
+                field,
+                start: at(from),
+                end: at(to),
+            },
+            label: None,
+        });
+    };
+    let mut i = 0;
+    while i < chars.len() {
+        let mut j = i;
+        while chars.get(j).is_some_and(|&(_, c)| c == '(') {
+            j += 1;
+        }
+        let boundary = is_word(j.checked_sub(1)) != is_word(Some(j));
+        let mut k = j;
+        while chars.get(k).is_some_and(|&(_, c)| in_run(c)) {
+            k += 1;
+        }
+        if boundary && k > j {
+            while chars
+                .get(k)
+                .is_some_and(|&(_, c)| matches!(c, '.' | ',' | ';' | ')' | '\n'))
+            {
+                k += 1;
             }
-            _ => {}
+            push(i, k, out);
+            i = k;
+        } else if chars[i].1 == '&' {
+            // usaddress reads the HTML entities `&amp;` and `&#38;` as `&`.
+            let rest = &text[at(i)..];
+            let len = ["&amp;", "&#38;"]
+                .iter()
+                .find(|e| rest.starts_with(**e))
+                .map_or(1, |e| e.len());
+            push(i, i + len, out);
+            if let (true, Some(tag)) = (len > 1, out.last_mut()) {
+                tag.text = "&".to_string();
+            }
+            i += len;
+        } else if chars[i].1 == '#' {
+            push(i, i + 1, out);
+            i += 1;
+        } else {
+            i += 1;
         }
     }
 }
@@ -336,6 +379,90 @@ fn fix_unlabeled(tags: &mut [UsaddressTag]) {
 #[allow(clippy::unwrap_used)]
 mod tests {
     use crate::{Fields, Parser};
+
+    /// The token texts of `input`, to compare with `usaddress.tokenize` (#78). The expected lists
+    /// were produced by usaddress 0.5.16 on the same strings.
+    fn token_texts(input: &str) -> Vec<String> {
+        let a = Parser::new().parse(input).unwrap();
+        a.to_usaddress_tags().into_iter().map(|t| t.text).collect()
+    }
+
+    #[test]
+    fn tokens_are_cut_like_usaddress() {
+        let cases: [(&str, &[&str]); 7] = [
+            (
+                "9024 Zephyr Point Way #7-C, Bristol, TN 37620",
+                &[
+                    "9024", "Zephyr", "Point", "Way", "#", "7-C,", "Bristol,", "TN", "37620",
+                ],
+            ),
+            (
+                "PO Box #71353, Hammonton, NJ 08037",
+                &["PO", "Box", "#", "71353,", "Hammonton,", "NJ", "08037"],
+            ),
+            (
+                "59219 Plover Ct,Mabank,TX 75156",
+                &["59219", "Plover", "Ct,", "Mabank,", "TX", "75156"],
+            ),
+            (
+                "5227 Ironwood Bluff Way , Abingdon, MD 21009",
+                &[
+                    "5227",
+                    "Ironwood",
+                    "Bluff",
+                    "Way",
+                    "Abingdon,",
+                    "MD",
+                    "21009",
+                ],
+            ),
+            (
+                "123 Main St (rear), Apt 4 & 5, Miami FL 33101",
+                &[
+                    "123", "Main", "St", "(rear),", "Apt", "4", "&", "5,", "Miami", "FL", "33101",
+                ],
+            ),
+            (
+                "12 -B Oak St &amp; Elm Ave, Tampa FL 33601",
+                &[
+                    "12", "B", "Oak", "St", "&", "Elm", "Ave,", "Tampa", "FL", "33601",
+                ],
+            ),
+            (
+                "95987 kingfisher dr #f thorofare nj 08086",
+                &[
+                    "95987",
+                    "kingfisher",
+                    "dr",
+                    "#",
+                    "f",
+                    "thorofare",
+                    "nj",
+                    "08086",
+                ],
+            ),
+        ];
+        for (input, expected) in cases {
+            assert_eq!(token_texts(input), expected, "{input}");
+        }
+    }
+
+    #[test]
+    fn a_hash_takes_the_label_of_its_value_and_the_commas_do_not_hide_cities() {
+        let t = tags("59219 Plover Ct,Mabank,TX 75156");
+        let labels: Vec<_> = t.iter().map(|(w, l)| (w.as_str(), *l)).collect();
+        assert!(
+            labels.contains(&("Mabank,", Some("PlaceName"))),
+            "{labels:?}"
+        );
+        assert!(labels.contains(&("TX", Some("StateName"))), "{labels:?}");
+        let h = tags("9024 Zephyr Point Way #7-C, Bristol, TN 37620");
+        assert!(
+            h.iter()
+                .any(|(w, l)| w == "#" && *l == Some("OccupancyIdentifier")),
+            "{h:?}"
+        );
+    }
 
     fn tags(input: &str) -> Vec<(String, Option<&'static str>)> {
         let a = Parser::new().parse(input).unwrap();

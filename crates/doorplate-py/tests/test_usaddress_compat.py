@@ -58,8 +58,28 @@ def test_tag_agrees_with_usaddress_on_its_test_files():
 
 @pytest.mark.skipif(not FILES, reason="the vendored usaddress test files are not here")
 def test_parse_tokens_split_the_input_like_usaddress():
-    for s in strings()[:300]:
+    for s in strings():
         assert [t for t, _ in uap.parse_tokens(s)] == [t for t, _ in usaddress.parse(s)], s
+
+
+# Invented strings of the shapes that used to be cut differently (#78): a `#` stuck to its value, a comma
+# with no space after it, a space before a comma, parentheses, `&` and its HTML entities, leading punctuation.
+CUT_SHAPES = [
+    "9024 Zephyr Point Way #7-C, Bristol, TN 37620",
+    "95987 kingfisher dr #f thorofare nj 08086",
+    "PO Box #71353, Hammonton, NJ 08037",
+    "5227 Ironwood Bluff Way , Abingdon, MD 21009",
+    "59219 Plover Ct,Mabank,TX 75156",
+    "123 Main St (rear), Apt 4 & 5, Miami FL 33101",
+    "12 -B Oak St &amp; Elm Ave, Tampa FL 33601",
+    "400 Elm St &#38; Oak Ave; Tampa; FL 33601",
+    "7 Pine Rd.,Apt.#3,Miami,FL,33101",
+]
+
+
+@pytest.mark.parametrize("s", CUT_SHAPES)
+def test_parse_tokens_cut_the_old_misfits_like_usaddress(s):
+    assert [t for t, _ in uap.parse_tokens(s)] == usaddress.tokenize(s)
 
 
 def test_a_repeated_label_is_joined_not_raised():
