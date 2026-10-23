@@ -19,14 +19,22 @@ pub fn normalize_key(s: &str) -> String {
 /// to skip an allocation per call.
 pub fn normalize_key_cow(s: &str) -> std::borrow::Cow<'_, str> {
     let b = s.as_bytes();
-    let already = b.is_ascii()
-        && !b.is_empty()
-        && b[0] != b' '
-        && b[b.len() - 1] != b' '
-        && !b
-            .iter()
-            .any(|c| c.is_ascii_lowercase() || *c == b'.' || *c < b' ')
-        && !s.contains("  ");
+    // One pass: ASCII, nothing a key would change (lowercase letters, periods,
+    // control characters), and no space at either end or next to another.
+    let mut already = !b.is_empty() && b[0] != b' ' && b[b.len() - 1] != b' ';
+    let mut prev = 0u8;
+    for &c in b {
+        if !c.is_ascii()
+            || c.is_ascii_lowercase()
+            || c == b'.'
+            || c < b' '
+            || (c == b' ' && prev == b' ')
+        {
+            already = false;
+            break;
+        }
+        prev = c;
+    }
     if already {
         return std::borrow::Cow::Borrowed(s);
     }
