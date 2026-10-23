@@ -322,7 +322,7 @@ docs/                       this page and the references below
 - **CI**: `cargo fmt --check`, `clippy -D warnings`, `cargo test --workspace
   --all-features`, the corpus report, the emitter-expectation check, a package
   build and a check of the license files, an sdist build in a clean environment, a short
-  fuzz smoke run of each target, the Python suite, the ingest, harness and review tools' tests and the wheel build. The benchmark
+  fuzz smoke run of each target, a line-coverage job (`cargo llvm-cov`, uploaded to Codecov; informational, `codecov.yml`), the Python suite, the ingest, harness and review tools' tests and the wheel build. The benchmark
   suite and the two release workflows run by hand or on a version tag; the Pages workflow
   runs when `site/` or the parser changes on `main`. CI also builds `doorplate-wasm` for
   `wasm32-unknown-unknown`, so a change to the core cannot break the demo.

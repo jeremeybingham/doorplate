@@ -54,7 +54,7 @@ pytest crates/doorplate-py/tests
 pytest tools/ingest tools/harness tools/review   # the ingest tool (Python 3.11+), the harness and the review tool
 ```
 
-Rust 1.80 or later; the Python extension needs 1.83. Plain `cargo test` needs no Python.
+Rust 1.80 or later; the Python extension needs 1.83. Plain `cargo test` needs no Python. CI also reports line coverage of the Rust code to Codecov (a separate, informational job; `codecov.yml` lists what is left out): read it as a map of code the tests do not reach, not as a gate.
 
 ## Fixing a parsing bug
 

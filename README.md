@@ -1,6 +1,7 @@
 # doorplate
 
 [![CI](https://github.com/jeremeybingham/doorplate/actions/workflows/ci.yml/badge.svg)](https://github.com/jeremeybingham/doorplate/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/jeremeybingham/doorplate/graph/badge.svg)](https://codecov.io/gh/jeremeybingham/doorplate)
 [![crates.io](https://img.shields.io/crates/v/doorplate.svg)](https://crates.io/crates/doorplate)
 [![crates.io downloads](https://img.shields.io/crates/d/doorplate.svg)](https://crates.io/crates/doorplate)
 [![doorplate-cli on crates.io](https://img.shields.io/crates/v/doorplate-cli.svg?label=doorplate-cli)](https://crates.io/crates/doorplate-cli)
