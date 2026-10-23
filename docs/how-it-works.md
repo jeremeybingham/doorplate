@@ -42,7 +42,7 @@ raw input
   -> assemble   ParsedAddress, component spans, warnings
   -> emitters   USPS, RESO, key, slug, display and long forms, usaddress tags (read-only)
 
-Lexicons (Pub 28 tables, national places, state packs) are read by classify, the
+Lexicons (Pub 28 tables, national places, state data) are read by classify, the
 tagger and assemble.
 ```
 
@@ -82,7 +82,7 @@ a `CITY, ST ZIP` line still works.
   input (and the field, for separate fields).
 - **Lexicons behind one interface.** The tagger never reads a table directly:
   everything goes through `Lexicons`, which merges the Pub 28 tables, the national
-  place list and any state pack. There is no state-specific logic in the tagger.
+  place list and any state data. There is no state-specific logic in the tagger.
 - **Emitters are read-only.** A new output format cannot change a parse.
 - **Rules plus a place list, no model.** There is no statistical model, no
   training and no model file. The place list is what separates a city from street
@@ -118,11 +118,11 @@ finding about the parse, not a statement that the address is wrong.
   correction, which the library avoids, and the key leaves the city out.
 - **City and ZIP disagreeing is a warning** (`zip_city_mismatch`), not an error.
   It says the pair does not match the place list. It fires only for states with a
-  curated pack, because the national list gives one place per ZIP while the postal
+  curated state data, because the national list gives one place per ZIP while the postal
   service accepts several city names for many ZIPs.
 - **`default_state` is a lookup hint, never a fill.** When the input names no state
   and has no known ZIP, a city is looked up in the hinted state and the state's
-  pack readings apply. `state` stays empty, `missing_state` still fires and the
+  state data readings apply. `state` stays empty, `missing_state` still fires and the
   key keeps its `k2n` form; `default_state_applied` says when the hint decided
   something.
 - **Dual addresses keep both.** A record with a street address and a PO Box fills
@@ -144,8 +144,8 @@ finding about the parse, not a statement that the address is wrong.
   a label are joined; a repeated label is joined and reported (`repeated_label`)
   instead of raising an error (`docs/usaddress-compat.md`).
 - **A penthouse after a designator is one unit** (`APT PH 5213` is `APT PH5213`).
-- **A curated pack wins over the national list for its state.** National rows for
-  that state only add places the pack lacks.
+- **A curated state data wins over the national list for its state.** National rows for
+  that state only add places the state data lacks.
 
 ## The key
 
@@ -176,19 +176,20 @@ table.
    default): generated for every state, DC and Puerto Rico from public data
    (Census Gazetteer, GeoNames ZIPs). It finds cities and matches ZIPs everywhere;
    it has no misspellings. `docs/places.md`.
-3. **Curated state packs** (`data/packs/<st>/`, feature `state-<st>`): hand-checked
-   data for one state, added where real data shows a need. Florida is the first and
-   is on by default. `docs/packs/fl.md`.
+3. **Curated state data** (`data/states/<st>/`, always compiled in): hand-checked
+   data for one state, added where real data shows a need. Florida is the first.
+   A folder is a state's data, with a golden-corpus file of its own
+   (`tests/corpus/<st>-state.jsonl`, checked by a test). `docs/states/fl.md`.
 
 Layering is add-only: a later layer adds names, variants and ZIPs and never replaces
 or removes an earlier entry, and a conflict fails the build. The one exception is a
-pack's `overrides.toml`, which can read a spelling the base table has as another
+state data's `overrides.toml`, which can read a spelling the base table has as another
 suffix in that state (`CR` is CIRCLE in Florida) or add a highway prefix (`SR` is
-STATE ROAD); each entry names its evidence. The shipped tables and packs are fixed
+STATE ROAD); each entry names its evidence. The shipped tables and state data are fixed
 at compile time.
 
 Cargo features: `rayon` (parallel `parse_many`), `corpus` (the golden-corpus runner;
-pulls in serde), `places-us` and `state-fl` (both on by default). The default build
+pulls in serde), and `places-us` (on by default). The default build
 has no runtime dependencies.
 
 ## Lessons from real address data
@@ -221,7 +222,7 @@ crates/
   doorplate/                pure Rust, no Python dependency
     build.rs                compiles data/ into static tables
     data/                   suffixes, directionals, units, states, special (.toml);
-                            places/ (national list) and packs/fl/ (Florida)
+                            places/ (national list) and states/fl/ (Florida)
     src/                    clean, tokenize, classify, tagger/, assemble, parser, input,
                             place, lexicon, country, intersection, types,
                             emit/{key,usps,reso,slug,display,usaddress}, corpus
@@ -276,7 +277,7 @@ docs/                       this page and the references below
 - **Pub 28 check**: `tools/pub28/verify.py` compares the tables with the live
   Publication 28 pages and runs every Appendix F example through the parser.
 - **CI**: `cargo fmt --check`, `clippy -D warnings`, `cargo test --workspace
-  --all-features`, the corpus report, the emitter-expectation check, a package
+  --all-features`, the corpus report, the emitter-expectation check, a state's dataage
   build and a check of the license files, an sdist build in a clean environment, a short
   fuzz smoke run of each target, the Python suite, the ingest, harness and review tools' tests and the wheel build. The benchmark
   suite and the two release workflows run by hand or on a version tag; the Pages workflow
@@ -292,7 +293,7 @@ docs/                       this page and the references below
 | [`reso-mapping.md`](reso-mapping.md) | RESO Data Dictionary field mapping |
 | [`usps-pub28-notes.md`](usps-pub28-notes.md) | The source of every table and parser rule |
 | [`places.md`](places.md) | The national place list: sources, licenses, coverage |
-| [`packs/fl.md`](packs/fl.md) | The Florida pack |
+| [`states/fl.md`](states/fl.md) | The Florida state data |
 | [`usaddress-compat.md`](usaddress-compat.md) | usaddress-shaped output, label mapping, migration |
 | [`benchmarks.md`](benchmarks.md) | Accuracy, speed and size: the results |
 | [`benchmark-suite.md`](benchmark-suite.md) | The benchmark suite: what it holds, how it was built, the rules that keep it fair |

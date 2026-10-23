@@ -29,7 +29,7 @@
 //!   punctuation: `APT.1285`, `STE.200`, `APT:201`, `UNIT-4`;
 //! - a street suffix run into a unit designator, before a number:
 //!   `CTAPT 107` -> `CT` `APT` `107`;
-//! - a street suffix run into a city a state pack knows, when the city ends
+//! - a street suffix run into a city a state data knows, when the city ends
 //!   the segment or comes before a state or ZIP:
 //!   `WILSON STREETDADE CITY FL` -> `STREET` `DADE` `CITY`.
 
@@ -333,7 +333,7 @@ impl Piece<'_> {
         // A hyphenated route: `GA-25`, `US-385`, `CR-48`, `I-65` (Appendix F
         // writes these with a space). Only after a highway prefix or a state
         // code that is not also a directional (`NE-2` stays whole); SR is
-        // left to state packs.
+        // left to state data.
         // `1174-1/2`: a hyphen before a fraction is a space (`1174 1/2`).
         if let Some(cut) = fraction_hyphen(t) {
             self.emit(t[..cut].to_string(), s2, s2 + cut, paren);
@@ -559,7 +559,7 @@ fn ordinal_ending(n: &str) -> Option<&'static str> {
 }
 
 /// `STREETDADE` before `CITY FL`: where a street suffix ends and a city the
-/// state packs know begins. The city is the rest of the word plus some of
+/// state data know begins. The city is the rest of the word plus some of
 /// the words after it, and must come before a state, a ZIP or another
 /// segment (with none of these the tagger could not use the split). Never
 /// splits a word that starts a place itself, or ends one with the words
@@ -719,7 +719,6 @@ mod tests {
         assert_eq!(toks("C-22"), ["C-22"]);
     }
 
-    #[cfg(feature = "state-fl")]
     #[test]
     fn glued_city() {
         assert_eq!(

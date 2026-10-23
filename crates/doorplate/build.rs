@@ -1,6 +1,5 @@
-//! Compiles `data/*.toml` and the enabled state packs (`data/packs/<st>/`,
-//! feature `state-<st>`) into static, sorted lookup tables
-//! (`$OUT_DIR/lexicon_tables.rs`, included by `src/lexicon.rs`).
+//! Compiles `data/*.toml` and the state data (`data/states/<st>/`) into static,
+//! sorted lookup tables (`$OUT_DIR/lexicon_tables.rs`, included by `src/lexicon.rs`).
 //!
 //! Doing this at build time keeps `doorplate` free of runtime dependencies
 //! and of any runtime data loading, and turns a malformed or contradictory
@@ -560,9 +559,9 @@ fn gen_fixed(
     Ok(())
 }
 
-// ---- state packs -----------------------------------------------------------
+// ---- state data -----------------------------------------------------------
 
-/// Rows of a pack `.tsv` file: a header naming `cols`, then tab-separated
+/// Rows of a state `.tsv` file: a header naming `cols`, then tab-separated
 /// rows with exactly that many fields.
 fn tsv(path: &Path, cols: &[&str]) -> Result<Vec<Vec<String>>> {
     println!("cargo:rerun-if-changed={}", path.display());
@@ -593,8 +592,8 @@ fn list(s: &str) -> Vec<&str> {
 }
 
 /// `STATE|spelling` -> (highway row, `Variant` or `Observed`), the highway
-/// prefix spellings a pack adds.
-type PackHighways = BTreeMap<String, (usize, &'static str)>;
+/// prefix spellings a state adds.
+type StateHighways = BTreeMap<String, (usize, &'static str)>;
 
 /// One place. `kind` is 0 municipality, 1 place, 2 subdivision.
 struct PlaceData {
@@ -605,22 +604,22 @@ struct PlaceData {
 }
 
 /// The place tables as they are built: rows, the `STATE|key` index, and the
-/// ZIP index. Packs fill it first and the national list adds to it.
+/// ZIP index. State data fills it first and the national list adds to it.
 #[derive(Default)]
 struct PlaceTables {
     rows: Vec<PlaceData>,
     index: BTreeMap<String, (usize, &'static str)>,
     zips: BTreeMap<String, (usize, Vec<usize>)>,
     max_words: usize,
-    /// Observed (state, ZIP, place) pairs whose place is not in the pack; the
+    /// Observed (state, ZIP, place) pairs whose place is not in the state data; the
     /// national list may have it (resolved after it is added).
     deferred: Vec<(String, String, String)>,
-    /// Added (state, variant, place) spellings for a place the pack lacks.
+    /// Added (state, variant, place) spellings for a place the state data lacks.
     deferred_variants: Vec<(String, String, String)>,
 }
 
-/// The place tables: the state packs enabled by `state-<st>` features, in
-/// state order, then the national list (`data/places/`, feature `places-us`)
+/// The place tables: the state data (`data/states/<st>/`), in state
+/// order, then the national list (`data/places/`, feature `places-us`)
 /// under them. Each adds places and ZIPs; nothing replaces another entry,
 /// and a spelling or ZIP that would lead to two places is a build error.
 fn gen_places(
@@ -634,23 +633,23 @@ fn gen_places(
         max_words: 1,
         ..PlaceTables::default()
     };
-    let (states, pack_suffixes, pack_highways) =
-        gen_packs(&dir.join("packs"), ex, sfx, hwy, &mut t)?;
+    let (states, state_suffixes, state_highways) =
+        gen_state_data(&dir.join("states"), ex, sfx, hwy, &mut t)?;
     if env::var_os("CARGO_FEATURE_PLACES_US").is_some() {
         gen_national(&dir.join("places"), ex, &states, &mut t)?;
         resolve_deferred(ex, &mut t)?;
     }
-    emit_places(&states, &pack_suffixes, &pack_highways, &t, out)
+    emit_places(&states, &state_suffixes, &state_highways, &t, out)
 }
 
-/// The state packs enabled by `state-<st>` features, in state order.
-fn gen_packs(
+/// The state data folders, in state order.
+fn gen_state_data(
     dir: &Path,
     ex: &Expand,
     sfx: &SuffixRows,
     hwy: &HighwayRows,
     t: &mut PlaceTables,
-) -> Result<(Vec<String>, BTreeMap<String, usize>, PackHighways)> {
+) -> Result<(Vec<String>, BTreeMap<String, usize>, StateHighways)> {
     println!("cargo:rerun-if-changed={}", dir.display());
     let PlaceTables {
         rows,
@@ -663,21 +662,20 @@ fn gen_packs(
     let mut states = Vec::new();
     if let Ok(entries) = fs::read_dir(dir) {
         for e in entries.flatten() {
-            let st = e.file_name().to_string_lossy().to_uppercase();
-            if env::var_os(format!("CARGO_FEATURE_STATE_{st}")).is_some() {
-                states.push(st);
+            if e.path().is_dir() {
+                states.push(e.file_name().to_string_lossy().to_uppercase());
             }
         }
     }
     states.sort();
 
     let expand = |w: &str| ex.get(w).cloned();
-    let mut pack_suffixes: BTreeMap<String, usize> = BTreeMap::new();
-    let mut pack_highways = PackHighways::new();
+    let mut state_suffixes: BTreeMap<String, usize> = BTreeMap::new();
+    let mut state_highways = StateHighways::new();
     for st in &states {
         let pdir = dir.join(st.to_lowercase());
-        let meta = load(&pdir, "pack.toml")?;
-        let ctx = format!("packs/{} pack.toml", st.to_lowercase());
+        let meta = load(&pdir, "state.toml")?;
+        let ctx = format!("states/{} state.toml", st.to_lowercase());
         if key_str(&meta, "state", &ctx)? != *st {
             return Err(format!("{ctx}: `state` must be {st}"));
         }
@@ -691,7 +689,7 @@ fn gen_packs(
         // is dropped rather than reported as a clash.
         for r in &places {
             let (name, county, kind) = (&r[0], &r[1], &r[2]);
-            let ctx = format!("packs/{} places.tsv {name}", st.to_lowercase());
+            let ctx = format!("states/{} places.tsv {name}", st.to_lowercase());
             check_key(name, &ctx)?;
             let kind = match kind.as_str() {
                 "municipality" => 0,
@@ -712,16 +710,16 @@ fn gen_packs(
                 return Err(format!("{ctx}: same key `{key}` as row {j}"));
             }
         }
-        // Optional: communities found in real data that the pack and the
+        // Optional: communities found in real data that the state data and the
         // national list lack (`places_added.tsv`, hand-kept, each with the
         // number of distinct addresses that use it). Add-only: a name whose
-        // key the pack already has is an error.
+        // key the state data already has is an error.
         let added = pdir.join("places_added.tsv");
         println!("cargo:rerun-if-changed={}", added.display());
         if added.exists() {
             for r in tsv(&added, &["name", "county", "kind", "addresses"])? {
                 let (name, county) = (&r[0], &r[1]);
-                let ctx = format!("packs/{} places_added.tsv {name}", st.to_lowercase());
+                let ctx = format!("states/{} places_added.tsv {name}", st.to_lowercase());
                 check_key(name, &ctx)?;
                 let kind = match r[2].as_str() {
                     "municipality" => 0,
@@ -748,7 +746,7 @@ fn gen_packs(
         }
         for r in &places {
             let (name, i) = (&r[0], by_name[&r[0]]);
-            let ctx = format!("packs/{} places.tsv {name}", st.to_lowercase());
+            let ctx = format!("states/{} places.tsv {name}", st.to_lowercase());
             for v in list(&r[4]) {
                 check_key(v, &ctx)?;
                 let key = format!("{st}|{}", place_key(v, expand));
@@ -771,7 +769,7 @@ fn gen_packs(
         println!("cargo:rerun-if-changed={}", extra.display());
         if extra.exists() {
             for r in tsv(&extra, &["variant", "place", "addresses"])? {
-                let ctx = format!("packs/{} variants_added.tsv {}", st.to_lowercase(), r[0]);
+                let ctx = format!("states/{} variants_added.tsv {}", st.to_lowercase(), r[0]);
                 check_key(&r[0], &ctx)?;
                 if r[2].parse::<u32>().is_err() {
                     return Err(format!("{ctx}: `addresses` must be a number"));
@@ -789,7 +787,7 @@ fn gen_packs(
                 .ok_or_else(|| format!("{ctx}: unknown place `{n}`"))
         };
         for r in tsv(&pdir.join("zips.tsv"), &["zip", "place", "shared"])? {
-            let ctx = format!("packs/{} zips.tsv {}", st.to_lowercase(), r[0]);
+            let ctx = format!("states/{} zips.tsv {}", st.to_lowercase(), r[0]);
             if r[0].len() != 5 || !r[0].bytes().all(|b| b.is_ascii_digit()) {
                 return Err(format!("{ctx}: not a 5-digit ZIP"));
             }
@@ -812,8 +810,8 @@ fn gen_packs(
         println!("cargo:rerun-if-changed={}", observed.display());
         if observed.exists() {
             for r in tsv(&observed, &["zip", "place", "addresses"])? {
-                let ctx = format!("packs/{} zips_observed.tsv {}", st.to_lowercase(), r[0]);
-                // A place the pack lacks may be in the national list.
+                let ctx = format!("states/{} zips_observed.tsv {}", st.to_lowercase(), r[0]);
+                // A place the state data lacks may be in the national list.
                 let Some(&p) = by_name.get(&r[1]) else {
                     deferred.push((st.clone(), r[0].clone(), r[1].clone()));
                     continue;
@@ -841,7 +839,7 @@ fn gen_packs(
             };
             for (n, r) in suffix_overrides.iter().enumerate() {
                 let ctx = format!(
-                    "packs/{} overrides.toml [[suffix]] #{}",
+                    "states/{} overrides.toml [[suffix]] #{}",
                     st.to_lowercase(),
                     n + 1
                 );
@@ -856,7 +854,7 @@ fn gen_packs(
                 if own.contains(&spelling) {
                     return Err(format!("{ctx}: `{spelling}` already means {target}"));
                 }
-                if pack_suffixes
+                if state_suffixes
                     .insert(format!("{st}|{spelling}"), *row)
                     .is_some()
                 {
@@ -873,7 +871,7 @@ fn gen_packs(
             };
             for (n, r) in highway_overrides.iter().enumerate() {
                 let ctx = format!(
-                    "packs/{} overrides.toml [[highway]] #{}",
+                    "states/{} overrides.toml [[highway]] #{}",
                     st.to_lowercase(),
                     n + 1
                 );
@@ -890,7 +888,7 @@ fn gen_packs(
                 if hwy.values().any(|(_, s)| s.contains(&spelling)) {
                     return Err(format!("{ctx}: `{spelling}` is already a highway spelling"));
                 }
-                if pack_highways
+                if state_highways
                     .insert(format!("{st}|{spelling}"), (*row, kind))
                     .is_some()
                 {
@@ -899,20 +897,20 @@ fn gen_packs(
             }
         }
         if rows.len() == first {
-            return Err(format!("packs/{}: no places", st.to_lowercase()));
+            return Err(format!("states/{}: no places", st.to_lowercase()));
         }
     }
 
-    Ok((states, pack_suffixes, pack_highways))
+    Ok((states, state_suffixes, state_highways))
 }
 
-/// Observed ZIP pairs for places only the national list has (a pack's
+/// Observed ZIP pairs for places only the national list has (the state data's
 /// `zips_observed.tsv`), added to the ZIP's shared places. Without the
 /// national list they are left out.
 fn resolve_deferred(ex: &Expand, t: &mut PlaceTables) -> Result<()> {
     let expand = |w: &str| ex.get(w).cloned();
     for (st, zip, name) in std::mem::take(&mut t.deferred) {
-        let ctx = format!("packs/{} zips_observed.tsv {zip}", st.to_lowercase());
+        let ctx = format!("states/{} zips_observed.tsv {zip}", st.to_lowercase());
         let Some(&(p, _)) = t.index.get(&format!("{st}|{}", place_key(&name, expand))) else {
             return Err(format!("{ctx}: unknown place `{name}`"));
         };
@@ -925,7 +923,7 @@ fn resolve_deferred(ex: &Expand, t: &mut PlaceTables) -> Result<()> {
         shared.push(p);
     }
     for (st, variant, name) in std::mem::take(&mut t.deferred_variants) {
-        let ctx = format!("packs/{} variants_added.tsv {variant}", st.to_lowercase());
+        let ctx = format!("states/{} variants_added.tsv {variant}", st.to_lowercase());
         let Some(&(p, _)) = t.index.get(&format!("{st}|{}", place_key(&name, expand))) else {
             return Err(format!("{ctx}: unknown place `{name}`"));
         };
@@ -964,15 +962,15 @@ fn add_variant(
     Ok(())
 }
 
-/// The national place list (`data/places/`), added under the packs. A state
-/// with a curated pack keeps the pack's places and ZIPs; national rows only
-/// add places the pack lacks (a place whose comparison key the pack already
-/// has, as a name or a variant, is the pack's) and are never matched against
-/// the pack's ZIPs. For every other state a repeated key or ZIP is an error.
+/// The national place list (`data/places/`), added under the state data. A state
+/// with curated state data keeps the state data's places and ZIPs; national rows only
+/// add places the state data lacks (a place whose comparison key the state data already
+/// has, as a name or a variant, is the state data's) and are never matched against
+/// the state data's ZIPs. For every other state a repeated key or ZIP is an error.
 fn gen_national(
     dir: &Path,
     ex: &Expand,
-    pack_states: &[String],
+    data_states: &[String],
     t: &mut PlaceTables,
 ) -> Result<()> {
     println!("cargo:rerun-if-changed={}", dir.display());
@@ -1020,8 +1018,8 @@ fn gen_national(
         }
         let key = format!("{st}|{}", place_key(name, expand));
         if index.contains_key(&key) {
-            if pack_states.contains(st) {
-                continue; // the pack has this place
+            if data_states.contains(st) {
+                continue; // the state data has this place
             }
             return Err(format!("{ctx}: same key `{key}` as an earlier row"));
         }
@@ -1046,8 +1044,8 @@ fn gen_national(
             let key = format!("{}|{}", r[0], place_key(v, expand));
             match index.get(&key) {
                 Some((j, _)) if *j == i => {}
-                // A pack state's own spelling of another place stands.
-                Some(_) if pack_states.contains(&r[0]) => {}
+                // A curated state's own spelling of another place stands.
+                Some(_) if data_states.contains(&r[0]) => {}
                 Some((j, _)) => {
                     return Err(format!("{ctx}: variant `{v}` also leads to row {j}"));
                 }
@@ -1068,8 +1066,8 @@ fn gen_national(
             return Err(format!("{ctx}: unknown place `{}`", r[2]));
         };
         if zips.contains_key(&r[0]) {
-            if pack_states.contains(&r[1]) {
-                continue; // the pack's ZIP
+            if data_states.contains(&r[1]) {
+                continue; // the state data's ZIP
             }
             return Err(format!("{ctx}: ZIP listed twice"));
         }
@@ -1110,8 +1108,8 @@ fn le8(v: usize, what: &str) -> Result<u8> {
 ///   u32. Sorted by ZIP. `ZIP_SHARED` lists the few ZIPs with shared places.
 fn emit_places(
     states: &[String],
-    pack_suffixes: &BTreeMap<String, usize>,
-    pack_highways: &PackHighways,
+    state_suffixes: &BTreeMap<String, usize>,
+    state_highways: &StateHighways,
     t: &PlaceTables,
     out: &mut String,
 ) -> Result<()> {
@@ -1195,10 +1193,10 @@ fn emit_places(
     write("place_any.bin", &any)?;
     write("zip_index.bin", &zips)?;
 
-    writeln!(out, "/// State packs compiled in.").ok();
+    writeln!(out, "/// States with curated data compiled in.").ok();
     writeln!(
         out,
-        "pub(crate) static PACK_STATES: &[&str] = &{states:?};\n"
+        "pub(crate) static STATES_WITH_DATA: &[&str] = &{states:?};\n"
     )
     .ok();
     writeln!(out, "/// States that have places, by number.").ok();
@@ -1243,29 +1241,29 @@ fn emit_places(
     writeln!(out, "];\n").ok();
     writeln!(
         out,
-        "/// `STATE|spelling` -> suffix row, for a spelling a pack reads differently."
+        "/// `STATE|spelling` -> suffix row, for a spelling a state reads differently."
     )
     .ok();
     writeln!(
         out,
-        "pub(crate) static PACK_SUFFIX_INDEX: &[(&str, u16)] = &["
+        "pub(crate) static STATE_SUFFIX_INDEX: &[(&str, u16)] = &["
     )
     .ok();
-    for (k, row) in pack_suffixes {
+    for (k, row) in state_suffixes {
         writeln!(out, "    ({k:?}, {row}),").ok();
     }
     writeln!(out, "];\n").ok();
     writeln!(
         out,
-        "/// `STATE|spelling` -> highway row, for a prefix spelling a pack adds."
+        "/// `STATE|spelling` -> highway row, for a prefix spelling a state adds."
     )
     .ok();
     writeln!(
         out,
-        "pub(crate) static PACK_HIGHWAY_INDEX: &[(&str, (u16, MatchKind))] = &["
+        "pub(crate) static STATE_HIGHWAY_INDEX: &[(&str, (u16, MatchKind))] = &["
     )
     .ok();
-    for (k, (row, kind)) in pack_highways {
+    for (k, (row, kind)) in state_highways {
         writeln!(out, "    ({k:?}, ({row}, MatchKind::{kind})),").ok();
     }
     writeln!(out, "];\n").ok();

@@ -287,7 +287,7 @@ names are used only to say what the output follows or is compared with.
 - [How it works](https://github.com/jeremeybingham/doorplate/blob/main/docs/how-it-works.md),
   [benchmarks](https://github.com/jeremeybingham/doorplate/blob/main/docs/benchmarks.md)
   and the [roadmap](https://github.com/jeremeybingham/doorplate/blob/main/docs/roadmap.md)
-  (customization packs and a table of how reliable each warning is are planned).
+  (customization layers and a table of how reliable each warning is are planned).
 - [Examples](https://github.com/jeremeybingham/doorplate/tree/main/examples): a
   notebook tour (rare shapes, place data, pandas, Polars, DuckDB, the command line) and a pipeline for each
   DataFrame library.

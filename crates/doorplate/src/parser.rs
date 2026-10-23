@@ -37,7 +37,7 @@ impl std::error::Error for ParseError {}
 pub struct ParseOptions {
     /// A state (USPS code or name) to assume when the input names none and
     /// its ZIP (if any) is unknown: the place list looks cities up in that
-    /// state, and the state's pack readings (`CR` is CIRCLE in Florida)
+    /// state, and the state's state data readings (`CR` is CIRCLE in Florida)
     /// apply. It is a hint, never a fill: the parsed
     /// `state` stays empty, `missing_state` still fires and the key is
     /// unchanged. [`Warning::DefaultStateApplied`] says when it decided
@@ -354,7 +354,7 @@ mod tests {
     }
 
     #[test]
-    fn default_state_gives_the_pack_readings() {
+    fn default_state_gives_the_state_data_readings() {
         let a = hinted("FL").parse("22200 SR 60").unwrap();
         assert_eq!(a.highway.unwrap().prefix.standard(), "STATE ROAD");
         assert!(a.diagnostics.has(&Warning::DefaultStateApplied));

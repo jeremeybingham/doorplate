@@ -94,7 +94,7 @@ forms = ["ATTN", "ATTENTION", "C/O", "IN CARE OF", "CARE OF", "%"]
 # by position: ROUTE 88 is a highway, ROUTE 2 BOX 15 a rural route.
 #
 # State-dependent abbreviations are deliberately left out of the base table
-# and belong in state packs (docs/how-it-works.md): "SR" is State Road in
+# and belong in state data (docs/how-it-works.md): "SR" is State Road in
 # Florida and State Route elsewhere (Appendix F itself shows both, SR 220 ->
 # STATE ROAD 220 and SR MM -> STATE ROUTE MM); "RR" is Ranch Road in Texas but
 # a rural route everywhere in Pub 28.

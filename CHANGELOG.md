@@ -7,6 +7,14 @@ change to what an input produces needs a new key version.
 
 ## [Unreleased]
 
+### Changed (breaking)
+
+- **State data is built in** (#101). The `state-fl` Cargo feature is gone: the Florida data is always compiled in, as
+  every folder under `crates/doorplate/data/states/` is. `data/packs/` is now `data/states/`, `pack.toml` is
+  `state.toml`, `docs/packs/` is `docs/states/`, the corpus file `fl-pack.jsonl` is `fl-state.jsonl`, and
+  `Lexicons::has_pack` is `Lexicons::has_state_data`. A test checks that every state folder has a corpus file
+  (`tests/corpus/<st>-state.jsonl`). The parser's output and the keys do not change.
+
 ## [0.3.1] - 2026-10-22
 
 A patch release: `doorplate --version`, the care-of line with a percent sign, and a quieter warning for Queens

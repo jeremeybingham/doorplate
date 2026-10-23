@@ -59,8 +59,8 @@ SUB_BARE = ["city", "town", "village", "borough"]
 # TWP"). The bare name and the abbreviation become variants.
 SUB_KEPT = {"township": "TWP", "plantation": "PLT", "gore": None, "grant": None,
             "purchase": None, "location": None}
-# Census names that differ from the name a curated pack uses for the same
-# place (docs/places.md). Without this the pack's EVERGLADES CITY and the
+# Census names that differ from the name a curated state data uses for the same
+# place (docs/places.md). Without this the state data's EVERGLADES CITY and the
 # Census's EVERGLADES would be two places. Keyed by (state, name after
 # cleaning).
 CENSUS_NAMES = {("FL", "EVERGLADES"): "EVERGLADES CITY"}
@@ -86,7 +86,7 @@ def norm(s):
     """Upper-case words of letters and digits: accents folded (`Añasco`),
     apostrophes and periods dropped (`O'Fallon`, `St. Louis`), every other
     punctuation mark a space (`Winston-Salem`), `ST`, `FT` and `MT` written
-    out (`SAINT`, `FORT`, `MOUNT`), as the Florida pack does."""
+    out (`SAINT`, `FORT`, `MOUNT`), as the Florida state data does."""
     s = unicodedata.normalize("NFKD", s)
     s = "".join(c for c in s if not unicodedata.combining(c))
     s = re.sub(r"[.'’`‘ʻ]", "", s).replace("&", " AND ")
@@ -204,7 +204,7 @@ def census_places(src, counties, stats):
         else:
             stats["places_not_in_2020_list"] += 1
         # CDPs (and Puerto Rico's comunidades and zonas urbanas) have no city
-        # government: the pack's `place`. Everything else is a municipality.
+        # government: the state data's `place`. Everything else is a municipality.
         kind = "place" if r["LSAD"] in ("57", "55", "62") else "municipality"
         name, variants = place_names(r["NAME"], r["USPS"])
         rows.append((r["USPS"], name, kind, county, [norm(v) for v in variants]))

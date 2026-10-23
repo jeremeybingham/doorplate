@@ -2,11 +2,11 @@
 //!
 //! Runs after assembly. Names the place the city stands for, from the place
 //! lists compiled into [`Lexicons`] (the national list for every state, with
-//! a curated state pack above it), or the ZIP's main place when there is no
+//! curated state data above it), or the ZIP's main place when there is no
 //! city. [`ParsedAddress::city`] is never changed: the match is reported in
 //! [`ParsedAddress::place`], beside it. A city the list knows whose ZIP the
 //! list does not give it gets [`Warning::ZipCityMismatch`], but only in a state
-//! with a curated pack: the national list names one place per ZIP, and many
+//! with curated state data: the national list names one place per ZIP, and many
 //! ZIPs are used by several, so the warning would fire too often elsewhere.
 
 use crate::classify::{house_number, NumberShape};
@@ -70,7 +70,7 @@ fn resolve_place(addr: &mut ParsedAddress, lex: &Lexicons, hint: Option<&'static
         })
     });
     if let (Some(m), Some(z)) = (found, zip) {
-        if lex.has_pack(state) && !z.contains(&m.place) {
+        if lex.has_state_data(state) && !z.contains(&m.place) {
             addr.diagnostics.warn(Warning::ZipCityMismatch);
         }
     }
@@ -125,7 +125,7 @@ fn complete(lex: &Lexicons, city: &str, zip: ZipPlaces) -> Option<Place> {
     found
 }
 
-#[cfg(all(test, feature = "state-fl"))]
+#[cfg(test)]
 #[allow(clippy::unwrap_used)]
 mod tests {
     use crate::{Fields, Parser, PlaceSource, Warning};
@@ -170,7 +170,7 @@ mod tests {
             place("WINGATE ST 32507"),
             Some(("PENSACOLA", PlaceSource::Zip))
         );
-        // The national list covers a state with no pack; with no city and
+        // The national list covers a state with no state data; with no city and
         // no ZIP there is nothing to name.
         assert_eq!(
             place("1 MAIN ST, ATLANTA, GA 30301"),
@@ -192,7 +192,7 @@ mod tests {
             .parse("1 MAIN ST, AVENTURA, FL 33180")
             .unwrap();
         assert!(!a.diagnostics.has(&Warning::ZipCityMismatch));
-        // Outside a curated-pack state the ZIP names one place only, so a
+        // Outside a curated-data state the ZIP names one place only, so a
         // different city is not flagged.
         let a = Parser::new()
             .parse("1 MAIN ST, ST LOUIS, MO 63301")

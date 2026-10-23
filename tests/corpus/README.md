@@ -32,7 +32,7 @@ Every parsing bug fixed gets a case here (`CONTRIBUTING.md`).
   (shapes seen in Florida county address listings, `county-data.jsonl`),
   `cty-golden-` (the same, from raw listing lines, `county-data-golden.jsonl`), `p28-`
   (Pub 28 examples), `rg-` (regressions), `key-`, `reso-` (emitter cases),
-  `fl-` (Florida pack, `fl-pack.jsonl`), `pl-` (national place list outside
+  `fl-` (Florida state data, `fl-state.jsonl`), `pl-` (national place list outside
   Florida, `places-us.jsonl`), `ds-` (`default_state`, `default-state.jsonl`),
   `tg-` (`tag()` and `address_type()`, `tag.jsonl`),
   `co-` (trailing country, `country.jsonl`),
@@ -96,11 +96,10 @@ Emitter expectations are optional record keys, checked only when present
   `ParseOptions::default_state` for this case, so the hint cases (`ds-*`) can
   run in the one corpus. Absent means no hint.
 
-- `place`: `ParsedAddress::place` as `"NAME (source)"`, with the pack's
+- `place`: `ParsedAddress::place` as `"NAME (source)"`, with the state data's
   standard name and the `PlaceSource::code()` (`"WEST PALM BEACH (name)"`,
   `"FERNANDINA BEACH (completed)"`, `"PENSACOLA (zip)"`), or `"none"`.
-  These cases need the state packs, which the tests always build with
-  (default features).
+  These cases need the state data, which is always built in.
 
 - `reso`: an object of Data Dictionary 2.0 field names to the expected
   `to_reso()` values (`{"StreetName": "MAIN", "City": "MIAMI"}`). A field not
@@ -134,7 +133,7 @@ not standard forms from the lexicon tables.
   dropped, suffixes, directionals, unit designators and states as their
   standard abbreviations (`CIRCLE` -> `CIR`, `EAST` -> `E`, `UN` -> `UNIT`).
   Names keep their own words (`6th` -> `6TH`, `St. Petersburg` ->
-  `ST PETERSBURG`; expanding `ST` to `SAINT` in a place name is a state-pack
+  `ST PETERSBURG`; expanding `ST` to `SAINT` in a place name is a state-data
   job).
 - A unit with no designator (`DR 706`) or with `#` has an empty `unit_type`
   and only a `unit_number`. Pub 28 C2 uses `#` when the designator is
@@ -171,7 +170,7 @@ Ids `cty-street-`, `cty-full-`, `cty-placeholder-` and `cty-highway-`.
 Address shapes seen in Florida county property listings, hand-labeled in this
 library's schema: house number letters, units with and without designators,
 highways, placeholders such as `UNKNOWN` and `NO SITUS`. Cases that need a
-place list are in `fl-pack.jsonl` instead.
+place list are in `fl-state.jsonl` instead.
 
 ### `county-data-golden.jsonl`
 
@@ -202,27 +201,30 @@ Cases that pin the emitters: exact `k2` key and slug strings (`key-`) and RESO
 field values (`reso-`), written from `docs/key-format.md` and
 `docs/reso-mapping.md`.
 
-### `fl-pack.jsonl`
+### `fl-state.jsonl`
 
-Ids `fl-001` to `fl-033`. The Florida pack and the national place list on
+Every folder under `crates/doorplate/data/states/` needs a file like this one, `<st>-state.jsonl`, with cases
+from that state; a test fails when one is missing.
+
+Ids `fl-001` to `fl-033`. The Florida state data and the national place list on
 Florida input: a city on one line with no commas, a city run into the street,
 cut-off cities completed, the place from the ZIP, `zip_city_mismatch`, the
 observed ZIP places, `CR` as CIRCLE, `SR` as STATE ROAD, and communities and
-spellings added to the pack (`docs/packs/fl.md`). `fl-013` and `fl-019` are
-Georgia and Colorado inputs that show a state with no curated pack. They need
-the default features (`state-fl`, `places-us`).
+spellings added to the Florida data (`docs/states/fl.md`). `fl-013` and `fl-019` are
+Georgia and Colorado inputs that show a state with no curated state data. They need
+the default feature `places-us`.
 
 ### `places-us.jsonl`
 
 Ids `pl-001` to `pl-008`. The same place behaviors in states with no curated
-pack (`ST LOUIS`, `NORTH LITTLE ROCK`, `LA GRANGE PARK`, `ROARING BROOK TWP`, a
+state data (`ST LOUIS`, `NORTH LITTLE ROCK`, `LA GRANGE PARK`, `ROARING BROOK TWP`, a
 cut-off city, the place from the ZIP), and `zip_city_mismatch` not raised
 there.
 
 ### `default-state.jsonl`
 
 Ids `ds-001` to `ds-007`. Cases with a `default_state` field: a comma-less
-city found in the hinted state, the state's pack readings, a city not in the
+city found in the hinted state, the state's data readings, a city not in the
 hinted state, and the input's own state or a known ZIP winning over the hint.
 
 ### `country.jsonl`

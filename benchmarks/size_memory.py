@@ -98,7 +98,7 @@ def main():
         model = next(Path(d).rglob("usaddr.crfsuite"), None)
         if model:
             print(f"| the usaddress model file | {mb(model.stat().st_size)} |")
-    print("\nThe lexicon tables, the national place list and the Florida pack are compiled into the binary\n"
+    print("\nThe lexicon tables, the national place list and the Florida state data are compiled into the binary\n"
           "(`docs/places.md` sizes the place list); there is no model or data file to load.\n")
 
     # Import time and memory.

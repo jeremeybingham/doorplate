@@ -27,12 +27,13 @@ New to the project? Read the [project README](../README.md), then
 | [`reso-mapping.md`](reso-mapping.md) | The RESO Data Dictionary 2.0 field mapping |
 | [`usps-pub28-notes.md`](usps-pub28-notes.md) | The USPS Publication 28 rules: the source of every table and parser rule, and what was left as it is on purpose |
 
-## Data: places, packs and what data may be used
+## Data: places, state data and what data may be used
 
 | Page | What it covers |
 |---|---|
 | [`places.md`](places.md) | The national place list: sources, licenses, how it is built and compiled in, coverage |
-| [`packs/fl.md`](packs/fl.md) | The Florida pack: places, spellings, ZIPs, evidence |
+| [`states/README.md`](states/README.md) | State data: what a state's folder holds and how to add one |
+| [`states/fl.md`](states/fl.md) | The Florida state data: places, spellings, ZIPs, evidence |
 | [`data-policy.md`](data-policy.md) | What data the project uses, what may be committed, and what may be said about data that is not ours to publish |
 | [`NOTICE`](../NOTICE), [`LICENSE-MIT`](../LICENSE-MIT), [`LICENSE-APACHE`](../LICENSE-APACHE) | Licenses and third-party credits (GeoNames, the National Address Database) |
 
@@ -90,7 +91,7 @@ the same pull request. The pull request template asks for it.
 | The RESO output | [`reso-mapping.md`](reso-mapping.md) (the table and the choices) and `tests/corpus/reso.jsonl` |
 | Accuracy or speed figures, or the benchmark scripts | [`benchmarks.md`](benchmarks.md); [`benchmarks/README.md`](../benchmarks/README.md); the figures in the four READMEs that quote them; [`CHANGELOG.md`](../CHANGELOG.md). The suite's `v1` files are never edited: a fix is a `v2` |
 | The benchmark suite (its generator, scoring or composition) | [`benchmark-suite.md`](benchmark-suite.md); [`benchmarks/README.md`](../benchmarks/README.md); [`benchmarks/suite/README.md`](../benchmarks/suite/README.md); [`benchmarks.md`](benchmarks.md) |
-| Place data or a state pack | [`places.md`](places.md) or [`packs/fl.md`](packs/fl.md); [`data-policy.md`](data-policy.md); [`NOTICE`](../NOTICE) when a source needs credit; [`how-it-works.md`](how-it-works.md) (the lexicon layers) |
+| Place data or state data | [`places.md`](places.md) or [`states/fl.md`](states/fl.md); [`data-policy.md`](data-policy.md); [`NOTICE`](../NOTICE) when a source needs credit; [`how-it-works.md`](how-it-works.md) (the lexicon layers) |
 | How private data is used, or what leaves `local-data/` | [`data-policy.md`](data-policy.md); [`tools/harness/README.md`](../tools/harness/README.md); [`tools/ingest/README.md`](../tools/ingest/README.md); [`tools/review/README.md`](../tools/review/README.md) |
 | The golden corpus format or the way it runs | [`tests/corpus/README.md`](../tests/corpus/README.md); [`how-it-works.md`](how-it-works.md) ("Testing") |
 | Build commands, the repository layout, the CI jobs or the release steps | [`AGENTS.md`](../AGENTS.md); [`CLAUDE.md`](../CLAUDE.md); [`CONTRIBUTING.md`](../CONTRIBUTING.md); [`how-it-works.md`](how-it-works.md) ("Repository layout" and "Testing") |

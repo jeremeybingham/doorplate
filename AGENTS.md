@@ -88,7 +88,7 @@ Plain `cargo test` needs no Python. Rust 1.80 or later; the Python extension nee
 
 - `crates/doorplate/src/`: `clean`, `tokenize`, `tagger/`, `classify`, `assemble`,
   `lexicon`, `emit/` (`usps`, `reso`, `key`, `slug`, `usaddress`, `display`), `parser`.
-- `crates/doorplate/data/`: the Pub 28 tables, the national place list and state packs.
+- `crates/doorplate/data/`: the Pub 28 tables, the national place list and state data.
 - `tests/corpus/`: the golden corpus. `examples/`: runnable examples.
 - `docs/`: design notes and the sources of every rule. `tools/`: verification, fuzzing,
   corpus, comparison, the harness (`tools/harness/`, offline, private data) and the
