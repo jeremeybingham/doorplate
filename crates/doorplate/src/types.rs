@@ -557,12 +557,23 @@ pub enum Warning {
     /// a corner, not an address. The first street is parsed, the second stays in
     /// [`Diagnostics::unparsed`], and [`ParsedAddress::key`] is `None`.
     IntersectionDetected,
+    /// A second address line was dropped without a component of its own:
+    /// a copy of the end of line 1 (`123 MAIN ST` / `MAIN ST`) or a line of
+    /// no-data markers. The parse is the same as with an empty line 2 (#45).
+    SecondLineSkipped,
+    /// A second address line became part of the street that line 1 began:
+    /// a route (`COUNTY RD` / `A 5`), a suffix or a directional (`123 MAIN
+    /// ST` / `NW`). Nothing marks that the text came from line 2 (#45).
+    SecondLineInStreet,
+    /// A second address line was kept as the building name (`YORKTOWNE
+    /// PLAZA`), a component no emitter prints (#45).
+    SecondLineBuilding,
 }
 
 impl Warning {
     /// Every variant, in declaration order. Add new variants here too; the
     /// golden-corpus runner checks expected warning codes against this list.
-    pub const ALL: [Warning; 22] = [
+    pub const ALL: [Warning; 25] = [
         Warning::UnparsedRemainder,
         Warning::AmbiguousToken,
         Warning::Placeholder,
@@ -585,6 +596,9 @@ impl Warning {
         Warning::RepeatedLabel,
         Warning::CountryIgnored,
         Warning::IntersectionDetected,
+        Warning::SecondLineSkipped,
+        Warning::SecondLineInStreet,
+        Warning::SecondLineBuilding,
     ];
 
     /// Stable snake_case identifier. Part of the public contract: never
@@ -613,6 +627,9 @@ impl Warning {
             Warning::RepeatedLabel => "repeated_label",
             Warning::CountryIgnored => "country_ignored",
             Warning::IntersectionDetected => "intersection_detected",
+            Warning::SecondLineSkipped => "second_line_skipped",
+            Warning::SecondLineInStreet => "second_line_in_street",
+            Warning::SecondLineBuilding => "second_line_building",
         }
     }
 }

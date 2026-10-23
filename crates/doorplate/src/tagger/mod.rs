@@ -199,6 +199,47 @@ impl<'a> Tagger<'a> {
         s
     }
 
+    /// Diagnostics for line 2 text that is dropped, or used by the street, or
+    /// kept as the building name, without a component of its own (#45). Called
+    /// once line 2's tokens are tagged; line 2 text that is a unit, an
+    /// attention line, the city, state or ZIP, or an unparsed remainder is
+    /// reported (or not) as before.
+    fn second_line_notes(&mut self, l1: &Range<usize>, l2: &Range<usize>) {
+        let (Some(first), Some(second)) = (self.tags.get(l1.clone()), self.tags.get(l2.clone()))
+        else {
+            return;
+        };
+        if second.is_empty() {
+            return;
+        }
+        let street = |t: &Tag| {
+            matches!(
+                t,
+                Tag::PreDir
+                    | Tag::Name
+                    | Tag::Suffix
+                    | Tag::PostDir
+                    | Tag::HighwayPrefix
+                    | Tag::HighwayRoute
+            )
+        };
+        let skipped = second.iter().all(|t| *t == Tag::Skip);
+        // The street began on line 1: a street on line 2 alone (`THE COVE` /
+        // `1111 ASBURY WAY`, a box on line 1) is just the address.
+        let began = first.iter().any(|t| street(t) || *t == Tag::StreetNumber);
+        let in_street = began && second.iter().any(street);
+        let building = second.contains(&Tag::Building);
+        if skipped {
+            self.warn(Warning::SecondLineSkipped);
+        }
+        if in_street {
+            self.warn(Warning::SecondLineInStreet);
+        }
+        if building {
+            self.warn(Warning::SecondLineBuilding);
+        }
+    }
+
     fn finish(mut self) -> Tagged {
         for t in &mut self.tags {
             if *t == Tag::Untagged {
@@ -337,6 +378,7 @@ pub(crate) fn tag_fields(
             t.claim_fraction(l2.start);
         }
         t.claim_bare_unit(l2.clone());
+        t.second_line_notes(&l1, &l2);
         return t.finish();
     }
     let city_range = t.city_field(city, state.is_empty());
@@ -355,6 +397,7 @@ pub(crate) fn tag_fields(
         t.claim_fraction(l2.start);
     }
     t.claim_bare_unit(l2.clone());
+    t.second_line_notes(&l1, &l2);
     t.finish()
 }
 
