@@ -45,7 +45,7 @@ what a `k3` needs are in [`key-format.md`](key-format.md) ("Changing the key"). 
 evidence. The order is in #139. `k2` started with 0.3.0; the route-number and box rules are in
 [`key-format.md`](key-format.md).
 
-- **Moved from 0.4.0 (2026-10-23), the warnings and diagnostics:** warnings that say how far to trust a parse** (#102): a table of how reliable each warning is, measured
+- **Warnings that say how far to trust a parse** (#102, moved from 0.4.0 on 2026-10-23 with the other parsing issues): a table of how reliable each warning is, measured
   on labeled data, and named warnings where the parser knows it is guessing, starting with a lone letter after
   the house number (`123 A MAIN ST`).
 - **Line-2 diagnostics** (#45): say when a second line is skipped as a copy, merged into the street or kept as a
