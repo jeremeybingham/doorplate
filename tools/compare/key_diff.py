@@ -78,14 +78,6 @@ def dump(args):
     print(f"{name}: {done} rows parsed with doorplate {doorplate.__version__} ({skipped} with last_line left out)")
 
 
-def shape(key):
-    """The key with letters as a and digits as 9, so counts can be given without street text."""
-    out = []
-    for ch in key or "":
-        out.append("9" if ch.isdigit() else "a" if ch.isalpha() else ch)
-    return "".join(out)
-
-
 def diff(args):
     import duckdb
 
@@ -94,7 +86,9 @@ def diff(args):
     if not names:
         sys.exit("no source in both directories")
     con = duckdb.connect()
-    con.create_function("shape", shape, ["VARCHAR"], "VARCHAR")
+    # The key with letters as a and digits as 9, so counts can be given without street text. A SQL macro,
+    # not a Python function: DuckDB 2.0 needs numpy for those.
+    con.execute("create macro shape(k) as regexp_replace(regexp_replace(k, '\\p{L}', 'a', 'g'), '\\p{Nd}', '9', 'g')")
     total_changed = 0
     for n in names:
         va = json.loads((a / f"{n}.json").read_text())

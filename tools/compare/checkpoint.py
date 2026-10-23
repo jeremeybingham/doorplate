@@ -64,7 +64,7 @@ def count_rows(records):
     import duckdb
 
     try:
-        return duckdb.sql(f"select count(*), any_value(source) from '{records}'").fetchone()
+        return duckdb.connect().execute(f"select count(*), any_value(source) from '{records}'").fetchone()
     except Exception as e:  # DuckDB errors can quote rows: print the type only
         sys.exit(f"failed to read a records file: {type(e).__name__}")
 
