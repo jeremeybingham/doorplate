@@ -61,6 +61,8 @@ def main(out: str | None = None) -> pd.DataFrame:
     #    tool prints the same version (`doorplate --version`).
     version = next(a.to_dict()["provenance"]["library_version"] for a in rows if a)
     split["parser_version"] = version
+    #    The state data version names the curated data behind a Florida parse (None elsewhere).
+    split["state_data_version"] = [a.state_data_version if a else None for a in rows]
     print(split)
     print(f"keys written by doorplate {version}")
 

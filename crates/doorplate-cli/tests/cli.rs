@@ -39,6 +39,13 @@ fn parse_prints_one_json_line() {
     assert_eq!(v["usps"]["last_line"], "MIAMI FL 33101");
     assert_eq!(v["key"], "k2:S|123|N|MAIN|ST||FL|33101");
     assert_eq!(v["provenance"]["library_version"], doorplate::VERSION);
+    // Miami is in Florida, which has curated state data; the version is the `state.toml` one.
+    assert_eq!(
+        v["provenance"]["state_data_version"],
+        doorplate::Lexicons::builtin()
+            .state_data_version("FL")
+            .unwrap()
+    );
     assert_eq!(v["reso"]["City"], "MIAMI");
     assert_eq!(v["warnings"], serde_json::json!([]));
 }

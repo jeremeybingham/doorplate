@@ -621,6 +621,11 @@ pub struct Diagnostics {
     /// Reserved and always `None`; to be removed in 0.4.0.
     pub confidence: Option<f32>,
     pub library_version: &'static str,
+    /// The version of the curated data for the parse's state (`state.toml`,
+    /// `Lexicons::state_data_version`), or `None` when the state has none.
+    /// With `library_version` it ties a stored parse to the data that
+    /// produced it.
+    pub state_data_version: Option<&'static str>,
     /// The uncertain rules that settled a boundary. Internal: tests and the
     /// corpus tools read them through `decision_codes`.
     pub(crate) decisions: Vec<Decision>,
@@ -655,6 +660,7 @@ impl Default for Diagnostics {
             unparsed: None,
             confidence: None,
             library_version: VERSION,
+            state_data_version: None,
             decisions: Vec::new(),
         }
     }

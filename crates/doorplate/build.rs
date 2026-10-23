@@ -595,6 +595,15 @@ fn list(s: &str) -> Vec<&str> {
 /// prefix spellings a state adds.
 type StateHighways = BTreeMap<String, (usize, &'static str)>;
 
+/// What the state folders give: the states, their `state.toml` versions, the suffix
+/// spellings they read differently and the highway prefixes they add.
+type StateData = (
+    Vec<String>,
+    Vec<(String, String)>,
+    BTreeMap<String, usize>,
+    StateHighways,
+);
+
 /// One place. `kind` is 0 municipality, 1 place, 2 subdivision.
 struct PlaceData {
     state: String,
@@ -633,13 +642,20 @@ fn gen_places(
         max_words: 1,
         ..PlaceTables::default()
     };
-    let (states, state_suffixes, state_highways) =
+    let (states, versions, state_suffixes, state_highways) =
         gen_state_data(&dir.join("states"), ex, sfx, hwy, &mut t)?;
     if env::var_os("CARGO_FEATURE_PLACES_US").is_some() {
         gen_national(&dir.join("places"), ex, &states, &mut t)?;
         resolve_deferred(ex, &mut t)?;
     }
-    emit_places(&states, &state_suffixes, &state_highways, &t, out)
+    emit_places(
+        &states,
+        &versions,
+        &state_suffixes,
+        &state_highways,
+        &t,
+        out,
+    )
 }
 
 /// The state data folders, in state order.
@@ -649,7 +665,7 @@ fn gen_state_data(
     sfx: &SuffixRows,
     hwy: &HighwayRows,
     t: &mut PlaceTables,
-) -> Result<(Vec<String>, BTreeMap<String, usize>, StateHighways)> {
+) -> Result<StateData> {
     println!("cargo:rerun-if-changed={}", dir.display());
     let PlaceTables {
         rows,
@@ -672,6 +688,7 @@ fn gen_state_data(
     let expand = |w: &str| ex.get(w).cloned();
     let mut state_suffixes: BTreeMap<String, usize> = BTreeMap::new();
     let mut state_highways = StateHighways::new();
+    let mut versions: Vec<(String, String)> = Vec::new();
     for st in &states {
         let pdir = dir.join(st.to_lowercase());
         let meta = load(&pdir, "state.toml")?;
@@ -679,6 +696,11 @@ fn gen_state_data(
         if key_str(&meta, "state", &ctx)? != *st {
             return Err(format!("{ctx}: `state` must be {st}"));
         }
+        let version = meta
+            .get("version")
+            .and_then(Value::as_str)
+            .ok_or_else(|| format!("{ctx}: missing string `version`"))?;
+        versions.push((st.clone(), version.to_string()));
         let places = tsv(
             &pdir.join("places.tsv"),
             &["name", "county", "kind", "sources", "variants"],
@@ -901,7 +923,7 @@ fn gen_state_data(
         }
     }
 
-    Ok((states, state_suffixes, state_highways))
+    Ok((states, versions, state_suffixes, state_highways))
 }
 
 /// Observed ZIP pairs for places only the national list has (the state data's
@@ -1108,6 +1130,7 @@ fn le8(v: usize, what: &str) -> Result<u8> {
 ///   u32. Sorted by ZIP. `ZIP_SHARED` lists the few ZIPs with shared places.
 fn emit_places(
     states: &[String],
+    versions: &[(String, String)],
     state_suffixes: &BTreeMap<String, usize>,
     state_highways: &StateHighways,
     t: &PlaceTables,
@@ -1197,6 +1220,11 @@ fn emit_places(
     writeln!(
         out,
         "pub(crate) static STATES_WITH_DATA: &[&str] = &{states:?};\n"
+    )
+    .ok();
+    writeln!(
+        out,
+        "/// `(state, version)` of each state's curated data (`state.toml`).\npub(crate) static STATE_DATA_VERSIONS: &[(&str, &str)] = &{versions:?};\n"
     )
     .ok();
     writeln!(out, "/// States that have places, by number.").ok();

@@ -54,9 +54,10 @@ class Display(TypedDict):
     last_line: str
 
 class Provenance(TypedDict):
-    """Which release produced the result; more keys may join it (#7)."""
+    """Which release and which state data produced the result; more keys may join it (#3)."""
 
     library_version: str
+    state_data_version: str | None
 
 class ParsedAddressDict(TypedDict):
     input: str
@@ -151,6 +152,8 @@ class ParsedAddress:
     def confidence(self) -> float | None: ...
     @property
     def library_version(self) -> str: ...
+    @property
+    def state_data_version(self) -> str | None: ...
     def address_type(self) -> str: ...
     def key(self, unit: bool = False) -> str | None: ...
     def slug(self) -> str | None: ...

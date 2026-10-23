@@ -45,6 +45,7 @@ a.key(KeyOptions::property());    // Some("k2:S|123|N|MAIN|ST||FL|33101")
 a.slug();                         // Some("123-n-main-st-apt-4-miami-fl-33101"), display only
 a.to_display().line1;             // Some("123 N Main St Apt 4"); to_long(): "123 North Main Street Apartment 4"
 a.diagnostics.warnings;           // e.g. MissingZip, UnparsedRemainder
+a.diagnostics.state_data_version; // Some("2026.10.5") for Florida, None for a state without curated data
 ```
 
 - `Parser::parse_fields` takes pre-split fields (`Fields`: `line1`, `line2`, `city`, `state`, `zip`, each optional).

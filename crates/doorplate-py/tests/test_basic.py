@@ -43,9 +43,14 @@ def test_absent_components_are_none_and_confidence_is_reserved():
     assert a.library_version == uap.__version__
 
 
-def test_to_dict_carries_the_library_version():
+def test_to_dict_carries_the_library_and_state_data_versions():
     d = uap.parse("123 N Main St, Miami FL 33101").to_dict()
-    assert d["provenance"] == {"library_version": uap.__version__}
+    assert d["provenance"]["library_version"] == uap.__version__
+    # Florida has curated state data; Georgia does not (#7).
+    assert isinstance(d["provenance"]["state_data_version"], str)
+    assert uap.parse("123 N Main St, Atlanta GA 30303").to_dict()["provenance"]["state_data_version"] is None
+    assert uap.parse("123 N Main St, Miami FL 33101").state_data_version == d["provenance"]["state_data_version"]
+    assert uap.parse("123 Main St").state_data_version is None
 
 
 def test_dict_shapes():
