@@ -22,6 +22,7 @@ use crate::types::{
 
 /// How a looked-up spelling relates to its table entry.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[non_exhaustive]
 pub enum MatchKind {
     /// The standard abbreviation or code itself ("AVE", "STE", "FL", "N").
     Standard,
@@ -45,6 +46,7 @@ pub struct Lookup<T> {
 
 /// Non-street address words from `data/special.toml`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[non_exhaustive]
 pub enum Special {
     /// PO BOX (and synonyms such as DRAWER, CALLER).
     PoBox,

@@ -130,10 +130,11 @@ impl Opts {
 /// The parser for the options given: `--default-state ST` is a hint for
 /// lookups when the input names no state.
 fn parser_for(o: &Opts) -> Result<Parser, CliError> {
-    Parser::with_options(ParseOptions {
-        default_state: o.value("--default-state").map(str::to_string),
-    })
-    .map_err(|e| CliError::Usage(e.to_string()))
+    let mut options = ParseOptions::new();
+    if let Some(st) = o.value("--default-state") {
+        options = options.default_state(st);
+    }
+    Parser::with_options(options).map_err(|e| CliError::Usage(e.to_string()))
 }
 
 fn parse_cmd(args: &[String]) -> Result<ExitCode, CliError> {

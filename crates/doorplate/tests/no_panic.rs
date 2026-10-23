@@ -112,9 +112,7 @@ proptest! {
     fn hinted_parser_never_panics_or_fills_state(
         s in address_like(), st in prop::sample::select(&["FL", "AL", "ny", "Texas", "DC", "PR"][..]),
     ) {
-        let hinted = Parser::with_options(ParseOptions {
-            default_state: Some(st.to_string()),
-        }).unwrap();
+        let hinted = Parser::with_options(ParseOptions::new().default_state(st)).unwrap();
         let plain = Parser::new();
         if let (Ok(a), Ok(b)) = (hinted.parse(&s), plain.parse(&s)) {
             prop_assert_eq!(a.state, b.state);

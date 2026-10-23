@@ -246,7 +246,7 @@ a.diagnostics.warnings;           // e.g. MissingZip, UnparsedRemainder
 
 `Parser::parse_fields` takes pre-split fields (`Fields`); `Parser::parse_many` and
 `Parser::parse_fields_many` parse a batch, in parallel with the `rayon` feature.
-`Parser::with_options(ParseOptions { default_state: Some("FL".into()) })?` sets a
+`Parser::with_options(ParseOptions::new().default_state("FL"))?` sets a
 state hint.
 
 ### Command line

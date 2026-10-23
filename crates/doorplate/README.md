@@ -51,7 +51,7 @@ a.diagnostics.state_data_version; // Some("2026.10.5") for Florida, None for a s
 - `Parser::parse_fields` takes pre-split fields (`Fields`: `line1`, `line2`, `city`, `state`, `zip`, each optional).
 - `Parser::parse_many` and `Parser::parse_fields_many` parse a batch, in parallel
   with the `rayon` feature.
-- `Parser::with_options(ParseOptions { default_state: Some("FL".into()) })?` sets a
+- `Parser::with_options(ParseOptions::new().default_state("FL"))?` sets a
   state hint. It is a lookup hint, never a fill: `state` stays empty and
   `missing_state` still fires.
 - Only input with no address text at all is an error; anything else comes back as a

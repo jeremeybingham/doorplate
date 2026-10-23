@@ -12,6 +12,7 @@ use crate::types::{ParsedAddress, RouteKind, UnitType};
 /// `123 North Main Street Apartment 4` (long). Not a Pub 28 form; use
 /// [`UspsAddress`](crate::UspsAddress) for mail.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
+#[non_exhaustive]
 pub struct DisplayAddress {
     /// Delivery line, with the unit at the end.
     pub line1: Option<String>,

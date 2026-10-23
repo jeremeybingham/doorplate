@@ -3,9 +3,9 @@
 //! Every address is invented. The library parses and formats; it does not
 //! check that an address exists or can receive mail.
 
-use doorplate::{Fields, KeyOptions, Parser};
+use doorplate::{Fields, KeyOptions, ParseOptions, Parser};
 
-fn main() -> Result<(), doorplate::ParseError> {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     let parser = Parser::new();
 
     // One line. Only input with no address text is an error.
@@ -39,6 +39,12 @@ fn main() -> Result<(), doorplate::ParseError> {
             Err(e) => println!("row {i}: {e}"),
         }
     }
+
+    // Options are built, not written as a struct literal, so a new option is not a break:
+    // look cities up in Florida when the input names no state.
+    let hinted = Parser::with_options(ParseOptions::new().default_state("FL"))?;
+    let a = hinted.parse("100 Main St, Miami")?;
+    println!("{:?} (state field: {:?})", a.to_display().lines(), a.state);
 
     // A batch of lines (parallel with the `rayon` feature).
     let lines = ["1 Main St, Miami FL", "PO Box 5, Tampa FL"];

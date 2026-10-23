@@ -9,6 +9,13 @@ change to what an input produces needs a new key version.
 
 ### Changed (breaking)
 
+- **Result types and growable enums are `#[non_exhaustive]`** (#135), so a later field or variant is not a break.
+  Structs: `ParsedAddress`, `Diagnostics`, `SourceInfo`, `PlaceMatch`, `Highway`, `RuralRoute`, `MilitaryBox`,
+  `ComponentSpan`, `UspsAddress`, `DisplayAddress`, `ResoAddress`, `UsaddressTag`: read their public fields as
+  before, but they cannot be built with a struct literal or matched without `..` outside the crate. Enums:
+  `AddressType`, `ParseError`, `OptionsError`, `MatchKind`, `PlaceKind`, `PlaceSource`, `StateKind`, `Special`: a
+  `match` needs a `_` arm. `ParseOptions` too, with `ParseOptions::new()` and `.default_state(..)` in place of the
+  struct literal. No output or key changes.
 - **The reserved `confidence` field is removed** (#136): `Diagnostics::confidence` in Rust, `ParsedAddress.confidence`
   in Python and the `confidence` key of `to_dict()`. It was always `None`; named warnings are the signal for how far to
   trust a parse (#102). No other value and no key changes.

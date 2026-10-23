@@ -9,6 +9,7 @@ use crate::types::{ParsedAddress, UnitType};
 /// A Pub 28 style address: uppercase, punctuation dropped except the
 /// hyphen, the slash in fractions and the period in numbers like `39.2`.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
+#[non_exhaustive]
 pub struct UspsAddress {
     /// Delivery line: street, PO Box, route, military line or general
     /// delivery, with the unit at the end (Pub 28 section 213).
