@@ -15,9 +15,10 @@ fuzz_target!(|data: &[u8]| {
     let Ok(text) = std::str::from_utf8(rest) else {
         return;
     };
-    let options = ParseOptions {
-        default_state: HINTS[usize::from(pick) % HINTS.len()].map(str::to_string),
-    };
+    let mut options = ParseOptions::new();
+    if let Some(state) = HINTS[usize::from(pick) % HINTS.len()] {
+        options = options.default_state(state);
+    }
     let Ok(parser) = Parser::with_options(options) else {
         return;
     };

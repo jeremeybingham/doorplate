@@ -134,6 +134,7 @@ impl fmt::Display for UnitType {
 
 /// What a [`StateCode`] stands for.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[non_exhaustive]
 pub enum StateKind {
     State,
     /// The District of Columbia.
@@ -218,6 +219,7 @@ impl fmt::Display for Place {
 
 /// What kind of place a [`Place`] is.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[non_exhaustive]
 pub enum PlaceKind {
     /// An incorporated city, town or village.
     Municipality,
@@ -229,6 +231,7 @@ pub enum PlaceKind {
 
 /// How the parser found the place for an address.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[non_exhaustive]
 pub enum PlaceSource {
     /// The city matches the place's name (case, punctuation and
     /// abbreviations aside: `W PALM BCH` is WEST PALM BEACH).
@@ -259,6 +262,7 @@ impl PlaceSource {
 /// [`ParsedAddress::city`] keeps what the input said; this names the place it
 /// stands for.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[non_exhaustive]
 pub struct PlaceMatch {
     pub place: Place,
     pub source: PlaceSource,
@@ -284,6 +288,7 @@ impl RouteKind {
 
 /// Rural route or highway contract route plus box: `RR 2 BOX 152`.
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
 pub struct RuralRoute {
     pub kind: RouteKind,
     pub route: String,
@@ -302,6 +307,7 @@ pub struct RuralRoute {
 /// state followed only by a route gets the HIGHWAY prefix (`KENTUCKY 440` is
 /// `KY HIGHWAY 440`).
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
 pub struct Highway {
     pub state: Option<StateCode>,
     pub prefix: HighwayPrefix,
@@ -349,6 +355,7 @@ impl MilitaryKind {
 /// Military or Department of State delivery line: `PSC 1650 BOX 10`,
 /// `UNIT 9900 BOX 0500` (Pub 28 sections 238.1 and 239).
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
 pub struct MilitaryBox {
     pub kind: MilitaryKind,
     pub number: String,
@@ -435,6 +442,7 @@ pub enum Component {
 /// Where a component came from in the input. A component built from
 /// separated pieces (an unparsed remainder) has one span per piece.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[non_exhaustive]
 pub struct ComponentSpan {
     pub component: Component,
     pub span: Span,
@@ -442,6 +450,7 @@ pub struct ComponentSpan {
 
 /// Original input and provenance.
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
 pub struct SourceInfo {
     /// The input string, or for [`crate::Fields`] input the non-empty fields
     /// joined with `", "` (for display; spans index the fields themselves).
@@ -615,6 +624,7 @@ impl fmt::Display for Warning {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+#[non_exhaustive]
 pub struct Diagnostics {
     pub warnings: Vec<Warning>,
     pub unparsed: Option<String>,
@@ -666,6 +676,7 @@ impl Default for Diagnostics {
 /// A parsed address. Always returned, even for partial parses; check
 /// [`ParsedAddress::diagnostics`].
 #[derive(Debug, Clone, PartialEq)]
+#[non_exhaustive]
 pub struct ParsedAddress {
     /// "123", "123-125", "123 1/2", "12A".
     pub street_number: Option<String>,

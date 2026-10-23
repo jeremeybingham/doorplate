@@ -34,10 +34,8 @@ fn parser_for(default_state: Option<&str>) -> PyResult<Parser> {
     static DEFAULT: OnceLock<Parser> = OnceLock::new();
     match default_state {
         None => Ok(DEFAULT.get_or_init(Parser::new).clone()),
-        Some(s) => Parser::with_options(ParseOptions {
-            default_state: Some(s.to_string()),
-        })
-        .map_err(|e: OptionsError| PyValueError::new_err(e.to_string())),
+        Some(s) => Parser::with_options(ParseOptions::new().default_state(s))
+            .map_err(|e: OptionsError| PyValueError::new_err(e.to_string())),
     }
 }
 
@@ -227,6 +225,8 @@ impl PyParsedAddress {
                                 PlaceKind::Municipality => "municipality",
                                 PlaceKind::Place => "place",
                                 PlaceKind::Subdivision => "subdivision",
+                                // A kind added later reads as the generic one.
+                                _ => "place",
                             }
                             .to_string(),
                         ),

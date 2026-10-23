@@ -18,6 +18,7 @@ use crate::types::{FieldName, InputKind, ParsedAddress, Span, StateKind, Warning
 
 /// Returned only for truly unusable input. Partial parses are never errors.
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum ParseError {
     EmptyInput,
 }
@@ -34,6 +35,7 @@ impl std::error::Error for ParseError {}
 
 /// Parser settings.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
+#[non_exhaustive]
 pub struct ParseOptions {
     /// A state (USPS code or name) to assume when the input names none and
     /// its ZIP (if any) is unknown: the place list looks cities up in that
@@ -45,8 +47,23 @@ pub struct ParseOptions {
     pub default_state: Option<String>,
 }
 
+impl ParseOptions {
+    /// Options with every setting at its default.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Set [`ParseOptions::default_state`].
+    #[must_use]
+    pub fn default_state(mut self, state: impl Into<String>) -> Self {
+        self.default_state = Some(state.into());
+        self
+    }
+}
+
 /// A [`ParseOptions`] value that cannot be used.
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum OptionsError {
     /// `default_state` is not a US state, DC or territory.
     UnknownDefaultState(String),

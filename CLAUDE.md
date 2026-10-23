@@ -9,7 +9,7 @@ build commands are in `AGENTS.md`, imported above; this file holds the process w
 when working on the project with Claude Code.
 
 ## Workflow
-- Before finishing a task run `cargo fmt`, `cargo clippy --workspace --all-targets --all-features -- -D warnings` and `cargo test --workspace --all-features`.
+- Before finishing a task run `cargo fmt`, `cargo clippy --workspace --all-targets --all-features -- -D warnings` and `cargo test --workspace --all-features`; the `fuzz/` crate is outside the workspace, so also `cd fuzz && cargo +nightly check --bins` after a change to a public type.
 - Add a golden-corpus case for every parsing bug fixed (format: `tests/corpus/README.md`). When a change makes more cases pass, rerun the corpus test with `UPDATE_CORPUS_BASELINE=1` and commit `tests/corpus/passing.txt`.
 - Parse-rule changes also need a row in `docs/usps-pub28-notes.md` (its source, even when the source is data rather than USPS). Re-run `python3 tools/corpus/emit_expect.py --check tests/corpus/*.jsonl` after changing a rule the corpus emitters follow.
 - After changing a table in `crates/doorplate/data/`, run `python3 tools/pub28/verify.py --cache DIR --fetch --emitter` (needs the built Python extension) to compare with the live Pub 28 pages.

@@ -12,6 +12,7 @@ use crate::types::{Component, FieldName, InputKind, ParsedAddress, Span, Warning
 
 /// One input token and its usaddress label.
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
 pub struct UsaddressTag {
     /// The token as written, punctuation included (`Road,`).
     pub text: String,
@@ -26,6 +27,7 @@ pub struct UsaddressTag {
 /// What kind of address a record is. Finer than usaddress's three values
 /// ([`TaggedAddress::usaddress_type`] gives those, for migration).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[non_exhaustive]
 pub enum AddressType {
     /// A street address (a street name or a highway).
     Street,

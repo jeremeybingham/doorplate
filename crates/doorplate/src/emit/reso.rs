@@ -18,6 +18,7 @@ use crate::types::{ParsedAddress, UnitType};
 /// `PostalCity`, `StreetSuffixModifier`, `StreetAdditionalInfo`
 /// (`docs/reso-mapping.md`, "Fields not emitted").
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
+#[non_exhaustive]
 pub struct ResoAddress {
     /// `StreetNumber`: `123`, `123-125`, `123 1/2`, `12A`.
     pub street_number: Option<String>,

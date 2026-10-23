@@ -105,6 +105,8 @@ pub fn record(a: &ParsedAddress) -> Value {
                 PlaceKind::Municipality => "municipality",
                 PlaceKind::Place => "place",
                 PlaceKind::Subdivision => "subdivision",
+                // A kind added later reads as the generic one until it has a name here.
+                _ => "place",
             },
             "source": m.source.code(),
         })),
