@@ -31,8 +31,8 @@ The architecture and the breaking cleanup, done once, so the core is close to fi
 comparison with 0.3.1 shows zero differences. The order is in #138:
 
 - **Profiling** first (#90), as a baseline.
-- **State data:** fold the Florida pack into the core as built-in state data, dropping the `state-fl` Cargo
-  feature and renaming `data/packs/` to `data/states/` (#101); report the state data version in the output (#7).
+- **State data:** fold the Florida data into the core as built-in state data, dropping the `state-fl` Cargo
+  feature and renaming `data/states/` to `data/states/` (#101); report the state data version in the output (#7).
 - **An extension-ready core** (#137): everything the tagger reads goes through `Lexicons`, and the layer interface
   is decided, so the custom layer (#3) is a loader later.
 - **API cleanup:** remove the reserved `confidence` field (#136), and an audit of every

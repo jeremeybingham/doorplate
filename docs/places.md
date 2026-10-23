@@ -4,7 +4,7 @@ Layer 2 of the lexicon (`docs/how-it-works.md`): place
 names and ZIP places for every state, DC and Puerto Rico, generated from
 public data. It lets the parser find a city on a line with no commas, tell a
 street from a city before a ZIP, and complete a cut-off city. A curated state
-pack (`docs/packs/fl.md`) sits above it and wins for its state.
+state data (`docs/states/fl.md`) sits above it and wins for its state.
 
 This data helps the parser find and name the city. It does not say an
 address exists or can receive mail.
@@ -17,14 +17,14 @@ address exists or can receive mail.
 | `places.tsv` | 50,375 places: 19,491 municipalities, 19,988 places, 10,896 subdivisions; 16,290 variants | `state`, `name`, `county`, `kind`, `sources`, `variants` |
 | `zips.tsv` | 41,154 ZIPs | `zip`, `state`, `place` |
 
-Same shape as a state pack (`docs/packs/fl.md`), with a `state` column
+Same shape as a state data (`docs/states/fl.md`), with a `state` column
 because it is one table for all 52 states, and no `shared` column, because
 GeoNames gives each ZIP one place.
 
 - `name` is upper-case words of letters and digits: accents folded
   (`ANASCO`), apostrophes and periods dropped (`OFALLON`), other
   punctuation a space (`WINSTON SALEM`), `ST`, `FT`, `MT` written out
-  (`SAINT LOUIS`), as in the Florida pack.
+  (`SAINT LOUIS`), as in the Florida state data.
 - `kind` is `municipality` (a city, town, village or borough with its own
   government), `place` (a Census designated place, a Puerto Rico comunidad,
   or a postal name GeoNames has and the Census does not) or `subdivision`
@@ -34,7 +34,7 @@ GeoNames gives each ZIP one place.
   township's bare name and `TWP` form (`ROARING BROOK TOWNSHIP` has
   `ROARING BROOK` and `ROARING BROOK TWP`), and the long name of a
   consolidated city-county (`ATHENS` has `ATHENS CLARKE COUNTY`). There are
-  no misspellings in this list; those are curated (the Florida pack).
+  no misspellings in this list; those are curated (the Florida state data).
 - `county` is the county name without `County`, `Parish` or `Municipio`
   (`Baltimore city` stays `BALTIMORE CITY`). It is for telling places apart
   and is not used by the parser yet.
@@ -116,23 +116,23 @@ no places or no ZIPs.
 ## How it is compiled in
 
 `build.rs` compiles `crates/doorplate/data/places/` when the `places-us` cargo feature is on
-(it is by default), under the state packs:
+(it is by default), under the state data:
 
-- A state with a curated pack keeps the pack's places and ZIPs. A national
-  row whose comparison key the pack already has, as a name or a variant, is
-  the pack's and is skipped; the national list adds the rest. For Florida
-  that is 405 Census places the pack lacks (`TRINITY`, `CITRUS SPRINGS`,
-  ... all CDPs). The pack itself has 665 places and, since version 2026.10.5, 62
+- A state with a curated state data keeps the state data's places and ZIPs. A national
+  row whose comparison key the state data already has, as a name or a variant, is
+  the state data's and is skipped; the national list adds the rest. For Florida
+  that is 405 Census places the state data lacks (`TRINITY`, `CITRUS SPRINGS`,
+  ... all CDPs). The Florida data itself has 665 places and, since version 2026.10.5, 62
   added communities (727 in all); with the national rows Florida has 1,132. The Census's
   `Everglades` is renamed `EVERGLADES CITY` by the builder (`CENSUS_NAMES`
-  in `build_us.py`), the pack's name, so it is the pack's place and not a
-  second one. The pack's 1,473 ZIPs are untouched (GeoNames is the source of
+  in `build_us.py`), the state data's name, so it is the state data's place and not a
+  second one. The state data's 1,473 ZIPs are untouched (GeoNames is the source of
   both, so the national ZIPs for Florida are the same pairs); the new places'
   ZIPs come from the observed-ZIP table, which includes them
-  (`docs/packs/fl.md`); `build.rs` adds those pairs once the national rows
+  (`docs/states/fl.md`); `build.rs` adds those pairs once the national rows
   are in, and leaves them out when `places-us` is off.
 - For every other state a name, variant or ZIP that would lead to two places
-  is a build error, as in a pack. Names, counties and kinds are checked the
+  is a build error, as in a state's data. Names, counties and kinds are checked the
   same way.
 - The parser reads the national layer for every state:
   `Lexicons::place`, `zip_places`, `places` and `is_place` cover all 52. So
@@ -140,8 +140,8 @@ no places or no ZIPs.
   street versus a city before a ZIP, a city run into the street, a cut-off
   city completed from the ZIP, and the place from the ZIP. A `default_state`
   hint looks a city up in the hinted state's places.
-  `zip_city_mismatch` stays limited to states with a curated pack
-  (`Lexicons::has_pack`), because the list names one place per
+  `zip_city_mismatch` stays limited to states with a curated state data
+  (`Lexicons::has_state_data`), because the list names one place per
   ZIP, and its place equals the written city on only 75.8% of the
   benchmark's addresses.
 
@@ -153,7 +153,7 @@ MB** (stripped release binary 1.57 MB without it, 4.49 MB with it, as measured w
 the list was added; the tables are 3.1 MB before linking: names 0.53, keys 0.87,
 index 0.68, rows 0.45, ZIPs 0.37, and 0.2 for the any-state name index that
 `is_place` uses). `build.rs` takes about 2 seconds more. The 0.3.0 command-line tool,
-with the list, the Florida pack and the rules added since, is 4.64 MB stripped.
+with the list, the Florida state data and the rules added since, is 4.64 MB stripped.
 
 ## Coverage
 
@@ -167,9 +167,9 @@ Measured on the blind geocode benchmark (`local-data/geocode-benchmark/`,
 | ZIP's place equals the city | 75.8% |
 
 The last row is why `zip_city_mismatch` stays limited to states with a
-curated pack: GeoNames names one place per ZIP, and many ZIPs
-are used by several. The list contains 657 of the Florida pack's 665 places
-(the pack wins for Florida and adds the rest: `BAREFOOT BAY`, `BRUCE`,
+curated state data: GeoNames names one place per ZIP, and many ZIPs
+are used by several. The list contains 657 of the Florida state data's 665 places
+(the state data wins for Florida and adds the rest: `BAREFOOT BAY`, `BRUCE`,
 `ENTERPRISE`, `INLET BEACH`, `PENSACOLA BEACH`, `PERDIDO KEY`, `WALNUT HILL`,
 `WEEKI WACHEE`).
 

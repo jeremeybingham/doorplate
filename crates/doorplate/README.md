@@ -89,7 +89,6 @@ The runnable tour is [`examples/quickstart.rs`](https://github.com/jeremeybingha
 | Feature | Default | Adds |
 |---|---|---|
 | `places-us` | yes | the national place and ZIP list, used to find and name the city |
-| `state-fl` | yes | the curated Florida pack |
 | `rayon` | no | parallel `Parser::parse_many` and `parse_fields_many` |
 | `corpus` | no | the golden-corpus loader and runner (`doorplate::corpus`); pulls in serde |
 

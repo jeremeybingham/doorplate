@@ -305,7 +305,7 @@ for `parse_many` on the same strings (a separate run on 2026-10-17 on all 14 thr
 | The extension module inside it | 4.1 MB |
 | `usaddress` and its dependencies, installed | 4.8 MB (the model is 134 KB; the rest is python-crfsuite) |
 
-The lexicon tables, the national place list and the Florida pack are compiled
+The lexicon tables, the national place list and the Florida state data are compiled
 in, so there is no model or data file to download or load. The tables are
 inside the crate, so the crate package (53 files, 3.6 MiB unpacked,
 0.8 MB compressed) and the Python source distribution (0.8 MB) carry them and

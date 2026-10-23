@@ -276,7 +276,7 @@ is a hint, never a fill: `state` stays empty, `missing_state` still fires, and
 input (one line or fields)
   -> clean and tokenize -> classify and tag -> assemble (ParsedAddress)
        -> USPS | RESO | key | slug | usaddress labels
-  every step reads the Pub 28 tables, the place list and the state packs (Lexicons)
+  every step reads the Pub 28 tables, the place list and the state data (Lexicons)
 ```
 
 The parser is rules plus place data. There is no machine-learned model, so the same
@@ -293,10 +293,10 @@ with warnings. [`docs/how-it-works.md`](docs/how-it-works.md) has the details.
 A **national list** of 50,375 places and 41,154 ZIPs (Census Gazetteer and GeoNames
 postal codes) lets the parser find the city on a line with no commas, tell
 `WINGATE ST, 32507` (a street) from `PALM BEACH, 33480` (a city), and complete a cut-off
-city. A **state pack** is hand-checked data for one state, added where real data
+city. A **state's data** is hand-checked data for one state, added where real data
 shows a need; Florida is the first. Layers only add to each other. `city` always keeps
 what the input said; the place found is reported beside it. Sources and licenses:
-[`docs/places.md`](docs/places.md) and [`docs/packs/fl.md`](docs/packs/fl.md).
+[`docs/places.md`](docs/places.md) and [`docs/states/fl.md`](docs/states/fl.md).
 
 ## Benchmarks
 
@@ -364,7 +364,7 @@ The next work, roughly in this order, depends on what real data shows:
   named warnings for known ambiguities, and line-2 diagnostics. (The `%` in-care-of line, Queens-style
   house numbers and `--version` provenance are in the changelog.)
 - **0.4.0: the foundation.** The architecture and the breaking cleanup, done once with the key
-  unchanged: the Florida pack folded into the core as built-in state data, an extension-ready core, the
+  unchanged: the Florida state data folded into the core as built-in state data, an extension-ready core, the
   unused reserved field removed, and a review of every public name.
 - **0.5.0: a `k3`.** The key-affecting rules are cut together, so stored keys are re-keyed once.
 - **A custom layer.** A way to add your own spellings, places, ZIPs and state-specific readings
@@ -412,7 +412,7 @@ and small invented sample files.
 | [`docs/usaddress-compat.md`](docs/usaddress-compat.md) | usaddress-shaped output, labels, migration |
 | [`docs/benchmarks.md`](docs/benchmarks.md) | Accuracy, speed and size |
 | [`docs/roadmap.md`](docs/roadmap.md) | Planned work, what is not planned, and what data would help |
-| [`docs/places.md`](docs/places.md), [`docs/packs/fl.md`](docs/packs/fl.md) | The place list and the Florida pack: sources and licenses |
+| [`docs/places.md`](docs/places.md), [`docs/states/fl.md`](docs/states/fl.md) | The place list and the Florida state data: sources and licenses |
 | [`tests/corpus/README.md`](tests/corpus/README.md) | The golden corpus format |
 | [`crates/doorplate-py/README.md`](crates/doorplate-py/README.md) | The Python package |
 | [`CHANGELOG.md`](CHANGELOG.md) | Release notes |
@@ -454,6 +454,6 @@ names are used only to say what the output follows or is compared with.
 ## License
 
 Licensed under either of [MIT](LICENSE-MIT) or [Apache-2.0](LICENSE-APACHE) at your
-option. The ZIP tables in `crates/doorplate/data/packs/` and
+option. The ZIP tables in `crates/doorplate/data/states/` and
 `crates/doorplate/data/places/` are GeoNames data under CC BY 4.0; see
 [`NOTICE`](NOTICE).
