@@ -85,7 +85,6 @@ class ParsedAddressDict(TypedDict):
     place: Place | None
     warnings: list[str]
     unparsed: str | None
-    confidence: float | None
     address_type: str
     key: str | None
     key_unit: str | None
@@ -148,8 +147,6 @@ class ParsedAddress:
     def warnings(self) -> list[str]: ...
     @property
     def unparsed(self) -> str | None: ...
-    @property
-    def confidence(self) -> float | None: ...
     @property
     def library_version(self) -> str: ...
     @property

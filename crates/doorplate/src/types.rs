@@ -618,8 +618,6 @@ impl fmt::Display for Warning {
 pub struct Diagnostics {
     pub warnings: Vec<Warning>,
     pub unparsed: Option<String>,
-    /// Reserved and always `None`; to be removed in 0.4.0.
-    pub confidence: Option<f32>,
     pub library_version: &'static str,
     /// The version of the curated data for the parse's state (`state.toml`,
     /// `Lexicons::state_data_version`), or `None` when the state has none.
@@ -658,7 +656,6 @@ impl Default for Diagnostics {
         Self {
             warnings: Vec::new(),
             unparsed: None,
-            confidence: None,
             library_version: VERSION,
             state_data_version: None,
             decisions: Vec::new(),

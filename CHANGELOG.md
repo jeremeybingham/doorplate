@@ -9,6 +9,9 @@ change to what an input produces needs a new key version.
 
 ### Changed (breaking)
 
+- **The reserved `confidence` field is removed** (#136): `Diagnostics::confidence` in Rust, `ParsedAddress.confidence`
+  in Python and the `confidence` key of `to_dict()`. It was always `None`; named warnings are the signal for how far to
+  trust a parse (#102). No other value and no key changes.
 - **State data is built in** (#101). The `state-fl` Cargo feature is gone: the Florida data is always compiled in, as
   every folder under `crates/doorplate/data/states/` is. `data/packs/` is now `data/states/`, `pack.toml` is
   `state.toml`, `docs/packs/` is `docs/states/`, the corpus file `fl-pack.jsonl` is `fl-state.jsonl`, and

@@ -254,12 +254,6 @@ impl PyParsedAddress {
         self.inner.diagnostics.unparsed.as_deref()
     }
 
-    /// Reserved and always `None`; to be removed in 0.4.0.
-    #[getter]
-    fn confidence(&self) -> Option<f32> {
-        self.inner.diagnostics.confidence
-    }
-
     #[getter]
     fn library_version(&self) -> &'static str {
         self.inner.diagnostics.library_version
@@ -402,7 +396,6 @@ impl PyParsedAddress {
             "place",
             "warnings",
             "unparsed",
-            "confidence",
         ] {
             d.set_item(name, slf.getattr(name)?)?;
         }
