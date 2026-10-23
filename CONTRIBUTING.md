@@ -51,7 +51,7 @@ cargo test --workspace --all-features
 # Python (in a virtualenv with maturin and pytest; `uv venv` and `uv pip install` are fine)
 cd crates/doorplate-py && maturin develop --release && cd ../..
 pytest crates/doorplate-py/tests
-pytest tools/ingest tools/harness tools/review   # the ingest tool (Python 3.11+), the harness and the review tool
+pytest tools/ingest tools/harness tools/review tools/compare   # the ingest tool (Python 3.11+), the harness, the review tool and the key comparison
 ```
 
 Rust 1.80 or later; the Python extension needs 1.83. Plain `cargo test` needs no Python. CI also reports line coverage of the Rust code to Codecov (a separate, informational job; `codecov.yml` lists what is left out): read it as a map of code the tests do not reach, not as a gate.

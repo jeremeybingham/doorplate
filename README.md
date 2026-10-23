@@ -361,13 +361,12 @@ The specification of the suite and the rules that keep it fair: [`docs/benchmark
 
 The next work, roughly in this order, depends on what real data shows:
 
-- **Fixes that do not change keys, first in 0.4.0.** A table of how reliable each warning is and
-  named warnings for known ambiguities, and line-2 diagnostics. (The `%` in-care-of line, Queens-style
-  house numbers and `--version` provenance are in the changelog.)
-- **0.4.0: the foundation.** The architecture and the breaking cleanup, done once with the key
-  unchanged: the Florida state data folded into the core as built-in state data, an extension-ready core, the
-  unused reserved field removed, and a review of every public name.
-- **0.5.0: a `k3`.** The key-affecting rules are cut together, so stored keys are re-keyed once.
+- **0.4.0, the foundation, then a `k3`.** One release in two phases. First the architecture and the breaking
+  cleanup, done with the key unchanged (the Florida state data folded into the core as built-in state data, an
+  extension-ready core, the unused reserved field removed, a review of every public name, `parse_tokens` cut like
+  usaddress, and the parser about 30% faster); a checkpoint proves no key moved. Then the evidence (a second review
+  source, per-state counts) and the parser rules together: a table of how reliable each warning is, line-2
+  diagnostics, and the key-affecting fixes cut as a `k3`, so stored keys are re-keyed once.
 - **A custom layer.** A way to add your own spellings, places, ZIPs and state-specific readings
   without editing the shipped tables, loaded at run time. Not in this release; examples of what
   you would add are the best input.

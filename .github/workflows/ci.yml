@@ -110,4 +110,4 @@ jobs:
         if: matrix.python != '3.10'
         run: |
           . .venv/bin/activate
-          pytest tools/ingest tools/harness tools/review -q
+          pytest tools/ingest tools/harness tools/review tools/compare -q

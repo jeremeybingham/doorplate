@@ -382,7 +382,7 @@ Candidates, ranked by the effect on batch throughput and memory (not by effort):
 | 3 | One pass in `normalize_key_cow` (no substring search for two spaces, one scan of the bytes instead of four) | **+3.5% measured** (38,500 to 39,800 per second); no allocation change | low: zero key and warning differences over 37.0M rows | done with #1 (#147): +7% of the 17% (50,300 against 47,300 per second) |
 | 4 | `Vec::with_capacity` in `tokenize` and `assemble` | 3 fewer allocations of 197, no speed change | none | measured, **not worth doing** |
 | 5 | Token text borrowed from the cleaned input instead of a `String` per token | the token-creating sites (`Piece::sub`, `tokenize`, `Piece::emit`) make about 28 of the 197 (14%), though not all of those are token `String`s; smaller than #0 and #2 | medium: `Token.text` is read in many places | attributed; do after #0 and #2 |
-| 6 | A columnar result for pandas and Polars (#24), since `to_dict()` costs 16 µs a row | large for that path, none for the parser | API (0.5.0 at the earliest) | an existing issue |
+| 6 | A columnar result for pandas and Polars (#24), since `to_dict()` costs 16 µs a row | large for that path, none for the parser | API (after 0.4.0) | an existing issue |
 
 Not done, and why: the chunk size of `parse_many` and a different allocator were not measured (a new dependency is
 ruled out anyway). The held-results memory in Python (2.46 KB each, against 928 bytes inline) is mostly the owned

@@ -127,25 +127,30 @@ the keys of a representative sample before and after: `tools/harness/compare.py`
 changed.
 
 **Holding policy.** A new key version makes every stored key re-key and is a breaking change, so
-key-affecting changes are held and cut together as one version, not shipped one by one. A finding
-that would change a key is not merged: its issue is labeled `version:K` and waits. The held list is
-that label: [issues labeled `version:K`](https://github.com/jeremeybingham/doorplate/issues?q=is%3Aissue+is%3Aopen+label%3Aversion%3AK).
-Changes that do not alter a key (a new warning, a new output field, tooling, docs) ship as usual in
-patch releases ([the roadmap](roadmap.md)).
+key-affecting changes are cut together as one version, not released one by one. A finding that would
+change a key waits until the foundation checkpoint has passed (the comparison with 0.3.1 over the large
+sources shows zero differences, and its keys are frozen: [`backlog.md`](backlog.md), "The checkpoint"); its
+issue is labeled `version:K`. After the checkpoint such a change merges to `main` as an ordinary pull request,
+measured against the frozen keys, and stays unreleased until the `k3` is cut. The list is that label:
+[issues labeled `version:K`](https://github.com/jeremeybingham/doorplate/issues?q=is%3Aissue+is%3Aopen+label%3Aversion%3AK).
+Changes that do not alter a key (a new warning, a new output field, tooling, docs) ship as usual
+([the roadmap](roadmap.md)).
 
 **What a new key version needs.**
 
 - an evidence base for each change (counts and a source, not a guess);
-- a measured before and after: the golden corpus, a run over the large local sources (how many keys
-  change, by class), and the benchmark suite with its private twin;
+- a measured before and after against the frozen checkpoint keys: the golden corpus, a run over the large local
+  sources (`tools/compare/key_diff.py diff`: how many keys change, by source and class), and the benchmark suite
+  with its private twin;
 - this page updated, a CHANGELOG note that keys changed (store the prefix, re-parse to re-key), and
   the corpus key expectations (`tests/corpus/keys.jsonl`, `tools/corpus/emit_expect.py`) rewritten
   from the spec.
 
-**When to cut it.** The owner's call at each release (decided 2026-10-20, issue #103). There is no count
-or evidence threshold: the project is one person's and has no users yet, so the call is made from how
-smoothly the held `version:K` items progress and what else turns up (new data sources, new findings)
-in the meantime.
+**When to cut it.** With 0.4.0 (decided 2026-10-23, issue #138: first planned as 0.5.0, then folded into 0.4.0
+because the project has no users). The evidence-first work (a second review source, the per-state counts) comes
+before the rules, and the owner's call decides when the held `version:K` items are enough. There is no count or
+evidence threshold: the project is one person's, so the call is made from how smoothly the items progress and
+what else turns up (new data sources, new findings) in the meantime.
 
 ## Version history
 

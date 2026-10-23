@@ -61,7 +61,7 @@ cargo test --workspace --all-features
 # Python (in a virtualenv with maturin and pytest)
 cd crates/doorplate-py && maturin develop --release && cd ../..
 pytest crates/doorplate-py/tests
-pytest tools/ingest tools/harness tools/review   # the ingest tool (Python 3.11+), the harness and the review tool
+pytest tools/ingest tools/harness tools/review tools/compare   # the ingest tool (Python 3.11+), the harness, the review tool and the key comparison
 
 # The benchmark suite (needs usaddress; the extension built with --release)
 python benchmarks/suite.py all
@@ -78,7 +78,8 @@ Plain `cargo test` needs no Python. Rust 1.80 or later; the Python extension nee
 - The canonical key format is a public contract. A change to what an input produces
   needs a new version prefix (`k3`) and an update to `docs/key-format.md`; never edit
   `k2` in place. `k2` was released with 0.3.0 and is frozen: a key-affecting change is a
-  `k3`, and the project wants more outside data before it makes one.
+  `k3`, cut with 0.4.0 after the foundation checkpoint and the evidence-first work (`docs/backlog.md`); until the
+  checkpoint passes, no parsing change merges.
 - Every USPS or RESO rule implemented must be traceable to a source in `docs/`
   (`docs/usps-pub28-notes.md`, `docs/reso-mapping.md`).
 - Private data (local exports, the geocode benchmark, the Netsyms database) stays in
