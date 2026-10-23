@@ -297,6 +297,7 @@ docs/                       this page and the references below
 | [`usps-pub28-notes.md`](usps-pub28-notes.md) | The source of every table and parser rule |
 | [`places.md`](places.md) | The national place list: sources, licenses, coverage |
 | [`states/fl.md`](states/fl.md) | The Florida state data |
+| [`api-surface.md`](api-surface.md) | The API surface audit: every public name and the decision for it |
 | [`usaddress-compat.md`](usaddress-compat.md) | usaddress-shaped output, label mapping, migration |
 | [`benchmarks.md`](benchmarks.md) | Accuracy, speed and size: the results |
 | [`benchmark-suite.md`](benchmark-suite.md) | The benchmark suite: what it holds, how it was built, the rules that keep it fair |

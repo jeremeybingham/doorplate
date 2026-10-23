@@ -64,6 +64,7 @@ New to the project? Read the [project README](../README.md), then
 | [`AGENTS.md`](../AGENTS.md), [`CLAUDE.md`](../CLAUDE.md) | The tool-neutral guide for AI agents (also a map of the repository), and our own process for Claude Code |
 | [`CHANGELOG.md`](../CHANGELOG.md) | What changed in each release, and when keys changed |
 | [`site/README.md`](../site/README.md) | The blog and the live demo (Jekyll, published to GitHub Pages): how to publish a post, how the demo is built and the rules for what a page may show |
+| [`api-surface.md`](api-surface.md) | The audit of every public name in Rust, Python and the command line, with one decision each (#135) |
 | [`backlog.md`](backlog.md) | How the issues are organized: the release plan, the labels and milestones, and the row-by-row key comparison that "key-neutral" means |
 | [`roadmap.md`](roadmap.md) | What is planned, what depends on what, and what is deliberately not planned |
 | [`CODE_OF_CONDUCT.md`](../CODE_OF_CONDUCT.md), [`SECURITY.md`](../SECURITY.md) | Conduct and reporting a vulnerability |

@@ -21,6 +21,7 @@ imply otherwise in docs or code comments.
 | Runnable examples (notebook, pandas and Polars pipelines, Rust) | [`examples/README.md`](examples/README.md) |
 | What the match key is and when it changes | [`docs/key-format.md`](docs/key-format.md) |
 | Output fields | [`docs/reso-mapping.md`](docs/reso-mapping.md), `to_usps()`, `to_display()`, `to_long()` |
+| The public API surface and the decisions behind each name | [`docs/api-surface.md`](docs/api-surface.md) |
 | Coming from usaddress | [`docs/usaddress-compat.md`](docs/usaddress-compat.md) |
 | Accuracy and speed, and how to rerun them | [`docs/benchmarks.md`](docs/benchmarks.md), [`benchmarks/README.md`](benchmarks/README.md) (every benchmark and which to run) |
 | The benchmark suite: what it holds and the rules that keep it fair (it is not a work list) | [`docs/benchmark-suite.md`](docs/benchmark-suite.md); data in [`benchmarks/suite/`](benchmarks/suite/README.md) |
