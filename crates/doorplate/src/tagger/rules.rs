@@ -235,7 +235,7 @@ impl Tagger<'_> {
     }
 
     /// Where the city starts in a run with no commas, and the rule that
-    /// found it. A place the state pack knows wins over the suffix rule
+    /// found it. A place the state data knows wins over the suffix rule
     /// (`MAIN ST WEST PALM BEACH`).
     fn city_in_line(&self, lo: usize, hi: usize) -> Option<(usize, Decision)> {
         self.place_city(lo, hi)
@@ -280,8 +280,8 @@ impl Tagger<'_> {
         Some(PlaceCtx { state, zip, hinted })
     }
 
-    /// `WINGATE ST, 32507`: with a state pack, a first segment of plain words
-    /// that ends in a street suffix and is no place the pack knows is the
+    /// `WINGATE ST, 32507`: with a state data, a first segment of plain words
+    /// that ends in a street suffix and is no place the state data knows is the
     /// street, not the city.
     fn known_street(&self, lo: usize, hi: usize) -> bool {
         let Some(ctx) = self.places else {
@@ -295,7 +295,7 @@ impl Tagger<'_> {
                 .is_none()
     }
 
-    /// In a line with no commas, where the city starts by the state pack's
+    /// In a line with no commas, where the city starts by the state data's
     /// place list: the longest run of words ending at `hi` that is a place,
     /// preferring one the ZIP belongs to. A listed misspelling counts only
     /// when the ZIP agrees. After a house number, a street name must be left
@@ -1364,7 +1364,7 @@ impl Tagger<'_> {
             self.set(h.prefix.clone(), Tag::HighwayPrefix);
             self.set(h.route..h.route + 1, Tag::HighwayRoute);
             // `SR 60` under a Florida hint: a spelling only the hinted
-            // state's pack has.
+            // state's data has.
             let hinted = self.places.is_some_and(|c| c.hinted) && !h.prefix.is_empty();
             if hinted
                 && self
@@ -1458,7 +1458,7 @@ impl Tagger<'_> {
     /// keeps NE as the predirectional.
     fn highway_at(&self, i: usize, hi: usize) -> Option<HighwayAt> {
         let lex = self.lex;
-        // A state pack may add prefix spellings (`SR` in Florida).
+        // A state data may add prefix spellings (`SR` in Florida).
         let state = self.places.map(|c| c.state);
         let try_at = |p: usize| {
             let (l, w) = longest_at(self.toks, p, hi, |s| match state {

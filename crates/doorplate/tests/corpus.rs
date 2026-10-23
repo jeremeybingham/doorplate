@@ -85,3 +85,30 @@ fn usps_output_round_trips_to_the_same_key() {
         bad.join("\n  ")
     );
 }
+
+/// Every folder under `data/states/` has a golden-corpus file of its own
+/// (`tests/corpus/<st>-state.jsonl`) with cases from that state, and the
+/// parser has state data for it (#101).
+#[test]
+fn every_state_with_data_has_a_corpus_file() {
+    if !have_corpus() {
+        return;
+    }
+    let states = Path::new(env!("CARGO_MANIFEST_DIR")).join("data/states");
+    let lex = doorplate::Lexicons::builtin();
+    for entry in std::fs::read_dir(&states).unwrap().flatten() {
+        if !entry.path().is_dir() {
+            continue;
+        }
+        let st = entry.file_name().to_string_lossy().to_lowercase();
+        let file = corpus_dir().join(format!("{st}-state.jsonl"));
+        assert!(
+            file.is_file(),
+            "data/states/{st}/ needs tests/corpus/{st}-state.jsonl"
+        );
+        assert!(
+            lex.has_state_data(&st.to_uppercase()),
+            "data/states/{st}/ is not compiled in"
+        );
+    }
+}

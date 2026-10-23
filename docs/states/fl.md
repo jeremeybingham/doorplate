@@ -1,8 +1,8 @@
-# Florida pack (`crates/doorplate/data/packs/fl/`)
+# Florida state data (`crates/doorplate/data/states/fl/`)
 
-The first curated state pack. It gives the parser Florida's place names, the
+The first curated state data. It gives the parser Florida's place names, the
 spellings seen in real data and the city each ZIP belongs to. It is compiled in
-with the `state-fl` cargo feature (on by default).
+in every build (there is no feature for it).
 
 This data helps the parser find and name the city. It does not say an
 address exists or can receive mail.
@@ -11,7 +11,7 @@ address exists or can receive mail.
 
 | File | Rows | Columns |
 |---|---|---|
-| `pack.toml` | | state, pack version, sources |
+| `state.toml` | | state, data version, sources |
 | `places.tsv` | 665 places (411 municipalities, 254 other places), 998 variants | `name`, `county`, `kind`, `sources`, `variants` |
 | `zips.tsv` | 1,473 ZIPs (107 shared with a second place) | `zip`, `place` (the main place), `shared` |
 | `places_added.tsv` | 62 more communities, all `place` | `name`, `county`, `kind`, `addresses` (distinct street addresses seen) |
@@ -43,32 +43,32 @@ address exists or can receive mail.
 | Place list, county, kind, variants, shared ZIPs | Curated by the authors from the sources below and from Florida county listings | MIT OR Apache-2.0 |
 | Place names (`census` in `sources`) | US Census Bureau, 2024 Gazetteer Files, places, Florida | Public domain |
 | ZIP to main place (`geonames` in `sources`) | GeoNames postal code export, `US.zip`, Florida rows, https://download.geonames.org/export/zip/ | CC BY 4.0, attribution in `NOTICE` |
-| Observed ZIP places (`zips_observed.tsv`), added communities and spellings, the `CR` and `SR` overrides | A Florida public-record address export (2025-10-10, 445,252 Florida addresses) and four further public-record address files (961,275 distinct Florida addresses together); and, from pack version 2026.10.5, the Florida DBPR licensee files (downloaded 2026-10-18; 1,794,538 distinct Florida street addresses with a city, from licensees' mailing and location addresses). Only city, ZIP and the parsed street key were used; no names are kept | Florida public record (Chapter 119, Florida Statutes) |
+| Observed ZIP places (`zips_observed.tsv`), added communities and spellings, the `CR` and `SR` overrides | A Florida public-record address export (2025-10-10, 445,252 Florida addresses) and four further public-record address files (961,275 distinct Florida addresses together); and, from data version 2026.10.5, the Florida DBPR licensee files (downloaded 2026-10-18; 1,794,538 distinct Florida street addresses with a city, from licensees' mailing and location addresses). Only city, ZIP and the parsed street key were used; no names are kept | Florida public record (Chapter 119, Florida Statutes) |
 
 `zips.tsv` is GeoNames data: each ZIP's main place is GeoNames' place name for
 it, copied as is. The `shared` column was curated by the authors. In
 `sources`, `original` marks the authors' first hand-made list and `observed`
 a place first seen in county listings.
 
-## Maintaining the pack
+## Maintaining the state data
 
 The files are edited by hand, and `build.rs` fails the build on a malformed or
 contradictory row: a name or variant that leads to two places, a ZIP that is
 the main ZIP of two places, a shared ZIP that is no place's main ZIP, or a
 name that is not upper-case words. Additions are add-only (a name or spelling
-whose key the pack already has is an error), and each names its evidence.
+whose key the state data already has is an error), and each names its evidence.
 
 The rules used for additions, so that a new one is judged the same way:
 
 - **A community** is added when at least 10 distinct street addresses use it
   as the city and it has one main ZIP. The county is GeoNames' county for that
-  ZIP, in the pack's spelling (`DADE`, `ST. LUCIE`).
+  ZIP, in the state data's spelling (`DADE`, `ST. LUCIE`).
 - **A spelling** of a known place is added when at least 10 distinct
   addresses use it. `LA BELLE` needs an entry because the place comparison
   rule reads `LA` as the suffix LANE; changing that rule would merge `LADUE`
   and `LA DUE` in Missouri, two different places.
 - **An observed ZIP pair** (a place written with a ZIP `zips.tsv` does not give
-  it) is kept when the city is a pack name or listed variant and either at
+  it) is kept when the city is a state's data name or listed variant and either at
   least 10 distinct street addresses use it and they are at least 1% of the
   ZIP's addresses, or at least 3 that are at least 5% of the ZIP's addresses
   (small and PO Box ZIPs). Fewer stay out: they are mostly a nearby big city
@@ -87,11 +87,11 @@ fail are left out (`PLANTATION KEY` is split across ZIPs, `HIGH POINT RESORT` is
 resort, `CIUDAD DE MIAMI` and `HIALEAH LAKES` are not places, and strings with
 mis-encoded accents are not names). Two spellings that the place key
 folds together (`GREEN ACRES CITY` and `GREENACRES CITY`; `SAN DESTIN` and
-`SANDESTIN`) need one row or none. Placeholders written as the city are not pack
+`SANDESTIN`) need one row or none. Placeholders written as the city are not state
 data (below). The 123 new observed pairs include `NAVARRE BEACH` in 32566 (389
 addresses).
 
-`pack.toml` `version` is `YYYY.MM.N`. Bump it whenever a `.tsv` file changes.
+`state.toml` `version` is `YYYY.MM.N`. Bump it whenever a `.tsv` file changes.
 It is not reported in parser output.
 
 ## How the parser uses it
@@ -110,10 +110,10 @@ It is not reported in parser output.
   spelling (`variant`), a cut-off city that only one of the ZIP's places
   starts with (`completed`), or the ZIP's main place when there is no city
   (`zip`). `city` itself is never changed.
-- **`zip_city_mismatch`**: the city is a known place, but the pack does not
+- **`zip_city_mismatch`**: the city is a known place, but the state data does not
   list the ZIP for it. GeoNames gives one place per ZIP, while USPS accepts
   several city names for many ZIPs, so this flags a disagreement with the
-  pack, not a wrong address (`FORT MCCOY` with 32182). On 440,000 distinct
+  state data, not a wrong address (`FORT MCCOY` with 32182). On 440,000 distinct
   Florida addresses it fires on about 0.4%, mostly a nearby big city written
   for a suburb.
 - **`CR` is CIRCLE** (`overrides.toml`). The base table reads `CR` after a
@@ -156,5 +156,5 @@ all observed spellings that raise `non_standard_abbreviation`.
   before), a long tail of about 7,000 (city, ZIP) pairs, mostly a nearby big city
   written for a suburb. These numbers are on the data the rows came from; the
   geocode benchmark's scores did not move.
-- A city that is no known place, with a ZIP the pack knows: `place` stays
+- A city that is no known place, with a ZIP the state data knows: `place` stays
   `None`.

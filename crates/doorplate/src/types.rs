@@ -178,8 +178,8 @@ impl fmt::Display for StateCode {
 }
 
 /// A city, town or community from the national place list (`data/places/`,
-/// `docs/places.md`) or a curated state pack (`data/packs/`,
-/// `docs/packs/`). Obtain one with [`crate::Lexicons::place`] or
+/// `docs/places.md`) or a curated state data (`data/states/`,
+/// `docs/states/`). Obtain one with [`crate::Lexicons::place`] or
 /// [`crate::Lexicons::zip_places`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Place {
@@ -233,7 +233,7 @@ pub enum PlaceSource {
     /// The city matches the place's name (case, punctuation and
     /// abbreviations aside: `W PALM BCH` is WEST PALM BEACH).
     Name,
-    /// The city is a spelling the pack lists for the place, usually a typo
+    /// The city is a spelling the state data lists for the place, usually a typo
     /// (`BOCA RATOM`).
     Variant,
     /// The city looks cut off, and exactly one place for the ZIP starts that
@@ -524,7 +524,7 @@ pub enum Warning {
     /// to it. A disagreement with the data, not a finding that the address
     /// is wrong.
     ///
-    /// Only raised in a state with a curated pack (`Lexicons::has_pack`;
+    /// Only raised in a state with curated state data (`Lexicons::has_state_data`;
     /// Florida today). The national list names one place per ZIP and many
     /// ZIPs are used by several, so elsewhere the warning would fire on
     /// addresses that are fine. `ParsedAddress::place` is
@@ -701,8 +701,8 @@ pub struct ParsedAddress {
     pub building: Option<String>,
     /// The city as the input wrote it.
     pub city: Option<String>,
-    /// The place the city stands for, from the state packs, or the ZIP's
-    /// main place when there is no city. `None` when no pack covers the
+    /// The place the city stands for, from the state data, or the ZIP's
+    /// main place when there is no city. `None` when no state data covers the
     /// state or nothing matched. Not part of any emitted address.
     pub place: Option<PlaceMatch>,
     pub state: Option<StateCode>,

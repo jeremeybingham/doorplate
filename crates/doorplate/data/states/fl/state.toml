@@ -1,12 +1,12 @@
-# Florida state pack: curated places and ZIPs behind the `state-fl` feature.
-# Provenance and licenses: docs/packs/fl.md. build.rs checks every file and
+# Florida state data: curated places and ZIPs, always compiled in.
+# Provenance and licenses: docs/states/fl.md. build.rs checks every file and
 # stops the build on a malformed or contradictory row.
 #
 # places.tsv  name, county, kind (municipality | place), sources, variants
 #             (`;`-separated spellings seen in real data, mostly typos)
 # zips.tsv    zip, main place, shared places (`;`-separated)
 # places_added.tsv  name, county, kind, addresses: communities seen in
-#             Florida address data that the pack and the national list lack
+#             Florida address data that the state data and the national list lack
 # variants_added.tsv  variant, place, addresses: more spellings of a place
 # zips_observed.tsv  zip, place, addresses: more shared places, seen in
 #             Florida address data

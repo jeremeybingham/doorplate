@@ -13,13 +13,10 @@ categories = ["parser-implementations", "text-processing"]
 rust-version.workspace = true
 
 [features]
-default = ["places-us", "state-fl"]
+default = ["places-us"]
 # National place list (data/places/, docs/places.md): places and ZIPs for every
-# state, DC and Puerto Rico, under the curated state packs.
+# state, DC and Puerto Rico, under the curated state data (data/states/).
 places-us = []
-# Curated state packs (data/packs/<st>/, docs/packs/): place names, their
-# spellings and ZIPs, used to find and name the city.
-state-fl = []
 # Parallel `Parser::parse_many`.
 rayon = ["dep:rayon"]
 # Golden-corpus loader and runner (`doorplate::corpus`), used by the corpus

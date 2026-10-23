@@ -81,7 +81,7 @@ pub(crate) enum Decision {
     BareUnit,
     /// A single letter joined to the house number (`428 B SOUTH MAIN ST`).
     NumberLetter,
-    /// The parser's `default_state` decided a tag (a city or a pack's
+    /// The parser's `default_state` decided a tag (a city or a state's data's
     /// highway spelling).
     DefaultState,
 }
@@ -127,7 +127,7 @@ pub(crate) struct Tagger<'a> {
     incomplete: Option<usize>,
     zero_number: bool,
     lens: LineLengths,
-    /// The state pack that applies, once the last line's state or ZIP is
+    /// The state data that applies, once the last line's state or ZIP is
     /// known.
     places: Option<PlaceCtx>,
     /// The parser's `default_state`, used when the input names no state.
@@ -136,7 +136,7 @@ pub(crate) struct Tagger<'a> {
     hint_used: std::cell::Cell<bool>,
 }
 
-/// The state whose pack is used to find the city, and the ZIP's places.
+/// The state whose data is used to find the city, and the ZIP's places.
 #[derive(Clone, Copy)]
 pub(crate) struct PlaceCtx {
     state: &'static str,
@@ -435,7 +435,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(all(feature = "places-us", feature = "state-fl"))]
+    #[cfg(feature = "places-us")]
     fn the_default_state_hint() {
         assert_eq!(
             decisions("281 EVELYN DR DOTHAN", Some("AL")),

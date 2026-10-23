@@ -5,8 +5,8 @@
 //! `data/*.toml` by `build.rs` into sorted static arrays, so lookups are a
 //! key normalization plus a binary search, with no runtime data loading.
 //!
-//! `Lexicons` is the one interface the tagger reads through. State packs plug
-//! in here: a pack adds spellings that resolve to the same Pub 28 entries, so
+//! `Lexicons` is the one interface the tagger reads through. State data plugs
+//! in here: it adds spellings that resolve to the same Pub 28 entries, so
 //! the value types keep pointing at the base tables.
 
 mod key;
@@ -130,7 +130,7 @@ fn le32(b: &[u8], at: usize) -> Option<u32> {
     ))
 }
 
-/// The `n`th `len`-byte record of a packed table.
+/// The `n`th `len`-byte record of state dataed table.
 fn record(table: &'static [u8], len: usize, n: usize) -> Option<&'static [u8]> {
     let start = n.checked_mul(len)?;
     table.get(start..start.checked_add(len)?)
@@ -218,7 +218,7 @@ fn find_zip(zip5: &str) -> Option<(u32, &'static [u32])> {
 }
 
 /// The places a ZIP belongs to: its main place, and any place it shares with
-/// (the ZIP straddles a boundary; only a state pack lists shared places).
+/// (the ZIP straddles a boundary; only a state data lists shared places).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ZipPlaces {
     main: Place,
@@ -285,13 +285,13 @@ impl Lexicons {
         })
     }
 
-    /// Street suffix as read in `state` (a USPS code): a state pack may read
+    /// Street suffix as read in `state` (a USPS code): a state data may read
     /// a spelling as another suffix (`CR` is CIRCLE in Florida, CREEK in the
     /// base table), always as [`MatchKind::Observed`]. Otherwise the same as
     /// [`Self::suffix`].
     pub fn suffix_in(&self, state: &str, s: &str) -> Option<Lookup<StreetSuffix>> {
         let key = format!("{state}|{}", normalize_key(s));
-        let Some(&i) = find(tables::PACK_SUFFIX_INDEX, &key) else {
+        let Some(&i) = find(tables::STATE_SUFFIX_INDEX, &key) else {
             return self.suffix(s);
         };
         let row = tables::SUFFIXES.get(usize::from(i))?;
@@ -356,13 +356,13 @@ impl Lexicons {
         })
     }
 
-    /// Highway prefix as read in `state` (a USPS code): a state pack may add
+    /// Highway prefix as read in `state` (a USPS code): a state data may add
     /// a spelling the base table lacks (`SR` is STATE ROAD in Florida, STATE
     /// ROUTE elsewhere), as [`MatchKind::Variant`] or [`MatchKind::Observed`]
-    /// as the pack says. Otherwise the same as [`Self::highway`].
+    /// as the state data says. Otherwise the same as [`Self::highway`].
     pub fn highway_in(&self, state: &str, s: &str) -> Option<Lookup<HighwayPrefix>> {
         let key = format!("{state}|{}", normalize_key(s));
-        let Some(&(i, kind)) = find(tables::PACK_HIGHWAY_INDEX, &key) else {
+        let Some(&(i, kind)) = find(tables::STATE_HIGHWAY_INDEX, &key) else {
             return self.highway(s);
         };
         let standard = *tables::HIGHWAYS.get(usize::from(i))?;
@@ -479,18 +479,18 @@ impl Lexicons {
         })
     }
 
-    /// Whether a curated state pack for `state` (a USPS code) is compiled in.
-    /// Every state has the national list; a pack adds spellings seen in real
+    /// Whether a curated state data for `state` (a USPS code) is compiled in.
+    /// Every state has the national list; state data adds spellings seen in real
     /// data and shared ZIPs, which is what makes a city that disagrees with
     /// its ZIP worth a warning (`Warning::ZipCityMismatch`).
-    pub fn has_pack(&self, state: &str) -> bool {
-        tables::PACK_STATES.contains(&state)
+    pub fn has_state_data(&self, state: &str) -> bool {
+        tables::STATES_WITH_DATA.contains(&state)
     }
 
     /// A place in `state` (a USPS code) by name or a listed spelling:
     /// `"W Palm Bch"` -> WEST PALM BEACH ([`MatchKind::Standard`]),
     /// `"BOCA RATOM"` -> BOCA RATON ([`MatchKind::Variant`]). `None` when
-    /// neither the national list nor a pack has it.
+    /// neither the national list nor state data has it.
     pub fn place(&self, state: &str, s: &str) -> Option<Lookup<Place>> {
         let key = format!("{state}|{}", self.place_key(s));
         let (i, kind) = find_place(&key)?;
@@ -744,7 +744,7 @@ mod tests {
         assert_eq!(h("RTE"), Some("ROUTE"));
         assert_eq!(h("RD"), Some("ROAD"));
         assert_eq!(h("LOOP"), Some("LOOP"));
-        // State-dependent; left to state packs.
+        // State-dependent; left to state data.
         assert_eq!(h("SR"), None);
     }
 
@@ -820,7 +820,6 @@ mod tests {
         assert_ne!(k("PALM BEACH"), k("PALM BEACH GARDENS"));
     }
 
-    #[cfg(feature = "state-fl")]
     #[test]
     fn place_lookup() {
         let p = |s| LEX.place("FL", s).map(|l| (l.value.name(), l.kind));
@@ -840,10 +839,10 @@ mod tests {
             (miami.state(), miami.county(), miami.kind()),
             ("FL", "DADE", PlaceKind::Municipality)
         );
-        assert!(LEX.has_pack("FL"));
-        assert!(!LEX.has_pack("GA"));
+        assert!(LEX.has_state_data("FL"));
+        assert!(!LEX.has_state_data("GA"));
         assert_eq!(LEX.places().filter(|p| p.state() == "FL").count(), {
-            // The pack's 665 places and 62 added communities, plus the national list's 405 Census
+            // The state data's 665 places and 62 added communities, plus the national list's 405 Census
             // places it lacks when that is compiled in.
             if cfg!(feature = "places-us") {
                 1132
@@ -855,7 +854,7 @@ mod tests {
 
     #[cfg(feature = "places-us")]
     #[test]
-    fn national_layer_sits_under_the_pack() {
+    fn national_layer_sits_under_the_state_data() {
         // The national list is compiled in for every state ...
         assert!(tables::PLACE_ROWS.len() / ROW_LEN > 50_000);
         assert!(tables::ZIP_INDEX.len() / ZIP_LEN > 41_000);
@@ -876,20 +875,20 @@ mod tests {
         assert!(LEX.is_place("LA GRANGE PARK"));
         assert!(!LEX.is_place("LA GRANGE PARKK"));
         assert!(LEX.places().any(|p| p.state() == "MO"));
-        assert!(!LEX.has_pack("MO"));
+        assert!(!LEX.has_state_data("MO"));
     }
 
-    #[cfg(all(feature = "places-us", feature = "state-fl"))]
+    #[cfg(feature = "places-us")]
     #[test]
-    fn national_rows_only_add_to_the_pack() {
-        // A Census place the pack lacks is added, with its county and kind.
+    fn national_rows_only_add_to_the_state_data() {
+        // A Census place the state data lacks is added, with its county and kind.
         let trinity = LEX.place("FL", "TRINITY").unwrap();
         assert_eq!(trinity.kind, MatchKind::Standard);
         assert_eq!(
             (trinity.value.county(), trinity.value.kind()),
             ("PASCO", PlaceKind::Place)
         );
-        // The pack's own row and spelling win.
+        // The state data's own row and spelling win.
         let miami = LEX.place("FL", "MIAMI").unwrap().value;
         assert_eq!(
             (miami.county(), miami.kind()),
@@ -899,27 +898,26 @@ mod tests {
             LEX.place("FL", "BOCA RATOM").unwrap().kind,
             MatchKind::Variant
         );
-        // The Census's Everglades is the pack's EVERGLADES CITY, not a second
+        // The Census's Everglades is the state data's EVERGLADES CITY, not a second
         // place (build_us.py renames it).
         assert_eq!(LEX.place("FL", "EVERGLADES"), None);
         assert_eq!(
             LEX.place("FL", "EVERGLADES CITY").unwrap().value.county(),
             "COLLIER"
         );
-        // A national-only place the pack's observed ZIPs name is shared.
+        // A national-only place the state data's observed ZIPs name is shared.
         let bellview = LEX.place("FL", "BELLVIEW").unwrap().value;
         let z = LEX.zip_places("32526").unwrap();
         assert_eq!(z.main().name(), "PENSACOLA");
         assert!(z.contains(&bellview));
-        // The pack's ZIP table is not touched: 32507 is still PENSACOLA.
+        // The state data's ZIP table is not touched: 32507 is still PENSACOLA.
         assert_eq!(LEX.zip_places("32507").unwrap().main().name(), "PENSACOLA");
     }
 
-    #[cfg(feature = "state-fl")]
     #[test]
-    fn pack_highway_override() {
+    fn state_highway_override() {
         // SR is not in the base table (State Road in Florida, State Route
-        // elsewhere); the Florida pack reads it as STATE ROAD.
+        // elsewhere); the Florida state data reads it as STATE ROAD.
         assert!(LEX.highway("SR").is_none());
         let fl = LEX.highway_in("FL", "sr").unwrap();
         assert_eq!(
@@ -939,10 +937,9 @@ mod tests {
         );
     }
 
-    #[cfg(feature = "state-fl")]
     #[test]
-    fn pack_suffix_override() {
-        // CR is CREEK in the base table and CIRCLE in the Florida pack.
+    fn state_suffix_override() {
+        // CR is CREEK in the base table and CIRCLE in the Florida state data.
         assert_eq!(LEX.suffix("CR").unwrap().value.abbr(), "CRK");
         let fl = LEX.suffix_in("FL", "cr").unwrap();
         assert_eq!(fl.value.abbr(), "CIR");
