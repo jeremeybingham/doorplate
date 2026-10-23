@@ -52,6 +52,8 @@ source and evidence. The order is in #138. `k2` started with 0.3.0; the route-nu
 - **A county written as the city** (#113), and a `VILLAGE OF` prefix (#68).
 - **From the first review of real rows (#125):** care-of text welded to the street (#127); units left in the street
   name (#128); spelled-out numbers (#129); lines with no street (#130); floor forms (#114).
+- **From the survey of #131:** misspelled `PO BOX` words (#165) and a department name read as a unit (#166). The rest
+  of #131 (campus boxes, text after the suffix) is in Later.
 - **Misparses found since:** a word split before a trailing `CT`/`WY`/`KY`/`MT` suffix (#143), `BAY` read as a unit
   (#144), `LOOP` plus a number read as a route (#145).
 - **Number forms:** a letter after a hyphenated house number (#100); a spaced letter after a rural route box (#95);
