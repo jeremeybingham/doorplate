@@ -34,6 +34,25 @@ jobs:
             for f in LICENSE-MIT LICENSE-APACHE NOTICE; do cmp "$f" "$d/$f"; done
           done
 
+  # Line coverage of the Rust code, uploaded to Codecov. A separate job: the instrumented rebuild
+  # takes a few minutes and must not slow the `rust` job. Informational only (see codecov.yml).
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: llvm-tools-preview
+      - uses: Swatinem/rust-cache@v2
+      - uses: taiki-e/install-action@cargo-llvm-cov
+      - run: cargo llvm-cov --workspace --all-features --lcov --output-path lcov.info
+      - uses: codecov/codecov-action@v5
+        with:
+          files: lcov.info
+          token: ${{ secrets.CODECOV_TOKEN }}
+          # A missing token or a Codecov outage never fails a pull request.
+          fail_ci_if_error: false
+
   sdist:
     runs-on: ubuntu-latest
     steps:
