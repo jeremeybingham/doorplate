@@ -44,9 +44,9 @@ words. The mapping above goes into the documentation as the reference.
 3. **Inputs are different from results.** `Fields` (five fixed parts of an address) is built by callers and
    stays open. `ParseOptions` (one field, `default_state`) will grow (the custom layer, #3). `KeyOptions` will not
    in practice: a new key option changes the key, which is a `k3`.
-4. **`Lexicons` has 28 public methods**, including helpers that exist for the tagger (`is_number_marker`,
+4. **`Lexicons` had 28 public methods**, including helpers that exist for the tagger (`is_number_marker`,
    `is_no_data_line`, `is_city_head`, `is_area_word`, `is_building_word`, `is_placeholder`, `is_country`,
-   `place_key`). They are public by accident. Which of them are the layer interface is the question of #137.
+   `place_key`). They were public by accident; #137 made them crate-private.
 5. **`corpus` is public behind a feature** (`Corpus`, `Report`, `Comparison`, `Case`, `load`, `baseline_path`,
    `read_baseline`, `write_baseline`): test infrastructure for this repository and `doorplate corpus test`.
 6. `lexicon::{normalize_key, MAX_FORM_WORDS, MAX_PLACE_WORDS}` are public for the build script and the layer.
@@ -62,7 +62,7 @@ words. The mapping above goes into the documentation as the reference.
 | `Fields`, `Span` | **Keep open** (callers build `Fields`; `Span` is two offsets and a field name) |
 | `ParseOptions` | **Done: `#[non_exhaustive]` with builder methods** (`ParseOptions::new().default_state("FL")`); it will grow with #3 |
 | `KeyOptions` | **Keep open**: its constructors `property()` and `unit()` are how it is built, and a new option would change the key |
-| `Lexicons` helpers | **Later: decided in #137** (the lexicon audit), with the layer interface. Until then they are not documented as stable |
+| `Lexicons` helpers | **Done (#137): the tagger's predicates (`is_*`, `place_key`) are crate-private**; the typed lookups, the place functions and the iterators stay public as the layer interface ([`how-it-works.md`](how-it-works.md), "What a layer can extend") |
 | `corpus` module | **Keep behind its feature, documented as unstable** (no semver promise) |
 | `lexicon::{normalize_key, MAX_*}` | **Keep** (needed by `build.rs`, which includes the same file) |
 | `VERSION` | **Keep** |
@@ -154,13 +154,13 @@ none of this applies, which is why the breaking changes above are made now and w
 - **In 0.4.0 (done):** the `#[non_exhaustive]` additions and the `ParseOptions` builder (Rust, breaking, no output
   change). The key comparison with 0.3.1 must show zero
   differences after them.
-- **Decided elsewhere:** the `Lexicons` surface (#137); `confidence` (#136, done); the state data version (#7, done).
+- **Decided elsewhere:** `confidence` (#136, done); the state data version (#7, done).
 - **0.5.0:** `parse_tokens` (#78), the reliability table and new warnings (#102), and anything that alters a key.
 
 ## Is it stable enough for a beta?
 
 The answer: **not at 0.4.0, yes at 0.5.0.** After 0.4.0 the Rust, Python and CLI surfaces above are
-settled except for three things that are still moving: the `Lexicons` interface and the custom layer (#137, #3), the
+settled except for three things that are still moving: the custom layer (#3, whose interface #137 settled), the
 warning set and its reliability table (#102), and the key itself (`k3`, held for 0.5.0). The beta notice should
 wait for the `k3`: a beta that changes its key one release later is not a beta. The alpha notice in the four READMEs
 stays until then.

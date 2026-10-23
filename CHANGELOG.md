@@ -15,6 +15,11 @@ change to what an input produces needs a new key version.
 
 ### Changed (breaking)
 
+- **The `Lexicons` predicates the tagger uses are crate-private** (#137): `is_country`, `is_building_word`,
+  `is_area_word`, `is_city_head`, `is_placeholder`, `is_no_data_line`, `is_number_marker` and `place_key`. The typed
+  lookups (`suffix`, `directional`, `unit`, `state`, `special`, `highway`, `military`, the place functions and the
+  table iterators) stay public. Three word lists that were hard-coded in the tagger (the unit filler words, the
+  unit-value joiners and the intersection connectors) are now behind `Lexicons`. No output or key changes.
 - **Result types and growable enums are `#[non_exhaustive]`** (#135), so a later field or variant is not a break.
   Structs: `ParsedAddress`, `Diagnostics`, `SourceInfo`, `PlaceMatch`, `Highway`, `RuralRoute`, `MilitaryBox`,
   `ComponentSpan`, `UspsAddress`, `DisplayAddress`, `ResoAddress`, `UsaddressTag`: read their public fields as

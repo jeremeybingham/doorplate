@@ -191,6 +191,46 @@ suffix in that state (`CR` is CIRCLE in Florida) or add a highway prefix (`SR` i
 STATE ROAD); each entry names its evidence. The shipped tables and state data are fixed
 at compile time.
 
+### What a layer can extend (the audit of #137)
+
+Everything the tagger and tokenizer know about words goes through `Lexicons`; the audit of 2026-10-23 found no
+table read around it. The word lists below were hard-coded in the tagger and are now behind `Lexicons` too
+(`is_number_filler`, `is_value_joiner`, `is_intersection_connector`); they are constants in `lexicon.rs` until a
+layer needs them as data. What a layer (#3) may add, by table:
+
+| Table | Source | Read through | A layer may |
+|---|---|---|---|
+| Street suffixes (202) | `data/suffixes.toml` | `suffix`, `suffix_in(state)` | add spellings; read a spelling differently in one state (`overrides.toml`) |
+| Directionals (8), unit designators (25) | `directionals.toml`, `units.toml` | `directional`, `unit` | add spellings (the values are Pub 28's and closed) |
+| States (62) | `states.toml` | `state` | add spellings only (the set is USPS's) |
+| Special words: PO box, box, rural route, highway contract, general delivery, attention | `special.toml` | `special` | add spellings |
+| Highway prefixes (15) | `special.toml` `[[highway]]` | `highway`, `highway_in(state)` | add; scope to a state |
+| Military kinds (5) and post offices (3) | `special.toml` | `military`, `military_post_office` | nothing: fixed by USPS |
+| Country words, placeholder phrases, area words, city heads, building words | `special.toml` | internal predicates | add words |
+| National places and ZIPs | `data/places/` | `place`, `is_place`, `zip_places` | add places, spellings, ZIPs |
+| State data (Florida) | `data/states/<st>/` | the same, plus `has_state_data`, `state_data_version` | this is the shape of a layer |
+| Missing-number markers (`NULL`, nine or more nines), the `UNASSIGNED LOCATION` line, the unit filler words (`NO`, `NUM`, `NUMBER`), the unit-value joiners (`&`, `AND`), the intersection connectors (`&`, `@`, `AND`, `AT`) | constants in `lexicon.rs` | internal predicates | add words, once they are data |
+
+What stays **code**, by design, and a layer cannot change:
+
+- The shapes: house numbers (plain, lettered, hyphenated, grid, fractions), ordinals (`ST`, `ND`, `RD`, `TH`, written in
+  `classify`, `tokenize`, `assemble` and `emit/display`), ZIP and route values, unit value shapes.
+- The input folding in `clean` (accents, dashes, fractions) and the output casing in `emit/display` (`MC` names, `Unit`).
+- Rules that name a table row: the penthouse and floor designators `PH` and `FL`, the standard names `HIGHWAY`,
+  `ROAD`, `COUNTY ROAD` and `COUNTY HIGHWAY`, `WASHINGTON` before the District, `U S` before a route. They need
+  those rows to exist, so a layer must not remove them (layering is add-only anyway).
+- One state-specific rule in code, which breaks the rule that the core has none: the Queens house-number exception in
+  `place.rs` (`NY` and `QUEENS`, #99). It moves to the state data when #8 gives that data a rule format.
+
+**The interface for #3.** A layer is a folder with the shape of a state's folder: `places.tsv`, `zips.tsv`, a
+state-scoped `overrides.toml`, and an `aliases.toml` for spellings of the base tables and the word lists above. It
+is add-only, validated on load with the checks `build.rs` runs (they move into the library for the loader),
+deterministic, and reported in the output beside `state_data_version` (its name and a hash). The loader reads it
+into the same tables `Lexicons` reads, so the tagger does not change: #3 is a loader and a command on top.
+`Lexicons` itself is the public lookup interface (`builtin`, the typed lookups, the place functions and the table
+iterators); the predicates the tagger uses (`is_*`, `place_key`) are crate-private, since a layer extends their data
+and does not call them.
+
 Cargo features: `rayon` (parallel `parse_many`), `corpus` (the golden-corpus runner;
 pulls in serde), and `places-us` (on by default). The default build
 has no runtime dependencies.
