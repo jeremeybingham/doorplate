@@ -206,6 +206,9 @@ pub(crate) fn is_letter(t: &str) -> bool {
 /// Longest run of tokens starting at `start` (and before `end`, within one
 /// segment) that `f` accepts, joined with spaces. Returns the value and the
 /// number of tokens.
+///
+/// The runs share their start, so each is a prefix of the longest: the tokens
+/// are joined once and `f` sees slices of that string, longest first.
 pub(crate) fn longest_at<T>(
     toks: &[Token],
     start: usize,
@@ -214,20 +217,30 @@ pub(crate) fn longest_at<T>(
 ) -> Option<(T, usize)> {
     let seg = toks.get(start)?.seg;
     let max = MAX_FORM_WORDS.min(end.saturating_sub(start));
-    (1..=max).rev().find_map(|w| {
-        let run = toks.get(start..start + w)?;
-        if run
-            .iter()
-            .any(|t| t.seg != seg || t.is_hash() || t.is_dash())
-        {
-            return None;
+    let run = toks.get(start..(start + max).min(toks.len()))?;
+    let n = run
+        .iter()
+        .take_while(|t| t.seg == seg && !t.is_hash() && !t.is_dash())
+        .count();
+    let mut joined = String::with_capacity(run[..n].iter().map(|t| t.text.len() + 1).sum());
+    let mut cut = [0usize; MAX_FORM_WORDS];
+    for (k, t) in run[..n].iter().enumerate() {
+        if k > 0 {
+            joined.push(' ');
         }
-        f(&join(run)).map(|v| (v, w))
-    })
+        joined.push_str(&t.text);
+        cut[k] = joined.len();
+    }
+    (1..=n)
+        .rev()
+        .find_map(|w| f(&joined[..cut[w - 1]]).map(|v| (v, w)))
 }
 
 /// Longest run of tokens ending just before `end` (and starting at or after
 /// `min`, within one segment) that `f` accepts.
+///
+/// The runs share their end, so each is a suffix of the longest: joined once,
+/// as in [`longest_at`].
 pub(crate) fn longest_ending<T>(
     toks: &[Token],
     min: usize,
@@ -236,15 +249,25 @@ pub(crate) fn longest_ending<T>(
 ) -> Option<(T, usize)> {
     let seg = toks.get(end.checked_sub(1)?)?.seg;
     let max = MAX_FORM_WORDS.min(end.saturating_sub(min));
-    (1..=max).rev().find_map(|w| {
-        let run = toks.get(end - w..end)?;
-        if run
-            .iter()
-            .any(|t| t.seg != seg || t.is_hash() || t.is_dash())
-        {
-            return None;
+    let run = toks.get(end - max..end)?;
+    let n = run
+        .iter()
+        .rev()
+        .take_while(|t| t.seg == seg && !t.is_hash() && !t.is_dash())
+        .count();
+    let run = &run[max - n..];
+    let mut joined = String::with_capacity(run.iter().map(|t| t.text.len() + 1).sum());
+    let mut at = [0usize; MAX_FORM_WORDS];
+    for (k, t) in run.iter().enumerate() {
+        if k > 0 {
+            joined.push(' ');
         }
-        f(&join(run)).map(|v| (v, w))
+        at[k] = joined.len();
+        joined.push_str(&t.text);
+    }
+    (1..=n).rev().find_map(|w| {
+        let from = if w == n { 0 } else { at[n - w] };
+        f(&joined[from..]).map(|v| (v, w))
     })
 }
 
