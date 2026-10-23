@@ -35,7 +35,7 @@ comparison with 0.3.1 shows zero differences. The order is in #138:
   feature and renaming `data/states/` to `data/states/` (#101); report the state data version in the output (#7).
 - **An extension-ready core** (#137): everything the tagger reads goes through `Lexicons`, and the layer interface
   is decided, so the custom layer (#3) is a loader later.
-- **API cleanup:** remove the reserved `confidence` field (#136), and an audit of every
+- **API cleanup:** remove the reserved `confidence` field (#136), cut `parse_tokens` like usaddress (#78: the emitter, not the parser, so no key changes), and an audit of every
   public name before they freeze (#135).
 
 ### 0.5.0: the `k3`
@@ -50,7 +50,7 @@ evidence. The order is in #139. `k2` started with 0.3.0; the route-number and bo
   the house number (`123 A MAIN ST`).
 - **Line-2 diagnostics** (#45): say when a second line is skipped as a copy, merged into the street or kept as a
   building name; and the `%` care-of line leaving a copy or a number-led name unparsed (#126).
-- **A county written as the city** (#113), a `VILLAGE OF` prefix (#68), and the `parse_tokens` token cuts (#78).
+- **A county written as the city** (#113), and a `VILLAGE OF` prefix (#68).
 - **From the first review of real rows (#125):** care-of text welded to the street (#127); units left in the street
   name (#128); spelled-out numbers (#129); lines with no street (#130); floor forms (#114).
 - **Number forms:** a letter after a hyphenated house number (#100); a spaced letter after a rural route box (#95);

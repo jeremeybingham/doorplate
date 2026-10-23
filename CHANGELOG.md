@@ -19,6 +19,14 @@ change to what an input produces needs a new key version.
 
 ### Changed (breaking)
 
+- **`parse_tokens` and `to_usaddress_tags` cut the input like `usaddress.tokenize`** (#78): `#` and `&` are tokens of
+  their own (`#7-C` is `#` and `7-C,`), trailing `. , ; )` stay on the token (`Ct,Mabank,TX` is `Ct,`, `Mabank,`, `TX`), a
+  lone comma gives no token, leading punctuation is dropped, and `&amp;` and `&#38;` are read as `&`. Before, the
+  tokens were whitespace-delimited. Checked token for token against usaddress on its 8,108 test strings and the 56,835
+  inputs of the benchmark suite. `tag()` and the labels are unchanged (99.3% identical dicts, as before). The parse and
+  the keys do not change: only this output view. The benchmark suite scores these tokens by character span, so its
+  figures move only where a different cut had cost a token: the `hand` stratum goes from 92.3% to 94.3% and the whole
+  suite from 92.2% to 92.3% (`docs/benchmarks.md`).
 - **The `Lexicons` predicates the tagger uses are crate-private** (#137): `is_country`, `is_building_word`,
   `is_area_word`, `is_city_head`, `is_placeholder`, `is_no_data_line`, `is_number_marker` and `place_key`. The typed
   lookups (`suffix`, `directional`, `unit`, `state`, `special`, `highway`, `military`, the place functions and the
