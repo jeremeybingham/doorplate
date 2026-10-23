@@ -20,22 +20,14 @@ some, see [Sharing messy data](../CONTRIBUTING.md#sharing-messy-data).
 Releases are staged, decided on 2026-10-22 (issue #103): each release can then be proven on its own. The
 rules for the labels, the milestones and the order are in [`backlog.md`](backlog.md). A change that does not
 alter a key is safe to merge any time; the architecture and the breaking API changes come first, with the key
-unchanged; the key-affecting rules are cut together after that, because every `k3` re-keys stored keys. There is
+unchanged and no parsing changes; the parser rules are cut together after that (0.5.0), because every `k3`
+re-keys stored keys. There is
 no 0.3.2: with no users, a release is not made for a minor fix (a 0.3.x patch needs a very good reason, see
 [`backlog.md`](backlog.md)).
 
-### First, inside 0.4.0: the key-neutral fixes
-
-- **Warnings that say how far to trust a parse** (#102): a table of how reliable each warning is, measured
-  on labeled data, and named warnings where the parser knows it is guessing, starting with a lone letter after
-  the house number (`123 A MAIN ST`).
-- **Line-2 diagnostics** (#45): say when a second line is skipped as a copy, merged into the street or kept as a
-  building name; and the `%` care-of line leaving a copy or a number-led name unparsed (#126).
-- **A county written as the city** (#113), and a `VILLAGE OF` prefix (#68) if its keys do not change.
-
 ### 0.4.0: the foundation (the key stays `k2`)
 
-The architecture and the breaking cleanup, done once, so the core is close to final. The gate: a row-by-row key
+The architecture and the breaking cleanup, done once, so the core is close to final, with no parsing changes. The gate: a row-by-row key
 comparison with 0.3.1 shows zero differences. The order is in #138:
 
 - **Profiling** first (#90), as a baseline.
@@ -43,7 +35,7 @@ comparison with 0.3.1 shows zero differences. The order is in #138:
   feature and renaming `data/packs/` to `data/states/` (#101); report the state data version in the output (#7).
 - **An extension-ready core** (#137): everything the tagger reads goes through `Lexicons`, and the layer interface
   is decided, so the custom layer (#3) is a loader later.
-- **API cleanup:** remove the reserved `confidence` field (#136), decide `parse_tokens` (#78), and an audit of every
+- **API cleanup:** remove the reserved `confidence` field (#136), and an audit of every
   public name before they freeze (#135).
 
 ### 0.5.0: the `k3`
@@ -53,6 +45,12 @@ what a `k3` needs are in [`key-format.md`](key-format.md) ("Changing the key"). 
 evidence. The order is in #139. `k2` started with 0.3.0; the route-number and box rules are in
 [`key-format.md`](key-format.md).
 
+- **Warnings that say how far to trust a parse** (#102, moved from 0.4.0 on 2026-10-23 with the other parsing issues): a table of how reliable each warning is, measured
+  on labeled data, and named warnings where the parser knows it is guessing, starting with a lone letter after
+  the house number (`123 A MAIN ST`).
+- **Line-2 diagnostics** (#45): say when a second line is skipped as a copy, merged into the street or kept as a
+  building name; and the `%` care-of line leaving a copy or a number-led name unparsed (#126).
+- **A county written as the city** (#113), a `VILLAGE OF` prefix (#68), and the `parse_tokens` token cuts (#78).
 - **From the first review of real rows (#125):** care-of text welded to the street (#127); units left in the street
   name (#128); spelled-out numbers (#129); lines with no street (#130); floor forms (#114).
 - **Number forms:** a letter after a hyphenated house number (#100); a spaced letter after a rural route box (#95);
