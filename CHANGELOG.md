@@ -15,6 +15,14 @@ change to what an input produces needs a new key version.
   `Lexicons::has_pack` is `Lexicons::has_state_data`. A test checks that every state folder has a corpus file
   (`tests/corpus/<st>-state.jsonl`). The parser's output and the keys do not change.
 
+### Added
+
+- **The state data version in the output** (#7): `provenance.state_data_version` in the command-line JSON and in
+  `to_dict()`, `ParsedAddress.state_data_version` in Python and `Diagnostics::state_data_version` in Rust,
+  beside the library version. It is the `version` in the `state.toml` of the address's state (Florida's is
+  `2026.10.5`), or `None` when the state has no curated data. `Lexicons::state_data_version(state)` is the lookup.
+  An added field only: no existing value or key changes.
+
 ## [0.3.1] - 2026-10-22
 
 A patch release: `doorplate --version`, the care-of line with a percent sign, and a quieter warning for Queens

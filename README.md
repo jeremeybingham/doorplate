@@ -253,7 +253,7 @@ state hint.
 
 ```sh
 doorplate parse "123 N Main St, Miami FL 33101" --pretty     # JSON: components, output, key, warnings, provenance
-doorplate --version                                          # the library version, also in the JSON as provenance.library_version
+doorplate --version                                          # the library version, also in the JSON as provenance.library_version (and provenance.state_data_version)
 doorplate parse-file in.csv --column address -o out.csv      # appends addr_* columns
 doorplate parse "281 EVELYN DR DOTHAN" --default-state AL
 doorplate parse "123 N Main St, Miami FL 33101" --display    # mixed case; --long spells words out (not Pub 28)
