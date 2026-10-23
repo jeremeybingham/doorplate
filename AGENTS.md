@@ -67,7 +67,7 @@ pytest tools/ingest tools/harness tools/review tools/compare   # the ingest tool
 python benchmarks/suite.py all
 ```
 
-Plain `cargo test` needs no Python. Rust 1.80 or later; the Python extension needs 1.83.
+Plain `cargo test` needs no Python. Rust 1.80 or later; the Python extension needs 1.83. CI also uploads Rust line coverage to Codecov (informational; `codecov.yml`).
 
 ## Rules that must hold
 

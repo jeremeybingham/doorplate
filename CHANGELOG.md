@@ -16,6 +16,9 @@ change to what an input produces needs a new key version.
   `is_place`, instead of a string per word and per expansion. A further 25% fewer allocations per parse (138 to 103)
   and about 4% more addresses per second. No output change (a test compares the new key with the old
   implementation on every place name, every suffix and 30,000 generated strings).
+- **Cheaper table lookups** (#147): the binary search over a lexicon table compares the first byte inline before it calls
+  `memcmp`, and the key normalization checks a string in one pass. About 17% more addresses per second on the benchmark
+  suite's mix (43,000 to 50,300), with no output change (tests compare both with the previous behavior).
 
 ### Changed (breaking)
 

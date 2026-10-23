@@ -1,0 +1,20 @@
+# Codecov settings (#121). Coverage is a map of untested code, not a gate: the checks only inform and never block a
+# merge. Rust only: the Python tests mostly exercise the thin PyO3 wrapper, which would add noise.
+coverage:
+  status:
+    project:
+      default:
+        informational: true
+    patch:
+      default:
+        informational: true
+
+# Code the Rust tests are not meant to reach.
+ignore:
+  - "crates/doorplate/build.rs"        # the table generator, run at build time
+  - "crates/doorplate/benches/**"
+  - "crates/doorplate/tests/**"
+  - "crates/doorplate/src/corpus.rs"   # the golden-corpus runner (test tooling, feature `corpus`)
+  - "crates/doorplate-wasm/**"         # browser glue for the live demo
+  - "crates/doorplate-py/**"           # the PyO3 wrapper; pytest drives it, not cargo test
+  - "fuzz/**"
