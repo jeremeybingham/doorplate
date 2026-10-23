@@ -329,6 +329,56 @@ holds every component and its source spans (about 1.4 KB each against about
 on several threads, so its peak is higher than a loop's. usaddress loads its
 model on its first call, so its memory after import understates it.
 
+## Profile: where the time goes
+
+Issue #90, measured on `main` at the start of 0.4.0 (2026-10-23), one machine (Intel i9-9900K, 8 cores, WSL2).
+The input is the suite's `natural` mix (19,586 addresses, one text form each; `benchmarks/profile_inputs.py`),
+parsed on one pinned CPU. Tools: `crates/doorplate/examples/profile_loop.rs` (timing),
+`profile_alloc.rs` (a counting allocator), and `benchmarks/profile_fold.py` (folds a `perf record -e cpu-clock -g`
+profile into tables; WSL2's perf cannot resolve symbols itself). Absolute numbers are this machine's.
+
+| | Result |
+|---|---|
+| One address, the mix, one thread | **26.0 µs** (38,400 per second); streets 26.3 µs, PO boxes 12.6, highways 14.7, military 10.4 |
+| Allocations per parse | **197** (4.35 KB requested); 102 for a PO box, 120 for a highway or military address |
+| `size_of::<ParsedAddress>()` | 928 bytes inline; 2.46 KB per result held in Python (230 MB for 97,930 results) |
+| `parse_many`, 1 / 2 / 4 / 8 / 14 threads | 37,400 / 69,100 / 132,000 / 224,000 / 283,000 per second (3.5x at 4, 7.6x at 14 on 8 cores): scaling is good, so allocator contention is not the problem |
+| From Python, per row (1 thread) | reading 6 attributes 0.5 µs, `key()` 0.6, `to_usps()` 1.7, **`to_dict()` 16.4** (63% of a parse) |
+
+Samples by pipeline stage (the stack, 10,788 samples; "inclusive" counts a stage anywhere in the stack):
+
+| Stage | Exclusive | Inclusive |
+|---|---|---|
+| libc (`memcmp`, `malloc`, `memcpy`) | 39% | |
+| `lexicon` (lookups, `normalize_key_cow`, `place_key`) | 31% | 43% |
+| `std`/`alloc`/`core` (Vec growth, iterators) | 16% | |
+| `tokenize` | 5% | 40% |
+| `tagger` | 3% | 44% |
+| `clean`, `classify`, `assemble`, `parser` | under 2% each | |
+
+The cost is not in one stage but in lexicon lookups made from everywhere: the tokenizer (`Piece::sub`, 33% inclusive,
+which tries route, unit and period readings on every piece) and the tagger (`delivery`, `last_line_in`, `street_from`)
+each call `suffix`, `directional`, `unit`, `special`, `state`, `is_place` and `place` for the same tokens. Every call
+normalizes its key (`normalize_key_cow`, 9.6% exclusive) and binary-searches a table (the `memcmp` in libc, whose
+callers are mostly the lexicon and Vec growth). `place_key` is 14% inclusive and allocates a `String` per candidate.
+
+Candidates, ranked by the effect on batch throughput and memory (not by effort):
+
+| # | Candidate | Effect | Risk | Status |
+|---|---|---|---|---|
+| 1 | Cache the normalized key (or the lookup result) per token, so a token is normalized and searched once and not once per rule | an estimate of 10 to 20% on throughput; fewer allocations | medium: `Token` and every `lex.*` call site change | not prototyped |
+| 2 | `place_key` without a `String` per candidate (compare in place, or one reused buffer) | an estimate of 3 to 6% | low | not prototyped |
+| 3 | One pass in `normalize_key_cow` (no substring search for two spaces, one scan of the bytes instead of four) | **+3.5% measured** (38,500 to 39,800 per second, best of five, three runs each); no allocation change | low: **zero key and warning differences** against 0.3.1 over 37.0M rows (`tools/compare/key_diff.py`: NAD, Netsyms, IRS, NY corporations, FMCSA, NC voter, FCC) | prototyped; below the 5% bar alone, so it rides with #1 |
+| 4 | `Vec::with_capacity` in `tokenize` and `assemble` | 3 fewer allocations of 197, no speed change | none | measured, **not worth doing** |
+| 5 | Token text borrowed from the cleaned input instead of a `String` per token | fewer allocations (about one per token); the share of the 197 is not attributed yet | medium: `Token.text` is read in many places | needs an allocation attribution first |
+| 6 | A columnar result for pandas and Polars (#24), since `to_dict()` costs 16 µs a row | large for that path, none for the parser | API (0.5.0 at the earliest) | an existing issue |
+
+Not done, and why: the allocations are counted but not attributed to call sites (no heap profiler is installed;
+`heaptrack` and `valgrind` need a download), so #5 is a guess until that is done; the chunk size of `parse_many`
+and a different allocator were not measured (a new dependency is ruled out anyway). The held-results memory in
+Python (2.46 KB each, against 928 bytes inline) is mostly the owned `String` and `Vec` fields of a result; a
+smaller result type is an API change.
+
 ## What these numbers do not say
 
 - They do not say an address is real or deliverable.
