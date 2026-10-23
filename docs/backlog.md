@@ -11,7 +11,7 @@ project has no users and the foundation went quickly; it saves a version and a r
 
 | Milestone | What it is | Gate |
 |---|---|---|
-| **0.4.0** | **Phase 1, the foundation:** the architecture (state data folded into the core, an extension-ready lexicon) and the breaking API cleanup, with the key unchanged (`k2`) and no parsing changes. **Phase 2, the `k3`:** the evidence first, then every parser rule, key-affecting or not (warnings and diagnostics included), cut together | Phase 1 ends at the **checkpoint**: zero key differences with 0.3.1 over the large sources, and those keys frozen as the baseline. The release: the measured before and after against that baseline, in [`key-format.md`](key-format.md) ("Changing the key") |
+| **0.4.0** | **Phase 1, the foundation:** the architecture (state data folded into the core, an extension-ready lexicon) and the breaking API cleanup, with the key unchanged (`k2`) and no parsing changes. **Phase 2, the `k3`:** the parser rules already listed in #138, key-affecting or not (warnings and diagnostics included), cut together; the list is closed (see "Scope" below) | Phase 1 ends at the **checkpoint**: zero key differences with 0.3.1 over the large sources, and those keys frozen as the baseline. The release: the measured before and after against that baseline, in [`key-format.md`](key-format.md) ("Changing the key"). The checkpoint passed on 2026-10-23 (commit `1819acd`: zero differences over 36.9M rows) |
 | **Later** | Wanted, not planned for a release: new API surface, anything waiting on demand or a decision | |
 | **Tooling** | Harness, review tool, benchmarks, CI: never shipped, never closed | |
 
@@ -22,6 +22,12 @@ on valid input: the never-panic rule), a security or supply-chain problem, or a 
 does not install, a crate that does not build). It goes on a `release/0.3` branch cut from the `v0.3.1` tag, with the
 full release checklist. The tracker (`tracker` label) lists the order in both phases: #138 (#139, the `k3` tracker,
 is merged into it).
+
+**Scope of phase 2** (decided 2026-10-23, issue #138). The list of rules is closed: phase 2 works the issues that are in the 0.4.0 milestone and does not go looking for new rules, so the backlog does not grow faster than it is worked. In practice:
+
+- A finding that surfaces while working an issue is filed under **Later**, unless the issue cannot be fixed correctly without it (then it is part of that issue).
+- Tooling is built **just in time**, for a rule that is in the list (as the checkpoint tool was), and not as a standing evidence phase. Tooling that only finds new things (the review tool's comparison mode, #132) or that no listed rule needs (#112, #53) waits in the **Tooling** milestone.
+- The state-dependent rules and the reading that feeds them (#8, #11, #29, #92) are in **Later**; #110, the small architectural fix, stays.
 
 **The checkpoint.** Until it is passed, no parsing change merges, so that the comparison with 0.3.1 can be zero
 and any difference is the refactor's. It is one run, `tools/compare/checkpoint.py` (it prints a plan and needs
@@ -56,7 +62,7 @@ not change includes the count.
 | `tracker` | A meta issue that lists other issues |
 
 The milestone says **which release**; `version:` says **what kind of change**; `area:` says **which part of the
-project**. An issue that is `version:K` is in 0.4.0, phase 2, unless it is a research item that feeds one.
+project**. An issue that is `version:K` is in 0.4.0, phase 2, if it is in the list of #138; any other `version:K` issue is in Later.
 
 ## Where an issue comes from
 

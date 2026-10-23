@@ -78,8 +78,8 @@ Plain `cargo test` needs no Python. Rust 1.80 or later; the Python extension nee
 - The canonical key format is a public contract. A change to what an input produces
   needs a new version prefix (`k3`) and an update to `docs/key-format.md`; never edit
   `k2` in place. `k2` was released with 0.3.0 and is frozen: a key-affecting change is a
-  `k3`, cut with 0.4.0 after the foundation checkpoint and the evidence-first work (`docs/backlog.md`); until the
-  checkpoint passes, no parsing change merges.
+  `k3`, cut with 0.4.0 from a closed list of rules (`docs/backlog.md`). The foundation checkpoint passed on
+  2026-10-23, so parsing work may merge; the frozen keys are in `local-data/keycompare/checkpoint-1819acd`.
 - Every USPS or RESO rule implemented must be traceable to a source in `docs/`
   (`docs/usps-pub28-notes.md`, `docs/reso-mapping.md`).
 - Private data (local exports, the geocode benchmark, the Netsyms database) stays in
