@@ -53,6 +53,12 @@ change to what an input produces needs a new key version.
 
 ### Added
 
+- **A warning for a county written as the city** (#113): `city_is_county` for `123 MAIN ST, HENNEPIN, MN 55401` (and
+  `MIAMI DADE`, `BROWARD`, `COOK`), where the city is no place of the state but the name of one of its counties (with
+  or without `COUNTY`), from the county names of the national place list. `place` stays empty and the city is kept as
+  written; the key reads the street, state and ZIP, so no key moves. A name that is both a place and a county
+  (`COOK`, MN) is a place and is not flagged.
+
 - **A warning for a letter after the house number that was read into the street name** (#102): `ambiguous_number_letter`
   for `123 A MAIN ST` (street `A MAIN`), where the letter may be the number's suffix (`123A`). The reading is not changed
   and no key moves. It is not raised when the letter is stuck to the number, is a directional, is the whole street name

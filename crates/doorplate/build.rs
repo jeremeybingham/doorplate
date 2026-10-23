@@ -625,6 +625,8 @@ struct PlaceTables {
     deferred: Vec<(String, String, String)>,
     /// Added (state, variant, place) spellings for a place the state data lacks.
     deferred_variants: Vec<(String, String, String)>,
+    /// `STATE|key` of every county name of a state, for `Lexicons::is_county`.
+    counties: std::collections::BTreeSet<String>,
 }
 
 /// The place tables: the state data (`data/states/<st>/`), in state
@@ -648,6 +650,13 @@ fn gen_places(
         gen_national(&dir.join("places"), ex, &states, &mut t)?;
         resolve_deferred(ex, &mut t)?;
     }
+    let expand = |w: &str| ex.get(w).cloned();
+    t.counties = t
+        .rows
+        .iter()
+        .filter(|r| !r.county.is_empty())
+        .map(|r| format!("{}|{}", r.state, place_key(&r.county, expand)))
+        .collect();
     emit_places(
         &states,
         &versions,
@@ -674,6 +683,7 @@ fn gen_state_data(
         max_words,
         deferred,
         deferred_variants,
+        ..
     } = t;
     let mut states = Vec::new();
     if let Ok(entries) = fs::read_dir(dir) {
@@ -1231,6 +1241,12 @@ fn emit_places(
     writeln!(
         out,
         "pub(crate) static PLACE_STATES: &[&str] = &{place_states:?};\n"
+    )
+    .ok();
+    writeln!(
+        out,
+        "/// `STATE|key` of each county name, sorted.\npub(crate) static COUNTY_INDEX: &[&str] = &{:?};\n",
+        t.counties.iter().collect::<Vec<_>>()
     )
     .ok();
     writeln!(out, "/// County names; a row's county number minus 1.").ok();
