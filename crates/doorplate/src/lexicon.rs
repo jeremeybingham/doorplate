@@ -392,29 +392,29 @@ impl Lexicons {
     /// "UNASSIGNED LOCATION" line may end in a short trailing code.
     /// Whether `s` is a name of the United States (`USA`, `UNITED STATES`).
     /// Source: `data/special.toml` `[country]`.
-    pub fn is_country(&self, s: &str) -> bool {
+    pub(crate) fn is_country(&self, s: &str) -> bool {
         find_str(tables::COUNTRIES, &normalize_key_cow(s))
     }
 
     /// A word that ends a building name (`TOWER` in `EAST TOWER`).
     /// Source: `data/special.toml` `[building]`.
-    pub fn is_building_word(&self, s: &str) -> bool {
+    pub(crate) fn is_building_word(&self, s: &str) -> bool {
         find_str(tables::BUILDING_WORDS, &normalize_key_cow(s))
     }
 
     /// A word that opens a neighborhood or district name before a city
     /// (`DOWNTOWN` in `DOWNTOWN MIAMI`). Source: `data/special.toml` `[area]`.
-    pub fn is_area_word(&self, s: &str) -> bool {
+    pub(crate) fn is_area_word(&self, s: &str) -> bool {
         find_str(tables::AREA_WORDS, &normalize_key_cow(s))
     }
 
     /// A suffix word that also opens a city name (`LAKE` in `LAKE GENEVA`).
     /// Source: `data/special.toml` `[city_head]`.
-    pub fn is_city_head(&self, s: &str) -> bool {
+    pub(crate) fn is_city_head(&self, s: &str) -> bool {
         find_str(tables::CITY_HEADS, &normalize_key_cow(s))
     }
 
-    pub fn is_placeholder(&self, s: &str) -> bool {
+    pub(crate) fn is_placeholder(&self, s: &str) -> bool {
         let key = normalize_key(s);
         if !key.chars().any(char::is_alphanumeric) {
             return true;
@@ -442,7 +442,7 @@ impl Lexicons {
     /// placeholder phrase, or a run of nine or more nines) or, once, a code
     /// of up to two letters, and at least one is a marker. Only whole lines match,
     /// so `NONE SUCH RD` is not one.
-    pub fn is_no_data_line(&self, s: &str) -> bool {
+    pub(crate) fn is_no_data_line(&self, s: &str) -> bool {
         let key = normalize_key(s);
         let (mut marker, mut codes) = (false, 0);
         for t in key.split(' ').filter(|t| !t.is_empty()) {
@@ -463,9 +463,26 @@ impl Lexicons {
         (t.len() >= 9 && t.bytes().all(|b| b == b'9')) || find_str(tables::PLACEHOLDERS, t)
     }
 
+    /// A filler word between a unit designator and its value: `SUITE NO. 407`,
+    /// `APT NUM 5`.
+    pub(crate) fn is_number_filler(&self, t: &str) -> bool {
+        matches!(t, "NO" | "NUM" | "NUMBER")
+    }
+
+    /// A word that joins two unit values: `UNIT 3 & 4`, `SUITE 5 AND 6`.
+    pub(crate) fn is_value_joiner(&self, t: &str) -> bool {
+        matches!(t, "&" | "AND")
+    }
+
+    /// A word that joins two streets at an intersection: `MAIN ST & OAK AVE`,
+    /// `MAIN ST AT OAK AVE`.
+    pub(crate) fn is_intersection_connector(&self, t: &str) -> bool {
+        matches!(t, "&" | "@" | "AND" | "AT")
+    }
+
     /// A marker that stands for a missing house number when it opens the
     /// street line: `NULL`, or a run of nine or more nines.
-    pub fn is_number_marker(&self, t: &str) -> bool {
+    pub(crate) fn is_number_marker(&self, t: &str) -> bool {
         t == "NULL" || (t.len() >= 9 && t.bytes().all(|b| b == b'9'))
     }
 
@@ -473,7 +490,7 @@ impl Lexicons {
     /// abbreviations do not count (`W. Palm Bch` and `WEST PALM BEACH`
     /// share one). `ST`, `FT`, `MT` stand for SAINT, FORT, MOUNT; other
     /// words are expanded through the directional and suffix tables.
-    pub fn place_key(&self, s: &str) -> String {
+    pub(crate) fn place_key(&self, s: &str) -> String {
         place_key::place_key(s, |w| {
             self.directional(w)
                 .map(|l| l.value.name().to_string())
@@ -491,7 +508,7 @@ impl Lexicons {
 
     /// The version of the curated data for `state` (a USPS code, the
     /// `version` in its `state.toml`), or `None` when there is none. A
-    /// parse's [`Diagnostics::state_data_version`] is this for its state.
+    /// parse's [`crate::Diagnostics::state_data_version`] is this for its state.
     pub fn state_data_version(&self, state: &str) -> Option<&'static str> {
         tables::STATE_DATA_VERSIONS
             .iter()

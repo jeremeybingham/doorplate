@@ -1648,7 +1648,7 @@ impl Tagger<'_> {
         }
         let s = last - 2;
         let seg = self.toks[last].seg;
-        let joined = matches!(self.text(last - 1), "&" | "AND");
+        let joined = self.lex.is_value_joiner(self.text(last - 1));
         let after_designator = self.toks[s - 1].is_hash()
             || longest_ending(self.toks, floor, s, |u| {
                 self.lex.unit(u).filter(|l| l.kind != MatchKind::Observed)
@@ -1822,7 +1822,7 @@ impl Tagger<'_> {
                 }
                 // "SUITE NO. 407", "APT NO 5": a filler word between the
                 // designator and its value.
-                if start > floor + 1 && matches!(self.text(start - 1), "NO" | "NUM" | "NUMBER") {
+                if start > floor + 1 && lex.is_number_filler(self.text(start - 1)) {
                     if let Some((_, w)) =
                         longest_ending(self.toks, floor, start - 1, |s| lex.unit(s))
                     {

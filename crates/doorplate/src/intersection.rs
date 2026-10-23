@@ -27,15 +27,13 @@ use crate::lexicon::Lexicons;
 use crate::tagger::Tag;
 use crate::tokenize::Token;
 
-const CONNECTORS: [&str; 4] = ["&", "@", "AND", "AT"];
-
 /// The tokens of the second street, from its connector through its suffix
 /// (and a directional after it), if the input is an intersection.
 pub(crate) fn find(toks: &[Token], lex: &Lexicons) -> Option<Range<usize>> {
     let is_suffix = |t: &Token| lex.suffix(&t.text).is_some();
     let is_dir = |t: &Token| lex.directional(&t.text).is_some();
     for (c, conn) in toks.iter().enumerate() {
-        if !CONNECTORS.contains(&conn.text.as_str()) {
+        if !lex.is_intersection_connector(&conn.text) {
             continue;
         }
         // The segment's tokens before and after the connector.
