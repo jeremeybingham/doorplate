@@ -7,6 +7,12 @@ change to what an input produces needs a new key version.
 
 ## [Unreleased]
 
+### Changed
+
+- **Faster parsing** (#156): the lexicon's multi-word lookups join the tokens once and slice, instead of building a
+  new string for every candidate length. About 30% fewer allocations per parse and about 6% more addresses per second
+  on the benchmark suite's mix. No output or key changes (0 differences against 0.3.1 over 37.0M rows).
+
 ### Changed (breaking)
 
 - **Result types and growable enums are `#[non_exhaustive]`** (#135), so a later field or variant is not a break.
