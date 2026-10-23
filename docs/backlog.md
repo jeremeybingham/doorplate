@@ -10,8 +10,8 @@ Releases are staged so each one can be proven on its own:
 
 | Milestone | What it is | Gate |
 |---|---|---|
-| **0.4.0** | The foundation: the key-neutral fixes (warnings, diagnostics, small rule fixes), the architecture (state data folded into the core, an extension-ready lexicon) and the breaking API cleanup. The key stays `k2` | A row-by-row key comparison with 0.3.1 shows **zero differences** |
-| **0.5.0** | The `k3`: every key-affecting parser rule, cut together | The measured before and after in [`key-format.md`](key-format.md) ("Changing the key") |
+| **0.4.0** | The foundation: the architecture (state data folded into the core, an extension-ready lexicon) and the breaking API cleanup. No parsing changes. The key stays `k2` | A row-by-row key comparison with 0.3.1 shows **zero differences** |
+| **0.5.0** | The `k3`: every parser rule, key-affecting or not (warnings and diagnostics included), cut together | The measured before and after in [`key-format.md`](key-format.md) ("Changing the key") |
 | **Later** | Wanted, not planned for a release: new API surface, anything waiting on demand or a decision | |
 | **Tooling** | Harness, review tool, benchmarks, CI: never shipped, never closed | |
 
@@ -24,11 +24,13 @@ cut from the `v0.3.1` tag, with the full release checklist. Nothing waits open "
 merges to `main` once 0.4.0 is out. The trackers (`tracker` label) list the order inside a release: #138 (0.4.0)
 and #139 (0.5.0).
 
-Inside 0.4.0 the key-neutral fixes go first, in small pull requests, each with its row-by-row key comparison with
-0.3.1, so a key change is caught the day it is made and not at the release.
+There are no parsing changes in 0.4.0 (decided 2026-10-23): every issue that changes what the parser reads or warns
+about is in 0.5.0, so the zero-difference comparison below runs once, on the 0.4.0 release commit, and not for every
+rule. Parsing is dealt with when the key version no longer matters.
 
 **The comparison.** Install the released version in a throwaway environment, parse whole records files with both
-builds (`parse_fields_many`) and compare `a.key()` row by row, by source. "Key-neutral" is a claim about this
+builds (`parse_fields_many`) and compare `a.key()` row by row, by source. `tools/compare/key_diff.py` does it: `dump`
+in each environment, then `diff` (counts only, never street text). "Key-neutral" is a claim about this
 comparison, not about warnings or flagged rows: #97 was called key-neutral from warning counts and then changed
 8.7% of the IRS file's keys (the 0.3.1 record in `key-format.md`). A rule pull request that says its keys do
 not change includes the count.

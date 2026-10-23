@@ -155,6 +155,7 @@ not published as accuracy.
 | `tools/harness/nad_score.py` | Scores doorplate against the labeled columns of the National Address Database sample | `tools/harness/README.md` |
 | `tools/compare/compare_usaddress.py` | The token-by-token comparison with usaddress that `suite.py` and `accuracy.py` use; also runs on any labeled XML or CSV | its docstring |
 | `tools/compare/oneline_fl.py`, `city_diff.py` | The one-line Florida check and the cities gained and lost (above) | above |
+| `tools/compare/key_diff.py` | The row-by-row key comparison between two builds over the records files (`dump` in each environment, then `diff`; counts only) | [`docs/backlog.md`](../docs/backlog.md) |
 | `tools/benchsuite/` | The suite's generator, label audit and inventories; rebuilds the suite from private data | [`docs/benchmark-suite.md`](../docs/benchmark-suite.md) |
 
 For a parse-rule pull request: the tests, the sample comparison, and for a rule on one-line input
