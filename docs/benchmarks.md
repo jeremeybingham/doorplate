@@ -362,22 +362,31 @@ each call `suffix`, `directional`, `unit`, `special`, `state`, `is_place` and `p
 normalizes its key (`normalize_key_cow`, 9.6% exclusive) and binary-searches a table (the `memcmp` in libc, whose
 callers are mostly the lexicon and Vec growth). `place_key` is 14% inclusive and allocates a `String` per candidate.
 
+Where the 197 allocations come from (`heaptrack` on 2,000 inputs, 10,000 parses; `benchmarks/profile_heap.py`,
+which counts each allocation against the innermost `doorplate::` frame of its stack):
+
+| Module | Share | Per parse | The big sites |
+|---|---|---|---|
+| `classify` | 48.5% | 95 | `longest_at` and `longest_ending` build a joined `String` for every candidate length (about 78 per parse), `join` 17 |
+| `lexicon` | 23.7% | 47 | `place_key` 29 (a `String` per candidate), `highway_in` 8.6, `place` 6.0 |
+| `tokenize` | 18.7% | 37 | `Piece::sub` 18.4, `glue_place` 8.7, `tokenize` 7.6 |
+| `country`, `assemble`, `tagger`, `parser`, `clean` | 9% | 18 | `country::strip_trailing` 5.4, `assemble` 5.1 |
+
 Candidates, ranked by the effect on batch throughput and memory (not by effort):
 
 | # | Candidate | Effect | Risk | Status |
 |---|---|---|---|---|
+| 0 | `longest_at` and `longest_ending` join the tokens once and slice (each shorter run is a prefix, or a suffix, of the longest) | **-30% allocations (197 to 138 per parse, 4.35 to 3.92 KB) and +6.0% throughput measured** (38,800 to 41,200 per second, best of five, three runs each, against `main`) | low: **zero key and warning differences** against 0.3.1 over 37.0M rows | prototyped on branch `perf-join-once` (commit `f096e1f`) |
 | 1 | Cache the normalized key (or the lookup result) per token, so a token is normalized and searched once and not once per rule | an estimate of 10 to 20% on throughput; fewer allocations | medium: `Token` and every `lex.*` call site change | not prototyped |
-| 2 | `place_key` without a `String` per candidate (compare in place, or one reused buffer) | an estimate of 3 to 6% | low | not prototyped |
-| 3 | One pass in `normalize_key_cow` (no substring search for two spaces, one scan of the bytes instead of four) | **+3.5% measured** (38,500 to 39,800 per second, best of five, three runs each); no allocation change | low: **zero key and warning differences** against 0.3.1 over 37.0M rows (`tools/compare/key_diff.py`: NAD, Netsyms, IRS, NY corporations, FMCSA, NC voter, FCC) | prototyped; below the 5% bar alone, so it rides with #1 |
+| 2 | `place_key` without a `String` per candidate (compare in place, or one reused buffer): 29 allocations per parse, the largest single site after #0 | an estimate of 3 to 6% | low | not prototyped |
+| 3 | One pass in `normalize_key_cow` (no substring search for two spaces, one scan of the bytes instead of four) | **+3.5% measured** (38,500 to 39,800 per second); no allocation change | low: zero key and warning differences over 37.0M rows | prototyped (branch `perf-normalize-key-cow`); below the 5% bar alone, so it rides with #1 |
 | 4 | `Vec::with_capacity` in `tokenize` and `assemble` | 3 fewer allocations of 197, no speed change | none | measured, **not worth doing** |
-| 5 | Token text borrowed from the cleaned input instead of a `String` per token | fewer allocations (about one per token); the share of the 197 is not attributed yet | medium: `Token.text` is read in many places | needs an allocation attribution first |
+| 5 | Token text borrowed from the cleaned input instead of a `String` per token | the token-creating sites (`Piece::sub`, `tokenize`, `Piece::emit`) make about 28 of the 197 (14%), though not all of those are token `String`s; smaller than #0 and #2 | medium: `Token.text` is read in many places | attributed; do after #0 and #2 |
 | 6 | A columnar result for pandas and Polars (#24), since `to_dict()` costs 16 µs a row | large for that path, none for the parser | API (0.5.0 at the earliest) | an existing issue |
 
-Not done, and why: the allocations are counted but not attributed to call sites (no heap profiler is installed;
-`heaptrack` and `valgrind` need a download), so #5 is a guess until that is done; the chunk size of `parse_many`
-and a different allocator were not measured (a new dependency is ruled out anyway). The held-results memory in
-Python (2.46 KB each, against 928 bytes inline) is mostly the owned `String` and `Vec` fields of a result; a
-smaller result type is an API change.
+Not done, and why: the chunk size of `parse_many` and a different allocator were not measured (a new dependency is
+ruled out anyway). The held-results memory in Python (2.46 KB each, against 928 bytes inline) is mostly the owned
+`String` and `Vec` fields of a result; a smaller result type is an API change.
 
 ## What these numbers do not say
 
