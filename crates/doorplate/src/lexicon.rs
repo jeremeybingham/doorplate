@@ -183,7 +183,7 @@ fn find_place(key: &str) -> Option<(u32, MatchKind)> {
     let at = search(index.len() / KEY_LEN, |n| {
         let r = record(index, KEY_LEN, n)?;
         let k = pool_str(tables::PLACE_KEYS, le32(r, 0)?, *r.get(4)?)?;
-        Some(k.cmp(key))
+        Some(cmp_keys(k, key))
     })?;
     let r = record(index, KEY_LEN, at)?;
     let kind = if *r.get(5)? == 0 {
@@ -205,7 +205,7 @@ fn any_place(key: &str) -> bool {
         )?;
         pool_str(tables::PLACE_KEYS, le32(r, 0)?, *r.get(4)?)?.get(3..)
     };
-    search(tables::PLACE_ANY.len() / 4, |n| Some(at(n)?.cmp(key))).is_some()
+    search(tables::PLACE_ANY.len() / 4, |n| Some(cmp_keys(at(n)?, key))).is_some()
 }
 
 /// A ZIP's main place row and shared place rows.
@@ -249,9 +249,20 @@ impl ZipPlaces {
     }
 }
 
+/// `a.cmp(b)`, with the first byte compared inline: in a binary search over a
+/// table most steps differ at the first byte, and this spares the call to
+/// `memcmp` (the order is the same as `str::cmp`).
+#[inline]
+fn cmp_keys(a: &str, b: &str) -> std::cmp::Ordering {
+    match a.as_bytes().first().cmp(&b.as_bytes().first()) {
+        std::cmp::Ordering::Equal => a.cmp(b),
+        other => other,
+    }
+}
+
 fn find<'a, V>(index: &'a [(&'static str, V)], key: &str) -> Option<&'a V> {
     index
-        .binary_search_by(|(k, _)| (*k).cmp(key))
+        .binary_search_by(|(k, _)| cmp_keys(k, key))
         .ok()
         .and_then(|i| index.get(i))
         .map(|(_, v)| v)
@@ -604,7 +615,7 @@ impl Lexicons {
 }
 
 fn find_str(sorted: &[&str], key: &str) -> bool {
-    sorted.binary_search(&key).is_ok()
+    sorted.binary_search_by(|k| cmp_keys(k, key)).is_ok()
 }
 
 #[cfg(test)]
@@ -952,6 +963,27 @@ mod tests {
                 any_place(&place_key_reference(&LEX, s)),
                 "{s:?}"
             );
+        }
+    }
+
+    #[test]
+    fn cmp_keys_is_str_cmp() {
+        let mut keys: Vec<String> = LEX
+            .suffixes()
+            .flat_map(|s| [s.abbr().to_string(), s.name().to_string()])
+            .collect();
+        keys.extend(LEX.places().map(|p| p.name().to_string()));
+        keys.extend(
+            [
+                "", " ", "A", "AB", "B", "é", "ß", "~", "\u{7f}", "AVE", "AVENUE",
+            ]
+            .map(String::from),
+        );
+        keys.truncate(600);
+        for a in &keys {
+            for b in &keys {
+                assert_eq!(cmp_keys(a, b), a.as_str().cmp(b.as_str()), "{a:?} {b:?}");
+            }
         }
     }
 
