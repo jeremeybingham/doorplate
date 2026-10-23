@@ -13,27 +13,50 @@
 /// returns a full form (the caller passes directional and Pub 28 suffix
 /// names, so `N` is `NORTH` and `SPGS` is `SPRINGS`). The words are joined
 /// with no spaces (`DE FUNIAK` is `DEFUNIAK`).
-pub fn place_key<F>(s: &str, expand: F) -> String
+// This file is compiled into the crate and into build.rs; each uses one of the two functions.
+#[allow(dead_code)]
+pub fn place_key<F, R>(s: &str, expand: F) -> String
 where
-    F: Fn(&str) -> Option<String>,
+    F: Fn(&str) -> Option<R>,
+    R: AsRef<str>,
 {
     let mut out = String::with_capacity(s.len());
+    place_key_into(s, expand, &mut out);
+    out
+}
+
+/// [`place_key`], appended to `out` (which is not cleared). Each word is
+/// written into `out` as it is read and replaced in place when it expands,
+/// so the call allocates nothing beyond `out`'s own growth.
+#[allow(dead_code)]
+pub fn place_key_into<F, R>(s: &str, expand: F, out: &mut String)
+where
+    F: Fn(&str) -> Option<R>,
+    R: AsRef<str>,
+{
     for word in s.split(|c: char| c.is_whitespace() || c == '-' || c == '/') {
-        let w: String = word
-            .chars()
-            .filter(|c| c.is_alphanumeric())
-            .flat_map(char::to_uppercase)
-            .collect();
-        match w.as_str() {
-            "" => {}
-            "ST" => out.push_str("SAINT"),
-            "FT" => out.push_str("FORT"),
-            "MT" => out.push_str("MOUNT"),
-            _ => match expand(&w) {
-                Some(full) => out.push_str(&full),
-                None => out.push_str(&w),
-            },
+        let start = out.len();
+        for c in word.chars().filter(|c| c.is_alphanumeric()) {
+            out.extend(c.to_uppercase());
+        }
+        let replacement = match &out[start..] {
+            "" => continue,
+            "ST" => Some("SAINT"),
+            "FT" => Some("FORT"),
+            "MT" => Some("MOUNT"),
+            _ => None,
+        };
+        match replacement {
+            Some(full) => {
+                out.truncate(start);
+                out.push_str(full);
+            }
+            None => {
+                if let Some(full) = expand(&out[start..]) {
+                    out.truncate(start);
+                    out.push_str(full.as_ref());
+                }
+            }
         }
     }
-    out
 }

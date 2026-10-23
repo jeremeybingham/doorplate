@@ -491,10 +491,40 @@ impl Lexicons {
     /// share one). `ST`, `FT`, `MT` stand for SAINT, FORT, MOUNT; other
     /// words are expanded through the directional and suffix tables.
     pub(crate) fn place_key(&self, s: &str) -> String {
-        place_key::place_key(s, |w| {
-            self.directional(w)
-                .map(|l| l.value.name().to_string())
-                .or_else(|| self.suffix(w).map(|l| l.value.name().to_string()))
+        let mut out = String::with_capacity(s.len());
+        self.place_key_into(s, &mut out);
+        out
+    }
+
+    /// [`Self::place_key`], appended to `out`.
+    fn place_key_into(&self, s: &str, out: &mut String) {
+        place_key::place_key_into(
+            s,
+            |w| {
+                self.directional(w)
+                    .map(|l| l.value.name())
+                    .or_else(|| self.suffix(w).map(|l| l.value.name()))
+            },
+            out,
+        );
+    }
+
+    /// Run `f` on the place key of `s`, with `prefix|` in front when given.
+    /// The key is built in a buffer kept per thread, so a lookup allocates
+    /// nothing once the buffer has grown.
+    fn with_place_key<T>(&self, prefix: Option<&str>, s: &str, f: impl FnOnce(&str) -> T) -> T {
+        thread_local! {
+            static KEY: std::cell::RefCell<String> = const { std::cell::RefCell::new(String::new()) };
+        }
+        KEY.with(|buf| {
+            let mut buf = buf.borrow_mut();
+            buf.clear();
+            if let Some(p) = prefix {
+                buf.push_str(p);
+                buf.push('|');
+            }
+            self.place_key_into(s, &mut buf);
+            f(&buf)
         })
     }
 
@@ -521,8 +551,7 @@ impl Lexicons {
     /// `"BOCA RATOM"` -> BOCA RATON ([`MatchKind::Variant`]). `None` when
     /// neither the national list nor state data has it.
     pub fn place(&self, state: &str, s: &str) -> Option<Lookup<Place>> {
-        let key = format!("{state}|{}", self.place_key(s));
-        let (i, kind) = find_place(&key)?;
+        let (i, kind) = self.with_place_key(Some(state), s, find_place)?;
         let value = place_row(i)?;
         Some(Lookup { value, kind })
     }
@@ -530,7 +559,7 @@ impl Lexicons {
     /// Whether `s` names a place (by name, not a listed misspelling) in any
     /// state.
     pub fn is_place(&self, s: &str) -> bool {
-        any_place(&self.place_key(s))
+        self.with_place_key(None, s, any_place)
     }
 
     /// The places a 5-digit ZIP belongs to.
@@ -833,6 +862,96 @@ mod tests {
             "ACCESS UNDETERMINED",
         ] {
             assert!(!LEX.is_placeholder(s), "{s:?}");
+        }
+    }
+
+    /// The place key as it was written before the allocation-free version
+    /// (#148): a new string for every word and every expansion.
+    fn place_key_reference(lex: &Lexicons, s: &str) -> String {
+        let mut out = String::with_capacity(s.len());
+        for word in s.split(|c: char| c.is_whitespace() || c == '-' || c == '/') {
+            let w: String = word
+                .chars()
+                .filter(|c| c.is_alphanumeric())
+                .flat_map(char::to_uppercase)
+                .collect();
+            match w.as_str() {
+                "" => {}
+                "ST" => out.push_str("SAINT"),
+                "FT" => out.push_str("FORT"),
+                "MT" => out.push_str("MOUNT"),
+                _ => match lex
+                    .directional(&w)
+                    .map(|l| l.value.name().to_string())
+                    .or_else(|| lex.suffix(&w).map(|l| l.value.name().to_string()))
+                {
+                    Some(full) => out.push_str(&full),
+                    None => out.push_str(&w),
+                },
+            }
+        }
+        out
+    }
+
+    #[test]
+    fn place_key_matches_the_reference_on_names_and_generated_text() {
+        let mut inputs: Vec<String> = LEX.places().map(|p| p.name().to_string()).collect();
+        inputs.extend(
+            LEX.suffixes()
+                .flat_map(|s| [s.abbr().to_string(), s.name().to_string()]),
+        );
+        inputs.extend(
+            [
+                "St. Petersburg",
+                "W. Palm Bch",
+                "N FT MYERS",
+                "LAND O' LAKES",
+                "OPA-LOCKA",
+                "",
+                "  ",
+                "-/",
+                "ß",
+                "ÀÉ ñ",
+                "a\tb\nc",
+            ]
+            .map(String::from),
+        );
+        // Deterministic generated text: words from a pool that has the special cases, case,
+        // punctuation, hyphens, slashes, whitespace and non-ASCII letters.
+        let pool = [
+            "st", "St.", "FT", "mt", "N", "ne", "SPGS", "Beach", "bch", "de", "O'", "x1", "9", ".",
+            "-", "/", "ß", "É", "ǅ", "  ", "\t", "AVE", "Saint",
+        ];
+        let mut x: u64 = 0x9E37_79B9_7F4A_7C15;
+        for _ in 0..30_000 {
+            let mut s = String::new();
+            x ^= x << 13;
+            x ^= x >> 7;
+            x ^= x << 17;
+            let words = (x % 6) as usize;
+            for k in 0..words {
+                x ^= x << 13;
+                x ^= x >> 7;
+                x ^= x << 17;
+                if k > 0 && x % 3 != 0 {
+                    s.push(' ');
+                }
+                s.push_str(pool[(x >> 8) as usize % pool.len()]);
+            }
+            inputs.push(s);
+        }
+        for s in &inputs {
+            assert_eq!(LEX.place_key(s), place_key_reference(&LEX, s), "{s:?}");
+            // The lookups use the same key, through the per-thread buffer.
+            let by_state = LEX.place("FL", s).map(|l| (l.value.name(), l.kind));
+            let reference = find_place(&format!("FL|{}", place_key_reference(&LEX, s)))
+                .and_then(|(i, kind)| place_row(i).map(|v| (v.name(), kind)));
+            assert_eq!(by_state, reference, "{s:?}");
+            assert_eq!(
+                LEX.is_place(s),
+                any_place(&place_key_reference(&LEX, s)),
+                "{s:?}"
+            );
         }
     }
 
