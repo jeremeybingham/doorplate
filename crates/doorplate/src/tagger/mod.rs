@@ -261,6 +261,22 @@ impl<'a> Tagger<'a> {
         if unit && !street_like && has(&self.tags, Tag::StreetNumber) {
             self.warn(Warning::MissingStreetName);
         }
+        // `123 A MAIN ST`: a single letter right after a plain house number that
+        // went into a street name of more than one word. It may be the number's
+        // suffix (`123A`); the text cannot say (#102).
+        let letter_in_name = self.tags.windows(3).enumerate().any(|(k, w)| {
+            let (num, letter) = (&self.toks[k], &self.toks[k + 1]);
+            w == [Tag::StreetNumber, Tag::Name, Tag::Name]
+                && num.seg == letter.seg
+                && num.text.bytes().all(|b| b.is_ascii_digit() || b == b'-')
+                && letter.text.len() == 1
+                // `U S ROUTE 23` is the US highway, not number 20192U (as in `number_letter`).
+                && !(letter.text == "U" && self.toks.get(k + 2).is_some_and(|n| n.text == "S"))
+                && letter.text.bytes().all(|b| b.is_ascii_alphabetic())
+        });
+        if letter_in_name {
+            self.warn(Warning::AmbiguousNumberLetter);
+        }
         if has(&self.tags, Tag::Unparsed) {
             self.warn(Warning::UnparsedRemainder);
         }

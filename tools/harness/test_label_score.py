@@ -94,3 +94,26 @@ def test_unknown_field_is_refused(tmp_path):
     write(f, [("1", "t", "site", "1 A ST", None, None, None, None, None, "1", None, "A", "ST", None, None)], COLS)
     with pytest.raises(SystemExit):
         scored(str(f), "--fields", "bogus")
+
+
+def test_by_warning_counts_each_warning_against_the_labels(tmp_path):
+    f = tmp_path / "r.parquet"
+    write(f, [
+        # No warning, labels agree.
+        ("1", "t", "site", "123 OAK ST", None, "MIAMI", "FL", "33101", None, "123", None, "OAK", "ST", None, None),
+        # `123 A MAIN ST` carries ambiguous_number_letter; the label calls the letter the number's suffix: we differ.
+        ("2", "t", "site", "123 A MAIN ST", None, "MIAMI", "FL", "33101", None, "123A", None, "MAIN", "ST", None, None),
+        # The same warning where the label agrees with us (an initial in the name).
+        ("3", "t", "site", "820 A PHILIP RANDOLPH BLVD", None, "MIAMI", "FL", "33101", None, "820", None,
+         "A PHILIP RANDOLPH", "BLVD", None, None),
+    ], COLS)
+    res, fields = scored(str(f), "--by-warning")
+    key = ("t", "site")
+    w = res.w[key + ("ambiguous_number_letter",)]
+    assert w["rows"] == 2 and w["number: labeled"] == 2 and w["number: differ"] == 1
+    assert res.w[key + ("(none)",)]["rows"] == 1 and res.w[key + ("(none)",)]["number: differ"] == 0
+    # The per-warning rows add up to the rows (each of these rows has one warning, or none).
+    assert sum(v["rows"] for k, v in res.w.items() if k[:2] == key) == res.c[key]["rows"]
+    text = ls.render_by_warning(res, fields)
+    assert "| `ambiguous_number_letter` | 2 |" in text and "1 / 2 (50.0%)" in text
+    assert "A MAIN" not in text and "PHILIP" not in text  # counts only

@@ -108,8 +108,9 @@ Warnings have a stable snake_case `code()` meant for a database column:
 `non_standard_abbreviation`, `missing_city`, `missing_state`, `unknown_state`,
 `missing_zip`, `invalid_zip`, `zip_city_mismatch`, `default_state_applied`,
 `repeated_label`, `country_ignored`, `intersection_detected`, `second_line_skipped`,
-`second_line_in_street` and `second_line_building`. A warning is a finding about the
-parse, not a statement that the address is wrong.
+`second_line_in_street`, `second_line_building` and `ambiguous_number_letter`. A warning is a
+finding about the parse, not a statement that the address is wrong. What each one tells you, and how
+often rows that carry it disagree with labeled data: [`warnings.md`](warnings.md).
 
 ## Choices that shape the output
 
@@ -146,6 +147,10 @@ parse, not a statement that the address is wrong.
   building name, which no emitter prints). A unit, an attention line, the city, state and ZIP,
   or a street that is on line 2 alone get no warning: they are components of their own. These
   are warnings, like `country_ignored`, not a separate list; none changes a component or a key.
+- **A letter after the house number that went into the street name is reported** (#102):
+  `123 A MAIN ST` is street `A MAIN` with `ambiguous_number_letter`, because the letter may be the
+  number's suffix (`123A`). It is not raised when the letter is stuck to the number, is a directional,
+  is the whole street name (`123 A ST`) or is the `U` of `U S ROUTE`. The reading is not changed.
 - **Intersections have no key.** `MAIN ST & 1ST AVE` raises
   `intersection_detected`: the first street is parsed, the second stays in
   `unparsed`, and `key()` and `slug()` are `None`, because the first street alone
@@ -346,6 +351,7 @@ docs/                       this page and the references below
 | [`usps-pub28-notes.md`](usps-pub28-notes.md) | The source of every table and parser rule |
 | [`places.md`](places.md) | The national place list: sources, licenses, coverage |
 | [`states/fl.md`](states/fl.md) | The Florida state data |
+| [`warnings.md`](warnings.md) | What each warning tells you and how often it is wrong |
 | [`api-surface.md`](api-surface.md) | The API surface audit: every public name and the decision for it |
 | [`usaddress-compat.md`](usaddress-compat.md) | usaddress-shaped output, label mapping, migration |
 | [`benchmarks.md`](benchmarks.md) | Accuracy, speed and size: the results |

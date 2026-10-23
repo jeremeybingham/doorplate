@@ -72,6 +72,9 @@ def parse_args(argv=None):
     ap.add_argument("--any-number", action="store_true",
                     help="with --labels: score the other fields even when the house numbers differ (by default "
                          "they are skipped: a voter who moved within a ZIP code has another street, not a disagreement)")
+    ap.add_argument("--by-warning", action="store_true",
+                    help="also print, per warning code, the rows with it and how often we differ from the labels "
+                         "on those rows (counts only): the measured reliability of each warning (#102)")
     ap.add_argument("--limit", type=int, help="score only about this many rows (a test slice)")
     ap.add_argument("--chunk-rows", type=int, default=200_000)
     ap.add_argument("--top", type=int, default=8)
@@ -121,6 +124,7 @@ class Result:
         self.dropped = Counter()             # (src, role) -> pairs dropped for a different ZIP
         self.pairs_seen = Counter()          # (src, role) -> pairs joined
         self.other_number = Counter()        # (src, role) -> pairs whose other fields were skipped (number differs)
+        self.w = defaultdict(Counter)        # (src, role, warning code or "(none)") -> rows, "<field>: labeled/differ"
 
 
 def compare(row, lab, a, fields, canon, res, guard_number=False):
@@ -134,11 +138,18 @@ def compare(row, lab, a, fields, canon, res, guard_number=False):
         c["no result"] += 1
         return
     c["rows"] += 1
+    codes = [str(w) for w in a.warnings] or ["(none)"]
+    for code in codes:
+        res.w[key + (code,)]["rows"] += 1
 
     def count(field, labeled, differ, want="", got=""):
         if not labeled:
             return
         c[f"{field}: labeled"] += 1
+        for code in codes:
+            res.w[key + (code,)][f"{field}: labeled"] += 1
+            if differ:
+                res.w[key + (code,)][f"{field}: differ"] += 1
         if differ:
             c[f"{field}: differ"] += 1
             res.states[key + (field,)][state] += 1
@@ -283,6 +294,29 @@ def render(res, fields, top, mode):
     return "\n".join(out)
 
 
+def render_by_warning(res, fields):
+    """Per warning code: the rows that carry it and, for each field, the labeled rows among them and the share
+    where we differ. A row with several warnings counts under each. The first line is every row, the baseline."""
+    out = []
+    for key in sorted(res.c):
+        src, role = key
+        c = res.c[key]
+        out += [f"## {src} / {role}: by warning ({c['rows']:,} rows scored)", "",
+                "| warning | rows | " + " | ".join(f"{f}: differ / labeled" for f in fields) + " |",
+                "|---|---|" + "---|" * len(fields)]
+
+        def cells(counter):
+            return " | ".join(f"{counter[f'{f}: differ']:,} / {counter[f'{f}: labeled']:,} "
+                              f"({100 * counter[f'{f}: differ'] / counter[f'{f}: labeled']:.1f}%)"
+                              if counter[f"{f}: labeled"] else "-" for f in fields)
+
+        out.append(f"| (every row) | {c['rows']:,} | {cells(c)} |")
+        rows = sorted(((k[2], v) for k, v in res.w.items() if k[:2] == key), key=lambda kv: -kv[1]["rows"])
+        out += [f"| `{code}` | {v['rows']:,} | {cells(v)} |" for code, v in rows]
+        out.append("")
+    return "\n".join(out)
+
+
 def main(argv=None):
     args = parse_args(argv)
     for p in (args.records, args.labels):
@@ -308,6 +342,8 @@ def main(argv=None):
     except Exception as e:
         sys.exit(f"scoring failed: {type(e).__name__}")
     text = render(res, fields, args.top, "pair" if args.labels else "own")
+    if args.by_warning:
+        text = render_by_warning(res, fields) + "\n" + text
     print()
     print(text)
     if args.out:

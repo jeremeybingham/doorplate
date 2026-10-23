@@ -53,7 +53,7 @@ dp.parse("281 EVELYN DR DOTHAN", default_state="AL").city     # "DOTHAN"
 ```
 
 - Unusable input (no address text at all) raises `ParseError`, a `ValueError`; in
-  `parse_many` that element is `None`. Anything else comes back with `warnings`.
+  `parse_many` that element is `None`. Anything else comes back with `warnings` ([what each one tells you, and how often it is wrong](https://github.com/jeremeybingham/doorplate/blob/main/docs/warnings.md)).
 - `default_state` is a lookup hint for input with no state; it never fills `state`.
   A value that is not a US state, DC or territory raises `ValueError`.
 
@@ -285,7 +285,7 @@ names are used only to say what the output follows or is compared with.
 - [How it works](https://github.com/jeremeybingham/doorplate/blob/main/docs/how-it-works.md),
   [benchmarks](https://github.com/jeremeybingham/doorplate/blob/main/docs/benchmarks.md)
   and the [roadmap](https://github.com/jeremeybingham/doorplate/blob/main/docs/roadmap.md)
-  (customization layers and a table of how reliable each warning is are planned).
+  (customization layers are planned).
 - [Examples](https://github.com/jeremeybingham/doorplate/tree/main/examples): a
   notebook tour (rare shapes, place data, pandas, Polars, DuckDB, the command line) and a pipeline for each
   DataFrame library.

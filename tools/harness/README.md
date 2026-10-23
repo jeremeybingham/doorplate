@@ -141,6 +141,12 @@ until `--confirm`.
 python tools/harness/label_score.py local-data/nad-2026/records.parquet --confirm
 ```
 
+**How reliable is each warning (`--by-warning`, #102).** Adds a table per source and role: for each warning code
+the rows that carry it and, for each field, the labeled rows among them and the share where we differ (a row with
+several warnings counts under each; the first line is every row, the baseline). Counts only. The page that reads
+these numbers is [`docs/warnings.md`](../../docs/warnings.md); regenerate them after a rule change with
+`label_score.py RECORDS --by-warning --confirm`.
+
 **Same address in two forms.** With `--labels OTHER.parquet`, the labels come from another file and
 rows are paired by `(role, pair_id)` (ids unique in both files). Our parse of the first file's
 one-line form is scored against the other file's labels, and reported as a pair score. For the
