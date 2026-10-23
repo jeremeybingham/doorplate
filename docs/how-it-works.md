@@ -98,7 +98,8 @@ suffix, `highway` (state, prefix and route), first and second unit (type and
 number), `po_box`, `rural_route` (RR or HC, route, box), `general_delivery`,
 `military` and `military_post_office`, `attention`, `building`, city, state, ZIP5,
 ZIP+4, `place`, `diagnostics` and `source` (the original text and the spans).
-`Diagnostics` holds the warnings, the unparsed remainder, and the library version.
+`Diagnostics` holds the warnings, the unparsed remainder, the library version and the
+version of the state's curated data (`state_data_version`, `None` without it).
 
 Warnings have a stable snake_case `code()` meant for a database column:
 `unparsed_remainder`, `ambiguous_token`, `placeholder`, `missing_street_number`,
@@ -179,7 +180,9 @@ table.
 3. **Curated state data** (`data/states/<st>/`, always compiled in): hand-checked
    data for one state, added where real data shows a need. Florida is the first.
    A folder is a state's data, with a golden-corpus file of its own
-   (`tests/corpus/<st>-state.jsonl`, checked by a test). `docs/states/fl.md`.
+   (`tests/corpus/<st>-state.jsonl`, checked by a test) and a `version` in its
+   `state.toml`, which a parse reports as `state_data_version` (with the library version
+   it ties a stored result to the data that produced it). `docs/states/fl.md`.
 
 Layering is add-only: a later layer adds names, variants and ZIPs and never replaces
 or removes an earlier entry, and a conflict fails the build. The one exception is a

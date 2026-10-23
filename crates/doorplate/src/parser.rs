@@ -133,6 +133,10 @@ impl Parser {
             &|s: &Span| input.get(s.start..s.end),
         );
         place::resolve(&mut addr, &self.lex, self.default_state);
+        addr.diagnostics.state_data_version = addr
+            .state
+            .as_ref()
+            .and_then(|s| self.lex.state_data_version(s.code()));
         if country {
             addr.diagnostics.warn(Warning::CountryIgnored);
         }
@@ -215,6 +219,10 @@ impl Parser {
             &source,
         );
         place::resolve(&mut addr, &self.lex, self.default_state);
+        addr.diagnostics.state_data_version = addr
+            .state
+            .as_ref()
+            .and_then(|s| self.lex.state_data_version(s.code()));
         if country {
             addr.diagnostics.warn(Warning::CountryIgnored);
         }
@@ -452,6 +460,27 @@ mod tests {
     }
 
     #[cfg(feature = "corpus")]
+    #[test]
+    fn state_data_version_follows_the_state() {
+        let p = Parser::new();
+        let fl = p.parse("123 N Main St, Miami FL 33101").unwrap();
+        assert_eq!(
+            fl.diagnostics.state_data_version,
+            Lexicons::builtin().state_data_version("FL")
+        );
+        assert!(fl.diagnostics.state_data_version.is_some());
+        // No curated data for Georgia, and none with no state.
+        let ga = p.parse("123 N Main St, Atlanta GA 30303").unwrap();
+        assert_eq!(ga.diagnostics.state_data_version, None);
+        assert_eq!(
+            p.parse("123 Main St")
+                .unwrap()
+                .diagnostics
+                .state_data_version,
+            None
+        );
+    }
+
     #[test]
     fn decisions_reach_the_diagnostics() {
         let p = Parser::new();

@@ -265,6 +265,12 @@ impl PyParsedAddress {
         self.inner.diagnostics.library_version
     }
 
+    /// The version of the curated data for the address's state, or `None`.
+    #[getter]
+    fn state_data_version(&self) -> Option<&'static str> {
+        self.inner.diagnostics.state_data_version
+    }
+
     /// `street`, `po_box`, `rural_route`, `military`, `general_delivery`,
     /// `dual` or `unknown`.
     fn address_type(&self) -> &'static str {
@@ -409,6 +415,7 @@ impl PyParsedAddress {
         // The same group the command-line JSON carries (#85).
         let provenance = PyDict::new(py);
         provenance.set_item("library_version", a.inner.diagnostics.library_version)?;
+        provenance.set_item("state_data_version", a.inner.diagnostics.state_data_version)?;
         d.set_item("provenance", provenance)?;
         Ok(d)
     }

@@ -487,6 +487,16 @@ impl Lexicons {
         tables::STATES_WITH_DATA.contains(&state)
     }
 
+    /// The version of the curated data for `state` (a USPS code, the
+    /// `version` in its `state.toml`), or `None` when there is none. A
+    /// parse's [`Diagnostics::state_data_version`] is this for its state.
+    pub fn state_data_version(&self, state: &str) -> Option<&'static str> {
+        tables::STATE_DATA_VERSIONS
+            .iter()
+            .find(|(s, _)| *s == state)
+            .map(|(_, v)| *v)
+    }
+
     /// A place in `state` (a USPS code) by name or a listed spelling:
     /// `"W Palm Bch"` -> WEST PALM BEACH ([`MatchKind::Standard`]),
     /// `"BOCA RATOM"` -> BOCA RATON ([`MatchKind::Variant`]). `None` when
