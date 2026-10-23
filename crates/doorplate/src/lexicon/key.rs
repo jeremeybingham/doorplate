@@ -19,14 +19,22 @@ pub fn normalize_key(s: &str) -> String {
 /// to skip an allocation per call.
 pub fn normalize_key_cow(s: &str) -> std::borrow::Cow<'_, str> {
     let b = s.as_bytes();
-    let already = b.is_ascii()
-        && !b.is_empty()
-        && b[0] != b' '
-        && b[b.len() - 1] != b' '
-        && !b
-            .iter()
-            .any(|c| c.is_ascii_lowercase() || *c == b'.' || *c < b' ')
-        && !s.contains("  ");
+    // One pass: ASCII, nothing a key would change (lowercase letters, periods,
+    // control characters), and no space at either end or next to another.
+    let mut already = !b.is_empty() && b[0] != b' ' && b[b.len() - 1] != b' ';
+    let mut prev = 0u8;
+    for &c in b {
+        if !c.is_ascii()
+            || c.is_ascii_lowercase()
+            || c == b'.'
+            || c < b' '
+            || (c == b' ' && prev == b' ')
+        {
+            already = false;
+            break;
+        }
+        prev = c;
+    }
     if already {
         return std::borrow::Cow::Borrowed(s);
     }
@@ -51,4 +59,41 @@ fn normalize_slow(s: &str) -> String {
         out.extend(c.to_uppercase());
     }
     out
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// The one-pass check may borrow only when the string is already its own
+    /// key, and otherwise the result is the slow path's (#147).
+    #[test]
+    fn the_fast_path_borrows_only_a_string_that_is_already_a_key() {
+        let pool = [
+            "A", "z", "AVE", "Ave", "N.E.", ".", " ", "  ", "\t", "\u{7f}", "é", "ß", "ǅ", "#",
+            "-", "1/2", "PO", "box",
+        ];
+        let mut x: u64 = 0x2545_F491_4F6C_DD1D;
+        let mut next = move || {
+            x ^= x << 13;
+            x ^= x >> 7;
+            x ^= x << 17;
+            x
+        };
+        for _ in 0..40_000 {
+            let mut s = String::new();
+            for _ in 0..(next() % 6) {
+                s.push_str(pool[(next() >> 8) as usize % pool.len()]);
+                if next() % 3 == 0 {
+                    s.push(' ');
+                }
+            }
+            let slow = normalize_slow(&s);
+            let fast = normalize_key_cow(&s);
+            if matches!(fast, std::borrow::Cow::Borrowed(_)) {
+                assert_eq!(fast, s, "{s:?}");
+            }
+            assert_eq!(fast, slow, "{s:?}");
+        }
+    }
 }
