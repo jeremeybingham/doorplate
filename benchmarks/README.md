@@ -156,6 +156,7 @@ not published as accuracy.
 | `tools/compare/compare_usaddress.py` | The token-by-token comparison with usaddress that `suite.py` and `accuracy.py` use; also runs on any labeled XML or CSV | its docstring |
 | `tools/compare/oneline_fl.py`, `city_diff.py` | The one-line Florida check and the cities gained and lost (above) | above |
 | `profile_inputs.py`, `profile_fold.py`, `profile_heap.py`, `crates/doorplate/examples/profile_loop.rs`, `profile_alloc.rs` | The profiling kit of #90: plain input files from the suite, a single-thread timing loop, allocations per parse, a table of where `perf` samples land (by function and by stage) and where `heaptrack` says the allocations are made | the "Profile" section of [`docs/benchmarks.md`](../docs/benchmarks.md) |
+| `tools/compare/checkpoint.py` | The foundation checkpoint (`docs/backlog.md`): the key comparison with the released build over all the large sources in one run, keeping the current keys as the baseline for the `k3`; prints a plan and needs `--confirm` | [`docs/backlog.md`](../docs/backlog.md) |
 | `tools/compare/key_diff.py` | The row-by-row key comparison between two builds over the records files (`dump` in each environment, then `diff`; counts only) | [`docs/backlog.md`](../docs/backlog.md) |
 | `tools/benchsuite/` | The suite's generator, label audit and inventories; rebuilds the suite from private data | [`docs/benchmark-suite.md`](../docs/benchmark-suite.md) |
 

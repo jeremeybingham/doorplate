@@ -6,27 +6,30 @@ definitions that lived in the body of issue #103 (the backlog review), which now
 
 ## The release plan
 
-Releases are staged so each one can be proven on its own:
+One release, 0.4.0, in two phases (decided 2026-10-23: the `k3`, planned as 0.5.0, is folded into 0.4.0 because the
+project has no users and the foundation went quickly; it saves a version and a release cycle):
 
 | Milestone | What it is | Gate |
 |---|---|---|
-| **0.4.0** | The foundation: the architecture (state data folded into the core, an extension-ready lexicon) and the breaking API cleanup. No parsing changes. The key stays `k2` | A row-by-row key comparison with 0.3.1 shows **zero differences** |
-| **0.5.0** | The `k3`: every parser rule, key-affecting or not (warnings and diagnostics included), cut together | The measured before and after in [`key-format.md`](key-format.md) ("Changing the key") |
+| **0.4.0** | **Phase 1, the foundation:** the architecture (state data folded into the core, an extension-ready lexicon) and the breaking API cleanup, with the key unchanged (`k2`) and no parsing changes. **Phase 2, the `k3`:** the evidence first, then every parser rule, key-affecting or not (warnings and diagnostics included), cut together | Phase 1 ends at the **checkpoint**: zero key differences with 0.3.1 over the large sources, and those keys frozen as the baseline. The release: the measured before and after against that baseline, in [`key-format.md`](key-format.md) ("Changing the key") |
 | **Later** | Wanted, not planned for a release: new API surface, anything waiting on demand or a decision | |
 | **Tooling** | Harness, review tool, benchmarks, CI: never shipped, never closed | |
 
-`main` is the 0.4 line now and carries the version `0.4.0-dev` (a build from `main` never reports a released
-version; the release pull request sets `0.4.0`): there is no 0.3.2. The project has no users, so a release is not made for a minor fix;
-those wait for 0.4.0. **A 0.3.x patch needs a very good reason:** a correctness bug in shipped output that matters
-(a wrong key, a panic on valid input: the never-panic rule), a security or supply-chain problem, or a broken
-published artifact (a wheel that does not install, a crate that does not build). It goes on a `release/0.3` branch
-cut from the `v0.3.1` tag, with the full release checklist. Nothing waits open "for the k3": key-affecting work
-merges to `main` once 0.4.0 is out. The trackers (`tracker` label) list the order inside a release: #138 (0.4.0)
-and #139 (0.5.0).
+`main` is the 0.4 line and carries the version `0.4.0-dev` (a build from `main` never reports a released version; the
+release pull request sets `0.4.0`): there is no 0.3.2. The project has no users, so a release is not made for a minor
+fix. **A 0.3.x patch needs a very good reason:** a correctness bug in shipped output that matters (a wrong key, a panic
+on valid input: the never-panic rule), a security or supply-chain problem, or a broken published artifact (a wheel that
+does not install, a crate that does not build). It goes on a `release/0.3` branch cut from the `v0.3.1` tag, with the
+full release checklist. The tracker (`tracker` label) lists the order in both phases: #138 (#139, the `k3` tracker,
+is merged into it).
 
-There are no parsing changes in 0.4.0 (decided 2026-10-23): every issue that changes what the parser reads or warns
-about is in 0.5.0, so the zero-difference comparison below runs once, on the 0.4.0 release commit, and not for every
-rule. Parsing is dealt with when the key version no longer matters.
+**The checkpoint.** Until it is passed, no parsing change merges, so that the comparison with 0.3.1 can be zero
+and any difference is the refactor's. It is one run, `tools/compare/checkpoint.py` (it prints a plan and needs
+`--confirm`): every records file is parsed with the released build and the current build, the keys are compared row
+by row, and the current build's dumps are kept in `local-data/keycompare/checkpoint-<commit>` with a `FROZEN.md`
+note. After it, `version:K` and other parsing work merges to `main` as ordinary pull requests (and stays unreleased
+until the release); each key-affecting one is measured against the frozen keys with `key_diff.py diff`, by source
+and role, for the sources its issue names. The release does the full before and after over all of them once more.
 
 **The comparison.** Install the released version in a throwaway environment, parse whole records files with both
 builds (`parse_fields_many`) and compare `a.key()` row by row, by source. `tools/compare/key_diff.py` does it: `dump`
@@ -40,7 +43,7 @@ not change includes the count.
 | Label | Meaning |
 |---|---|
 | `size:S` / `M` / `L` / `D` | Hours; a day or two; several pull requests or a design; a decision with no code |
-| `version:K` | Changes a key (the number, directionals, street name, suffix, state, ZIP or unit; place data that moves the street/city split). Held for the `k3` |
+| `version:K` | Changes a key (the number, directionals, street name, suffix, state, ZIP or unit; place data that moves the street/city split). Waits for the checkpoint, then merges and is released with the `k3` |
 | `version:B` | Breaks an API: removes or renames a public thing |
 | `version:O` | Changes output without a key: a warning, a new field, a new opt-in API |
 | `version:N` | No user-visible change: docs, tooling, tests, internal |
@@ -53,7 +56,7 @@ not change includes the count.
 | `tracker` | A meta issue that lists other issues |
 
 The milestone says **which release**; `version:` says **what kind of change**; `area:` says **which part of the
-project**. An issue that is `version:K` is in 0.5.0 unless it is a research item that feeds one.
+project**. An issue that is `version:K` is in 0.4.0, phase 2, unless it is a research item that feeds one.
 
 ## Where an issue comes from
 

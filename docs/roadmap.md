@@ -17,35 +17,37 @@ some, see [Sharing messy data](../CONTRIBUTING.md#sharing-messy-data).
 
 ## Planned
 
-Releases are staged, decided on 2026-10-22 (issue #103): each release can then be proven on its own. The
-rules for the labels, the milestones and the order are in [`backlog.md`](backlog.md). A change that does not
-alter a key is safe to merge any time; the architecture and the breaking API changes come first, with the key
-unchanged and no parsing changes; the parser rules are cut together after that (0.5.0), because every `k3`
-re-keys stored keys. There is
-no 0.3.2: with no users, a release is not made for a minor fix (a 0.3.x patch needs a very good reason, see
-[`backlog.md`](backlog.md)).
+One release, 0.4.0, in two phases (decided 2026-10-23, issue #138; the `k3`, first planned as 0.5.0, is folded in
+because the project has no users and the foundation went quickly). The rules for the labels, the milestones and the
+order are in [`backlog.md`](backlog.md). There is no 0.3.2: with no users, a release is not made for a minor fix (a
+0.3.x patch needs a very good reason, see [`backlog.md`](backlog.md)).
 
-### 0.4.0: the foundation (the key stays `k2`)
+### 0.4.0, phase 1: the foundation (done; the key stays `k2`)
 
-The architecture and the breaking cleanup, done once, so the core is close to final, with no parsing changes. The gate: a row-by-row key
-comparison with 0.3.1 shows zero differences. The order is in #138:
+The architecture and the breaking cleanup, done once, so the core is close to final, with no parsing changes.
+It ends at the **checkpoint**: a row-by-row key comparison with 0.3.1 over the large sources shows zero differences,
+and those keys are frozen as the baseline for phase 2. What was done (#138):
 
-- **Profiling** first (#90), as a baseline.
-- **State data:** fold the Florida data into the core as built-in state data, dropping the `state-fl` Cargo
-  feature and renaming `data/states/` to `data/states/` (#101); report the state data version in the output (#7).
+- **Profiling** first (#90), then the speed work it found: about 38,400 to 50,300 addresses per second on the
+  benchmark mix and 197 to 103 allocations per parse (#147, #148, #156; `docs/benchmarks.md`, "Profile").
+- **State data:** the Florida data folded into the core as built-in state data, dropping the `state-fl` Cargo
+  feature and renaming `data/packs/` to `data/states/` (#101); the state data version in the output (#7).
 - **An extension-ready core** (#137): everything the tagger reads goes through `Lexicons`, and the layer interface
-  is decided, so the custom layer (#3) is a loader later.
-- **API cleanup:** remove the reserved `confidence` field (#136), cut `parse_tokens` like usaddress (#78: the emitter, not the parser, so no key changes), and an audit of every
-  public name before they freeze (#135).
+  is decided (`docs/how-it-works.md`), so the custom layer (#3) is a loader later.
+- **API cleanup:** the reserved `confidence` field removed (#136), `parse_tokens` cut like usaddress (#78: the
+  emitter, not the parser, so no key changes), and an audit of every public name (#135, `docs/api-surface.md`).
 
-### 0.5.0: the `k3`
+### 0.4.0, phase 2: the `k3`
 
-Held until the foundation is out, then cut together: the held list is the `version:K` label, and the process and
-what a `k3` needs are in [`key-format.md`](key-format.md) ("Changing the key"). Each change needs a source and
-evidence. The order is in #139. `k2` started with 0.3.0; the route-number and box rules are in
+After the checkpoint, the evidence first, then the rules, cut together: the list is the `version:K` label, and the
+process and what a `k3` needs are in [`key-format.md`](key-format.md) ("Changing the key"). Each change needs a
+source and evidence. The order is in #138. `k2` started with 0.3.0; the route-number and box rules are in
 [`key-format.md`](key-format.md).
 
-- **Warnings that say how far to trust a parse** (#102, moved from 0.4.0 on 2026-10-23 with the other parsing issues): a table of how reliable each warning is, measured
+- **Evidence first, tooling and research, no release:** the review tool's comparison mode and a second source
+  (#132), the per-state street-pattern counts that decide #8 (#53), less noise in the harness's scorers (#112), and
+  the research items (#131, #92). Without them the rules are tuned on one file.
+- **Warnings that say how far to trust a parse** (#102): a table of how reliable each warning is, measured
   on labeled data, and named warnings where the parser knows it is guessing, starting with a lone letter after
   the house number (`123 A MAIN ST`).
 - **Line-2 diagnostics** (#45): say when a second line is skipped as a copy, merged into the street or kept as a
@@ -53,6 +55,8 @@ evidence. The order is in #139. `k2` started with 0.3.0; the route-number and bo
 - **A county written as the city** (#113), and a `VILLAGE OF` prefix (#68).
 - **From the first review of real rows (#125):** care-of text welded to the street (#127); units left in the street
   name (#128); spelled-out numbers (#129); lines with no street (#130); floor forms (#114).
+- **Misparses found since:** a word split before a trailing `CT`/`WY`/`KY`/`MT` suffix (#143), `BAY` read as a unit
+  (#144), `LOOP` plus a number read as a route (#145).
 - **Number forms:** a letter after a hyphenated house number (#100); a spaced letter after a rural route box (#95);
   Queens-style numbers and their unhyphenated twins keyed the same (#109).
 - **`CR` and `CTY`** read as CIRCLE and COUNTY nationally, not only in Florida (#108), and the Florida data's
