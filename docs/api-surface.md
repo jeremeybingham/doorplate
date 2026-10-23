@@ -3,7 +3,7 @@
 The audit of #135: every public name and shape of the Rust crate, the Python package and the command-line
 tool, with one decision for each (keep, change in 0.4.0, hide, or later). It was made on `main` on 2026-10-23,
 at the start of 0.4.0, while the project has no users: this is the last cheap moment to rename things.
-Decisions marked **proposed** wait for the owner; the rest follow from rules that already exist.
+The decisions were confirmed by the owner on 2026-10-23 and made in the same release; the rest follow from rules that already exist.
 
 The public Rust items were listed from `cargo +nightly rustdoc -p doorplate --all-features -- -Z unstable-options
 --output-format json` (59 public items in the crate root, `lexicon` and `corpus`); the Python names from
@@ -40,9 +40,10 @@ words. The mapping above goes into the documentation as the reference.
    struct literal or matches it exhaustively. This already happened once: #7 added `Diagnostics::state_data_version`.
    The result types are built by the parser, never by callers, so they can be closed without cost.
 2. **Enums that can grow are closed:** `AddressType`, `ParseError` and `OptionsError` (one variant each),
-   `MatchKind`, `PlaceKind`, `PlaceSource`, `StateKind`, `RouteKind`, `Special`.
+   `MatchKind`, `PlaceKind`, `PlaceSource`, `StateKind`, `Special`.
 3. **Inputs are different from results.** `Fields` (five fixed parts of an address) is built by callers and
-   stays open. `ParseOptions` (one field, `default_state`) will grow (the custom layer, #3) and `KeyOptions` may.
+   stays open. `ParseOptions` (one field, `default_state`) will grow (the custom layer, #3). `KeyOptions` will not
+   in practice: a new key option changes the key, which is a `k3`.
 4. **`Lexicons` has 28 public methods**, including helpers that exist for the tagger (`is_number_marker`,
    `is_no_data_line`, `is_city_head`, `is_area_word`, `is_building_word`, `is_placeholder`, `is_country`,
    `place_key`). They are public by accident. Which of them are the layer interface is the question of #137.
@@ -55,11 +56,12 @@ words. The mapping above goes into the documentation as the reference.
 
 | Surface | Decision |
 |---|---|
-| Result types: `ParsedAddress`, `Diagnostics`, `SourceInfo`, `DisplayAddress`, `UspsAddress`, `ResoAddress`, `PlaceMatch`, `Highway`, `RuralRoute`, `MilitaryBox`, `ComponentSpan`, `UsaddressTag` | **Proposed: add `#[non_exhaustive]`** (0.4.0, breaking). Fields stay public: reading them is the API. `Diagnostics` and `ParsedAddress` keep `Default`/`empty` constructors inside the crate |
-| Open enums: `AddressType`, `ParseError`, `OptionsError`, `MatchKind`, `PlaceKind`, `PlaceSource`, `StateKind`, `RouteKind`, `Special` | **Proposed: add `#[non_exhaustive]`** (0.4.0, breaking) |
-| Closed enums: `Directional` (8 compass points), `MilitaryKind`, `MilitaryPostOffice` (fixed by USPS), `FieldName` (the five `Fields`), `InputKind` | **Keep closed** |
+| Result types: `ParsedAddress`, `Diagnostics`, `SourceInfo`, `DisplayAddress`, `UspsAddress`, `ResoAddress`, `PlaceMatch`, `Highway`, `RuralRoute`, `MilitaryBox`, `ComponentSpan`, `UsaddressTag` | **Done: `#[non_exhaustive]`** (0.4.0, breaking). Fields stay public: reading them is the API |
+| Open enums: `AddressType`, `ParseError`, `OptionsError`, `MatchKind`, `PlaceKind`, `PlaceSource`, `StateKind`, `RouteKind`, `Special` | **Done: `#[non_exhaustive]`** (0.4.0, breaking): a `match` needs a `_` arm |
+| Closed enums: `Directional` (8 compass points), `MilitaryKind`, `MilitaryPostOffice`, `RouteKind` (fixed by USPS), `FieldName` (the five `Fields`), `InputKind` | **Keep closed** |
 | `Fields`, `Span` | **Keep open** (callers build `Fields`; `Span` is two offsets and a field name) |
-| `ParseOptions`, `KeyOptions` | **Proposed: `#[non_exhaustive]` with builder methods** (`ParseOptions::new().default_state("FL")`). Both are small and will grow with #3 |
+| `ParseOptions` | **Done: `#[non_exhaustive]` with builder methods** (`ParseOptions::new().default_state("FL")`); it will grow with #3 |
+| `KeyOptions` | **Keep open**: its constructors `property()` and `unit()` are how it is built, and a new option would change the key |
 | `Lexicons` helpers | **Later: decided in #137** (the lexicon audit), with the layer interface. Until then they are not documented as stable |
 | `corpus` module | **Keep behind its feature, documented as unstable** (no semver promise) |
 | `lexicon::{normalize_key, MAX_*}` | **Keep** (needed by `build.rs`, which includes the same file) |
@@ -132,7 +134,7 @@ warning is (#102) and any new codes move to 0.5.0 with the other parsing changes
 The key is `k2:` plus pipe-separated parts (the format and when it changes are in
 [`key-format.md`](key-format.md)); `KeyOptions` has one switch, `include_unit` (`KeyOptions::property()` is the
 property-level key, `KeyOptions::unit()` the unit-level key, which carries the unit numbers). The slug is for display, not for
-matching. **Keep** both; the `ParseOptions`/`KeyOptions` builders above are the only change.
+matching. **Keep** both; the `ParseOptions` builder above is the only change.
 
 ## Output shapes
 
@@ -149,15 +151,15 @@ none of this applies, which is why the breaking changes above are made now and w
 
 ## What changes in 0.4.0 and what waits
 
-- **In 0.4.0 (proposed):** the `#[non_exhaustive]` additions and the `ParseOptions`/`KeyOptions` builders (Rust,
-  breaking, no output change). The key comparison with 0.3.1 must show zero
+- **In 0.4.0 (done):** the `#[non_exhaustive]` additions and the `ParseOptions` builder (Rust, breaking, no output
+  change). The key comparison with 0.3.1 must show zero
   differences after them.
 - **Decided elsewhere:** the `Lexicons` surface (#137); `confidence` (#136, done); the state data version (#7, done).
 - **0.5.0:** `parse_tokens` (#78), the reliability table and new warnings (#102), and anything that alters a key.
 
 ## Is it stable enough for a beta?
 
-The proposed answer: **not at 0.4.0, yes at 0.5.0.** After 0.4.0 the Rust, Python and CLI surfaces above are
+The answer: **not at 0.4.0, yes at 0.5.0.** After 0.4.0 the Rust, Python and CLI surfaces above are
 settled except for three things that are still moving: the `Lexicons` interface and the custom layer (#137, #3), the
 warning set and its reliability table (#102), and the key itself (`k3`, held for 0.5.0). The beta notice should
 wait for the `k3`: a beta that changes its key one release later is not a beta. The alpha notice in the four READMEs
