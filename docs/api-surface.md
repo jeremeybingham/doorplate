@@ -107,7 +107,9 @@ words. The mapping above goes into the documentation as the reference.
 2. The JSON record: `input`, `components`, `warnings`, `unparsed`, `key`, `key_unit`, `slug`, `usps`, `reso`,
    `place`, `provenance` (`library_version`, `state_data_version`). `components` carries only the parts present.
 3. The CSV adds `addr_`-prefixed columns after the input columns. It has `addr_usps_line1` and
-   `addr_usps_last_line` but no `addr_usps_line2`, so a unit written on a second USPS line is lost from the CSV.
+   `addr_usps_last_line` but no `addr_usps_line2`. That loses nothing today: `to_usps()` fills `line2` only when
+   it is asked to wrap long lines (`max_line`), which the command line never does, so `line2` is always empty
+   there (the unit stays on `line1`).
 4. `--usps`, `--display`, `--long`, `--usaddress` and `--tag` choose one output form instead of the JSON record.
 
 ### Decisions
@@ -116,7 +118,7 @@ words. The mapping above goes into the documentation as the reference.
 |---|---|
 | Subcommands, flags, JSON keys | **Keep** |
 | Exit codes | **Keep, document**: 0, 1, 2 as above |
-| CSV: no `addr_usps_line2` | **Proposed: add `addr_usps_line2`** after `addr_usps_line1` (an added column, 0.4.0) |
+| CSV: no `addr_usps_line2` | **Keep**: the column would always be empty. Revisit if the command line ever gets a line-length option |
 | CLI JSON key order | **Keep**; it is not a promise beyond "`input` first" |
 
 ## Warning codes
@@ -148,7 +150,7 @@ none of this applies, which is why the breaking changes above are made now and w
 ## What changes in 0.4.0 and what waits
 
 - **In 0.4.0 (proposed):** the `#[non_exhaustive]` additions and the `ParseOptions`/`KeyOptions` builders (Rust,
-  breaking, no output change); `addr_usps_line2` in the CSV. The key comparison with 0.3.1 must show zero
+  breaking, no output change). The key comparison with 0.3.1 must show zero
   differences after them.
 - **Decided elsewhere:** the `Lexicons` surface (#137); `confidence` (#136, done); the state data version (#7, done).
 - **0.5.0:** `parse_tokens` (#78), the reliability table and new warnings (#102), and anything that alters a key.
