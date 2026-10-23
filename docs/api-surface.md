@@ -128,7 +128,7 @@ words. The mapping above goes into the documentation as the reference.
 
 The 22 codes are stable snake_case strings from `Warning::code`, and `Warning` is `#[non_exhaustive]`: new codes
 may be added in a minor release, and consumers must not treat the set as closed. The table of how reliable each
-warning is (#102) and any new codes move to 0.5.0 with the other parsing changes. **Keep** the names.
+warning is (#102) and any new codes come with the parser rules of 0.4.0's second phase. **Keep** the names.
 
 ## The key and the slug
 
@@ -156,12 +156,13 @@ none of this applies, which is why the breaking changes above are made now and w
   change). The key comparison with 0.3.1 must show zero
   differences after them.
 - **Decided elsewhere:** `confidence` (#136, done); the state data version (#7, done).
-- **0.5.0:** the reliability table and new warnings (#102), and anything that alters a key.
+- **0.4.0, phase 2 (the parser rules):** the reliability table and new warnings (#102), and anything that alters a key.
 
 ## Is it stable enough for a beta?
 
-The answer: **not at 0.4.0, yes at 0.5.0.** After 0.4.0 the Rust, Python and CLI surfaces above are
+The answer (updated 2026-10-23, when the `k3` was folded into 0.4.0): **not after the foundation phase, yes at 0.4.0
+once the `k3` is in.** After the foundation phase the Rust, Python and CLI surfaces above are
 settled except for three things that are still moving: the custom layer (#3, whose interface #137 settled), the
-warning set and its reliability table (#102), and the key itself (`k3`, held for 0.5.0). The beta notice should
-wait for the `k3`: a beta that changes its key one release later is not a beta. The alpha notice in the four READMEs
+warning set and its reliability table (#102), and the key itself (the `k3`, still to come in phase 2). The beta notice should
+wait for the `k3`: a beta that changes its key afterwards is not a beta. The alpha notice in the four READMEs
 stays until then.
