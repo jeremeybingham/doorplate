@@ -280,7 +280,7 @@ docs/                       this page and the references below
 - **Pub 28 check**: `tools/pub28/verify.py` compares the tables with the live
   Publication 28 pages and runs every Appendix F example through the parser.
 - **CI**: `cargo fmt --check`, `clippy -D warnings`, `cargo test --workspace
-  --all-features`, the corpus report, the emitter-expectation check, a state's dataage
+  --all-features`, the corpus report, the emitter-expectation check, a package
   build and a check of the license files, an sdist build in a clean environment, a short
   fuzz smoke run of each target, the Python suite, the ingest, harness and review tools' tests and the wheel build. The benchmark
   suite and the two release workflows run by hand or on a version tag; the Pages workflow

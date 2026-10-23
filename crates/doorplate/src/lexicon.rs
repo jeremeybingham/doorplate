@@ -132,7 +132,7 @@ fn le32(b: &[u8], at: usize) -> Option<u32> {
     ))
 }
 
-/// The `n`th `len`-byte record of state dataed table.
+/// The `n`th `len`-byte record of a packed table.
 fn record(table: &'static [u8], len: usize, n: usize) -> Option<&'static [u8]> {
     let start = n.checked_mul(len)?;
     table.get(start..start.checked_add(len)?)

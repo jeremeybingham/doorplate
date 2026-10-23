@@ -56,6 +56,7 @@ the index and the table above.
 cargo fmt
 cargo clippy --workspace --all-targets --all-features -- -D warnings
 cargo test --workspace --all-features
+(cd fuzz && cargo +nightly check --bins)   # outside the workspace: check it after a change to a public type
 
 # Python (in a virtualenv with maturin and pytest)
 cd crates/doorplate-py && maturin develop --release && cd ../..
