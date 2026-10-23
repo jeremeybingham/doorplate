@@ -36,6 +36,7 @@ Every parsing bug fixed gets a case here (`CONTRIBUTING.md`).
   Florida, `places-us.jsonl`), `ds-` (`default_state`, `default-state.jsonl`),
   `tg-` (`tag()` and `address_type()`, `tag.jsonl`),
   `co-` (trailing country, `country.jsonl`),
+  `sl-` (a second line used or dropped, `second-line.jsonl`),
   `is-` (intersections, `intersections.jsonl`),
   `nat-` (shapes found in a national address database, `national-data.jsonl`);
   `us-roundtrip-001` in `regressions.jsonl` came from the USPS round trip.
@@ -226,6 +227,14 @@ there.
 Ids `ds-001` to `ds-007`. Cases with a `default_state` field: a comma-less
 city found in the hinted state, the state's data readings, a city not in the
 hinted state, and the input's own state or a known ZIP winning over the hint.
+
+### `second-line.jsonl`
+
+Ids `sl-001` to `sl-015` (#45). A second address line that is used or dropped without a component of its own is
+reported: a copy of line 1 or a no-data line (`second_line_skipped`), a route, suffix or directional that joins
+the street of line 1 (`second_line_in_street`) and a building name (`second_line_building`); and the near misses
+that get no warning: a unit, a street on line 2 alone, a dual address, an attention line, no line 2, the last line
+on line 2.
 
 ### `country.jsonl`
 

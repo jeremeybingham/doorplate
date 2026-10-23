@@ -53,6 +53,14 @@ change to what an input produces needs a new key version.
 
 ### Added
 
+- **Three warnings for a second address line that is used or dropped without a component of its own** (#45):
+  `second_line_skipped` (a copy of the end of line 1 or of the city, or a line of no-data markers, dropped),
+  `second_line_in_street` (line 2 joined the street that line 1 began: a route, a suffix or a directional) and
+  `second_line_building` (kept as the building name, which no emitter prints). They report what the parser already
+  did; no component and no key changes. A row that has such a line now carries a warning where it had none, so a
+  pipeline that treats "no warnings" as clean sees about 0.015% more rows flagged (the 21,825 of 146.6M that
+  the Netsyms review counted).
+
 - **The state data version in the output** (#7): `provenance.state_data_version` in the command-line JSON and in
   `to_dict()`, `ParsedAddress.state_data_version` in Python and `Diagnostics::state_data_version` in Rust,
   beside the library version. It is the `version` in the `state.toml` of the address's state (Florida's is

@@ -126,7 +126,7 @@ words. The mapping above goes into the documentation as the reference.
 
 ## Warning codes
 
-The 22 codes are stable snake_case strings from `Warning::code`, and `Warning` is `#[non_exhaustive]`: new codes
+The 25 codes are stable snake_case strings from `Warning::code`, and `Warning` is `#[non_exhaustive]`: new codes
 may be added in a minor release, and consumers must not treat the set as closed. The table of how reliable each
 warning is (#102) and any new codes come with the parser rules of 0.4.0's second phase. **Keep** the names.
 

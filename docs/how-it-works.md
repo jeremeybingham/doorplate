@@ -107,8 +107,9 @@ Warnings have a stable snake_case `code()` meant for a database column:
 `multiple_addresses`, `dual_address`, `possibly_truncated`, `missing_unit_number`,
 `non_standard_abbreviation`, `missing_city`, `missing_state`, `unknown_state`,
 `missing_zip`, `invalid_zip`, `zip_city_mismatch`, `default_state_applied`,
-`repeated_label`, `country_ignored` and `intersection_detected`. A warning is a
-finding about the parse, not a statement that the address is wrong.
+`repeated_label`, `country_ignored`, `intersection_detected`, `second_line_skipped`,
+`second_line_in_street` and `second_line_building`. A warning is a finding about the
+parse, not a statement that the address is wrong.
 
 ## Choices that shape the output
 
@@ -137,6 +138,14 @@ finding about the parse, not a statement that the address is wrong.
   emitter.
 - **A trailing country is ignored.** `USA`, `US` or `UNITED STATES` after the
   address is dropped with `country_ignored`; other countries are not recognized.
+- **A second address line that is used or dropped without a component of its own is
+  reported** (#45), so a pipeline can audit those rows: `second_line_skipped` (line 2 is a
+  copy of the end of line 1 or of the city, or a line of no-data markers, and is dropped),
+  `second_line_in_street` (line 2 became part of the street that line 1 began: the route of
+  `COUNTY RD` / `A`, a suffix or a directional) and `second_line_building` (line 2 is the
+  building name, which no emitter prints). A unit, an attention line, the city, state and ZIP,
+  or a street that is on line 2 alone get no warning: they are components of their own. These
+  are warnings, like `country_ignored`, not a separate list; none changes a component or a key.
 - **Intersections have no key.** `MAIN ST & 1ST AVE` raises
   `intersection_detected`: the first street is parsed, the second stays in
   `unparsed`, and `key()` and `slug()` are `None`, because the first street alone
