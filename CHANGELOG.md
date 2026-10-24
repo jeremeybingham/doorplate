@@ -57,7 +57,9 @@ change to what an input produces needs a new key version.
   `MIAMI DADE`, `BROWARD`, `COOK`), where the city is no place of the state but the name of one of its counties (with
   or without `COUNTY`), from the county names of the national place list. `place` stays empty and the city is kept as
   written; the key reads the street, state and ZIP, so no key moves. A name that is both a place and a county
-  (`COOK`, MN) is a place and is not flagged.
+  (`COOK`, MN) is a place and is not flagged. Measured against the frozen checkpoint keys: 0 keys changed in 12.7M rows
+  (the amateur-radio list, the tax-exempt list and the carrier census); the warning is on 0.013% of the amateur-radio
+  rows, 0.017% of the tax-exempt list, 0.024% of the carrier census, and 1 of 1,138,982 Netsyms sample rows.
 
 - **A warning for a letter after the house number that was read into the street name** (#102): `ambiguous_number_letter`
   for `123 A MAIN ST` (street `A MAIN`), where the letter may be the number's suffix (`123A`). The reading is not changed
