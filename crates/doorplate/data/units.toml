@@ -182,7 +182,8 @@ forms = ["UNIT"]
 # observed: Pasco County listings ("9960 EAGLES POINT CIRCLE UN 3");
 # Florida address data: industrial and studio units that Appendix C2
 # has no word for ("14355 SW 120TH STREET, BAY 102" 127 lines, "STUDIO 7" 99,
-# "BOOTH 12" 11), read as a plain unit
+# "BOOTH 12" 11), read as a plain unit; BAY is a unit only after a street suffix
+# or on a later line, not at the end of a street name (issue #144)
 observed = ["UN", "BAY", "STUDIO", "BOOTH"]
 
 [[unit]]

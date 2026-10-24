@@ -9,6 +9,13 @@ change to what an input produces needs a new key version.
 
 ### Changed
 
+- **`BAY` at the end of a street name is part of the name** (#144, **held for the `k3`**: 97 keys change): `1305 HERON BAY #
+  2B` and `1305 HERON BAY 2B` had the street `HERON` and a unit `UNIT 2B`, because `BAY` is an observed unit
+  designator (an industrial bay). Now `BAY` is a unit designator only after a street suffix (`MAIN ST BAY 4`), on a later
+  line, after a `#`, or after a word with a digit; after a plain name it is part of the street (`HERON BAY`, with a bare
+  unit `2B`). Measured against the build before this rule: 97 keys change in the seven large sources, 95 of them a
+  street name that now ends in `BAY`, and `non_standard_abbreviation` is removed from those 97. NAD's labels agree (433
+  of 462 rows have a street name ending in `BAY`).
 - **A word before a trailing `CT`, `KY`, `MT` or `WY` is no longer cut in two** (#143, **held for the `k3`**: 15,725 keys
   change): in pre-split fields `1305 PINEBRIAR CT` had the street name `PINE BRIAR` (and `TRELLIS CT` had `TR ELLIS`,
   `STORCH CT` had `ST ORCHARD`), because the tokenizer took `CT` for Connecticut ending a city glued to the street. A state
