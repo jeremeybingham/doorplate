@@ -1,4 +1,4 @@
-# Run artifacts (schema version 7)
+# Run artifacts (schema version 8)
 
 Written by `tools/harness/run.py`, read by `tools/harness/analyze.py` and `compare.py`. The
 folder is private (docs/data-policy.md): aggregate numbers may leave it, nothing else.
@@ -20,7 +20,7 @@ A row whose parse returns no result (no address text) is counted as `no_result`.
 
 ## Comparison rules (the `mismatches` codes)
 
-Schema version 7 compares unit designators by their standard abbreviation in the `street` check (`SUITE` equals `STE`); before, a unit spelled out in line 1 (`123 MAIN ST, SUITE 4`) was a false `street` mismatch. Schema version 6 accepts a spelled-out state (`NEW YORK`) or an alias for the `state` check; before, any source that spells states out was flagged on every row. Schema version 5 runs the `unit` check only for roles that have `label_unit` (a source that says its line 2 is a unit): in sources whose line 2 holds attention lines and building names, `m_unit` of version 4 and earlier counted every line 2 as a missing unit. Schema version 4 changed the `street` rule for PO boxes, rural routes, general delivery and military boxes (below); on those rows `m_street` of version 3 flagged nearly every one. Schema version 3 added `role`, `provider` and the last-line counts, and runs the checks per field:
+Schema version 8 compares an ordinal by its number in the `street` check (`5TH` equals `5`, `THIRD` equals `3`): a floor written as an ordinal (`123 MAIN ST 5TH FL`) is parsed as floor 5, and was a false `street` mismatch (issue #114). Schema version 7 compares unit designators by their standard abbreviation in the `street` check (`SUITE` equals `STE`); before, a unit spelled out in line 1 (`123 MAIN ST, SUITE 4`) was a false `street` mismatch. Schema version 6 accepts a spelled-out state (`NEW YORK`) or an alias for the `state` check; before, any source that spells states out was flagged on every row. Schema version 5 runs the `unit` check only for roles that have `label_unit` (a source that says its line 2 is a unit): in sources whose line 2 holds attention lines and building names, `m_unit` of version 4 and earlier counted every line 2 as a missing unit. Schema version 4 changed the `street` rule for PO boxes, rural routes, general delivery and military boxes (below); on those rows `m_street` of version 3 flagged nearly every one. Schema version 3 added `role`, `provider` and the last-line counts, and runs the checks per field:
 a check runs for a role only when some row of that role has the field (the manifest's
 `input.fields_present`). Schema version 2 changed the `street` rule; runs of version 1 are not
 comparable on `m_street`. The counts of version 2 and 3 are the same for the same Netsyms rows.

@@ -33,7 +33,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 HERE = Path(__file__).resolve().parent
-SCHEMA_VERSION = 7
+SCHEMA_VERSION = 8
 REQUIRED = ["zipcode", "number", "street", "street2", "city", "state", "plus4", "country", "source"]
 GB = 1 << 30
 # The columns of a row as the checks see it (tools/ingest/README.md has their meaning).
@@ -200,9 +200,17 @@ CANON = _load_forms()
 SYNONYMS = {"HWY": "HIGHWAY", "RTE": "ROUTE", "CO": "COUNTY", "CTY": "COUNTY"}
 
 
+ORDINAL_DIGITS = re.compile(r"(\d+)(?:ST|ND|RD|TH)")
+ORDINAL_WORDS = {w: str(i + 1) for i, w in enumerate((
+    "FIRST SECOND THIRD FOURTH FIFTH SIXTH SEVENTH EIGHTH NINTH TENTH ELEVENTH TWELFTH THIRTEENTH "
+    "FOURTEENTH FIFTEENTH SIXTEENTH SEVENTEENTH EIGHTEENTH NINETEENTH TWENTIETH").split())}
+
+
 def words(text):
     out = []
     for tok in re.findall(r"[A-Z0-9]+", (text or "").upper()):
+        # `5TH` and `THIRD` are the floor number 5 and 3 in `5TH FL` (the parser writes FL 5).
+        tok = ORDINAL_WORDS.get(tok) or (ORDINAL_DIGITS.fullmatch(tok) and ORDINAL_DIGITS.fullmatch(tok).group(1)) or tok
         tok = CANON.get(tok, tok)
         out.extend(SYNONYMS.get(tok, tok).split())
     return Counter(out)

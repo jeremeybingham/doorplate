@@ -82,6 +82,19 @@ def test_street_check_accepts_po_boxes_and_rural_routes():
     assert not run.street_ok("123 ELM ST", None, "123", a)
 
 
+def test_street_check_accepts_an_ordinal_floor():
+    from doorplate import parse_fields
+
+    # The floor `5TH FL` is parsed as floor 5 (issue #114): not a street mismatch.
+    for text in ("123 MAIN ST 5TH FL", "123 MAIN ST THIRD FLOOR"):
+        a = parse_fields(line1=text, city="MIAMI", state="FL", zip="33101")
+        assert run.street_ok(text, None, "123", a), text
+    # An ordinal street name still compares equal to itself and a real change is still caught.
+    a = parse_fields(line1="123 5TH ST", city="MIAMI", state="FL", zip="33101")
+    assert run.street_ok("123 5TH ST", None, "123", a)
+    assert not run.street_ok("123 6TH ST", None, "123", a)
+
+
 def test_unit_check_runs_only_where_line2_is_a_unit():
     rows = [row("1", "123 OAK HOLLOW DR", "ATTN FRONT OFFICE", "AUSTIN", "TX", "78701")]
     # A role whose line 2 is attention text (no `label_unit`): no unit mismatch.
