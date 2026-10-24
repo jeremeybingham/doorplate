@@ -493,6 +493,12 @@ impl Lexicons {
         matches!(t, "NO" | "NUM" | "NUMBER")
     }
 
+    /// A word that stands for a unit designator after a street's suffix but is
+    /// not one in Pub 28: `BOX 3300`, `NO 65`, `NUM 230`, `LOC 12` (#128).
+    pub(crate) fn is_unit_marker(&self, t: &str) -> bool {
+        self.is_number_filler(t) || matches!(t, "BOX" | "LOC")
+    }
+
     /// A word that joins two unit values: `UNIT 3 & 4`, `SUITE 5 AND 6`.
     pub(crate) fn is_value_joiner(&self, t: &str) -> bool {
         matches!(t, "&" | "AND")

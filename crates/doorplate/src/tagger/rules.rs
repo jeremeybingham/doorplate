@@ -1668,6 +1668,26 @@ impl Tagger<'_> {
         lex.suffix(word).is_some() && !highway && sfx > name_start
     }
 
+    /// Whether tokens `last - 1` and `last` are two numbers right after a
+    /// designator or `#`, one unit value written in two parts: `STE 180
+    /// 417020`, `FL 2 270` (#128).
+    fn number_pair(&self, floor: usize, last: usize) -> bool {
+        if last < floor + 2 {
+            return false;
+        }
+        let v = last - 1;
+        let seg = self.toks[last].seg;
+        all_digits(self.text(last))
+            && all_digits(self.text(v))
+            && self.toks[v].seg == seg
+            && self.toks[v - 1].seg == seg
+            && (self.toks[v - 1].is_hash()
+                || longest_ending(self.toks, floor, v, |s| {
+                    self.lex.unit(s).filter(|l| l.kind != MatchKind::Observed)
+                })
+                .is_some())
+    }
+
     /// Whether tokens `last - 1` and `last` are one unit value written in two
     /// parts, a letter and a number in either order, right after a designator
     /// or `#`: `APT E 1003`, `UNIT 210 C`, and `# V 21`, the form the USPS
@@ -1823,6 +1843,23 @@ impl Tagger<'_> {
                 j = last;
                 continue;
             }
+            // A designator spelling the lexicon knows only as observed, cut off
+            // at the line limit: "... AVE NW SUIT" (#128).
+            if found.is_empty()
+                && j == hi
+                && t.len() >= 3
+                && lex.suffix(t).is_none()
+                && lex
+                    .unit(t)
+                    .is_some_and(|l| l.kind == MatchKind::Observed && l.value.range_required())
+                && self.suffix_before(name_lo, last)
+            {
+                self.warn(Warning::MissingUnitNumber);
+                self.incomplete = Some(last);
+                found.push((last..j, j..j));
+                j = last;
+                continue;
+            }
             // "#" with nothing after it.
             if self.toks[last].is_hash() {
                 self.set(last..j, Tag::Skip);
@@ -1846,7 +1883,7 @@ impl Tagger<'_> {
                 || self.letters_after_designator(floor, last))
                 && last > floor
             {
-                let start = if self.split_value(floor, last) {
+                let start = if self.split_value(floor, last) || self.number_pair(floor, last) {
                     last - 1
                 } else {
                     self.hash_run(floor, last)
@@ -1903,6 +1940,24 @@ impl Tagger<'_> {
                         continue;
                     }
                 }
+            }
+            // "BOX 3300", "NO 65", "NUM 230", "LOC 12" after a street's suffix:
+            // a unit written with a word that is not a designator in Pub 28;
+            // the word is dropped and the value is a unit with no type (#128).
+            if found.is_empty()
+                && j == hi
+                && last > name_lo + 1
+                && has_digit(t)
+                && is_unit_value(t)
+                && lex.is_unit_marker(self.text(last - 1))
+                && self.toks[last - 1].seg == self.toks[last].seg
+                && self.suffix_before(name_lo, last - 1)
+            {
+                self.set(last - 1..last, Tag::Skip);
+                found.push((last..last, last..j));
+                self.decide(Decision::BareUnit);
+                j = last - 1;
+                continue;
             }
             // A later line or comma segment that is only a number: "403" as
             // line 2 of `2309 1ST AVE NO`. A unit with no known designator.
@@ -1961,6 +2016,18 @@ impl Tagger<'_> {
                         j = ph.start;
                         continue;
                     }
+                    // "STE STE C": the same designator written twice (#128).
+                    if let Some((ty, _)) = found.last() {
+                        let again = ty.start == j
+                            && lex
+                                .unit(&join(&self.toks[ty.clone()]))
+                                .is_some_and(|l| l.value.abbr() == u.value.abbr());
+                        if again {
+                            self.set(j - w..j, Tag::Skip);
+                            j -= w;
+                            continue;
+                        }
+                    }
                     if u.value.range_required() {
                         self.warn(Warning::MissingUnitNumber);
                         self.incomplete = Some(last);
@@ -1975,6 +2042,18 @@ impl Tagger<'_> {
             // postdirectional: "DR E 203" is DR E, unit 203; a line "E 203"
             // is the unit.
             if bare && found.is_empty() {
+                // "BLVD 250 3440": two numbers after the suffix, one unit (#128).
+                if last > floor + 1
+                    && all_digits(t)
+                    && all_digits(self.text(last - 1))
+                    && self.toks[last - 1].seg == self.toks[last].seg
+                    && self.suffix_before(name_lo, last - 1)
+                {
+                    found.push((last - 1..last - 1, last - 1..j));
+                    self.decide(Decision::BareUnit);
+                    j = last - 1;
+                    continue;
+                }
                 if last > floor
                     && all_digits(t)
                     && is_letter(self.text(last - 1))

@@ -37,6 +37,7 @@ Every parsing bug fixed gets a case here (`CONTRIBUTING.md`).
   `tg-` (`tag()` and `address_type()`, `tag.jsonl`),
   `co-` (trailing country, `country.jsonl`),
   `sl-` (a second line used or dropped, `second-line.jsonl`),
+  `un-` (units left in the street name, `units.jsonl`),
   `is-` (intersections, `intersections.jsonl`),
   `nat-` (shapes found in a national address database, `national-data.jsonl`);
   `us-roundtrip-001` in `regressions.jsonl` came from the USPS round trip.
@@ -235,6 +236,13 @@ reported: a copy of line 1 or a no-data line (`second_line_skipped`), a route, s
 the street of line 1 (`second_line_in_street`) and a building name (`second_line_building`); and the near misses
 that get no warning: a unit, a street on line 2 alone, a dual address, an attention line, no line 2, the last line
 on line 2.
+
+### `units.jsonl`
+
+Ids `un-001` to `un-018` (#128). Units that stayed in the street name: two numbers after a designator or the suffix,
+`BOX`, `NO`, `NUM` and `LOC` after a street, a designator cut off (`SUIT`, `FLOO`, `FLO`) and a designator written
+twice; and the near misses that must not change (a street named `FLOOR`, `UNIT`, `NUM`, `BOX` or `NO`, a PO Box with a
+unit, a plain unit).
 
 ### `country.jsonl`
 
