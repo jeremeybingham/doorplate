@@ -306,7 +306,7 @@ The headline numbers, then what each benchmark in the repository is, so you can 
 | | doorplate | usaddress |
 |---|---|---|
 | Whole address right, [benchmark suite](benchmarks/README.md#the-benchmark-suite), `natural` stratum (16,001 addresses written in five styles) | 98.3% | 96.1% |
-| Whole address right, geocode benchmark dev split (60,522 one-line addresses) | 94.4% | 88.1% |
+| Whole address right, [geocode benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark) dev split (60,522 one-line addresses) | 94.4% | 88.1% |
 | Addresses per second from Python, one thread (suite inputs; `parse_tokens` / `usaddress.parse`) | about 33,900 | about 9,100 |
 | Addresses per second, `parse_many` on 4 threads (usaddress has no batch call) | about 120,000 | about 9,100 |
 | Installed size | 1.8 MB wheel | 4.8 MB with dependencies |
@@ -322,7 +322,7 @@ sets and are not promised for yours. Method, every other figure and the caveats:
 | Name | What it measures | Run it | Data | For |
 |---|---|---|---|---|
 | **Benchmark suite** | Accuracy next to usaddress on 19,586 labeled addresses neither library was made from, a doorplate-only track (fields input, Pub 28 output, key stability, warnings), and speed under a fixed 4-CPU, 8 GB profile | `python benchmarks/suite.py all` (about 20 s) | In the repository (`benchmarks/suite/v1/`) | Anyone. **Start here** |
-| **Geocode benchmark** | Accuracy on one-line, uppercase, comma-free US street addresses from an outside data set (60,522 in the `dev` split) | `python benchmarks/accuracy.py` | Not redistributable: download it into `local-data/` | Maintainers; the check that a rule fix generalizes |
+| **[Geocode benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark)** | Accuracy on one-line, uppercase, comma-free US street addresses from an outside data set (60,522 in the `dev` split) | `python benchmarks/accuracy.py` | Not redistributable: download it into `local-data/` | Maintainers; the check that a rule fix generalizes |
 | **Speed** | Addresses per second: Python (`speed_python.py`), batches and pandas, Polars and DuckDB frames (`bench_batch.py`), Rust (`speed_rust.py`, criterion) | the scripts in `benchmarks/` | Committed, invented addresses | Anyone; absolute figures belong to one machine, so read ratios |
 | **Size and memory** | Wheel, binary and installed size; import time; resident memory, against usaddress | `python benchmarks/size_memory.py` | None | Anyone |
 | **Checks on private data** | Rule changes and releases on real data: the Netsyms address database, the National Address Database sample, Florida records | `tools/harness/`, `tools/compare/` | `local-data/`, never published | Maintainers |
@@ -337,7 +337,7 @@ house number with a letter prefix (`W 615 County Road C`). The suite's rows are 
 Database rows (real streets, cities and ZIP codes, invented numbers), and a private twin built from an
 unpublished seed checks that the public set was not tuned to.
 
-The geocode benchmark's figure needs a caveat: the rules and the place list were first developed while
+The [geocode benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark)'s figure needs a caveat: the rules and the place list were first developed while
 reading the errors of its *test* split (96.7%), so that figure is optimistic; later rules were fixed against
 part of the train split (20% of it held out, unread, 94.1%) and checked on dev, and 94.4% is the estimate for
 data of that shape (one line, US street addresses, a city and a state), not a guarantee for yours.

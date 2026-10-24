@@ -98,10 +98,10 @@ The runnable tour is [`examples/quickstart.rs`](https://github.com/jeremeybingha
 | | doorplate | usaddress |
 |---|---|---|
 | Whole address right, benchmark suite, `natural` stratum (16,001 addresses written in five styles) | 98.3% | 96.1% |
-| Whole address right, geocode benchmark dev split (60,522 one-line addresses) | 94.4% | 88.1% |
+| Whole address right, [geocode benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark) dev split (60,522 one-line addresses) | 94.4% | 88.1% |
 | One address in Rust (median of the corpus shapes, criterion; `cargo bench -p doorplate --bench parse`) | 7 to 18 µs | |
 
-The suite and the geocode benchmark are run from Python (the table compares with the Python library usaddress); see the
+The suite and the [geocode benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark) are run from Python (the table compares with the Python library usaddress); see the
 [benchmarks](https://github.com/jeremeybingham/doorplate/blob/main/docs/benchmarks.md) for the suite's strata, method and caveats, and
 [`benchmarks/README.md`](https://github.com/jeremeybingham/doorplate/blob/main/benchmarks/README.md) to rerun them. These are
 measurements on a few data sets, not promises for yours.

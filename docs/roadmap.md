@@ -65,7 +65,7 @@ source and evidence. The order is in #138. `k2` started with 0.3.0; the route-nu
 
 - **State-dependent rules and the reading that feeds them** (moved out of the 0.4.0 cut on 2026-10-23 to keep phase 2
   to the rules already listed): state road conventions such as Texas `RR`, `PR 462` and county road names (#8),
-  Florida place gaps (#11), the geocode benchmark's place-name gap (#29), Puerto Rico and the uncited parts of Pub 28
+  Florida place gaps (#11), the [geocode benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark)'s place-name gap (#29), Puerto Rico and the uncited parts of Pub 28
   (#92), with the per-state counts that decide them (#53); `CMR` only if a real case shows up (#77, decided: left out).
 - **Tooling that finds new things** (Tooling milestone): the review tool's comparison mode and second source (#132),
   less noise in the harness's scorers (#112). Built when a listed rule needs them.

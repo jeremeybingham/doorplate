@@ -82,7 +82,7 @@ Plain `cargo test` needs no Python. Rust 1.80 or later; the Python extension nee
   2026-10-23, so parsing work may merge; the frozen keys are in `local-data/keycompare/checkpoint-1819acd`.
 - Every USPS or RESO rule implemented must be traceable to a source in `docs/`
   (`docs/usps-pub28-notes.md`, `docs/reso-mapping.md`).
-- Private data (local exports, the geocode benchmark, the Netsyms database) stays in
+- Private data (local exports, the [geocode benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark), the Netsyms database) stays in
   `local-data/` (git-ignored). Never commit it and never print personal names from it.
   Examples and tests use invented addresses. The full rules are in
   [`docs/data-policy.md`](docs/data-policy.md).

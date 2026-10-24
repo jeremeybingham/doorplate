@@ -42,7 +42,7 @@ New to the project? Read the [project README](../README.md), then
 
 | Page | What it covers |
 |---|---|
-| [`benchmarks.md`](benchmarks.md) | The results: the suite, the geocode benchmark, speed, size and memory |
+| [`benchmarks.md`](benchmarks.md) | The results: the suite, the [geocode benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark), speed, size and memory |
 | [`benchmarks/README.md`](../benchmarks/README.md) | How to run every benchmark, and which one answers which question |
 | [`benchmark-suite.md`](benchmark-suite.md) | The benchmark suite's specification: what it holds, how it was built and audited, the rules that keep it fair |
 | [`benchmarks/suite/README.md`](../benchmarks/suite/README.md), [`MANIFEST.md`](../benchmarks/suite/v1/MANIFEST.md) | The suite's data folder, and the composition and checksums of `v1` |

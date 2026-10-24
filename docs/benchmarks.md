@@ -10,7 +10,7 @@ diagnostics).
 This library formats and parses; it does not validate deliverability. None of
 the figures below say an address exists or can receive mail.
 
-This page holds the results. Which benchmark is which (the suite, the geocode benchmark, the speed and size
+This page holds the results. Which benchmark is which (the suite, the [geocode benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark), the speed and size
 scripts, the checks on private data) and how to run each: the table in the project README
 ([Benchmarks](../README.md#benchmarks)) and [`benchmarks/README.md`](../benchmarks/README.md).
 
@@ -38,7 +38,7 @@ track varies by about 10% from run to run on its own); package and import sizes 
 |---|---|---|
 | Benchmark suite, `natural` stratum (16,001), whole address (coarse) | 98.3% | 96.1% |
 | Benchmark suite, whole suite (19,586), whole address (coarse) | 92.3% | 85.5% |
-| Geocode benchmark, dev split, whole address (coarse) | 94.4% | 88.1% |
+| [Geocode benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark), dev split, whole address (coarse) | 94.4% | 88.1% |
 | usaddress's own test files, whole address (coarse) | 99.2% | 100.0% |
 | Addresses per second, one thread, benchmark suite inputs (`parse_tokens` / `usaddress.parse`) | 33,862 | 9,142 |
 | Addresses per second, `parse_many` on 4 threads, suite inputs (usaddress has no batch call) | 127,001 | 9,142 |
