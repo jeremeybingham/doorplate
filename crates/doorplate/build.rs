@@ -482,6 +482,15 @@ fn gen_special(t: &Table, out: &mut String, mw: &mut usize) -> Result<HighwayRow
     )
     .ok();
 
+    let ppctx = format!("{ctx} [place_prefix]");
+    let mut prefixes = key_list(table(t, "place_prefix", ctx)?, "words", &ppctx, true)?;
+    prefixes.sort();
+    writeln!(
+        out,
+        "pub(crate) static PLACE_PREFIXES: &[&str] = &{prefixes:?};\n"
+    )
+    .ok();
+
     let pctx = format!("{ctx} [placeholder]");
     let mut phrases = key_list(table(t, "placeholder", ctx)?, "phrases", &pctx, true)?;
     phrases.sort();

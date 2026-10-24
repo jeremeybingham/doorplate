@@ -234,6 +234,22 @@ phrases = [
   "UNITED STATES OF AMERICA",
 ]
 
+[place_prefix]
+# The first word of a municipality-type prefix written before a city
+# ("VILLAGE OF PINECREST", "TOWN OF LONGBOAT KEY", "CITY OF SUNRISE",
+# "TWP OF EDISON"): the word and OF. Place resolution reads the rest as the
+# place when the city as written is not one (`CITY OF INDUSTRY`, CA, is). Not a
+# USPS rule. Counted on county, state and federal address lists (issue #68):
+# TX and CA for CITY, WI, IL and NY for VILLAGE and TOWN, NJ for TWP;
+# BOROUGH OF is left out, one row in 40M.
+words = [
+  "VILLAGE",
+  "TOWN",
+  "CITY",
+  "TOWNSHIP",
+  "TWP",
+]
+
 [placeholder]
 # Whole-line stand-ins meaning "no usable street address". Matched against the
 # normalized street line, optionally after a leading run of zeros ("0 UNKNOWN",

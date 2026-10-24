@@ -53,6 +53,16 @@ change to what an input produces needs a new key version.
 
 ### Added
 
+- **A municipality prefix before the city is read off for the place** (#68): `VILLAGE OF PINECREST`, `TOWN OF LONGBOAT KEY`,
+  `CITY OF SUNRISE`, `TOWNSHIP OF` and `TWP OF` now give `place` the rest (source `variant`; a cut-off rest such as
+  `VILLAGE OF PALM SPRI` is completed from the ZIP), in every state, where only Florida's per-name spellings did. The city
+  stays as written and no key moves. A place whose name starts with the prefix (`CITY OF INDUSTRY`, CA) is the place as
+  written. `BOROUGH OF` is not read (one row in 40M). The list is `[place_prefix]` in `data/special.toml`.
+  Measured: 0 keys and 0 warnings changed (17.6M rows of four sources against the frozen checkpoint keys, and
+  against the build before this rule); the Netsyms sample is identical. On the record files of ten sources 3,247 rows
+  (1 in 12,000 of the 40M) now get a place: `CITY OF` 2,683 (TX 2,277, CA 326), `TOWN OF` 292, `VILLAGE OF` 245,
+  `TWP OF` 18 and `TOWNSHIP OF` 9.
+
 - **A warning for a county written as the city** (#113): `city_is_county` for `123 MAIN ST, HENNEPIN, MN 55401` (and
   `MIAMI DADE`, `BROWARD`, `COOK`), where the city is no place of the state but the name of one of its counties (with
   or without `COUNTY`), from the county names of the national place list. `place` stays empty and the city is kept as

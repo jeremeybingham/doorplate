@@ -407,6 +407,19 @@ impl Lexicons {
         find_str(tables::COUNTRIES, &normalize_key_cow(s))
     }
 
+    /// The place named after a municipality-type prefix (`PINECREST` in
+    /// `VILLAGE OF PINECREST`), or `None` when `city` has no such prefix or
+    /// nothing after it. Source: `data/special.toml` `[place_prefix]`.
+    pub(crate) fn strip_place_prefix<'a>(&self, city: &'a str) -> Option<&'a str> {
+        let (first, rest) = city.trim().split_once(' ')?;
+        let (of, rest) = rest.trim_start().split_once(' ')?;
+        let rest = rest.trim();
+        (of.eq_ignore_ascii_case("OF")
+            && !rest.is_empty()
+            && find_str(tables::PLACE_PREFIXES, &normalize_key_cow(first)))
+        .then_some(rest)
+    }
+
     /// A word that ends a building name (`TOWER` in `EAST TOWER`).
     /// Source: `data/special.toml` `[building]`.
     pub(crate) fn is_building_word(&self, s: &str) -> bool {

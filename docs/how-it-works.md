@@ -220,7 +220,7 @@ layer needs them as data. What a layer (#3) may add, by table:
 | Special words: PO box, box, rural route, highway contract, general delivery, attention | `special.toml` | `special` | add spellings |
 | Highway prefixes (15) | `special.toml` `[[highway]]` | `highway`, `highway_in(state)` | add; scope to a state |
 | Military kinds (5) and post offices (3) | `special.toml` | `military`, `military_post_office` | nothing: fixed by USPS |
-| Country words, placeholder phrases, area words, city heads, building words | `special.toml` | internal predicates | add words |
+| Country words, municipality prefix words, placeholder phrases, area words, city heads, building words | `special.toml` | internal predicates | add words |
 | National places and ZIPs | `data/places/` | `place`, `is_place`, `zip_places` | add places, spellings, ZIPs |
 | State data (Florida) | `data/states/<st>/` | the same, plus `has_state_data`, `state_data_version` | this is the shape of a layer |
 | Missing-number markers (`NULL`, nine or more nines), the `UNASSIGNED LOCATION` line, the unit filler words (`NO`, `NUM`, `NUMBER`), the unit-value joiners (`&`, `AND`), the intersection connectors (`&`, `@`, `AND`, `AT`) | constants in `lexicon.rs` | internal predicates | add words, once they are data |
