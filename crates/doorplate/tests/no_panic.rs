@@ -10,6 +10,12 @@ use proptest::prelude::*;
 /// rather than stopping at the first unknown token.
 const WORDS: &[&str] = &[
     "123",
+    "C/O",
+    "%",
+    "ATTN",
+    "4-H",
+    "Club",
+    "Star",
     "N",
     "SW",
     "Main",
@@ -164,6 +170,39 @@ proptest! {
         if let (Ok(a), Ok(b)) = (p.parse(&s), p.parse(&s.to_uppercase())) {
             if s.is_ascii() {
                 prop_assert_eq!(a.key(KeyOptions::unit()), b.key(KeyOptions::unit()));
+            }
+        }
+    }
+}
+
+/// A care-of marker after a street, with its number in the same or a later
+/// comma segment, on one line or two (#126).
+#[test]
+fn care_of_after_street_never_panics() {
+    let parser = Parser::new();
+    for marker in ["%", "C/O", "ATTN", "c/o"] {
+        for rest in [
+            "5 STAR GROUP",
+            "4-H CLUB",
+            "9",
+            "4 BAYVIEW WEST A",
+            "123 MAIN ST",
+            "123 MAIN",
+            "",
+            ", 5 STAR",
+            "5,",
+        ] {
+            for street in ["123 MAIN ST", "123 MAIN ST STE 4", "123", "MAIN ST"] {
+                let one = format!("{street} {marker} {rest}, MIAMI FL 33101");
+                let _ = parser.parse(&one);
+                let _ = parser.parse(&format!("{street}, {marker} {rest}"));
+                let _ = parser.parse_fields(&Fields {
+                    line1: Some(street.to_string()),
+                    line2: Some(format!("{marker} {rest}")),
+                    city: Some("MIAMI".to_string()),
+                    state: Some("FL".to_string()),
+                    zip: Some("33101".to_string()),
+                });
             }
         }
     }

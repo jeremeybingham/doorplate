@@ -9,6 +9,15 @@ change to what an input produces needs a new key version.
 
 ### Changed
 
+- **A care-of line after a street no longer swallows the unit or leaves a warning** (#126, **key-affecting, held for the `k3`**): in
+  `12 OAK AVE STE 4` / `% 5 STAR GROUP` the number after the marker started a second address, so the name was left over
+  and the unit stayed in the street name. Now a marker line after a street is the attention line when it holds a
+  digit-led name (`% 5 STAR GROUP`, `% 4-H CLUB`), and a copy of the street line (`% 68 QUINCEWOOD ST`) is dropped
+  with `second_line_skipped`. A bare number (`% 9`) and a second address (`% 4 BAYVIEW WEST A`) stay unparsed.
+  Measured against the frozen checkpoint keys: 299 of 1,975,975 IRS rows and 1 of 9,038,491 carrier-census rows change
+  key (the unit now parsed out of the street name), none in NAD, Netsyms, the amateur-radio list or the NY
+  corporations; 966 IRS rows lose `unparsed_remainder` (117 of them gain `second_line_skipped`); the Netsyms sample is
+  identical.
 - **Faster parsing** (#156): the lexicon's multi-word lookups join the tokens once and slice, instead of building a
   new string for every candidate length. About 30% fewer allocations per parse and about 6% more addresses per second
   on the benchmark suite's mix. No output or key changes (0 differences against 0.3.1 over 37.0M rows).
