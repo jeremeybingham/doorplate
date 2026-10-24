@@ -790,12 +790,40 @@ impl Tagger<'_> {
 
     // ---- delivery line -----------------------------------------------------
 
+    /// A street field that is only a country (`UNITED STATES`, `USA`) next to a
+    /// city, state or ZIP field: dropped, no street (#130). Single-line input
+    /// is not touched (`USA` alone stays what it was). Returns whether it was.
+    pub(super) fn country_street_line(&mut self, lo: usize, hi: usize) -> bool {
+        if lo >= hi
+            || !(lo..hi).all(|k| self.toks[k].seg == self.toks[lo].seg)
+            || !self.lex.is_country(&join(&self.toks[lo..hi]))
+        {
+            return false;
+        }
+        self.set(lo..hi, Tag::Skip);
+        self.warn(Warning::CountryIgnored);
+        self.warn(Warning::MissingStreetName);
+        true
+    }
+
     pub(super) fn delivery(&mut self, lo: usize, hi: usize) {
         let lo = self.co_lead(lo, hi);
         let (lo, hi) = self.attention(lo, hi);
         let lo = self.name_line(lo, hi);
         let lo = self.leading_recipient(lo, hi);
         if lo >= hi || self.placeholder(lo, hi) {
+            return;
+        }
+        // "PO BOX" with no number: a box word, not a street name (#130). It
+        // stays in `unparsed`.
+        if (lo..hi).all(|k| self.toks[k].seg == self.toks[lo].seg)
+            && (self.lex.is_bare_box_word(&join(&self.toks[lo..hi]))
+                || longest_at(self.toks, lo, hi, |s| {
+                    self.lex.special(s).filter(|l| l.value == Special::PoBox)
+                })
+                .is_some_and(|(_, w)| lo + w == hi))
+        {
+            self.set(lo..hi, Tag::Unparsed);
             return;
         }
         let mut lo = lo;
@@ -1538,6 +1566,11 @@ impl Tagger<'_> {
             // "5210/5212 BRISTO ST"
             self.warn(Warning::MultipleAddresses);
             self.set(i..i + 1, Tag::Unparsed);
+            i += 1;
+        } else if hi == lo + 1 && all_digits(t0) && !t0.bytes().all(|c| c == b'0') {
+            // "4871" alone: a house number and no street (#130).
+            self.set(i..i + 1, Tag::StreetNumber);
+            self.warn(Warning::MissingStreetName);
             i += 1;
         } else if self.spelled_house_number(lo, hi) {
             // "ONE COMMERCE PLAZA": the number word is the house number; the

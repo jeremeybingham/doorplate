@@ -408,7 +408,9 @@ pub(crate) fn tag_fields(
     }
     let end = t.drop_repeated_state(line.start, end);
     let end = t.drop_city_copy(line.start, end, city_range);
-    t.delivery(line.start, end);
+    if !t.country_street_line(line.start, end) {
+        t.delivery(line.start, end);
+    }
     if after_fraction {
         t.claim_fraction(l2.start);
     }
