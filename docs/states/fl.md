@@ -155,6 +155,6 @@ all observed spellings that raise `non_standard_abbreviation`.
 - `zip_city_mismatch` fires on 0.68% of Florida rows in the DBPR files (0.78%
   before), a long tail of about 7,000 (city, ZIP) pairs, mostly a nearby big city
   written for a suburb. These numbers are on the data the rows came from; the
-  geocode benchmark's scores did not move.
+  [geocode benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark)'s scores did not move.
 - A city that is no known place, with a ZIP the state data knows: `place` stays
   `None`.

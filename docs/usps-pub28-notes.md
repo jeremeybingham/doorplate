@@ -178,7 +178,7 @@ from Pub 28 or from data; it is how the library behaves.
 
 | Rule | Source |
 |---|---|
-| One line with no commas: a highway route ends the street, then an optional postdirectional, a suffix after a name word (`HWY 66 FRONTAGE RD`) and a unit; the city follows (`395 COUNTY ROAD 8 LAUREL MS`). A directional with nothing after it is the postdirectional (`HIGHWAY 29 SOUTH 32533`). | Section 237; geocode benchmark. |
+| One line with no commas: a highway route ends the street, then an optional postdirectional, a suffix after a name word (`HWY 66 FRONTAGE RD`) and a unit; the city follows (`395 COUNTY ROAD 8 LAUREL MS`). A directional with nothing after it is the postdirectional (`HIGHWAY 29 SOUTH 32533`). | Section 237; [geocode benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark). |
 | Name words after a highway route belong to the street only on the route's line or comma segment; the emitters and the key keep them (`HIGHWAY 66 FRONTAGE RD`). Words on a later line are unparsed. | Appendix F; bug fix (the word was dropped from every output). |
 | A street and city in the first comma segment are split after the street (`626 E KILBOURN AVE MILWAUKEE, WI`), unless the segment ends in a suffix or directional (`427 SOUTH LA SALLE STREET, 60605` is all street). | usaddress test data. |
 | A unit starting the city's segment belongs to the street (`..., # 234 SANTA FE NM`). | Bug fix (usaddress test data). |

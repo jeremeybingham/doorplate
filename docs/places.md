@@ -157,7 +157,7 @@ with the list, the Florida state data and the rules added since, is 4.64 MB stri
 
 ## Coverage
 
-Measured on the blind geocode benchmark (`local-data/geocode-benchmark/`,
+Measured on the blind [geocode benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark) (`local-data/geocode-benchmark/`,
 26,745 addresses with a city and a state), by the place comparison rule:
 
 | | Share |

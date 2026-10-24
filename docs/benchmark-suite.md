@@ -12,7 +12,7 @@ address points (see "Anonymization").
 ## What it is for, and what it is not
 
 - **A benchmark anyone can rerun**, without the private data in `local-data/` (the Netsyms
-  database, the geocode benchmark, the Florida exports) and on ordinary hardware.
+  database, the [geocode benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark), the Florida exports) and on ordinary hardware.
 - **A fair comparison with usaddress.** Neither library's rules, model or tests were made
   from it, its labels come from neither parser, and its mix is fixed before either parser runs
   on it.

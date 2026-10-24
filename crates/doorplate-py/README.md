@@ -251,7 +251,7 @@ Tokens that cannot be placed are left out of `tag()`, and some usaddress labels
 | | doorplate | usaddress |
 |---|---|---|
 | Whole address right, benchmark suite, `natural` stratum (16,001 addresses written in five styles) | 98.3% | 96.1% |
-| Whole address right, geocode benchmark dev split (60,522 one-line addresses) | 94.4% | 88.1% |
+| Whole address right, [geocode benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark) dev split (60,522 one-line addresses) | 94.4% | 88.1% |
 | Addresses per second, one thread (suite inputs) | about 33,900 | about 9,100 |
 | Addresses per second, `parse_many` on 4 threads | about 120,000 | about 9,100 (no batch call) |
 | Installed size | 1.8 MB wheel | 4.8 MB with dependencies |
