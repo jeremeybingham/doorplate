@@ -38,6 +38,7 @@ Every parsing bug fixed gets a case here (`CONTRIBUTING.md`).
   `co-` (trailing country, `country.jsonl`),
   `sl-` (a second line used or dropped, `second-line.jsonl`),
   `ns-` (street lines with no street, `nostreet.jsonl`),
+  `pb-` (misspelled PO BOX words, `pobox.jsonl`),
   `rc-` (recipient text ahead of the address, `recipient.jsonl`),
   `un-` (units left in the street name, `units.jsonl`),
   `sp-` (spelled-out numbers, `spelled.jsonl`),
@@ -262,10 +263,16 @@ DR`, `FOUR CORNERS RD`, a street named `THIRD FLOOR`).
 
 ### `nostreet.jsonl`
 
-Ids `ns-001` to `ns-011` (#130). Street lines with no street: a lone number (`missing_street_name`, no key), a PO Box
+Ids `ns-001` to `ns-012` (#130). Street lines with no street: a lone number (`missing_street_name`, no key), a PO Box
 word with no number (`unparsed_remainder`), a line that is only a country (`country_ignored`); and the near misses
 that must not change (`5TH ST`, `1 A ST`, `PO BOX 12`, a lone number with its street on line 2, a country ahead of a
 street on line 2).
+
+### `pobox.jsonl`
+
+Ids `pb-001` to `pb-018` (#165). The eleven misspellings of PO BOX read as a box, a misspelled box with a unit, after a
+street (`dual_address`), a misspelled word with no number (unparsed); and the near misses that must not change (streets
+named `POX`, `P`, `POP`, the standard spelling).
 
 ### `country.jsonl`
 

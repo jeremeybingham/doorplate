@@ -126,6 +126,9 @@ pub(crate) struct Tagger<'a> {
     /// A token where the input looks cut off, if any.
     incomplete: Option<usize>,
     zero_number: bool,
+    /// Pre-split input with a city, state or ZIP field: a street field that is
+    /// only a country is dropped (#130).
+    country_street: bool,
     lens: LineLengths,
     /// The state data that applies, once the last line's state or ZIP is
     /// known.
@@ -160,6 +163,7 @@ impl<'a> Tagger<'a> {
             lex,
             incomplete: None,
             zero_number: false,
+            country_street: false,
             lens,
             places: None,
             hint,
@@ -408,9 +412,8 @@ pub(crate) fn tag_fields(
     }
     let end = t.drop_repeated_state(line.start, end);
     let end = t.drop_city_copy(line.start, end, city_range);
-    if !t.country_street_line(line.start, end) {
-        t.delivery(line.start, end);
-    }
+    t.country_street = true;
+    t.delivery(line.start, end);
     if after_fraction {
         t.claim_fraction(l2.start);
     }

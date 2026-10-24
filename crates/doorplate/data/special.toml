@@ -32,8 +32,17 @@
 # Pub 28 section 281: write PO BOX ##. Section 283: CALLER, FIRM CALLER, BIN,
 # LOCKBOX and DRAWER are changed to PO BOX. PO DRAWER and LOCK BOX are not
 # named there; they stay as accepted input.
+# Misspellings seen on 36.9M rows (issue #165; lines exactly `<spelling> n`, counts
+# of lines): P O BX 321, P BOX 79, POX 77, PO BOX BOX 75, P OBOX 55, PO OX 45,
+# PO POX 39, POX BOX 36, PO OBX 32, POP BOX 31, P O OX 26 (816 lines, 729
+# distinct, in the NC voter, IRS, NY, FMCSA and FCC files). Not in Pub 28; like
+# POB and P O B they raise no warning.
 standard = "PO BOX"
-forms = ["PO BOX", "P O BOX", "POBOX", "PO BX", "POB", "P O B", "POST OFFICE BOX", "POST BOX"]
+forms = [
+  "PO BOX", "P O BOX", "POBOX", "PO BX", "POB", "P O B", "POST OFFICE BOX", "POST BOX",
+  "P O BX", "P BOX", "POX", "PO BOX BOX", "P OBOX", "PO OX", "PO POX", "POX BOX", "PO OBX",
+  "POP BOX", "P O OX",
+]
 synonyms = ["DRAWER", "PO DRAWER", "CALLER", "FIRM CALLER", "BIN", "LOCKBOX", "LOCK BOX"]
 
 [box]

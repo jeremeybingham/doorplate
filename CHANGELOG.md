@@ -9,6 +9,13 @@ change to what an input produces needs a new key version.
 
 ### Changed
 
+- **Misspelled PO BOX words are read as PO Boxes** (#165, **held for the `k3`**): `P O BX 1234`, `P BOX`, `POX`, `PO BOX BOX`,
+  `P OBOX`, `PO OX`, `PO POX`, `POX BOX`, `PO OBX`, `POP BOX` and `P O OX` are forms of PO BOX (they were streets with
+  `missing_street_number`), with no warning (as `POB`). Measured against the build before this rule: 869 keys change
+  in the seven large sources (807 `S` to `P`; 52 street keys that no longer hold box words, now with `dual_address`;
+  6 route and military boxes); `missing_street_number` is removed from 827 rows. This also fixes two unreleased
+  readings: a recipient is no longer taken ahead of a box that starts the line (`FIRM CALLER 4410`, from #127), and a
+  country-only street field with an attention line (`USA` / `% NAME`) is dropped again (from #130).
 - **Lines with no street are no longer read as a street name** (#130, **held for the `k3`**: the key becomes `None`): a lone
   number (`4871`) is a house number with `missing_street_name` (it was the street name `4871`), a bare `PO BOX` or `PO`
   stays in `unparsed` (it was the street name `PO BOX`), and a street field that is only a country (`UNITED STATES`,

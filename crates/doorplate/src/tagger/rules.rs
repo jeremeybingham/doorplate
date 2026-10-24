@@ -809,6 +809,9 @@ impl Tagger<'_> {
     pub(super) fn delivery(&mut self, lo: usize, hi: usize) {
         let lo = self.co_lead(lo, hi);
         let (lo, hi) = self.attention(lo, hi);
+        if self.country_street && self.country_street_line(lo, hi) {
+            return;
+        }
         let lo = self.name_line(lo, hi);
         let lo = self.leading_recipient(lo, hi);
         if lo >= hi || self.placeholder(lo, hi) {
@@ -1129,6 +1132,11 @@ impl Tagger<'_> {
             return lo;
         }
         let e = self.seg_end(lo, hi);
+        // A box that starts the line (`FIRM CALLER 4410`, `PO POX 1234`) has no
+        // recipient ahead of it.
+        if self.box_line(lo, e, false).is_some() {
+            return lo;
+        }
         let target = self
             .address_start(lo, e)
             .or_else(|| (lo + 1..e).find(|&k| self.box_line(k, e, false).is_some()));
