@@ -420,6 +420,13 @@ impl Lexicons {
         .then_some(rest)
     }
 
+    /// Whether `s`, at the start of a line ahead of a house number, is not a
+    /// recipient name (`BLOCK`, `MILEPOST`, `NO`, `URB`). Source:
+    /// `data/special.toml` `[non_recipient]`.
+    pub(crate) fn is_non_recipient_word(&self, s: &str) -> bool {
+        find_str(tables::NON_RECIPIENT_WORDS, &normalize_key_cow(s))
+    }
+
     /// A word that ends a building name (`TOWER` in `EAST TOWER`).
     /// Source: `data/special.toml` `[building]`.
     pub(crate) fn is_building_word(&self, s: &str) -> bool {

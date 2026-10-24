@@ -37,6 +37,7 @@ Every parsing bug fixed gets a case here (`CONTRIBUTING.md`).
   `tg-` (`tag()` and `address_type()`, `tag.jsonl`),
   `co-` (trailing country, `country.jsonl`),
   `sl-` (a second line used or dropped, `second-line.jsonl`),
+  `rc-` (recipient text ahead of the address, `recipient.jsonl`),
   `un-` (units left in the street name, `units.jsonl`),
   `is-` (intersections, `intersections.jsonl`),
   `nat-` (shapes found in a national address database, `national-data.jsonl`);
@@ -237,6 +238,12 @@ the street of line 1 (`second_line_in_street`) and a building name (`second_line
 that get no warning: a unit, a street on line 2 alone, a dual address, an attention line, no line 2, the last line
 on line 2.
 
+### `recipient.jsonl`
+
+Ids `rc-001` to `rc-015` (#127). Recipient text ahead of the address on line 1: after `C/O` or `ATTN`, after `CO`
+(for `C/O`), with no marker, and ahead of a PO Box; with the number kept and the words in `attention`. The near
+misses that must not change: a county road (`COUNTY ROAD 12`, `CO RD 12`), `C/O` directly before the address, and a
+unit designator ahead of the address.
 ### `units.jsonl`
 
 Ids `un-001` to `un-018` (#128). Units that stayed in the street name: two numbers after a designator or the suffix,
