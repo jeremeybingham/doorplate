@@ -491,6 +491,15 @@ fn gen_special(t: &Table, out: &mut String, mw: &mut usize) -> Result<HighwayRow
     )
     .ok();
 
+    let nctx = format!("{ctx} [non_recipient]");
+    let mut non_recipient = key_list(table(t, "non_recipient", ctx)?, "words", &nctx, true)?;
+    non_recipient.sort();
+    writeln!(
+        out,
+        "pub(crate) static NON_RECIPIENT_WORDS: &[&str] = &{non_recipient:?};\n"
+    )
+    .ok();
+
     let pctx = format!("{ctx} [placeholder]");
     let mut phrases = key_list(table(t, "placeholder", ctx)?, "phrases", &pctx, true)?;
     phrases.sort();

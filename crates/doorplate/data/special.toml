@@ -250,6 +250,29 @@ words = [
   "TWP",
 ]
 
+[non_recipient]
+# Words that start a line ahead of a house number and are not a recipient name,
+# so the line is left as it was (#127): words that locate a point on a road
+# (`BLOCK 100 MAIN ST`, `MILEPOST 12 STATE HWY`), a number marker (`NO 100
+# MAIN ST`) and the Puerto Rico urbanization (`URB LAS FLORES 12 CALLE
+# ROBLE`, issue #92). Not a USPS rule. Seen in a business-location list, where
+# the labels write the location word and the number together as the house
+# number, and in the carrier census, amateur-radio and corporation lists.
+words = [
+  "BILLBD",
+  "BILLBOARD",
+  "BLK",
+  "BLOCK",
+  "MILE",
+  "MILEPOST",
+  "MP",
+  "NO",
+  "NUM",
+  "NUMBER",
+  "URB",
+  "URBANIZACION",
+]
+
 [placeholder]
 # Whole-line stand-ins meaning "no usable street address". Matched against the
 # normalized street line, optionally after a leading run of zeros ("0 UNKNOWN",
