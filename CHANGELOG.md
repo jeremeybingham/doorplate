@@ -9,6 +9,13 @@ change to what an input produces needs a new key version.
 
 ### Changed
 
+- **A floor written as an ordinal and `FL` is a floor when the state is `FL`** (#114, **held for the `k3`**: it changes the
+  unit and the unit-level key): `123 MAIN ST 5TH FL` and `123 MAIN ST THIRD FL` with state `FL` are floor 5 and floor
+  3; the repeated-state rule had dropped the `FL` and left `5TH` as a bare unit. The ordinal must follow a street suffix
+  (`123 5TH FL` is the street `5TH`), and a plain number (`5 FL`) is unchanged. 82 rows of the large sources have the
+  shape and 67 change; one key changes (of 37M rows). `THIRD FLOOR` (the second problem of the issue) was fixed with
+  #129. The harness (`tools/harness`, schema version 8) now compares an ordinal by its number in the `street` check
+  (`5TH` equals `5`), so a correct floor is no longer a false mismatch.
 - **Spelled-out numbers are read as numbers** (#129, **key-affecting, held for the `k3`**): `ONE COMMERCE PLAZA`, `TWO
   BAYVIEW LANE 15TH FLOOR` and `ONE NORTH MAIN ST` have the house number 1 or 2 (a number word `ONE` to `TWENTY` at the
   start of a street line, when a name and a street suffix follow), `SUITE TWO` is suite 2, and `THIRD FLOOR` is floor 3.

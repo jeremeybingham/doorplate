@@ -116,7 +116,7 @@ A shape in the report is a question, not a bug. Before chasing one, sort it:
    files).
 3. **A flaw in a check?** The harness's own checks have been wrong before: PO box and rural route
    words counted as street mismatches, a spelled-out unit (`SUITE`) against its abbreviation
-   (`STE`), a state spelled out (`NEW YORK`). Each fix bumped the schema version. When a mismatch
+   (`STE`), a state spelled out (`NEW YORK`). Each fix bumped the schema version (version 8: an ordinal compares as its number, `5TH` equals `5`). When a mismatch
    rate looks implausible, break it down by address type and shape before blaming the parser.
 4. **A parser question?** Reproduce it with an invented address of the same shape. If it does not
    reproduce, it is a property of the source. If it does, find a source for the rule

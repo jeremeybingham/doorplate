@@ -700,7 +700,7 @@ impl Tagger<'_> {
         };
         match longest_ending(self.toks, lo + 1, hi, |s| self.state_ok(s, false)) {
             Some((_, w)) if code(&join(&self.toks[hi - w..hi])) == Some(tagged) => {
-                if w == 1 && self.completes_street(lo, hi) {
+                if w == 1 && (self.completes_street(lo, hi) || self.floor_word(lo, hi)) {
                     return hi;
                 }
                 self.set(hi - w..hi, Tag::Skip);
@@ -708,6 +708,22 @@ impl Tagger<'_> {
             }
             _ => hi,
         }
+    }
+
+    /// The last token (`hi - 1`) is the floor word `FL` right after an ordinal
+    /// (`123 MAIN ST 5TH FL`, `THIRD FL`, with state `FL`): a floor, not a copy
+    /// of the state (#114), when a street suffix comes before the ordinal (`123
+    /// 5TH FL` is the street `5TH`). A city before it (`LECANTO FL`) or a plain number
+    /// (`5 FL`, read as unit 5 as before) is not.
+    fn floor_word(&self, lo: usize, hi: usize) -> bool {
+        if hi < lo + 2 {
+            return false;
+        }
+        let (prev, last) = (self.text(hi - 2), self.text(hi - 1));
+        self.lex.unit(last).is_some_and(|l| l.value.abbr() == "FL")
+            && self.toks[hi - 2].seg == self.toks[hi - 1].seg
+            && (is_ordinal(prev) || spelled_ordinal(prev).is_some())
+            && self.suffix_before(lo + 1, hi - 2)
     }
 
     /// The last token (`hi - 1`) is a street suffix or directional, not just a

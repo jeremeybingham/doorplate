@@ -210,7 +210,7 @@ field values (`reso-`), written from `docs/key-format.md` and
 Every folder under `crates/doorplate/data/states/` needs a file like this one, `<st>-state.jsonl`, with cases
 from that state; a test fails when one is missing.
 
-Ids `fl-001` to `fl-033`. The Florida state data and the national place list on
+Ids `fl-001` to `fl-047`. The Florida state data and the national place list on
 Florida input: a city on one line with no commas, a city run into the street,
 cut-off cities completed, the place from the ZIP, `zip_city_mismatch`, the
 observed ZIP places, `CR` as CIRCLE, `SR` as STATE ROAD, and communities and
