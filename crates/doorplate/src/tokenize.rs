@@ -612,6 +612,7 @@ fn glue_place(
                         && !later_anchor
                         && (j + 1 == rest.len()
                             || (j + 2 == rest.len() && zip_parts(rest[j + 1]).is_some()))
+                        && suffix_state_confirmed(w, rest.get(j + 1).copied(), lex)
                 }
             };
             let mut city = first.to_string();
@@ -626,6 +627,20 @@ fn glue_place(
         return None;
     }
     (2..n - 2).find(|&cut| lex.suffix(&t[..cut]).is_some() && city_at(&t[cut..]))
+}
+
+/// A state code that is also a street suffix (`CT`, `KY`, `MT`, `WY`, `LA`) ends
+/// a glued city only when a ZIP of that state follows it: a bare `CT` after a
+/// word is the suffix (`PINEBRIAR CT` is not `PINE` `BRIAR` in Connecticut), as
+/// the tagger decides for the same collision. Any other anchor stands.
+fn suffix_state_confirmed(w: &str, zip: Option<&str>, lex: &Lexicons) -> bool {
+    if lex.state(w).is_none() || lex.suffix(w).is_none() {
+        return true;
+    }
+    let state = lex.state(w).map(|l| l.value.code());
+    zip.and_then(zip_parts)
+        .and_then(|(z5, _)| lex.zip_places(z5))
+        .is_some_and(|z| Some(z.main().state()) == state)
 }
 
 fn known_word(t: &str, lex: &Lexicons) -> bool {
@@ -735,6 +750,32 @@ mod tests {
             ["13551", "WILSON", "STREETDADE", "CITY"]
         );
         assert_eq!(toks("1 PARKLAND DR"), ["1", "PARKLAND", "DR"]);
+    }
+
+    #[test]
+    fn a_suffix_that_is_a_state_ends_no_glued_city_without_its_zip() {
+        // `CT` is the suffix COURT unless a Connecticut ZIP follows (#143).
+        for street in ["PINEBRIAR", "TRELLIS", "STORCH", "COURTNEY", "FIELDSTONE"] {
+            assert_eq!(
+                toks(&format!("1305 {street} CT")),
+                ["1305", street, "CT"],
+                "{street}"
+            );
+        }
+        for suffix in ["WY", "KY", "MT"] {
+            assert_eq!(
+                toks(&format!("1305 PINEBRIAR {suffix}")).len(),
+                3,
+                "{suffix}"
+            );
+        }
+        // With a ZIP of that state the glued city still splits.
+        assert_eq!(
+            toks("123 MAIN STHARTFORD CT 06103"),
+            ["123", "MAIN", "ST", "HARTFORD", "CT", "06103"]
+        );
+        // A ZIP of another state does not make it Connecticut.
+        assert_eq!(toks("1305 PINEBRIAR CT 33601").len(), 4);
     }
 
     #[test]

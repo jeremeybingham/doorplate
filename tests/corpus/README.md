@@ -40,6 +40,7 @@ Every parsing bug fixed gets a case here (`CONTRIBUTING.md`).
   `ns-` (street lines with no street, `nostreet.jsonl`),
   `pb-` (misspelled PO BOX words, `pobox.jsonl`),
   `dp-` (department names, `dept.jsonl`),
+  `gl-` (a word glued to a state-like suffix, `glue.jsonl`),
   `rc-` (recipient text ahead of the address, `recipient.jsonl`),
   `un-` (units left in the street name, `units.jsonl`),
   `sp-` (spelled-out numbers, `spelled.jsonl`),
@@ -280,6 +281,12 @@ named `POX`, `P`, `POP`, the standard spelling).
 Ids `dp-001` to `dp-010` (#166). A department name on line 2 or after a comma (`MATH DEPT`, `HUMAN RESOURCES DEPARTMENT`)
 as the attention line; and the near misses that must not change (`DEPT 4`, `DEPT. 4`, `DEPT #4`, streets named `FIRE
 DEPT RD` and `FIRE DEPARTMENT RD`, an `ATTN` line).
+
+### `glue.jsonl`
+
+Ids `gl-001` to `gl-011` (#143). A word before a trailing `CT`, `WY`, `KY` or `MT` stays one word (`PINEBRIAR CT`, `TRELLIS
+CT`), in pre-split fields and on one line; and the near misses that must not change (`CIR`, `LN`, a unit after `CT`, a
+city glued to the street with a Connecticut ZIP).
 
 ### `country.jsonl`
 

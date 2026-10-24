@@ -9,6 +9,12 @@ change to what an input produces needs a new key version.
 
 ### Changed
 
+- **A word before a trailing `CT`, `KY`, `MT` or `WY` is no longer cut in two** (#143, **held for the `k3`**: 15,725 keys
+  change): in pre-split fields `1305 PINEBRIAR CT` had the street name `PINE BRIAR` (and `TRELLIS CT` had `TR ELLIS`,
+  `STORCH CT` had `ST ORCHARD`), because the tokenizer took `CT` for Connecticut ending a city glued to the street. A state
+  code that is also a street suffix now ends a glued city only when a ZIP of that state follows. Measured against the
+  build before this rule: 15,725 keys change in the seven large sources (about 0.04% of rows, no warning changes), 15,713
+  of them the same name without the cut; the 6 NAD rows match NAD's labels. `STHARTFORD CT 06103` still splits.
 - **A department name is an attention line, not a unit** (#166, **held for the `k3`**: 31 keys change): on a later line or
   comma segment, two or more words with no digit ending in `DEPT` or `DEPARTMENT` (`MATH DEPT`, `HUMAN RESOURCES
   DEPARTMENT`) were a unit `DEPT` with no number and their words in `unparsed`. `DEPT 4`, a street named `FIRE DEPT RD`,
