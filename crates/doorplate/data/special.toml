@@ -273,6 +273,22 @@ words = [
   "URBANIZACION",
 ]
 
+[numbered_street]
+# Words that, right after a spelled-out number at the start of a line, make
+# the number part of a street name (`ONE MILE RD`, `THREE FORKS RD`, `TWO
+# RIVERS DR`, `FOUR CORNERS RD`): the number word is not the house number
+# (#129). Not a USPS rule. The first name word of these numbered streets, as in
+# the issue; the building names that are addresses (`ONE COMMERCE PLAZA`, `ONE
+# PENN PLAZA`) are not here and read as house number 1.
+words = [
+  "CORNERS",
+  "FORKS",
+  "HUNDRED",
+  "MILE",
+  "MILES",
+  "RIVERS",
+]
+
 [placeholder]
 # Whole-line stand-ins meaning "no usable street address". Matched against the
 # normalized street line, optionally after a leading run of zeros ("0 UNKNOWN",

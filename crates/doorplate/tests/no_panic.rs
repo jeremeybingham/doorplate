@@ -16,6 +16,12 @@ const WORDS: &[&str] = &[
     "4-H",
     "Club",
     "Star",
+    "One",
+    "Two",
+    "Third",
+    "Floor",
+    "Flr",
+    "Mile",
     "Acme",
     "Inc",
     "CO",
@@ -299,6 +305,50 @@ fn unusual_units_never_panic() {
                 let _ = parser.parse_fields(&Fields {
                     line1: Some(street.to_string()),
                     line2: Some(unit.to_string()),
+                    city: Some("MIAMI".to_string()),
+                    state: Some("FL".to_string()),
+                    zip: Some("33101".to_string()),
+                });
+            }
+        }
+    }
+}
+
+/// Spelled-out house numbers, unit numbers and floors, in every position and
+/// comma placement (#129).
+#[test]
+fn spelled_numbers_never_panic() {
+    let parser = Parser::new();
+    for lead in [
+        "ONE",
+        "TWO",
+        "TWENTY",
+        "ONE NORTH",
+        "ONE MILE",
+        "THIRD",
+        "ONE ONE",
+        "",
+    ] {
+        for tail in [
+            "COMMERCE PLAZA",
+            "QUINCEWOOD PLAZA BOX 3300",
+            "BAYVIEW LANE 15TH FLOOR",
+            "MAIN ST SUITE TWO",
+            "MAIN ST THIRD FLOOR",
+            "MAIN ST THIRD FLR",
+            "MAIN ST SUITE",
+            "MAIN ST SUITE TWENTY ONE",
+            "PLAZA",
+            "ST",
+            "",
+        ] {
+            for sep in [" ", ", ", " , "] {
+                let line = format!("{lead}{sep}{tail}");
+                let _ = parser.parse(&line);
+                let _ = parser.parse(&format!("{line}, MIAMI FL 33101"));
+                let _ = parser.parse_fields(&Fields {
+                    line1: Some(line),
+                    line2: Some("THIRD FLOOR".to_string()),
                     city: Some("MIAMI".to_string()),
                     state: Some("FL".to_string()),
                     zip: Some("33101".to_string()),
