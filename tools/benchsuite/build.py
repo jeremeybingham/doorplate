@@ -34,6 +34,7 @@ import gzip
 import hashlib
 import json
 import multiprocessing
+import os
 import random
 import re
 import struct
@@ -468,7 +469,7 @@ def main():
     ap.add_argument("--scale", type=float, default=1.0, help="a fraction of the full size (tests)")
     ap.add_argument("--twin", action="store_true", help="the private twin: seed from local-data/benchsuite/TWIN_SEED")
     ap.add_argument("--out", type=Path)
-    ap.add_argument("--workers", type=int, default=4)
+    ap.add_argument("--workers", type=int, default=os.cpu_count() or 1, help="processes (default: all cores)")
     ap.add_argument("--training-dir", type=Path, default=LOCAL / "usaddress-training")
     args = ap.parse_args()
     load_tables()

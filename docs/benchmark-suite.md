@@ -276,7 +276,8 @@ rewritten:
 
 The reference profile is **4 logical CPUs and 8 GB of memory, on Linux**. It is what a
 GitHub-hosted `ubuntu-latest` runner on a public repository has, and what an ordinary laptop has.
-The runner applies it itself:
+The profile applies to benchmark runs only (builds, tests and the other tools are not limited). The runner applies it
+itself:
 
 - `os.sched_setaffinity` to 4 CPUs, and `RAYON_NUM_THREADS=4` for doorplate's batch calls
 - an 8 GB `RLIMIT_AS` on the processes it starts (an address-space limit, so an approximation;

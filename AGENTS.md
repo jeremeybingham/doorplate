@@ -67,6 +67,10 @@ pytest tools/ingest tools/harness tools/review tools/compare   # the ingest tool
 python benchmarks/suite.py all
 ```
 
+**Resources.** Builds, tests, the harness, the key comparison and the data tools use all the cores and memory
+the machine has. Only the benchmark suite's runner (`benchmarks/suite.py`) and a speed figure you intend to quote pin
+the reference profile (4 CPUs, 8 GB; [`benchmarks/README.md`](benchmarks/README.md)).
+
 Plain `cargo test` needs no Python. Rust 1.80 or later; the Python extension needs 1.83. CI also uploads Rust line coverage to Codecov (informational; `codecov.yml`).
 
 ## Rules that must hold
