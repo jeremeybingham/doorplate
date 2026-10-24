@@ -775,8 +775,10 @@ impl Tagger<'_> {
     // ---- delivery line -----------------------------------------------------
 
     pub(super) fn delivery(&mut self, lo: usize, hi: usize) {
+        let lo = self.co_lead(lo, hi);
         let (lo, hi) = self.attention(lo, hi);
         let lo = self.name_line(lo, hi);
+        let lo = self.leading_recipient(lo, hi);
         if lo >= hi || self.placeholder(lo, hi) {
             return;
         }
@@ -969,6 +971,14 @@ impl Tagger<'_> {
         let end = (k..hi)
             .find(|&e| self.toks[e].seg != self.toks[k].seg)
             .unwrap_or(hi);
+        // "C/O ACME CORP 20 QUINCEWOOD CT": the address ends the segment, so
+        // the attention line stops before its house number (#127).
+        if k == lo {
+            if let Some(j) = self.address_start(k + w, end) {
+                self.set(k..j, Tag::Attention);
+                return self.attention(j, hi);
+            }
+        }
         if end == hi {
             // "PO BOX 23181 C/O YMF", or line 2 "ATTN: RYAN ADAIR".
             self.set(k..hi, Tag::Attention);
@@ -979,6 +989,111 @@ impl Tagger<'_> {
             (end, hi)
         } else {
             (lo, hi)
+        }
+    }
+
+    /// The end of the comma segment that holds `k`, at most `hi`.
+    fn seg_end(&self, k: usize, hi: usize) -> usize {
+        (k..hi)
+            .find(|&e| self.toks[e].seg != self.toks[k].seg)
+            .unwrap_or(hi)
+    }
+
+    /// Whether a street address runs from `j` to `e`: a house number, at least
+    /// one name word (no digits, but an ordinal is fine) and a street suffix,
+    /// which may be followed by a directional: `20 QUINCEWOOD CT`, `7100
+    /// ZEPHYRMILL DR S`, `500 5TH AVE`.
+    fn address_at(&self, j: usize, e: usize) -> bool {
+        let lex = self.lex;
+        if j >= e || house_number(self.text(j)).is_none() {
+            return false;
+        }
+        let mut last = e;
+        if last > j + 2 && lex.directional(self.text(last - 1)).is_some() {
+            last -= 1;
+        }
+        if last < j + 3 || lex.suffix(self.text(last - 1)).is_none() {
+            return false;
+        }
+        self.toks[j + 1..last - 1]
+            .iter()
+            .all(|t| (!has_digit(&t.text) || is_ordinal(&t.text)) && !t.is_hash() && !t.is_dash())
+    }
+
+    /// Where the address starts in `from..e`: the last house number that
+    /// begins one (see [`Self::address_at`]).
+    fn address_start(&self, from: usize, e: usize) -> Option<usize> {
+        (from..e).rev().find(|&j| self.address_at(j, e))
+    }
+
+    /// Words that can be a recipient name ahead of a street: no digit, hash
+    /// or dash, and nothing that belongs to an address (a PO Box or route
+    /// word, a unit designator, a directional, a highway prefix; `CO` is read
+    /// as the company word it usually is; a single letter and a word such as
+    /// `BLOCK`, `NO` or `URB` are not names).
+    fn recipient_words(&self, lo: usize, hi: usize) -> bool {
+        let lex = self.lex;
+        lo < hi
+            && hi - lo <= 8
+            && (lo..hi).all(|i| {
+                let t = self.text(i);
+                let highway = longest_at(self.toks, i, hi, |s| lex.highway(s))
+                    .is_some_and(|(_, w)| w > 1 || !t.eq_ignore_ascii_case("CO"));
+                !has_digit(t)
+                    && !is_letter(t)
+                    && !lex.is_non_recipient_word(t)
+                    && !self.toks[i].is_hash()
+                    && !self.toks[i].is_dash()
+                    && lex.special(t).is_none()
+                    && lex.unit(t).is_none()
+                    && lex.directional(t).is_none()
+                    && !highway
+            })
+    }
+
+    /// `CO` for `C/O` at the start of a line, when an address follows the
+    /// recipient words: `CO ACME INC 120 QUINCEWOOD AVE`, `CO 612 QUINCEWOOD
+    /// ST` (not the county highway `CO RD 12` or `CO HWY 612`). Returns the
+    /// start of what is left (#127).
+    fn co_lead(&mut self, lo: usize, hi: usize) -> usize {
+        let lex = self.lex;
+        if lo + 1 >= hi || !self.text(lo).eq_ignore_ascii_case("CO") {
+            return lo;
+        }
+        if longest_at(self.toks, lo, hi, |s| lex.highway(s)).is_some_and(|(_, w)| w > 1) {
+            return lo;
+        }
+        let e = self.seg_end(lo, hi);
+        let Some(j) = self.address_start(lo + 1, e) else {
+            return lo;
+        };
+        if j == lo + 1 {
+            self.set(lo..j, Tag::Skip);
+        } else if self.recipient_words(lo + 1, j) {
+            self.set(lo..j, Tag::Attention);
+        } else {
+            return lo;
+        }
+        j
+    }
+
+    /// Recipient words ahead of the address with no marker: `ACME FOUNDATION
+    /// 500 BAYVIEW RD`, and a name ahead of a box, `ACME CO PO BOX 12345`.
+    /// The words are the attention line (#127).
+    fn leading_recipient(&mut self, lo: usize, hi: usize) -> usize {
+        if lo >= hi || house_number(self.text(lo)).is_some() {
+            return lo;
+        }
+        let e = self.seg_end(lo, hi);
+        let target = self
+            .address_start(lo, e)
+            .or_else(|| (lo + 1..e).find(|&k| self.box_line(k, e, false).is_some()));
+        match target {
+            Some(j) if j > lo && self.recipient_words(lo, j) => {
+                self.set(lo..j, Tag::Attention);
+                j
+            }
+            _ => lo,
         }
     }
 

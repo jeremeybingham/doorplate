@@ -16,6 +16,9 @@ const WORDS: &[&str] = &[
     "4-H",
     "Club",
     "Star",
+    "Acme",
+    "Inc",
+    "CO",
     "N",
     "SW",
     "Main",
@@ -199,6 +202,48 @@ fn care_of_after_street_never_panics() {
                 let _ = parser.parse_fields(&Fields {
                     line1: Some(street.to_string()),
                     line2: Some(format!("{marker} {rest}")),
+                    city: Some("MIAMI".to_string()),
+                    state: Some("FL".to_string()),
+                    zip: Some("33101".to_string()),
+                });
+            }
+        }
+    }
+}
+
+/// Recipient words, a marker or `CO` ahead of an address or a box, on one line
+/// or two, in every comma placement (#127).
+#[test]
+fn recipient_before_address_never_panics() {
+    let parser = Parser::new();
+    for lead in [
+        "C/O ACME INC",
+        "CO ACME INC",
+        "CO",
+        "ACME INC",
+        "ATTN",
+        "CO RD",
+        "ACME CO",
+        "",
+    ] {
+        for tail in [
+            "20 QUINCEWOOD CT",
+            "7100 ZEPHYRMILL DR S",
+            "500 5TH AVE",
+            "20 CT",
+            "20",
+            "PO BOX 12345",
+            "PO BOX",
+            "12 BAYVIEW RD STE 4",
+            "612 QUINCEWOOD ST, MIAMI FL 33101",
+        ] {
+            for sep in [" ", ", ", " , "] {
+                let line = format!("{lead}{sep}{tail}");
+                let _ = parser.parse(&line);
+                let _ = parser.parse(&format!("{line}, MIAMI FL 33101"));
+                let _ = parser.parse_fields(&Fields {
+                    line1: Some(line),
+                    line2: Some("% ACME INC".to_string()),
                     city: Some("MIAMI".to_string()),
                     state: Some("FL".to_string()),
                     zip: Some("33101".to_string()),

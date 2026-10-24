@@ -9,6 +9,15 @@ change to what an input produces needs a new key version.
 
 ### Changed
 
+- **Recipient text ahead of the address is the attention line, not part of the street** (#127, **key-affecting, held for the
+  `k3`**): `C/O ACME CORP 20 QUINCEWOOD CT` (the attention line took the whole line and the street was empty),
+  `CO ACME INC 120 QUINCEWOOD AVE` and `CO 612 QUINCEWOOD ST` (`CO` for `C/O`, not the county highway),
+  `ACME FOUNDATION 500 BAYVIEW RD` (no marker) and `ACME CO PO BOX 12345` (a name ahead of a box) now keep their house
+  number or box and put the words in `attention`. Measured against the frozen checkpoint keys, 13,547 keys change
+  in the seven large sources (5,494 IRS, 4,091 NC voter mailing, 1,870 amateur radio, 1,193 carrier census, 895 NY
+  corporations, 3 Netsyms, 1 NAD), and `missing_street_number` is removed from about 12,000 rows. A county-highway prefix, a unit designator, a route or box word, a
+  directional, any digit, a single letter or a word such as `BLOCK`, `NO` or `URB` among the leading words leaves the
+  line as before (`[non_recipient]` in `data/special.toml`). The Netsyms sample changes in 3 rows.
 - **A care-of line after a street no longer swallows the unit or leaves a warning** (#126, **key-affecting, held for the `k3`**): in
   `12 OAK AVE STE 4` / `% 5 STAR GROUP` the number after the marker started a second address, so the name was left over
   and the unit stayed in the street name. Now a marker line after a street is the attention line when it holds a
