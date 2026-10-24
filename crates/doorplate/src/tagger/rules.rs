@@ -1917,6 +1917,34 @@ impl Tagger<'_> {
         lex.suffix(word).is_some() && !highway && sfx > name_start
     }
 
+    /// Whether `BAY` at `k` ends the street's name rather than naming a unit
+    /// (`HERON BAY # 2B`, `OYSTER BAY 4`): a name word (no digit) comes before it
+    /// in the street's own segment and no street suffix does. `BAY` is a unit (an
+    /// industrial bay) after a suffix (`MAIN ST BAY 4`) or on a later line
+    /// (#144).
+    fn bay_in_name(&self, name_lo: usize, k: usize) -> bool {
+        k > name_lo
+            && k < self.toks.len()
+            && self.text(k) == "BAY"
+            && self.toks[k].seg == self.toks[name_lo].seg
+            && !self.toks[k - 1].is_hash()
+            && !has_digit(self.text(k - 1))
+            && !self.suffix_before(name_lo, k)
+    }
+
+    /// Whether the value at `last` follows a street name that ends in `BAY`,
+    /// with a postdirectional between them or not (`HERON BAY 2B`, `HERON BAY
+    /// W 2B`).
+    fn bay_before_value(&self, name_lo: usize, last: usize) -> bool {
+        let Some(mut k) = last.checked_sub(1) else {
+            return false;
+        };
+        if k > name_lo && self.lex.directional(self.text(k)).is_some() {
+            k -= 1;
+        }
+        self.bay_in_name(name_lo, k)
+    }
+
     /// Whether tokens `last - 1` and `last` are two numbers right after a
     /// designator or `#`, one unit value written in two parts: `STE 180
     /// 417020`, `FL 2 270` (#128).
@@ -2164,9 +2192,10 @@ impl Tagger<'_> {
                     let designator = longest_ending(self.toks, floor, hash, |s| lex.unit(s))
                         .filter(|&(_, w)| {
                             let v = hash - w;
-                            !(v > name_lo + 1
+                            let floor_first = v > name_lo + 1
                                 && is_ordinal(self.text(v - 1))
-                                && self.suffix_before(name_lo, v - 1))
+                                && self.suffix_before(name_lo, v - 1);
+                            !floor_first && !self.bay_in_name(name_lo, v)
                         });
                     match designator {
                         Some((_, w)) => {
@@ -2198,7 +2227,7 @@ impl Tagger<'_> {
                     // `OCEAN FRONT W` is not unit `FRNT W`.
                     let street_word = lex.directional(t).is_some()
                         && !(u.kind != MatchKind::Observed && u.value.range_required());
-                    if !street_word {
+                    if !street_word && !self.bay_in_name(name_lo, start - w) {
                         found.push((start - w..start, start..j));
                         j = start - w;
                         continue;
@@ -2335,7 +2364,10 @@ impl Tagger<'_> {
                 }
                 // A directional letter here is the postdirectional ("PARK AVE S").
                 let dir = lex.directional(t).is_some();
-                if is_unit_value(t) && !dir && self.suffix_before(name_lo, last) {
+                if is_unit_value(t)
+                    && !dir
+                    && (self.suffix_before(name_lo, last) || self.bay_before_value(name_lo, last))
+                {
                     found.push((last..last, last..j));
                     self.decide(Decision::BareUnit);
                     j = last;

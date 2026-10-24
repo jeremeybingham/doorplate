@@ -16,6 +16,9 @@ const WORDS: &[&str] = &[
     "4-H",
     "Club",
     "Star",
+    "Bay",
+    "Heron",
+    "2B",
     "Pinebriar",
     "Hartford",
     "CT",
@@ -404,6 +407,48 @@ fn department_lines_never_panic() {
                 let _ = parser.parse_fields(&Fields {
                     line1: Some(street.to_string()),
                     line2: Some(dept.to_string()),
+                    city: Some("MIAMI".to_string()),
+                    state: Some("FL".to_string()),
+                    zip: Some("33101".to_string()),
+                });
+            }
+        }
+    }
+}
+
+/// `BAY` ahead of a value, a hash, a directional or nothing, in every
+/// position, including as the first and only word (#144).
+#[test]
+fn bay_never_panics() {
+    let parser = Parser::new();
+    for lead in [
+        "",
+        "1305",
+        "1305 HERON",
+        "1305 MAIN ST",
+        "1305 N",
+        "1305 22A",
+        "# ",
+        "HERON",
+    ] {
+        for tail in [
+            "BAY",
+            "BAY 2B",
+            "BAY # 2B",
+            "BAY W 45",
+            "BAY #",
+            "BAY BAY 4",
+            "BAY ST",
+            "BAY UNIT 2B",
+            "# BAY 4",
+        ] {
+            for sep in [" ", ", ", " , "] {
+                let line = format!("{lead}{sep}{tail}");
+                let _ = parser.parse(&line);
+                let _ = parser.parse(&format!("{line}, MIAMI FL 33101"));
+                let _ = parser.parse_fields(&Fields {
+                    line1: Some(lead.to_string()),
+                    line2: Some(tail.to_string()),
                     city: Some("MIAMI".to_string()),
                     state: Some("FL".to_string()),
                     zip: Some("33101".to_string()),

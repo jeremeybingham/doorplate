@@ -41,6 +41,7 @@ Every parsing bug fixed gets a case here (`CONTRIBUTING.md`).
   `pb-` (misspelled PO BOX words, `pobox.jsonl`),
   `dp-` (department names, `dept.jsonl`),
   `gl-` (a word glued to a state-like suffix, `glue.jsonl`),
+  `by-` (BAY in a street name, `bay.jsonl`),
   `rc-` (recipient text ahead of the address, `recipient.jsonl`),
   `un-` (units left in the street name, `units.jsonl`),
   `sp-` (spelled-out numbers, `spelled.jsonl`),
@@ -287,6 +288,12 @@ DEPT RD` and `FIRE DEPARTMENT RD`, an `ATTN` line).
 Ids `gl-001` to `gl-011` (#143). A word before a trailing `CT`, `WY`, `KY` or `MT` stays one word (`PINEBRIAR CT`, `TRELLIS
 CT`), in pre-split fields and on one line; and the near misses that must not change (`CIR`, `LN`, a unit after `CT`, a
 city glued to the street with a Connecticut ZIP).
+
+### `bay.jsonl`
+
+Ids `by-001` to `by-011` (#144). `BAY` at the end of a street name (`HERON BAY # 2B`, `HERON BAY 2B`, `HERON BAY W 45`)
+is part of the name; and the near misses that must not change (`BAY` after a suffix or on line 2 is still a unit, a
+street named `BAY` or `OYSTER BAY BLVD`).
 
 ### `country.jsonl`
 
