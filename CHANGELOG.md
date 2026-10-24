@@ -9,6 +9,13 @@ change to what an input produces needs a new key version.
 
 ### Changed
 
+- **A department name is an attention line, not a unit** (#166, **held for the `k3`**: 31 keys change): on a later line or
+  comma segment, two or more words with no digit ending in `DEPT` or `DEPARTMENT` (`MATH DEPT`, `HUMAN RESOURCES
+  DEPARTMENT`) were a unit `DEPT` with no number and their words in `unparsed`. `DEPT 4`, a street named `FIRE DEPT RD`,
+  a line that starts with a designator (`SUITE B ...`) and a department alone on line 1 are unchanged. Measured against
+  the build before this rule: about 220 rows change (216 NY corporations, 2 IRS, 2 NAD; the IRS department lines mostly
+  start with `%` and were already attention lines); `missing_unit_number` is removed from 218 rows and
+  `unparsed_remainder` from 217; the 31 key changes are streets that had a department joined to them by a dash.
 - **Misspelled PO BOX words are read as PO Boxes** (#165, **held for the `k3`**): `P O BX 1234`, `P BOX`, `POX`, `PO BOX BOX`,
   `P OBOX`, `PO OX`, `PO POX`, `POX BOX`, `PO OBX`, `POP BOX` and `P O OX` are forms of PO BOX (they were streets with
   `missing_street_number`), with no warning (as `POB`). Measured against the build before this rule: 869 keys change

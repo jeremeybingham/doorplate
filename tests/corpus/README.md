@@ -39,6 +39,7 @@ Every parsing bug fixed gets a case here (`CONTRIBUTING.md`).
   `sl-` (a second line used or dropped, `second-line.jsonl`),
   `ns-` (street lines with no street, `nostreet.jsonl`),
   `pb-` (misspelled PO BOX words, `pobox.jsonl`),
+  `dp-` (department names, `dept.jsonl`),
   `rc-` (recipient text ahead of the address, `recipient.jsonl`),
   `un-` (units left in the street name, `units.jsonl`),
   `sp-` (spelled-out numbers, `spelled.jsonl`),
@@ -273,6 +274,12 @@ street on line 2).
 Ids `pb-001` to `pb-018` (#165). The eleven misspellings of PO BOX read as a box, a misspelled box with a unit, after a
 street (`dual_address`), a misspelled word with no number (unparsed); and the near misses that must not change (streets
 named `POX`, `P`, `POP`, the standard spelling).
+
+### `dept.jsonl`
+
+Ids `dp-001` to `dp-010` (#166). A department name on line 2 or after a comma (`MATH DEPT`, `HUMAN RESOURCES DEPARTMENT`)
+as the attention line; and the near misses that must not change (`DEPT 4`, `DEPT. 4`, `DEPT #4`, streets named `FIRE
+DEPT RD` and `FIRE DEPARTMENT RD`, an `ATTN` line).
 
 ### `country.jsonl`
 
