@@ -18,6 +18,62 @@ pub(crate) fn all_digits(t: &str) -> bool {
     !t.is_empty() && t.bytes().all(|c| c.is_ascii_digit())
 }
 
+/// A spelled-out number, `ONE` to `TWENTY`: its value.
+pub(crate) fn spelled_number(t: &str) -> Option<u32> {
+    const WORDS: [&str; 20] = [
+        "ONE",
+        "TWO",
+        "THREE",
+        "FOUR",
+        "FIVE",
+        "SIX",
+        "SEVEN",
+        "EIGHT",
+        "NINE",
+        "TEN",
+        "ELEVEN",
+        "TWELVE",
+        "THIRTEEN",
+        "FOURTEEN",
+        "FIFTEEN",
+        "SIXTEEN",
+        "SEVENTEEN",
+        "EIGHTEEN",
+        "NINETEEN",
+        "TWENTY",
+    ];
+    let k = WORDS.iter().position(|w| t.eq_ignore_ascii_case(w))?;
+    u32::try_from(k + 1).ok()
+}
+
+/// A spelled-out ordinal, `FIRST` to `TWENTIETH`: its value.
+pub(crate) fn spelled_ordinal(t: &str) -> Option<u32> {
+    const WORDS: [&str; 20] = [
+        "FIRST",
+        "SECOND",
+        "THIRD",
+        "FOURTH",
+        "FIFTH",
+        "SIXTH",
+        "SEVENTH",
+        "EIGHTH",
+        "NINTH",
+        "TENTH",
+        "ELEVENTH",
+        "TWELFTH",
+        "THIRTEENTH",
+        "FOURTEENTH",
+        "FIFTEENTH",
+        "SIXTEENTH",
+        "SEVENTEENTH",
+        "EIGHTEENTH",
+        "NINETEENTH",
+        "TWENTIETH",
+    ];
+    let k = WORDS.iter().position(|w| t.eq_ignore_ascii_case(w))?;
+    u32::try_from(k + 1).ok()
+}
+
 /// `42ND`, `1ST`, `6TH`: digits then an ordinal suffix.
 pub(crate) fn is_ordinal(t: &str) -> bool {
     let d = t.bytes().take_while(u8::is_ascii_digit).count();
@@ -314,6 +370,12 @@ mod tests {
         let lex = Lexicons::builtin();
         assert!(is_cut_designator("UNI", &lex));
         assert!(!is_cut_designator("TRL", &lex) && !is_cut_designator("ST", &lex));
+        assert_eq!(spelled_number("One"), Some(1));
+        assert_eq!(spelled_number("TWENTY"), Some(20));
+        assert_eq!(spelled_number("TWENTYONE"), None);
+        assert_eq!(spelled_ordinal("third"), Some(3));
+        assert_eq!(spelled_ordinal("TWENTIETH"), Some(20));
+        assert_eq!(spelled_ordinal("THREE"), None);
         assert_eq!(house_number("112-10"), Some(NumberShape::Plain));
         assert_eq!(house_number("289-01"), Some(NumberShape::Plain));
         for g in ["22W410", "5S710", "W338S9739", "S1749", "0N428"] {

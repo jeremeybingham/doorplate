@@ -427,6 +427,13 @@ impl Lexicons {
         find_str(tables::NON_RECIPIENT_WORDS, &normalize_key_cow(s))
     }
 
+    /// Whether `s`, right after a spelled-out number at the start of a line,
+    /// makes the number part of the street name (`MILE` in `ONE MILE RD`).
+    /// Source: `data/special.toml` `[numbered_street]`.
+    pub(crate) fn is_numbered_street_word(&self, s: &str) -> bool {
+        find_str(tables::NUMBERED_STREET_WORDS, &normalize_key_cow(s))
+    }
+
     /// A word that ends a building name (`TOWER` in `EAST TOWER`).
     /// Source: `data/special.toml` `[building]`.
     pub(crate) fn is_building_word(&self, s: &str) -> bool {

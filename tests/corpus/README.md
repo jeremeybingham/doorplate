@@ -39,6 +39,7 @@ Every parsing bug fixed gets a case here (`CONTRIBUTING.md`).
   `sl-` (a second line used or dropped, `second-line.jsonl`),
   `rc-` (recipient text ahead of the address, `recipient.jsonl`),
   `un-` (units left in the street name, `units.jsonl`),
+  `sp-` (spelled-out numbers, `spelled.jsonl`),
   `is-` (intersections, `intersections.jsonl`),
   `nat-` (shapes found in a national address database, `national-data.jsonl`);
   `us-roundtrip-001` in `regressions.jsonl` came from the USPS round trip.
@@ -250,6 +251,13 @@ Ids `un-001` to `un-018` (#128). Units that stayed in the street name: two numbe
 `BOX`, `NO`, `NUM` and `LOC` after a street, a designator cut off (`SUIT`, `FLOO`, `FLO`) and a designator written
 twice; and the near misses that must not change (a street named `FLOOR`, `UNIT`, `NUM`, `BOX` or `NO`, a PO Box with a
 unit, a plain unit).
+
+### `spelled.jsonl`
+
+Ids `sp-001` to `sp-016` (#129). Spelled-out numbers: a house number word ahead of a name and a suffix (`ONE COMMERCE
+PLAZA`, `TWO BAYVIEW LANE 15TH FLOOR`), a unit number word (`SUITE TWO`, `UNIT ELEVEN`), a spelled ordinal before a
+floor (`THIRD FLOOR`), `FLR`; and the near misses that must not change (`ONE MILE RD`, `THREE FORKS RD`, `TWO RIVERS
+DR`, `FOUR CORNERS RD`, a street named `THIRD FLOOR`).
 
 ### `country.jsonl`
 

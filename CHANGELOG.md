@@ -9,6 +9,16 @@ change to what an input produces needs a new key version.
 
 ### Changed
 
+- **Spelled-out numbers are read as numbers** (#129, **key-affecting, held for the `k3`**): `ONE COMMERCE PLAZA`, `TWO
+  BAYVIEW LANE 15TH FLOOR` and `ONE NORTH MAIN ST` have the house number 1 or 2 (a number word `ONE` to `TWENTY` at the
+  start of a street line, when a name and a street suffix follow), `SUITE TWO` is suite 2, and `THIRD FLOOR` is floor 3.
+  `ONE MILE RD`, `THREE FORKS RD`, `TWO RIVERS DR` and `FOUR CORNERS RD` stay streets (`[numbered_street]` in
+  `data/special.toml`). `FLR` is an observed spelling of FLOOR (`non_standard_abbreviation`). Pub 28 does not say how a
+  spelled-out number is written, so the data is the source (section 235 only covers numeric street names). Measured
+  against the build before this rule, 26,132 keys change (16,808 NY service-of-process addresses, 4,148 other NY
+  corporation rows, 2,740 carrier census, 2,091 IRS, 288 amateur radio, 57 NC voter); `missing_street_number` is removed
+  from 18,500 rows, `unparsed_remainder` from 10,611 and `missing_unit_number` from 6,239, and
+  `non_standard_abbreviation` is added to 11,738 (the `FLR` spelling).
 - **Recipient text ahead of the address is the attention line, not part of the street** (#127, **key-affecting, held for the
   `k3`**): `C/O ACME CORP 20 QUINCEWOOD CT` (the attention line took the whole line and the street was empty),
   `CO ACME INC 120 QUINCEWOOD AVE` and `CO 612 QUINCEWOOD ST` (`CO` for `C/O`, not the county highway),

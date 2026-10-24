@@ -8,7 +8,7 @@ use crate::classify::{
     all_digits, has_digit, house_number, is_bare_unit, is_cut_designator, is_fraction,
     is_glued_ordinal, is_grid_number, is_letter, is_lettered_route, is_ordinal, is_route_value,
     is_slash_pair, is_unit_pair, is_unit_value, is_unit_word, join, longest_at, longest_ending,
-    zip_parts, NumberShape, ORDINAL_SUFFIXES,
+    spelled_number, spelled_ordinal, zip_parts, NumberShape, ORDINAL_SUFFIXES,
 };
 use crate::lexicon::{MatchKind, Special, MAX_PLACE_WORDS};
 use crate::tokenize::Token;
@@ -1442,6 +1442,38 @@ impl Tagger<'_> {
         Some(start)
     }
 
+    /// Whether the number word at `lo` (`ONE` to `TWENTY`) is the house number:
+    /// a name and a street suffix follow in its segment, with at most five
+    /// words after the suffix (a postdirectional, a unit). Not when the first
+    /// name word makes a numbered street of it (`ONE MILE RD`, `THREE FORKS
+    /// RD`, from `[numbered_street]`) or is a unit designator or a highway
+    /// prefix (#129).
+    fn spelled_house_number(&self, lo: usize, hi: usize) -> bool {
+        let lex = self.lex;
+        if spelled_number(self.text(lo)).is_none() || hi < lo + 3 {
+            return false;
+        }
+        let e = self.seg_end(lo, hi);
+        let dir = longest_at(self.toks, lo + 1, e, |s| lex.directional(s)).map_or(0, |(_, w)| w);
+        let n0 = lo + 1 + dir;
+        if n0 + 1 >= e {
+            return false;
+        }
+        let first = self.text(n0);
+        if lex.is_numbered_street_word(first)
+            || lex.unit(first).is_some()
+            || lex.highway(first).is_some()
+            || lex.suffix(first).is_some()
+            || has_digit(first)
+        {
+            return false;
+        }
+        let Some(s) = (n0 + 1..e).find(|&s| lex.suffix(self.text(s)).is_some()) else {
+            return false;
+        };
+        e - s - 1 <= 5
+    }
+
     /// A second plain house number at `k`, right after the first
     /// (`1309 1329 E VINE ST`): both are three or more digits, and a whole
     /// street follows on the line: an optional directional, at least one
@@ -1490,6 +1522,11 @@ impl Tagger<'_> {
             // "5210/5212 BRISTO ST"
             self.warn(Warning::MultipleAddresses);
             self.set(i..i + 1, Tag::Unparsed);
+            i += 1;
+        } else if self.spelled_house_number(lo, hi) {
+            // "ONE COMMERCE PLAZA": the number word is the house number; the
+            // assembler writes it as a digit.
+            self.set(i..i + 1, Tag::StreetNumber);
             i += 1;
         } else if let Some(shape) = house_number(t0).filter(|_| hi > lo + 1) {
             if t0.bytes().all(|c| c == b'0') {
@@ -1900,6 +1937,20 @@ impl Tagger<'_> {
         None
     }
 
+    /// `SUITE TWO`, `APT NINE`: a spelled-out number right after a designator
+    /// that takes a value (#129).
+    fn spelled_after_designator(&self, floor: usize, last: usize) -> bool {
+        last > floor
+            && spelled_number(self.text(last)).is_some()
+            && self.toks[last].seg == self.toks[last - 1].seg
+            && longest_ending(self.toks, floor, last, |s| {
+                self.lex
+                    .unit(s)
+                    .filter(|l| l.kind != MatchKind::Observed && l.value.range_required())
+            })
+            .is_some()
+    }
+
     /// `APT TD`, `UNIT AB`: two letters right after a designator that always
     /// takes a value. Others are street words (`FRONT ST`, `UPPER RD`), and a suffix
     /// or directional after the designator ends a street (`KEY RD`).
@@ -1993,6 +2044,7 @@ impl Tagger<'_> {
             }
             // "# 309", "UNIT 203", "LOT H28", and a word after '#': "# REAR".
             if (is_unit_value(t)
+                || self.spelled_after_designator(floor, last)
                 || is_unit_pair(t)
                 || (last > floor && self.toks[last - 1].is_hash() && is_unit_word(t))
                 || self.letters_after_designator(floor, last))
@@ -2088,9 +2140,11 @@ impl Tagger<'_> {
                 continue;
             }
             // An ordinal before the designator: "3RD FLOOR".
-            if let Some((_, w)) = longest_ending(self.toks, floor + 1, j, |s| lex.unit(s)) {
+            if let Some((u, w)) = longest_ending(self.toks, floor + 1, j, |s| lex.unit(s)) {
                 let v = j - w - 1;
-                if v > name_lo && is_ordinal(self.text(v)) {
+                // "THIRD FLOOR": a spelled ordinal counts before a floor word.
+                let spelled = u.value.abbr() == "FL" && spelled_ordinal(self.text(v)).is_some();
+                if v > name_lo && (is_ordinal(self.text(v)) || spelled) {
                     found.push((j - w..j, v..v + 1));
                     j = v;
                     continue;

@@ -500,6 +500,15 @@ fn gen_special(t: &Table, out: &mut String, mw: &mut usize) -> Result<HighwayRow
     )
     .ok();
 
+    let nsctx = format!("{ctx} [numbered_street]");
+    let mut numbered = key_list(table(t, "numbered_street", ctx)?, "words", &nsctx, true)?;
+    numbered.sort();
+    writeln!(
+        out,
+        "pub(crate) static NUMBERED_STREET_WORDS: &[&str] = &{numbered:?};\n"
+    )
+    .ok();
+
     let pctx = format!("{ctx} [placeholder]");
     let mut phrases = key_list(table(t, "placeholder", ctx)?, "phrases", &pctx, true)?;
     phrases.sort();

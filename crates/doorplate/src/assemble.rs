@@ -6,7 +6,7 @@
 //! each token is. Spelling choices that Pub 28 does not list
 //! (`MatchKind::Observed`) raise `NonStandardAbbreviation`.
 
-use crate::classify::{is_fraction, is_ordinal, join, zip_parts};
+use crate::classify::{is_fraction, is_ordinal, join, spelled_number, spelled_ordinal, zip_parts};
 use crate::lexicon::{Lexicons, MatchKind, Special};
 use crate::tagger::{Tag, Tagged};
 use crate::tokenize::Token;
@@ -345,6 +345,17 @@ pub(crate) fn assemble(
             }
         }
     }
+    // A spelled-out house number or unit number is written as its digits:
+    // `ONE COMMERCE PLAZA` is 1, `SUITE TWO` is 2 (#129).
+    for n in [
+        &mut addr.street_number,
+        &mut addr.unit_number,
+        &mut addr.second_unit_number,
+    ] {
+        if let Some(d) = n.as_deref().and_then(spelled_number) {
+            *n = Some(d.to_string());
+        }
+    }
     // A floor is a number (Appendix C2: FL takes a range): `5TH FLOOR` is
     // FL 5.
     for (t, n) in [
@@ -354,6 +365,8 @@ pub(crate) fn assemble(
         if let (Some(t), Some(v)) = (t, n.as_mut()) {
             if t.abbr() == "FL" && is_ordinal(v) {
                 v.truncate(v.trim_end_matches(|c: char| c.is_ascii_alphabetic()).len());
+            } else if let Some(d) = (t.abbr() == "FL").then(|| spelled_ordinal(v)).flatten() {
+                *v = d.to_string();
             }
         }
     }
