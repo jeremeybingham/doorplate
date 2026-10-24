@@ -18,6 +18,16 @@ change to what an input produces needs a new key version.
   corporations, 3 Netsyms, 1 NAD), and `missing_street_number` is removed from about 12,000 rows. A county-highway prefix, a unit designator, a route or box word, a
   directional, any digit, a single letter or a word such as `BLOCK`, `NO` or `URB` among the leading words leaves the
   line as before (`[non_recipient]` in `data/special.toml`). The Netsyms sample changes in 3 rows.
+- **Units written as two numbers, with `BOX`, `NO`, `NUM` or `LOC`, cut off or twice stay out of the street name** (#128, **key-affecting,
+  held for the `k3`**): `1200 QUINCEWOOD RD NW STE 180 417020` (unit `180 417020`), `2100 E BAYVIEW BLVD 250 3440`,
+  `1500 QUINCEWOOD BLVD BOX 3300`, `2400 BAYVIEW PKWY NO 65`, `9900 N BAYVIEW PKWY E NUM 230` and `... LOC 12` (a unit with
+  no type; Pub 28 lists none of these words as a designator, so this is the data's reading), `1300 ZEPHYRMILL AVE NW
+  SUIT` and `... 15TH FLOO` (a cut-off designator is read, with `non_standard_abbreviation`), and `STE STE C` (one
+  designator). `FLO` and `FLOO` are observed spellings of FLOOR. Measured against the frozen checkpoint keys: 18,020 keys
+  change in the seven large sources (8,073 carrier census, 5,882 IRS, 1,950 amateur radio, 1,847 NY corporations,
+  235 NC voter, 26 NAD, 7 Netsyms); `possibly_truncated` is removed from 3,312 rows, `unparsed_remainder` from 1,807 and
+  `missing_unit_number` from 340, and `non_standard_abbreviation` is added to 653. A street named for the word
+  (`12 BOX ST`, `123 FLOOR ST`) is unchanged; so is a single-letter floor (`18TH F`).
 - **A care-of line after a street no longer swallows the unit or leaves a warning** (#126, **key-affecting, held for the `k3`**): in
   `12 OAK AVE STE 4` / `% 5 STAR GROUP` the number after the marker started a second address, so the name was left over
   and the unit stayed in the street name. Now a marker line after a street is the attention line when it holds a

@@ -59,6 +59,9 @@ name = "FLOOR"
 abbr = "FL"
 range_required = true
 forms = ["FLOOR", "FL"]
+# observed: a floor cut off at the line limit ("... AVE 15TH FLOO", "3RD FLO"),
+# in the IRS exempt-organization extract (issue #128)
+observed = ["FLO", "FLOO"]
 
 [[unit]]
 name = "FRONT"

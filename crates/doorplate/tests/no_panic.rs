@@ -19,6 +19,14 @@ const WORDS: &[&str] = &[
     "Acme",
     "Inc",
     "CO",
+    "Box",
+    "NO",
+    "Num",
+    "Loc",
+    "Suit",
+    "Floo",
+    "250",
+    "3440",
     "N",
     "SW",
     "Main",
@@ -244,6 +252,53 @@ fn recipient_before_address_never_panics() {
                 let _ = parser.parse_fields(&Fields {
                     line1: Some(line),
                     line2: Some("% ACME INC".to_string()),
+                    city: Some("MIAMI".to_string()),
+                    state: Some("FL".to_string()),
+                    zip: Some("33101".to_string()),
+                });
+            }
+        }
+    }
+}
+
+/// Units written with two numbers, with `BOX`, `NO`, `NUM` or `LOC`, with a cut
+/// designator, or twice, in every position after a street (#128).
+#[test]
+fn unusual_units_never_panic() {
+    let parser = Parser::new();
+    for street in [
+        "123 MAIN ST",
+        "123 N MAIN ST NW",
+        "123 AVE OF THE ELMS",
+        "123",
+        "MAIN ST",
+        "PO BOX 5",
+    ] {
+        for unit in [
+            "STE 180 417020",
+            "250 3440",
+            "FL 2 270",
+            "BOX 3300",
+            "NO 65",
+            "NUM",
+            "NUM 230 4",
+            "LOC 12",
+            "SUIT",
+            "STE STE C",
+            "STE STE",
+            "15TH FLOO",
+            "3RD FLO",
+            "# 1 2 3",
+            "BOX NO 5",
+            "NO NO",
+        ] {
+            for sep in [" ", ", "] {
+                let line = format!("{street}{sep}{unit}");
+                let _ = parser.parse(&line);
+                let _ = parser.parse(&format!("{line}, MIAMI FL 33101"));
+                let _ = parser.parse_fields(&Fields {
+                    line1: Some(street.to_string()),
+                    line2: Some(unit.to_string()),
                     city: Some("MIAMI".to_string()),
                     state: Some("FL".to_string()),
                     zip: Some("33101".to_string()),
