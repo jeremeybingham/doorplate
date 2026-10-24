@@ -86,7 +86,9 @@ for both by design. `hand` (1,000) is 90 hand-labeled shapes of messy real forms
 (CPU affinity, `RAYON_NUM_THREADS=4`, an 8 GB address-space limit) and its header prints what it got. Speed is
 reported on 1 thread and on 4, never on all cores, and leads with ratios; accuracy does not depend on the
 profile. On macOS and Windows, run it in Docker with `--cpus=4 --memory=8g`. The `workflow_dispatch` job
-`.github/workflows/suite.yml` runs it on a real runner.
+`.github/workflows/suite.yml` runs it on a real runner. The profile belongs to benchmark runs only: builds,
+tests, the harness and the other tools use all the cores and memory of the machine, and `suite.py --no-profile`
+runs the suite unpinned for quick development checks (do not quote its speed).
 
 **What is in `v1/`, and rebuilding it:** [`suite/README.md`](suite/README.md). `v1` is never edited after it
 was published; label errors found later go into `v2`.

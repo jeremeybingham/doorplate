@@ -11,7 +11,8 @@ extension with `maturin develop --release` first and install usaddress (`pip ins
 
 The runner puts itself in the reference resource profile (4 logical CPUs and 8 GB of memory, on Linux): it
 pins the CPU affinity, sets RAYON_NUM_THREADS=4 and an 8 GB address-space limit. The header says what it
-got. `--no-profile` turns that off. The comparison track is scored with `tools/compare/compare_usaddress.py`'s
+got. `--no-profile` turns that off (use it for quick development checks; do not quote its speed). The profile is for
+benchmark runs only: nothing else in the repository is limited to 4 CPUs or 8 GB. The comparison track is scored with `tools/compare/compare_usaddress.py`'s
 rules (token by token, by character span, street parts folded for the coarse score), and the doorplate-only
 track is never mixed into a doorplate-versus-usaddress figure.
 

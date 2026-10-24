@@ -37,7 +37,7 @@ def header():
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--confirm", action="store_true")
-    ap.add_argument("--threads", type=int, default=4)
+    ap.add_argument("--threads", type=int, default=os.cpu_count() or 1, help="DuckDB threads (default: all cores)")
     args = ap.parse_args()
     if not ZIP.exists():
         sys.exit(f"{ZIP} is not here (local-data/README.md says how to download it)")

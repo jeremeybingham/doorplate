@@ -56,8 +56,8 @@ def parse_args(argv=None):
                     help="rowids per chunk (rows per chunk with --input)")
     ap.add_argument("--limit-chunks", type=int, help="stop after this many chunks (tests)")
     ap.add_argument("--threads", type=int, help="Rust parse threads per worker (default: cores / workers)")
-    ap.add_argument("--workers", type=int, default=max(1, min(6, (os.cpu_count() or 2) // 2)),
-                    help="processes working on different chunks (default: half the cores, at most 6)")
+    ap.add_argument("--workers", type=int, default=max(1, (os.cpu_count() or 2) // 2),
+                    help="processes working on different chunks (default: half the cores, each with cores / workers parse threads, so all cores are used)")
     ap.add_argument("--budget-gb", type=float, default=60.0,
                     help="abort when the input's folder (not counting .7z archives) plus all runs exceed this (default 60)")
     ap.add_argument("--min-free-gb", type=float, default=20.0, help="refuse to start below this")

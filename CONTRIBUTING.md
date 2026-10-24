@@ -54,7 +54,7 @@ pytest crates/doorplate-py/tests
 pytest tools/ingest tools/harness tools/review tools/compare   # the ingest tool (Python 3.11+), the harness, the review tool and the key comparison
 ```
 
-Rust 1.80 or later; the Python extension needs 1.83. Plain `cargo test` needs no Python. CI also reports line coverage of the Rust code to Codecov (a separate, informational job; `codecov.yml` lists what is left out): read it as a map of code the tests do not reach, not as a gate.
+Rust 1.80 or later; the Python extension needs 1.83. Plain `cargo test` needs no Python. Nothing here is limited to a number of cores or an amount of memory; only the benchmark suite's runner pins its reference profile (4 CPUs, 8 GB, `benchmarks/README.md`). CI also reports line coverage of the Rust code to Codecov (a separate, informational job; `codecov.yml` lists what is left out): read it as a map of code the tests do not reach, not as a gate.
 
 ## Fixing a parsing bug
 

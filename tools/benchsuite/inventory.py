@@ -21,6 +21,7 @@ import collections
 import json
 import math
 import multiprocessing
+import os
 import random
 import re
 import sys
@@ -260,7 +261,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--records", type=int, default=200_000)
     ap.add_argument("--seed", type=int, default=75)
-    ap.add_argument("--workers", type=int, default=4, help="processes for the parsers (the profile has 4 CPUs)")
+    ap.add_argument("--workers", type=int, default=os.cpu_count() or 1, help="processes for the parsers (default: all cores)")
     ap.add_argument("--out", type=Path, default=ROOT / "local-data" / "benchsuite")
     args = ap.parse_args()
     rng = random.Random(args.seed)
