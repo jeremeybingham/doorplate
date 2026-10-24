@@ -217,10 +217,10 @@ the default feature `places-us`.
 
 ### `places-us.jsonl`
 
-Ids `pl-001` to `pl-013`. The same place behaviors in states with no curated
+Ids `pl-001` to `pl-021`. The same place behaviors in states with no curated
 state data (`ST LOUIS`, `NORTH LITTLE ROCK`, `LA GRANGE PARK`, `ROARING BROOK TWP`, a
 cut-off city, the place from the ZIP), and `zip_city_mismatch` not raised
-there; and a county written as the city (`city_is_county`, `pl-009` to `pl-013`).
+there; and a county written as the city (`city_is_county`, `pl-009` to `pl-013`); and a municipality prefix before the city (`VILLAGE OF PINECREST`, `pl-014` to `pl-021`).
 
 ### `default-state.jsonl`
 

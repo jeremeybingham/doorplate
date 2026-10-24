@@ -65,12 +65,26 @@ fn resolve_place(addr: &mut ParsedAddress, lex: &Lexicons, hint: Option<&'static
         }
         return;
     };
-    let found = lookup(lex, state, city).or_else(|| {
-        complete(lex, city, zip?).map(|place| PlaceMatch {
-            place,
-            source: PlaceSource::Completed,
+    // `VILLAGE OF PINECREST`: the name as written first (`CITY OF INDUSTRY` is
+    // a place), then what follows the prefix, then a cut-off one.
+    let bare = lex.strip_place_prefix(city);
+    let found = lookup(lex, state, city)
+        .or_else(|| {
+            let m = lookup(lex, state, bare?)?;
+            Some(PlaceMatch {
+                source: PlaceSource::Variant,
+                ..m
+            })
         })
-    });
+        .or_else(|| {
+            let z = zip?;
+            bare.and_then(|b| complete(lex, b, z))
+                .or_else(|| complete(lex, city, z))
+                .map(|place| PlaceMatch {
+                    place,
+                    source: PlaceSource::Completed,
+                })
+        });
     if let (Some(m), Some(z)) = (found, zip) {
         if lex.has_state_data(state) && !z.contains(&m.place) {
             addr.diagnostics.warn(Warning::ZipCityMismatch);
@@ -210,6 +224,30 @@ mod tests {
             .unwrap();
         assert!(!a.diagnostics.has(&Warning::ZipCityMismatch));
         assert!(a.place.is_none());
+    }
+
+    #[test]
+    fn municipality_prefix() {
+        let p = |s: &str| place(s).map(|(n, src)| (n, src == PlaceSource::Variant));
+        assert_eq!(
+            p("123 Main St, Village of Pinecrest, FL 33156"),
+            Some(("PINECREST", true))
+        );
+        assert_eq!(
+            p("123 Main St, Twp of Edison, NJ 08817"),
+            Some(("EDISON", true))
+        );
+        // A place that starts with the prefix is the place as written.
+        assert_eq!(
+            p("123 Main St, City of Industry, CA 91744"),
+            Some(("CITY OF INDUSTRY", false))
+        );
+        assert_eq!(p("123 Main St, City of Atlantis, TX 77001"), None);
+        assert_eq!(p("123 Main St, Borough of Edison, NJ 08817"), None);
+        let a = Parser::new()
+            .parse("123 Main St, Town of Longboat Key, FL 34228")
+            .unwrap();
+        assert_eq!(a.city.as_deref(), Some("TOWN OF LONGBOAT KEY"));
     }
 
     #[test]
