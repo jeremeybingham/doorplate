@@ -807,6 +807,7 @@ impl Tagger<'_> {
     }
 
     pub(super) fn delivery(&mut self, lo: usize, hi: usize) {
+        let hi = self.department_line(lo, hi);
         let lo = self.co_lead(lo, hi);
         let (lo, hi) = self.attention(lo, hi);
         if self.country_street && self.country_street_line(lo, hi) {
@@ -1096,6 +1097,45 @@ impl Tagger<'_> {
                     && lex.directional(t).is_none()
                     && !highway
             })
+    }
+
+    /// A department name on a later line or comma segment (`MATH DEPT`,
+    /// `HUMAN RESOURCES DEPARTMENT`): two or more words, no digit, ending in
+    /// `DEPT` or `DEPARTMENT`. It is the attention line, not a unit without a
+    /// number with its words left over (#166). `DEPT 4` keeps being a unit, and
+    /// so does a line that starts with a designator that takes a value
+    /// (`SUITE B FINANCE DEPT`) or holds a special word (`ATTN ACCOUNTS DEPT`,
+    /// `PO BOX`). Returns the end of the delivery lines.
+    fn department_line(&mut self, lo: usize, hi: usize) -> usize {
+        let lex = self.lex;
+        if hi < lo + 3 {
+            return hi;
+        }
+        let seg = self.toks[hi - 1].seg;
+        let Some(start) = (lo..hi).find(|&k| self.toks[k].seg == seg) else {
+            return hi;
+        };
+        if start == lo || hi - start < 2 {
+            return hi;
+        }
+        let last = self.text(hi - 1);
+        let department = lex.unit(last).is_some_and(|l| l.value.abbr() == "DEPT");
+        let plain = (start..hi).all(|k| {
+            let t = self.text(k);
+            !has_digit(t)
+                && !self.toks[k].is_hash()
+                && !self.toks[k].is_dash()
+                && !self.toks[k].paren
+                && lex.special(t).is_none()
+        });
+        let first_unit = lex
+            .unit(self.text(start))
+            .is_some_and(|l| l.value.range_required());
+        if !department || !plain || first_unit {
+            return hi;
+        }
+        self.set(start..hi, Tag::Attention);
+        start
     }
 
     /// `CO` for `C/O` at the start of a line, when an address follows the

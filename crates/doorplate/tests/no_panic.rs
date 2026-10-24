@@ -16,6 +16,9 @@ const WORDS: &[&str] = &[
     "4-H",
     "Club",
     "Star",
+    "Dept",
+    "Department",
+    "Math",
     "POX",
     "BX",
     "Pop",
@@ -357,6 +360,43 @@ fn spelled_numbers_never_panic() {
                 let _ = parser.parse_fields(&Fields {
                     line1: Some(line),
                     line2: Some("THIRD FLOOR".to_string()),
+                    city: Some("MIAMI".to_string()),
+                    state: Some("FL".to_string()),
+                    zip: Some("33101".to_string()),
+                });
+            }
+        }
+    }
+}
+
+/// A department name on a later line or comma segment, with and without other
+/// words, digits and designators around it (#166).
+#[test]
+fn department_lines_never_panic() {
+    let parser = Parser::new();
+    for dept in [
+        "MATH DEPT",
+        "HUMAN RESOURCES DEPARTMENT",
+        "DEPT",
+        "DEPT 4",
+        "DEPT.",
+        "SUITE B FINANCE DEPT",
+        "ATTN ACCOUNTS DEPT",
+        "PO BOX DEPT",
+        "DEPT OF MATH DEPT",
+        "MATH DEPT 4",
+        "# DEPT",
+        "(MATH) DEPT",
+        "- DEPT",
+    ] {
+        for street in ["123 MAIN ST", "123", "MAIN ST", "", "FIRE DEPT RD"] {
+            for sep in [" ", ", ", " - "] {
+                let line = format!("{street}{sep}{dept}");
+                let _ = parser.parse(&line);
+                let _ = parser.parse(&format!("{line}, MIAMI FL 33101"));
+                let _ = parser.parse_fields(&Fields {
+                    line1: Some(street.to_string()),
+                    line2: Some(dept.to_string()),
                     city: Some("MIAMI".to_string()),
                     state: Some("FL".to_string()),
                     zip: Some("33101".to_string()),
