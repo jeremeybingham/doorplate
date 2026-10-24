@@ -37,6 +37,7 @@ Every parsing bug fixed gets a case here (`CONTRIBUTING.md`).
   `tg-` (`tag()` and `address_type()`, `tag.jsonl`),
   `co-` (trailing country, `country.jsonl`),
   `sl-` (a second line used or dropped, `second-line.jsonl`),
+  `ns-` (street lines with no street, `nostreet.jsonl`),
   `rc-` (recipient text ahead of the address, `recipient.jsonl`),
   `un-` (units left in the street name, `units.jsonl`),
   `sp-` (spelled-out numbers, `spelled.jsonl`),
@@ -258,6 +259,13 @@ Ids `sp-001` to `sp-016` (#129). Spelled-out numbers: a house number word ahead 
 PLAZA`, `TWO BAYVIEW LANE 15TH FLOOR`), a unit number word (`SUITE TWO`, `UNIT ELEVEN`), a spelled ordinal before a
 floor (`THIRD FLOOR`), `FLR`; and the near misses that must not change (`ONE MILE RD`, `THREE FORKS RD`, `TWO RIVERS
 DR`, `FOUR CORNERS RD`, a street named `THIRD FLOOR`).
+
+### `nostreet.jsonl`
+
+Ids `ns-001` to `ns-011` (#130). Street lines with no street: a lone number (`missing_street_name`, no key), a PO Box
+word with no number (`unparsed_remainder`), a line that is only a country (`country_ignored`); and the near misses
+that must not change (`5TH ST`, `1 A ST`, `PO BOX 12`, a lone number with its street on line 2, a country ahead of a
+street on line 2).
 
 ### `country.jsonl`
 

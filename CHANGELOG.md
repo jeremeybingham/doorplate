@@ -9,6 +9,14 @@ change to what an input produces needs a new key version.
 
 ### Changed
 
+- **Lines with no street are no longer read as a street name** (#130, **held for the `k3`**: the key becomes `None`): a lone
+  number (`4871`) is a house number with `missing_street_name` (it was the street name `4871`), a bare `PO BOX` or `PO`
+  stays in `unparsed` (it was the street name `PO BOX`), and a street field that is only a country (`UNITED STATES`,
+  `USA`) next to a city, state or ZIP field is dropped with `country_ignored` and `missing_street_name`. A line that is only an organization name is
+  unchanged. Measured against the build before this rule: 9,555 keys in the seven large sources change, all to
+  `None` (carrier census 6,064, IRS 2,236, NY corporations 710, amateur radio 283, NC voter 182, NAD 54, Netsyms 26);
+  `missing_street_name` is added to 8,637 rows, `unparsed_remainder` to 914 and `country_ignored` to 5, and
+  `missing_street_number` is removed from 9,555.
 - **A floor written as an ordinal and `FL` is a floor when the state is `FL`** (#114, **held for the `k3`**: it changes the
   unit and the unit-level key): `123 MAIN ST 5TH FL` and `123 MAIN ST THIRD FL` with state `FL` are floor 5 and floor
   3; the repeated-state rule had dropped the `FL` and left `5TH` as a bare unit. The ordinal must follow a street suffix

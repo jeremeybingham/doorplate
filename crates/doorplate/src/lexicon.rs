@@ -507,6 +507,12 @@ impl Lexicons {
         matches!(t, "NO" | "NUM" | "NUMBER")
     }
 
+    /// `PO` or `P O` alone: the start of a PO Box with no number and no `BOX`
+    /// (`PO BOX 12` is a form of its own; this is only the leftover, #130).
+    pub(crate) fn is_bare_box_word(&self, s: &str) -> bool {
+        matches!(s, "PO" | "P O")
+    }
+
     /// A word that stands for a unit designator after a street's suffix but is
     /// not one in Pub 28: `BOX 3300`, `NO 65`, `NUM 230`, `LOC 12` (#128).
     pub(crate) fn is_unit_marker(&self, t: &str) -> bool {

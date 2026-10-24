@@ -38,7 +38,7 @@ The parse may be wrong or incomplete.
 |---|---|---|---|
 | `unparsed_remainder` | Some text could not be placed; it is in `unparsed`. | 17,245 | unit 38.6% (3,593 / 9,319; baseline 3.6%), name 8.5%, number 6.1% |
 | `missing_street_number` | A street with no house number. | 262 | number 100% (the labels have one) |
-| `missing_street_name` | A house number and a unit, no street. | 11 | name 100% |
+| `missing_street_name` | A house number with no street: with a unit (`123 APT 4`), or a lone number (`4871`, #130). The key is `None`. | 11 | name 100% |
 | `ambiguous_street_number` | The number runs into a numbered street (`409742ND SQ`): a guess. | 0 | too few rows |
 | `multiple_addresses` | Several addresses in one input (`5210/5212 BRISTO ST`). | 1,390 | number 67.5% (938 / 1,390) |
 | `possibly_truncated` | The input looks cut off at a field-length limit. | 1,549 | suffix 76.3% (100 / 131), postdirectional 92.9% (13 / 14), name 21.0%, unit 15.4% |
@@ -73,7 +73,7 @@ The parser did something, or the input lacks a part. A parse with one of these i
 | `dual_address` | A street address and a PO Box in one record; both kept. | 6 | too few rows |
 | `second_line_skipped` | Line 2 was a copy or a no-data line and was dropped. | 34 | too few rows (unit 87.5%, 7 / 8) |
 | `second_line_building` | Line 2 is the building name, which no emitter prints. | 103 | number and name within 2% |
-| `country_ignored` | A trailing `USA`, `US` or `UNITED STATES` was dropped. | 66 | too few rows |
+| `country_ignored` | A trailing `USA`, `US` or `UNITED STATES` was dropped, or a street field that was only a country. | 66 | too few rows |
 | `placeholder` | The street line is stand-in text (`NO SITUS`); the key is `None`. | 0 | NC voter: 86 rows, number 100% (the snapshot has a number the stand-in text hides) |
 | `intersection_detected` | Two streets joined by `&`, `AND`, `@` or `AT`: a corner; the key is `None`. | 18 | too few rows |
 | `zip_city_mismatch` | The city is a known place, but the place list does not give the ZIP to it. Only in a state with curated data (Florida). | 0 | not measured: no labeled Florida sample |
