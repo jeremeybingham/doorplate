@@ -574,12 +574,16 @@ pub enum Warning {
     /// name; the parser guessed the name (#102). A letter that is a
     /// directional, or the whole street name (`123 A ST`), is not reported.
     AmbiguousNumberLetter,
+    /// The city is no place of the state but the name of one of its counties
+    /// (`MIAMI DADE`, `HENNEPIN`), so [`ParsedAddress::place`] is empty. The
+    /// city is kept as written and the key does not change (#113).
+    CityIsCounty,
 }
 
 impl Warning {
     /// Every variant, in declaration order. Add new variants here too; the
     /// golden-corpus runner checks expected warning codes against this list.
-    pub const ALL: [Warning; 26] = [
+    pub const ALL: [Warning; 27] = [
         Warning::UnparsedRemainder,
         Warning::AmbiguousToken,
         Warning::Placeholder,
@@ -606,6 +610,7 @@ impl Warning {
         Warning::SecondLineInStreet,
         Warning::SecondLineBuilding,
         Warning::AmbiguousNumberLetter,
+        Warning::CityIsCounty,
     ];
 
     /// Stable snake_case identifier. Part of the public contract: never
@@ -638,6 +643,7 @@ impl Warning {
             Warning::SecondLineInStreet => "second_line_in_street",
             Warning::SecondLineBuilding => "second_line_building",
             Warning::AmbiguousNumberLetter => "ambiguous_number_letter",
+            Warning::CityIsCounty => "city_is_county",
         }
     }
 }

@@ -8,6 +8,8 @@
 //! list does not give it gets [`Warning::ZipCityMismatch`], but only in a state
 //! with curated state data: the national list names one place per ZIP, and many
 //! ZIPs are used by several, so the warning would fire too often elsewhere.
+//! A city that is no place but names a county of the state (`HENNEPIN`) gets
+//! [`Warning::CityIsCounty`]; `place` stays empty and nothing else changes.
 
 use crate::classify::{house_number, NumberShape};
 use crate::lexicon::{Lexicons, MatchKind, ZipPlaces};
@@ -73,6 +75,9 @@ fn resolve_place(addr: &mut ParsedAddress, lex: &Lexicons, hint: Option<&'static
         if lex.has_state_data(state) && !z.contains(&m.place) {
             addr.diagnostics.warn(Warning::ZipCityMismatch);
         }
+    }
+    if found.is_none() && lex.is_county(state, city) {
+        addr.diagnostics.warn(Warning::CityIsCounty);
     }
     if hinted && found.is_some() {
         addr.diagnostics.warn(Warning::DefaultStateApplied);
@@ -205,5 +210,22 @@ mod tests {
             .unwrap();
         assert!(!a.diagnostics.has(&Warning::ZipCityMismatch));
         assert!(a.place.is_none());
+    }
+
+    #[test]
+    fn county_as_city() {
+        let w = |s: &str| {
+            let a = Parser::new().parse(s).unwrap();
+            (
+                a.place.is_some(),
+                a.diagnostics.warnings.contains(&Warning::CityIsCounty),
+            )
+        };
+        assert_eq!(w("123 Main St, Hennepin, MN 55401"), (false, true));
+        assert_eq!(w("123 Main St, Miami Dade, FL 33101"), (false, true));
+        assert_eq!(w("123 Main St, Hennepin County, MN 55401"), (false, true));
+        // A place of the state wins, and an unknown name is not a county.
+        assert_eq!(w("123 Main St, Cook, MN 55604"), (true, false));
+        assert_eq!(w("123 Main St, Atlantis, MN 55401"), (false, false));
     }
 }

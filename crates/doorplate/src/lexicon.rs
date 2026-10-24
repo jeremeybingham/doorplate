@@ -573,6 +573,20 @@ impl Lexicons {
         self.with_place_key(None, s, any_place)
     }
 
+    /// Whether `s` is the name of a county of `state` (`HENNEPIN` in MN,
+    /// `MIAMI DADE` in FL), with or without a trailing `COUNTY`. The counties
+    /// are those of the national place list.
+    pub(crate) fn is_county(&self, state: &str, s: &str) -> bool {
+        let has = |key: &str| {
+            tables::COUNTY_INDEX
+                .binary_search_by(|k| cmp_keys(k, key))
+                .is_ok()
+        };
+        self.with_place_key(Some(state), s, |key| {
+            has(key) || key.strip_suffix("COUNTY").is_some_and(has)
+        })
+    }
+
     /// The places a 5-digit ZIP belongs to.
     pub fn zip_places(&self, zip5: &str) -> Option<ZipPlaces> {
         let (main, shared) = find_zip(zip5)?;

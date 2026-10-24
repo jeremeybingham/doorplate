@@ -77,6 +77,7 @@ The parser did something, or the input lacks a part. A parse with one of these i
 | `placeholder` | The street line is stand-in text (`NO SITUS`); the key is `None`. | 0 | NC voter: 86 rows, number 100% (the snapshot has a number the stand-in text hides) |
 | `intersection_detected` | Two streets joined by `&`, `AND`, `@` or `AT`: a corner; the key is `None`. | 18 | too few rows |
 | `zip_city_mismatch` | The city is a known place, but the place list does not give the ZIP to it. Only in a state with curated data (Florida). | 0 | not measured: no labeled Florida sample |
+| `city_is_county` | The city is no place of the state but the name of one of its counties (`HENNEPIN`, `MIAMI DADE`); `place` is empty. | 0 | not measured: no labeled sample. On the self-entered sources it is on 0.013% (amateur licenses), 0.017% (tax-exempt list) and 0.024% (carrier census) of the rows, and 1 of 1,138,982 Netsyms sample rows |
 | `default_state_applied` | A `default_state` hint decided a place or a reading; the state stays empty. | 0 | only with the option |
 | `repeated_label` | Reported by `tag()` only: a usaddress label appears in two runs. | 0 | `tag()` only |
 | `ambiguous_token` | Reserved: defined, but the parser does not raise it today. | 0 | none |
