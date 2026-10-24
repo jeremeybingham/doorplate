@@ -230,7 +230,7 @@ hinted state, and the input's own state or a known ZIP winning over the hint.
 
 ### `second-line.jsonl`
 
-Ids `sl-001` to `sl-015` (#45). A second address line that is used or dropped without a component of its own is
+Ids `sl-001` to `sl-024` (#45, #126; `sl-016` to `sl-024` are the care-of line after a street: a copy, a digit-led name, a unit that is now parsed, and the bare number and second address that stay unparsed). A second address line that is used or dropped without a component of its own is
 reported: a copy of line 1 or a no-data line (`second_line_skipped`), a route, suffix or directional that joins
 the street of line 1 (`second_line_in_street`) and a building name (`second_line_building`); and the near misses
 that get no warning: a unit, a street on line 2 alone, a dual address, an attention line, no line 2, the last line

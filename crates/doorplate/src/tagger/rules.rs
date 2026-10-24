@@ -960,6 +960,9 @@ impl Tagger<'_> {
         // "C/O 2775 NW 49TH AVE": the address itself follows; only the word
         // is dropped.
         if k + w < hi && house_number(self.text(k + w)).is_some() {
+            if let Some(range) = self.care_of_after_street(lo, hi, k, w) {
+                return range;
+            }
             self.set(k..k + w, Tag::Skip);
             return if k == lo { (k + w, hi) } else { (lo, hi) };
         }
@@ -977,6 +980,62 @@ impl Tagger<'_> {
         } else {
             (lo, hi)
         }
+    }
+
+    /// A care-of marker after a street, followed by a number: `12 OAK AVE` /
+    /// `% 5 STAR GROUP`. The number does not start an address when the street
+    /// is already there, so the marker's line is the attention line, or a copy
+    /// of the street line (`% 12 OAK AVE`, dropped with
+    /// [`Warning::SecondLineSkipped`]). A bare number (`% 9`) and a second
+    /// address (a plain house number with a suffix, a directional or a unit
+    /// after it) are left to the caller. Only a marker that ends the delivery
+    /// lines, with its number in the same comma segment (#126).
+    fn care_of_after_street(
+        &mut self,
+        lo: usize,
+        hi: usize,
+        k: usize,
+        w: usize,
+    ) -> Option<(usize, usize)> {
+        let lex = self.lex;
+        // A street, not a lone house number whose street follows the marker.
+        if k < lo + 2 || house_number(self.text(lo)).is_none() {
+            return None;
+        }
+        let seg = self.toks[k].seg;
+        if (k..hi).any(|e| self.toks[e].seg != seg) || self.toks[k + w].seg != seg {
+            return None;
+        }
+        let rest = k + w..hi;
+        if rest.len() < 2 {
+            return None;
+        }
+        let same = |a: &[Token], b: &[Token]| {
+            a.len() == b.len()
+                && a.iter()
+                    .zip(b)
+                    .all(|(x, y)| x.text.eq_ignore_ascii_case(&y.text))
+        };
+        let street = &self.toks[lo..k];
+        let line = &self.toks[rest.clone()];
+        if same(street, line)
+            || (line.len() < street.len() && same(&street[street.len() - line.len()..], line))
+        {
+            self.set(k..hi, Tag::Skip);
+            self.warn(Warning::SecondLineSkipped);
+            return Some((lo, k));
+        }
+        let address = all_digits(self.text(rest.start))
+            && self.toks[rest.start + 1..hi].iter().any(|t| {
+                lex.suffix(&t.text).is_some()
+                    || lex.directional(&t.text).is_some()
+                    || lex.unit(&t.text).is_some()
+            });
+        if address {
+            return None;
+        }
+        self.set(k..hi, Tag::Attention);
+        Some((lo, k))
     }
 
     /// Pub 28 section 215: a street address and a PO Box in one record.
