@@ -26,7 +26,7 @@ receive mail. Pub 28 formatting is not deliverability, and validation needs
 postal-service-certified data; warnings such as `zip_city_mismatch` are hints about the
 input, not verdicts.
 
-> **Alpha release (0.3.1).** Expect rough edges. This documentation MAY describe features from pre-release versions. The match key is versioned (`k3:`) and
+> **Alpha release (0.4.0).** Expect rough edges. This documentation MAY describe features from pre-release versions. The match key is versioned (`k3:`) and
 > will probably get new versions as the parser improves, so store the version prefix
 > with your keys and plan to re-key. Accuracy and speed are measurements on a few
 > datasets, not guarantees. Names in the API and the warning codes may still change
