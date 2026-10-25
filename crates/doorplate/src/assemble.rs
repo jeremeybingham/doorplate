@@ -242,6 +242,15 @@ pub(crate) fn assemble(
                     record(addr, Component::RuralRoute);
                 }
             }
+            Tag::BoxLetter => {
+                if let Some(b) = addr
+                    .rural_route
+                    .as_mut()
+                    .and_then(|r| r.box_number.as_mut())
+                {
+                    b.push_str(&text);
+                }
+            }
             Tag::GeneralDelivery => {
                 addr.general_delivery = true;
                 record(addr, Component::GeneralDelivery);

@@ -52,6 +52,8 @@ pub(crate) enum Tag {
     Route,
     RouteNumber,
     BoxNumber,
+    /// A lone letter written after a box number, joined to it (`BOX 45 A`).
+    BoxLetter,
     GeneralDelivery,
     MilitaryKind,
     MilitaryNumber,

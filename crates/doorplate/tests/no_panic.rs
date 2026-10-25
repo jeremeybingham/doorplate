@@ -481,3 +481,33 @@ fn loop_never_panics() {
         }
     }
 }
+
+/// A letter after a rural route box number, at the end of the input, before a
+/// comma or on its own line (#95).
+#[test]
+fn route_box_letter_never_panics() {
+    let parser = Parser::new();
+    for route in ["RR 2", "HC 63", "STAR RTE 9", "RR", "RR 2 BOX", "BOX"] {
+        for tail in [
+            "BOX 45 A",
+            "BOX 45A",
+            "BOX 45 A B",
+            "BOX A",
+            "BOX 45 AB",
+            "BOX # 4 B",
+            "BOX 45 A,",
+            "BOX 45 ,A",
+        ] {
+            let line = format!("{route} {tail}");
+            let _ = parser.parse(&line);
+            let _ = parser.parse(&format!("{line}, MIAMI FL 33101"));
+            let _ = parser.parse_fields(&Fields {
+                line1: Some(route.to_string()),
+                line2: Some(tail.to_string()),
+                city: Some("MIAMI".to_string()),
+                state: Some("FL".to_string()),
+                zip: Some("33101".to_string()),
+            });
+        }
+    }
+}

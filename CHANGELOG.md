@@ -9,6 +9,10 @@ change to what an input produces needs a new key version.
 
 ### Changed
 
+- **A spaced letter after a rural route box number is part of the box** (#95, **held for the `k3`**: 4,824 keys change): `RR 2 BOX 45 A` and
+  `HC 63 BOX 4 B` had the box `45` and `4` with the letter left unparsed (`unparsed_remainder`). Now the box is `45A` and
+  `4B`, as the joined form `RR 2 BOX 45A` already was. One lone letter after a numeric box, on the same line; a PO Box is
+  unchanged. Measured against the build before this rule: 4,824 keys change in the seven large sources (carrier census 4,283, amateur radio 457, IRS 54, NC voter 14, NY corporations 16, NAD 0, Netsyms 0), every one a rural route or highway contract key that gains a box letter.
 - **A letter after a hyphenated house number is part of the number** (#100, **held for the `k3`**: 4,998 keys change): `12-34A MAIN ST` had no
   street number (`missing_street_number`, the number left in the street name `12-34A MAIN`). Now `12-34A` is the number, as
   `12-34` and `1234A` already were. One letter only; `12-34AB` and `12A-34` are unchanged, and `1204-1206A` is a number, not
