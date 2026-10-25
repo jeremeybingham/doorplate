@@ -142,8 +142,8 @@ doorplate parse-file split.csv --column line1 --line2 line2 --city city --state 
 Every helper adds the same columns: the components, `address_type`, `key`, `slug`, `warnings` (codes joined by
 commas), and optionally the USPS lines, the unit-level key and the unparsed text. A blank or missing row stays
 blank instead of failing. The helpers are built over `parse_many`, which parses on every core it is given: on
-the benchmark suite's inputs, under its 4-CPU, 8 GB profile, it handles about 120,000 addresses per second
-(`usaddress.parse` in a loop: about 9,100). Runnable versions with data of several shapes are in [`examples/`](examples/README.md) (a notebook, a pandas, a Polars and a DuckDB
+the benchmark suite's inputs, under its 4-CPU, 8 GB profile, it handles about 152,000 addresses per second
+(`usaddress.parse` in a loop: about 8,900). Runnable versions with data of several shapes are in [`examples/`](examples/README.md) (a notebook, a pandas, a Polars and a DuckDB
 pipeline); the full API and the recipes are in
 [`crates/doorplate-py/README.md`](crates/doorplate-py/README.md).
 
@@ -306,16 +306,29 @@ The headline numbers, then what each benchmark in the repository is, so you can 
 | | doorplate | usaddress |
 |---|---|---|
 | Whole address right, [benchmark suite](benchmarks/README.md#the-benchmark-suite), `natural` stratum (16,001 addresses written in five styles) | 98.3% | 96.1% |
-| Whole address right, [geocode benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark) dev split (60,522 one-line addresses) | 94.4% | 88.1% |
-| Addresses per second from Python, one thread (suite inputs; `parse_tokens` / `usaddress.parse`) | about 33,900 | about 9,100 |
-| Addresses per second, `parse_many` on 4 threads (usaddress has no batch call) | about 120,000 | about 9,100 |
+| Whole address right, [geocode benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark) dev split (60,522 one-line addresses) | 94.5% | 88.1% |
+| Addresses per second from Python, one thread (suite inputs; `parse_tokens` / `usaddress.parse`) | about 38,300 | about 8,900 |
+| Addresses per second, `parse_many` on 4 threads (usaddress has no batch call) | about 152,000 | about 8,900 |
 | Installed size | 1.8 MB wheel | 4.8 MB with dependencies |
 
 The accuracy and speed rows of the suite come from `python benchmarks/suite.py all` (4 CPUs, 8 GB; the speed is
-the best of three runs on one machine, so read the ratios: about 3.7x on one thread and 13x on four; the recorded run is in `docs/benchmarks.md`). The geocode row is
+the best of three runs on one machine, so read the ratios: about 4.3x on one thread and 17x on four; the recorded run, and 0.3.1 against 0.4.0, are in `docs/benchmarks.md`). The geocode row is
 an outside data set, and the size row is from `benchmarks/size_memory.py`. They were measured on a few data
 sets and are not promised for yours. Method, every other figure and the caveats:
 [`docs/benchmarks.md`](docs/benchmarks.md).
+
+**0.3.1 to 0.4.0**, the same benchmarks on both builds, back to back on one machine (the full tables, with the Rust
+and size figures, are in [`docs/benchmarks.md`](docs/benchmarks.md#031-to-040)):
+
+| | 0.3.1 | 0.4.0 |
+|---|---|---|
+| Suite, `natural` stratum / whole suite | 98.3% / 92.3% | 98.3% / 92.3% |
+| Geocode benchmark, dev | 94.4% | 94.5% |
+| Fields input right / unit number right | 98.9% / 96.8% | 99.1% / 97.8% |
+| Wrong parses that raised a warning | 43.9% | 54.7% |
+| Python `parse`, geocode addresses, one thread | 34,149/s | 38,463/s (+13%) |
+| Python `parse_many`, 4 threads | 113,873/s | 137,876/s (+21%) |
+| One address in Rust, full one line | 17.3 µs | 12.4 µs (-28%) |
 
 ### The benchmarks, and which to run
 
@@ -338,8 +351,8 @@ Database rows (real streets, cities and ZIP codes, invented numbers), and a priv
 unpublished seed checks that the public set was not tuned to.
 
 The [geocode benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark)'s figure needs a caveat: the rules and the place list were first developed while
-reading the errors of its *test* split (96.7%), so that figure is optimistic; later rules were fixed against
-part of the train split (20% of it held out, unread, 94.1%) and checked on dev, and 94.4% is the estimate for
+reading the errors of its *test* split (96.8%), so that figure is optimistic; later rules were fixed against
+part of the train split (20% of it held out, unread, 94.2%) and checked on dev, and 94.5% is the estimate for
 data of that shape (one line, US street addresses, a city and a state), not a guarantee for yours.
 
 How to run each, what it needs, and the resource profile: [`benchmarks/README.md`](benchmarks/README.md).

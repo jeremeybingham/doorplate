@@ -34,6 +34,9 @@ def main():
         where upper(trim(state))='FL' and regexp_matches(trim(zip),'^\\d{{5}}') and trim(city)<>''
         and s1 not ilike '%private%' and regexp_matches(trim(s1),'^\\d')
         and not regexp_matches(upper(trim(s1)),'(^| )(APT|UNIT|STE|SUITE|BLDG|#)')""").fetchall()
+    # `select distinct` has no order, so sort first: the same seed then picks the same records on every run
+    # and every build can be compared (an unsorted sample moved the scores by 0.1 point on its own).
+    rows.sort()
     random.Random(args.seed).shuffle(rows)
     rows = rows[: args.n]
     lines = [f"{s1} {city} FL {z}" for s1, city, z in rows]
