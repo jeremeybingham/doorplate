@@ -14,7 +14,7 @@ to download.
 This library formats and parses; it **does not validate** that an address exists or
 can receive mail.
 
-> **Alpha release (0.3.1).** Expect rough edges. The match key is versioned (`k2:`) and
+> **Alpha release (0.3.1).** Expect rough edges. The match key is versioned (`k3:`) and
 > will probably get new versions as the parser improves, so store the version prefix
 > with your keys and plan to re-key. Accuracy and speed are measurements on a few
 > datasets, not guarantees.
@@ -40,7 +40,7 @@ a.place                # {"name": "MIAMI", "state": "FL", "county": "DADE", ...}
 a.warnings             # []
 a.to_usps()["line1"]   # "123 N MAIN ST APT 4"
 a.to_display()["line1"]  # "123 N Main St Apt 4" (to_long(): "123 North Main Street Apartment 4"); display only, not Pub 28
-a.key()                # "k2:S|123|N|MAIN|ST||FL|33101"
+a.key()                # "k3:S|123|N|MAIN|ST||FL|33101"
 a.slug()               # "123-n-main-st-apt-4-miami-fl-33101"
 a.to_reso()            # RESO Data Dictionary 2.0 fields
 a.to_dict()            # everything above as plain Python values, and provenance (the library version and the state data version; also `a.library_version`, `a.state_data_version`)

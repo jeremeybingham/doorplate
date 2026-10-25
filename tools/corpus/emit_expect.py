@@ -99,7 +99,7 @@ def keyseg(s):
 
 def key(e,unit):
     st,z=e.get("state",""),e.get("zip5","")
-    pre="k2:" if st and z else "k2n:"
+    pre="k3:" if st and z else "k3n:"
     # A dual address keys on the street (docs/key-format.md).
     if e.get("po_box") and not has_street(e): body=["P",e["po_box"],st,z]
     elif e.get("rural_route"):

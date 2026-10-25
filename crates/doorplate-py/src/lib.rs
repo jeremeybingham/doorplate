@@ -271,7 +271,7 @@ impl PyParsedAddress {
         self.inner.address_type().code()
     }
 
-    /// The match key (`k2:...`), or `None` when there is nothing to key on.
+    /// The match key (`k3:...`), or `None` when there is nothing to key on.
     /// With `unit=True` the unit numbers are part of it.
     #[pyo3(signature = (unit=false))]
     fn key(&self, unit: bool) -> Option<String> {

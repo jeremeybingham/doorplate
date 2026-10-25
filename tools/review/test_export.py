@@ -19,10 +19,10 @@ ANSWER = {
     "input": {"line1": "123 456 QUINCEWOOD ST", "line2": "% JOHN SMITH", "city": "MIAMI", "state": "FL", "zip": "33101"},
     "cluster": {"shape": "9 9 a a | % a a", "warnings": "multiple_addresses,unparsed_remainder", "size": 41},
     "verdict": "corrected", "corrected": "123 QUINCEWOOD ST, MIAMI FL 33101", "note": "John Smith is a name",
-    "parse": {"key": "k2:S|123||QUINCEWOOD|ST||FL|33101", "warnings": ["multiple_addresses", "unparsed_remainder"],
+    "parse": {"key": "k3:S|123||QUINCEWOOD|ST||FL|33101", "warnings": ["multiple_addresses", "unparsed_remainder"],
               "unparsed": "456", "components": {"street_number": "123", "street_name": "QUINCEWOOD", "city": "MIAMI"},
               "library_version": "0.3.0"},
-    "corrected_parse": {"key": "k2:S|123||QUINCEWOOD|ST||FL|33101", "warnings": [], "unparsed": None,
+    "corrected_parse": {"key": "k3:S|123||QUINCEWOOD|ST||FL|33101", "warnings": [], "unparsed": None,
                         "components": {"street_number": "123", "street_name": "QUINCEWOOD"}, "library_version": "0.3.0"},
 }
 

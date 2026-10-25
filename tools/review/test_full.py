@@ -19,9 +19,9 @@ ANSWER = {
     "ts": "2026-10-22T10:11:12+00:00", "id": "irs-eo-bmf|organization|1", "seq": 1, "source": "irs-eo-bmf", "role": "organization",
     "input": INPUT, "cluster": {"shape": "a a a 9 a a | % a a", "warnings": "missing_street_number", "size": 41},
     "verdict": "corrected", "corrected": "123 SMITH ST, % JOHN SMITH, MIAMI FL 33101", "note": "John Smith is the contact; delete ACME",
-    "parse": {"key": "k2:S||ACME HOLDINGS LLC 123 SMITH|ST||FL|33101", "warnings": ["missing_street_number"], "unparsed": None,
+    "parse": {"key": "k3:S||ACME HOLDINGS LLC 123 SMITH|ST||FL|33101", "warnings": ["missing_street_number"], "unparsed": None,
               "components": {"street_name": "ACME HOLDINGS LLC 123 SMITH", "attention": "% JOHN SMITH", "city": "MIAMI"}},
-    "corrected_parse": {"key": "k2:S|123||SMITH|ST||FL|33101", "warnings": [], "unparsed": None,
+    "corrected_parse": {"key": "k3:S|123||SMITH|ST||FL|33101", "warnings": [], "unparsed": None,
                         "components": {"street_number": "123", "street_name": "SMITH", "attention": "% JOHN SMITH"}},
 }
 

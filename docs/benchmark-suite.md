@@ -268,7 +268,7 @@ rewritten:
 - **Fields input**: `parse_fields` on `fields`, scored on the components in `expect`.
 - **Standardized output**: the components in Pub 28 form, and the `to_usps()` lines.
 - **Key stability**: the share of records whose `inputs` (the same record in several styles)
-  all give the same `k2` key, and the share of keys shared by two different records.
+  all give the same `k3` key, and the share of keys shared by two different records.
 - **Warnings**: of the records parsed wrong, the share that raised a warning; of those parsed
   right, the share that raised one.
 

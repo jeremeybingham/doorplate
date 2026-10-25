@@ -213,7 +213,7 @@ other tests (`CONTRIBUTING.md`: every parsing bug fixed gets a case). Ids start 
 
 ### `keys.jsonl`, `reso.jsonl`
 
-Cases that pin the emitters: exact `k2` key and slug strings (`key-`) and RESO
+Cases that pin the emitters: exact `k3` key and slug strings (`key-`) and RESO
 field values (`reso-`), written from `docs/key-format.md` and
 `docs/reso-mapping.md`.
 

@@ -72,7 +72,7 @@ writes the Markdown.
 **Two tracks, never mixed.** The comparison track (`compare.jsonl.gz`) gives both libraries the same
 strings and scores their token labels, in usaddress's label set, by character span. The doorplate-only track
 (`doorplate.jsonl.gz`) measures what usaddress cannot do: `parse_fields` on pre-split fields against Pub 28
-components, the `to_usps` lines, whether the same record in several styles gives one `k2` key, and whether
+components, the `to_usps` lines, whether the same record in several styles gives one `k3` key, and whether
 a wrong parse raises a warning. No figure from the second track appears in a doorplate-versus-usaddress
 table.
 

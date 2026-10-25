@@ -132,7 +132,7 @@ code is, measured: [`warnings.md`](warnings.md). New codes come with the parser 
 
 ## The key and the slug
 
-The key is `k2:` plus pipe-separated parts (the format and when it changes are in
+The key is `k3:` plus pipe-separated parts (the format and when it changes are in
 [`key-format.md`](key-format.md)); `KeyOptions` has one switch, `include_unit` (`KeyOptions::property()` is the
 property-level key, `KeyOptions::unit()` the unit-level key, which carries the unit numbers). The slug is for display, not for
 matching. **Keep** both; the `ParseOptions` builder above is the only change.
