@@ -330,7 +330,7 @@ an accuracy contest.
 ### Golden corpus
 
 761 of 762 whole addresses right (99.9%). The one that is not is `rg-171`, an old negative case that #128 changed on purpose (a
-bare `1 1234567` on line 2 is now one unit) and left out of `tests/corpus/passing.txt`. The corpus is written alongside
+bare `1 1234567` on line 2 is now one unit) and left out of `tests/corpus/passing.txt` (issue #196 decides what it should do). The corpus is written alongside
 the parser and every bug fix adds a case, so it is a regression check and says nothing about accuracy on new data.
 
 ## Speed
