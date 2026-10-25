@@ -14,9 +14,9 @@ to download.
 This library formats and parses; it **does not validate** that an address exists or
 can receive mail.
 
-> **Alpha release (0.3.1).** Expect rough edges. The match key is versioned (`k3:`) and
+> **Alpha release (0.4.0).** Expect rough edges. The match key is versioned (`k3:`) and
 > will probably get new versions as the parser improves, so store the version prefix
-> with your keys and plan to re-key. Accuracy and speed are measurements on a few
+> with your keys and plan to re-key. `k3` is new in 0.4.0 and has only been checked on the project's own test data, so a `k4` may follow soon. Accuracy and speed are measurements on a few
 > datasets, not guarantees.
 >
 > **Help wanted: messy addresses.** If it parses your addresses badly, please
