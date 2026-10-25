@@ -135,8 +135,11 @@ pub(crate) fn house_number(t: &str) -> Option<NumberShape> {
             NumberShape::Plain
         });
     }
-    (after.len() == 1 && after.bytes().all(|c| c.is_ascii_alphabetic()))
-        .then_some(NumberShape::Plain)
+    // `12-34A`: the Queens form with one trailing letter (#100).
+    let e = after.bytes().take_while(u8::is_ascii_digit).count();
+    let tail = &after[e..];
+    let one_letter = |s: &str| s.len() == 1 && s.bytes().all(|c| c.is_ascii_alphabetic());
+    (one_letter(after) || e > 0 && one_letter(tail)).then_some(NumberShape::Plain)
 }
 
 /// A county grid number: `22W410`, `5S710` (DuPage County, IL),
@@ -366,6 +369,12 @@ mod tests {
         assert_eq!(zip_parts("3310"), None);
         assert_eq!(house_number("12A"), Some(NumberShape::Plain));
         assert_eq!(house_number("12-A"), Some(NumberShape::Plain));
+        // The Queens form with a trailing letter (#100): one letter only.
+        assert_eq!(house_number("12-34A"), Some(NumberShape::Plain));
+        assert_eq!(house_number("1204-1206A"), Some(NumberShape::Plain));
+        assert_eq!(house_number("12-34AB"), None);
+        assert_eq!(house_number("12A-34"), None);
+        assert_eq!(house_number("12-34-5A"), None);
         assert_eq!(house_number("1204-1206"), Some(NumberShape::Range));
         let lex = Lexicons::builtin();
         assert!(is_cut_designator("UNI", &lex));
