@@ -9,6 +9,10 @@ change to what an input produces needs a new key version.
 
 ### Changed
 
+- **A lone directional on line 2 is a unit** (#170, **held for the `k3`**: 712 keys change): `123 MAIN ST` / `N` had the
+  postdirectional `N` (`second_line_in_street`); NAD's labels say a unit for 88.8% of such rows (584 of 658). Now a lone
+  directional of at most two letters on line 2, after a line 1 that already ends in its street suffix, is the unit `N`.
+  Line 1 with no suffix, a postdirectional already there, or two words on line 2 are unchanged. Measured: 712 keys change in the seven large sources (NAD 524, NC voter mailing 147, NY corporations 41, others 0), each a street that loses a postdirectional and gains a unit, with `second_line_in_street` removed.
 - **In Queens the key drops the hyphen of the house number** (#109, **held for the `k3`**: 383,510 keys change): `37-12 82ND
   ST` and `3712 82ND ST` were one building with two keys (14.6% of the hyphenated Queens addresses in a New York registry
   also appear without the hyphen). When the resolved place is in Queens, NY, a number of one to three digits, a hyphen, two

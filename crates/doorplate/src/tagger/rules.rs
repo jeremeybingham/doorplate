@@ -792,6 +792,19 @@ impl Tagger<'_> {
         self.decide(Decision::BareUnit);
     }
 
+    /// A lone directional on line 2 that `tag_fields` kept out of the street
+    /// (#170) is the unit, with no designator, as a bare letter is.
+    pub(super) fn claim_lone_direction(&mut self, r: &Range<usize>, lone: bool) {
+        if lone
+            && r.clone()
+                .all(|k| matches!(self.tags[k], Tag::Untagged | Tag::Unparsed))
+            && !self.tags.contains(&Tag::UnitNumber(0))
+        {
+            self.set(r.clone(), Tag::UnitNumber(0));
+            self.decide(Decision::BareUnit);
+        }
+    }
+
     // ---- delivery line -----------------------------------------------------
 
     /// A street field that is only a country (`UNITED STATES`, `USA`) next to a

@@ -384,6 +384,21 @@ pub(crate) fn tag_fields(
         t.set(l2.clone(), Tag::StreetNumber);
         line = l1.clone();
     }
+    // `123 MAIN ST` / `N`: a street that already ends in its suffix, then a lone
+    // directional on line 2, is a unit, not a postdirectional (#170: NAD's
+    // labels say unit for 88.8% of these). Line 1 is read alone.
+    let lone_direction = !lone_fraction
+        && !l1.is_empty()
+        && l1.len() >= 3
+        && l2.len() == 1
+        && l2.start == l1.end
+        && crate::classify::house_number(&toks[l1.start].text).is_some()
+        && lex.suffix(&toks[l1.end - 1].text).is_some()
+        && toks[l2.start].text.len() <= 2
+        && lex.directional(&toks[l2.start].text).is_some();
+    if lone_direction {
+        line = l1.clone();
+    }
     line.start = t.drop_truncated_copy(line.start, line.end);
     let after_fraction = line1_number
         && !lone_fraction
@@ -400,6 +415,7 @@ pub(crate) fn tag_fields(
             t.claim_fraction(l2.start);
         }
         t.claim_bare_unit(l2.clone());
+        t.claim_lone_direction(&l2, lone_direction);
         t.second_line_notes(&l1, &l2);
         return t.finish();
     }
@@ -427,6 +443,7 @@ pub(crate) fn tag_fields(
         t.claim_fraction(l2.start);
     }
     t.claim_bare_unit(l2.clone());
+    t.claim_lone_direction(&l2, lone_direction);
     t.second_line_notes(&l1, &l2);
     t.finish()
 }
