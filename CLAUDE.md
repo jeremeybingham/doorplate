@@ -19,17 +19,15 @@ when working on the project with Claude Code.
 - New public API (a function, a method, a CLI flag or an output form) also gets an example in `examples/` (the notebook, a pipeline script or `crates/doorplate/examples/`) in the same change; `crates/doorplate-py/tests/test_examples.py` runs them.
 - `docs/README.md` indexes all the documentation by topic and has a table "When you change something, check these". Before finishing any change, find it in that table and update every related page in the same change; when you add, rename or remove a page, update the index. A change that touches a rule, a key, a warning code, the API, a figure or the layout almost always has related pages.
 - `AGENTS.md` is the tool-neutral guide for agents and contributors. Keep it in step with the code and with this file: when the build commands, the rules that must hold, the layout or the documentation links change, update `AGENTS.md` in the same change, and keep its links relative to the repository root.
-- Ask before any major process: extracting the Netsyms archive, a full Netsyms run, a download, or anything that runs over about a minute or writes over about 1 GB. The harness scripts (`tools/harness/`) print a plan and need `--confirm`; show the plan and wait for a go-ahead. Small checks (tests, the 12-second sample comparison, read-only counts) need no approval.
+- Major processes here need a go-ahead (the general rule is in `~/.claude/CLAUDE.md`): extracting the Netsyms archive, a full Netsyms run, a download. The harness scripts (`tools/harness/`) print a plan and need `--confirm`; show the plan and wait. Small checks (tests, the 12-second sample comparison, read-only counts) need no approval. Resource use (all cores, except the benchmark profile) is in `AGENTS.md`.
 - For each parse-rule PR: the tests above plus a before/after comparison on `local-data/netsyms-2026/sample.sqlite` with `tools/harness/compare.py`. The foundation checkpoint (`tools/compare/checkpoint.py`, `docs/backlog.md`) passed on 2026-10-23, so parsing changes may merge; a key-affecting rule is also measured against the frozen checkpoint keys with `tools/compare/key_diff.py diff`. Full Netsyms runs happen once after a batch of rules and on the release commit.
 - Rebuild the extension (`maturin develop --release`) after every Rust change.
-- Use all the cores and memory for builds, tests, dumps and tools. The 4-CPU, 8 GB profile is only for benchmark runs (`benchmarks/suite.py`, which applies it itself, and speed figures you will quote: `taskset -c 0-3` with `RAYON_NUM_THREADS=4`).
 - A parse-rule PR also runs the sample comparison and, for a rule on one-line input, the checks in `benchmarks/README.md` (`tools/compare/city_diff.py` and `tools/compare/oneline_fl.py`): a rule tuned on the geocode benchmark alone once broke spelled-out postdirectionals. The loop is in `tools/harness/README.md`.
-- Keep it simple: there are no users yet, so no compatibility shims or migration tooling. Summarize decisions and next steps when asked, and do not start new work until the owner says so.
-- Keep small commits. A pull request holds a reasonable number of related changes; split unrelated work into separate pull requests.
 
 ## Local notes
 
-This machine's shell, tools and data (the shell, `uv`, a `gh` workaround, where the private data is) are in
-`local-data/SESSION.md`. It is git-ignored, so a fresh clone does not have it; the rules above do not depend on it.
+Machine facts (shell, tools, `gh` workaround, long-run status rule) are in `~/.claude/CLAUDE.md`, not here. What is
+specific to this project on this machine (the venv, the private data, the current state) is in `local-data/SESSION.md`.
+It is git-ignored, so a fresh clone does not have it; the rules above do not depend on it.
 
 @local-data/SESSION.md

@@ -61,16 +61,27 @@ source and evidence. The order is in #138. `k2` started with 0.3.0; the route-nu
 - **`CR` and `CTY`** read as CIRCLE and COUNTY nationally, not only in Florida (#108), and the state data's
   readings applied on pre-split input (#110).
 
+### After 0.4.0 (released 2026-10-25)
+
+Two trackers set the order ([`backlog.md`](backlog.md)); nothing is started.
+
+- **0.4.x (#200): extensibility and tooling.** The custom layer (#3), a columnar result (#24) and a usaddress-shaped
+  module (#36), all additive with no key change; and the tooling that feeds the rules: an anonymizing tool (#105),
+  harness fixes (#112), the review tool's comparison mode (#132) and per-state counts (#53).
+- **0.5.0 (#201): the `k4`.** The key-changing rules, cut together once the 0.4.x work has produced evidence: the
+  remaining research from the first review (#131), two bare numbers glued into a unit (#196), the state-dependent
+  rules and their reading (#8, #11, #29, #92), with the bare `BAY` warning (#193) riding along.
+
 ### Later, waiting on data or demand
 
-- **State-dependent rules and the reading that feeds them** (moved out of the 0.4.0 cut on 2026-10-23 to keep phase 2
-  to the rules already listed): state road conventions such as Texas `RR`, `PR 462` and county road names (#8),
+- **State-dependent rules and the reading that feeds them** (moved out of the 0.4.0 cut on 2026-10-23; now in the
+  0.5.0 tracker, #201): state road conventions such as Texas `RR`, `PR 462` and county road names (#8),
   Florida place gaps (#11), the [geocode benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark)'s place-name gap (#29), Puerto Rico and the uncited parts of Pub 28
   (#92), with the per-state counts that decide them (#53); `CMR` only if a real case shows up (#77, decided: left out).
-- **Tooling that finds new things** (Tooling milestone): the review tool's comparison mode and second source (#132),
-  less noise in the harness's scorers (#112). Built when a listed rule needs them.
+- **Tooling that finds new things** (Tooling milestone, ordered in #200): the review tool's comparison mode and
+  second source (#132), less noise in the harness's scorers (#112). Built when a listed rule needs them.
 
-- **A custom layer** (#3): a way to add your own spellings, places, ZIPs and state-scoped readings
+- **A custom layer** (#3, first in the 0.4.x tracker): a way to add your own spellings, places, ZIPs and state-scoped readings
   without editing the shipped tables, loaded at run time, validated on load, deterministic, and
   reported in the output so stored keys can be tied to the layer in use. Today the tables are fixed
   at compile time, and a misparse is fixed by reporting it. The design is settled; it waits for real

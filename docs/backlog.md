@@ -7,11 +7,14 @@ definitions that lived in the body of issue #103 (the backlog review), which now
 ## The release plan
 
 One release, 0.4.0, in two phases (decided 2026-10-23: the `k3`, planned as 0.5.0, is folded into 0.4.0 because the
-project has no users and the foundation went quickly; it saves a version and a release cycle):
+project has no users and the foundation went quickly; it saves a version and a release cycle). **0.4.0 was released on
+2026-10-25**; the plan after it is the 0.4.x and 0.5.0 milestones below.
 
 | Milestone | What it is | Gate |
 |---|---|---|
 | **0.4.0** | **Phase 1, the foundation:** the architecture (state data folded into the core, an extension-ready lexicon) and the breaking API cleanup, with the key unchanged (`k2`) and no parsing changes. **Phase 2, the `k3`:** the parser rules already listed in #138, key-affecting or not (warnings and diagnostics included), cut together; the list is closed (see "Scope" below) | Phase 1 ends at the **checkpoint**: zero key differences with 0.3.1 over the large sources, and those keys frozen as the baseline. The release: the measured before and after against that baseline, in [`key-format.md`](key-format.md) ("Changing the key"). The checkpoint passed on 2026-10-23 (commit `1819acd`: zero differences over 36.9M rows) |
+| **0.4.x** | Extensibility (the custom layer #3, columnar output #24, the usaddress-shaped module #36) and the tooling around it; additive changes only, no key change | Tracker #200 |
+| **0.5.0** | The next key-changing release, the `k4`: the parser rules that change keys (#131 first, #196, #29, #11, #8, #92; #193 rides along). Held until the 0.4.x work has produced evidence | Tracker #201; the measured before and after against the `k3` keys, as for the `k3` |
 | **Later** | Wanted, not planned for a release: new API surface, anything waiting on demand or a decision | |
 | **Tooling** | Harness, review tool, benchmarks, CI: never shipped, never closed | |
 
@@ -20,8 +23,8 @@ release pull request sets `0.4.0`): there is no 0.3.2. The project has no users,
 fix. **A 0.3.x patch needs a very good reason:** a correctness bug in shipped output that matters (a wrong key, a panic
 on valid input: the never-panic rule), a security or supply-chain problem, or a broken published artifact (a wheel that
 does not install, a crate that does not build). It goes on a `release/0.3` branch cut from the `v0.3.1` tag, with the
-full release checklist. The tracker (`tracker` label) lists the order in both phases: #138 (#139, the `k3` tracker,
-is merged into it).
+full release checklist. The tracker (`tracker` label) lists the order: #138 for 0.4.0 (closed; #139, the `k3` tracker,
+was merged into it), #200 for 0.4.x and #201 for 0.5.0.
 
 **Scope of phase 2** (decided 2026-10-23, issue #138). The list of rules is closed: phase 2 works the issues that are in the 0.4.0 milestone and does not go looking for new rules, so the backlog does not grow faster than it is worked. In practice:
 
