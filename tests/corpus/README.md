@@ -46,6 +46,7 @@ Every parsing bug fixed gets a case here (`CONTRIBUTING.md`).
   `rb-` (a spaced letter after a rural route box number, `rrbox.jsonl`),
   `ff-` (state data on pre-split fields, `fields-state.jsonl`),
   `cy-` (CR as CIRCLE and the CTY highway spellings, `county.jsonl`),
+  `qk-` (Queens house numbers in the key, `queens.jsonl`),
   `lp-` (LOOP and a number after a name, `loop.jsonl`),
   `rc-` (recipient text ahead of the address, `recipient.jsonl`),
   `un-` (units left in the street name, `units.jsonl`),
@@ -328,6 +329,12 @@ misses that must not change (another state, no state or ZIP).
 Ids `cy-001` to `cy-009` (#108). `CR` after a name is `CIRCLE` in every state; `CTY RD`, `CTY ROAD` and `CTY HWY` before a
 route number are `COUNTY ROAD` and `COUNTY HIGHWAY` outside Florida too; and the near misses that must not change (`CR`
 before a route number, `CO RD`, `CTY` as `CITY`, a street named `CTY`).
+
+### `queens.jsonl`
+
+Ids `qk-001` to `qk-009` (#109). In Queens, NY the key drops the hyphen of `37-12` and `37-12A`, so a building written both
+ways keys the same (`qk-001`/`qk-002`, `qk-003`/`qk-004`); and the near misses that keep the hyphen (Manhattan, the Bronx,
+New Jersey, one digit after the hyphen).
 
 ### `country.jsonl`
 

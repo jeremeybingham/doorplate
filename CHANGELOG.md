@@ -9,6 +9,12 @@ change to what an input produces needs a new key version.
 
 ### Changed
 
+- **In Queens the key drops the hyphen of the house number** (#109, **held for the `k3`**: 383,510 keys change): `37-12 82ND
+  ST` and `3712 82ND ST` were one building with two keys (14.6% of the hyphenated Queens addresses in a New York registry
+  also appear without the hyphen). When the resolved place is in Queens, NY, a number of one to three digits, a hyphen, two
+  digits and an optional letter (`37-12`, `37-12A`) keys without the hyphen, so both forms give `k2:S|3712||82ND|ST||NY|11354`.
+  Elsewhere the hyphen stays (`20-22 W 45TH ST` in Manhattan is two numbers). `street_number` and the slug keep what was
+  written. Measured: 383,510 keys change in the seven large sources (NY corporations 306,725, Netsyms 56,391, carrier census 14,785, NAD 3,355, amateur radio 1,269, IRS 847, NC voter 138), every one a New York key that loses the hyphen of its house number and nothing else; no warning changes.
 - **`CR` is CIRCLE and `CTY HWY`, `CTY RD`, `CTY ROAD` are county roads in every state** (#108, **held for the `k3`**: 8,080 keys
   change): three readings that only Florida had, because that is where the evidence was first collected. `CR` after a
   street name was `CREEK` outside Florida; it is now `CIRCLE` (`12 BAYVIEW CR` is `BAYVIEW CIR`), still with

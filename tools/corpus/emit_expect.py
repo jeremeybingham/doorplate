@@ -32,6 +32,16 @@ def special(e):
     if e.get("general_delivery"): return "GENERAL DELIVERY"
     return ""
 
+def queens_number(e):
+    """The house number as the key writes it (#109): in Queens, NY the hyphen of `37-12` or
+    `37-12A` is dropped (one to three digits, a hyphen, two digits, an optional letter), so the
+    building keys like its unhyphenated twin. Queens is decided here from the labeled state and
+    ZIP prefix (111, 113, 114, 116), a second implementation of the library's place-county test."""
+    n=e.get("street_number","")
+    if e.get("state")=="NY" and (e.get("zip5") or "")[:3] in ("111","113","114","116") and re.fullmatch(r"\d{1,3}-\d{2}[A-Za-z]?",n):
+        return n.replace("-","")
+    return n
+
 def route_key(r):
     """A route number in the key: leading zeros before another digit are dropped
     (`02` is `2`, `00` is `0`; Pub 28 sections 242 and 252). Box numbers keep theirs."""
@@ -98,7 +108,7 @@ def key(e,unit):
         m=e["military"]; body=["M",m["kind"],m["number"],m.get("box",""),e.get("military_post_office",""),st,z]
     elif e.get("general_delivery"): body=["G",st,z]
     elif e.get("street_name") or e.get("highway"):
-        body=["S",e.get("street_number",""),e.get("street_dir_prefix",""),name_text(e,True),e.get("street_suffix",""),e.get("street_dir_suffix",""),st,z]
+        body=["S",queens_number(e),e.get("street_dir_prefix",""),name_text(e,True),e.get("street_suffix",""),e.get("street_dir_suffix",""),st,z]
         if unit: body+=[e.get("unit_number",""),e.get("second_unit_number","")]
     else: return None
     return pre+body[0]+":"[:0]+"|".join([body[0]]+[keyseg(x) for x in body[1:]])[1:] if False else pre+"|".join([body[0]]+[keyseg(x) for x in body[1:]])
