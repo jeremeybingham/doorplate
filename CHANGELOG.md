@@ -9,6 +9,11 @@ change to what an input produces needs a new key version.
 
 ### Changed
 
+- **Pre-split fields get the state's data for highways** (#110, **held for the `k3`**: 1,086 keys change): in Florida
+  `22200 SR 60` was `STATE ROAD 60` on one line (`parse("22200 SR 60, LAKE WALES, FL 33898")`) but a street named `SR 60`
+  through `parse_fields`, so one address had two keys; `CTY HWY` had the same gap. The highway pass now gets the state
+  (from the state field, or the ZIP) before it reads line 1, as it does on one line. The suffix override (`CR` as `CIR`)
+  already worked on both. All 1,086 changes are Florida highway readings.
 - **A spaced letter after a rural route box number is part of the box** (#95, **held for the `k3`**: 4,824 keys change): `RR 2 BOX 45 A` and
   `HC 63 BOX 4 B` had the box `45` and `4` with the letter left unparsed (`unparsed_remainder`). Now the box is `45A` and
   `4B`, as the joined form `RR 2 BOX 45A` already was. One lone letter after a numeric box, on the same line; a PO Box is
