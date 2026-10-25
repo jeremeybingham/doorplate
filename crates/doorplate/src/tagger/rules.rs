@@ -1893,7 +1893,9 @@ impl Tagger<'_> {
 
     /// Whether a street suffix (with a name before it) ends right before
     /// token `k`, allowing a postdirectional in between. Highway words are
-    /// excluded: after HWY a number is the route, not a unit.
+    /// excluded: after HWY a number is the route, not a unit. `ROAD` and `LOOP`
+    /// are highway words that are suffixes after a name (`MAPLE COVE LOOP 412`,
+    /// #145); `LOOP 410` at the start of the street is still a route.
     fn suffix_before(&self, name_lo: usize, k: usize) -> bool {
         let lex = self.lex;
         let mut s = k;
@@ -1907,7 +1909,7 @@ impl Tagger<'_> {
         let word = self.text(sfx);
         let highway = lex
             .highway(word)
-            .is_some_and(|h| h.value.standard() != "ROAD");
+            .is_some_and(|h| !matches!(h.value.standard(), "ROAD" | "LOOP"));
         // A leading directional is the predirectional, not the name:
         // "147 SE AVENUE A" has no name before AVENUE, so A is not a unit.
         let mut name_start = name_lo;

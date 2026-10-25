@@ -42,6 +42,7 @@ Every parsing bug fixed gets a case here (`CONTRIBUTING.md`).
   `dp-` (department names, `dept.jsonl`),
   `gl-` (a word glued to a state-like suffix, `glue.jsonl`),
   `by-` (BAY in a street name, `bay.jsonl`),
+  `lp-` (LOOP and a number after a name, `loop.jsonl`),
   `rc-` (recipient text ahead of the address, `recipient.jsonl`),
   `un-` (units left in the street name, `units.jsonl`),
   `sp-` (spelled-out numbers, `spelled.jsonl`),
@@ -294,6 +295,11 @@ city glued to the street with a Connecticut ZIP).
 Ids `by-001` to `by-011` (#144). `BAY` at the end of a street name (`HERON BAY # 2B`, `HERON BAY 2B`, `HERON BAY W 45`)
 is part of the name; and the near misses that must not change (`BAY` after a suffix or on line 2 is still a unit, a
 street named `BAY` or `OYSTER BAY BLVD`).
+
+### `loop.jsonl`
+
+Ids `lp-001` to `lp-007` (#145). `LOOP` after a street name, then a number (`MAPLE COVE LOOP 412`) is the suffix and a
+bare unit; and the near misses that must not change (no number, a designator, `LOOP 410` at the start of the street).
 
 ### `country.jsonl`
 

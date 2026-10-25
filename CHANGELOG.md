@@ -9,6 +9,10 @@ change to what an input produces needs a new key version.
 
 ### Changed
 
+- **`LOOP` after a street name is the suffix, and a number after it a unit** (#145, **held for the `k3`**: 518 keys change): `1305 MAPLE COVE
+  LOOP 412` had the street name `MAPLE COVE LOOP 412` with no suffix, because `LOOP` is a highway word (`LOOP 410`) and a
+  number after a highway word is its route. Now `LOOP` with a name before it is a suffix like `CIR` or `DR`, so the number
+  is a bare unit (`MAPLE COVE`, `LOOP`, unit `412`). `LOOP 410` at the start of the street is still a route. Measured against the build before this rule: 518 keys change in the seven large sources (carrier census 269, amateur radio 72, IRS 69, NY corporations 78, NAD 16, Netsyms 9, NC voter 5), all of the shape name, `LOOP`, number.
 - **`BAY` at the end of a street name is part of the name** (#144, **held for the `k3`**: 97 keys change): `1305 HERON BAY #
   2B` and `1305 HERON BAY 2B` had the street `HERON` and a unit `UNIT 2B`, because `BAY` is an observed unit
   designator (an industrial bay). Now `BAY` is a unit designator only after a street suffix (`MAIN ST BAY 4`), on a later
