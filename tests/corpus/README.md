@@ -47,6 +47,7 @@ Every parsing bug fixed gets a case here (`CONTRIBUTING.md`).
   `ff-` (state data on pre-split fields, `fields-state.jsonl`),
   `cy-` (CR as CIRCLE and the CTY highway spellings, `county.jsonl`),
   `qk-` (Queens house numbers in the key, `queens.jsonl`),
+  `ld-` (a lone directional on line 2, `lonedir.jsonl`),
   `lp-` (LOOP and a number after a name, `loop.jsonl`),
   `rc-` (recipient text ahead of the address, `recipient.jsonl`),
   `un-` (units left in the street name, `units.jsonl`),
@@ -335,6 +336,12 @@ before a route number, `CO RD`, `CTY` as `CITY`, a street named `CTY`).
 Ids `qk-001` to `qk-009` (#109). In Queens, NY the key drops the hyphen of `37-12` and `37-12A`, so a building written both
 ways keys the same (`qk-001`/`qk-002`, `qk-003`/`qk-004`); and the near misses that keep the hyphen (Manhattan, the Bronx,
 New Jersey, one digit after the hyphen).
+
+### `lonedir.jsonl`
+
+Ids `ld-001` to `ld-008` (#170). A lone directional on line 2 (`N`, `NW`) after a line 1 that already ends in its suffix
+is the unit, not the postdirectional; and the near misses that must not change (no suffix on line 1, a postdirectional
+already there, a letter that is not a directional, two words on line 2).
 
 ### `country.jsonl`
 

@@ -44,7 +44,7 @@ The parse may be wrong or incomplete.
 | `possibly_truncated` | The input looks cut off at a field-length limit. | 1,549 | suffix 76.3% (100 / 131), postdirectional 92.9% (13 / 14), name 21.0%, unit 15.4% |
 | `missing_unit_number` | A designator that needs a number has none (`APT`, `#`). | 1,101 | unit 97.1% (569 / 586) |
 | `ambiguous_number_letter` | One letter after the house number was read into the street name (`123 A MAIN ST`): it may be the number's suffix. | 4,676 | NAD labels it the number's suffix: number 79.8%, name 80.2%. NC voter: number 1.0%, name 0.5% (3,139 rows) |
-| `second_line_in_street` | Line 2 became part of the street that line 1 began (a route, a suffix, a directional). | 767 | postdirectional 91.0% (61 / 67), unit 88.8% (584 / 658): a lone letter on line 2 is often a unit |
+| `second_line_in_street` | Line 2 became part of the street that line 1 began (a route, a suffix, a directional). | 767 | postdirectional 91.0% (61 / 67), unit 88.8% (584 / 658): a lone letter on line 2 is often a unit; since #170 a lone directional after a suffix on line 1 is read as the unit and does not raise this |
 | `invalid_zip` | A ZIP that is not 5 digits, or ZIP+4 that is not 4. | 1,320 | name 13.4% (baseline 4.4%) |
 | `unknown_state` | A state-position token that is not a USPS code or a known name. | 0 | too few rows |
 
