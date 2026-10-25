@@ -44,6 +44,7 @@ Every parsing bug fixed gets a case here (`CONTRIBUTING.md`).
   `by-` (BAY in a street name, `bay.jsonl`),
   `hn-` (hyphenated house number with a letter, `hyphen.jsonl`),
   `rb-` (a spaced letter after a rural route box number, `rrbox.jsonl`),
+  `ff-` (state data on pre-split fields, `fields-state.jsonl`),
   `lp-` (LOOP and a number after a name, `loop.jsonl`),
   `rc-` (recipient text ahead of the address, `recipient.jsonl`),
   `un-` (units left in the street name, `units.jsonl`),
@@ -314,6 +315,12 @@ unparsed (two letters, a letter on the first part).
 Ids `rb-001` to `rb-008` (#95). A lone letter after a numeric rural route or highway contract box number (`RR 2 BOX 45 A`)
 is part of the box (`45A`); and the near misses that must not change (the joined form, no letter, a PO Box, two letters,
 a letter on the next line).
+
+### `fields-state.jsonl`
+
+Ids `ff-001` to `ff-005` (#110). A reading only a state's data has (Florida `SR 60` is `STATE ROAD 60`, `CTY HWY` is
+`COUNTY HIGHWAY`) applies to pre-split fields as it does to one-line input, with a state, with a ZIP alone; and the near
+misses that must not change (another state, no state or ZIP).
 
 ### `country.jsonl`
 

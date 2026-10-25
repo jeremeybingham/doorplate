@@ -264,7 +264,11 @@ impl Tagger<'_> {
 
     /// The place context for the last line: the state tagged there, else the
     /// state of the ZIP's main place.
-    fn place_ctx(&self, state: Option<Range<usize>>, zip: Option<usize>) -> Option<PlaceCtx> {
+    pub(super) fn place_ctx(
+        &self,
+        state: Option<Range<usize>>,
+        zip: Option<usize>,
+    ) -> Option<PlaceCtx> {
         let zip = zip
             .and_then(|k| zip_parts(self.text(k)))
             .and_then(|(z5, _)| self.lex.zip_places(z5));

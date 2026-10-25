@@ -404,14 +404,21 @@ pub(crate) fn tag_fields(
         return t.finish();
     }
     let city_range = t.city_field(city, state.is_empty());
-    t.state_field(state);
+    t.state_field(state.clone());
     t.zip_field(zip.clone());
     let mut end = line.end;
+    // The ZIP that tells the place context: the field, else one ending line 1.
+    let mut zip_at = (t.tags.get(zip.start) == Some(&Tag::Zip)).then_some(zip.start);
     if zip.is_empty() {
         end = t.trailing_zip(line.start, end);
+        zip_at = (end < line.end).then_some(end);
     } else {
         end = t.drop_repeated_zip(line.start, end);
     }
+    // The state data applies to the address lines as it does to one-line input
+    // (`SR 60` is `STATE ROAD 60` in Florida), #110.
+    let state_at = (t.tags.get(state.start) == Some(&Tag::State)).then_some(state);
+    t.places = t.place_ctx(state_at, zip_at);
     let end = t.drop_repeated_state(line.start, end);
     let end = t.drop_city_copy(line.start, end, city_range);
     t.country_street = true;
