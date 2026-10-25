@@ -11,7 +11,7 @@ change to what an input produces needs a new key version.
 
 - **Faster, and a little more accurate where the rules went** (0.3.1 to 0.4.0, measured back to back on one machine; the
   tables are in [`docs/benchmarks.md`](docs/benchmarks.md#031-to-040)). Ordinary input is unchanged: the suite's `natural`
-  stratum is 98.3% and the whole suite 92.3% on both builds. Geocode dev goes from 94.4% to 94.5%, fields input from
+  stratum is 98.3% on both builds (the whole suite 92.2% to 92.3%, the `hand` stratum 92.3% to 94.3% from #78). Geocode dev goes from 94.4% to 94.5%, fields input from
   98.9% to 99.1%, unit numbers from 96.8% to 97.8%, and the share of wrong parses that raise a warning from 43.9% to
   54.7%. Python `parse` on the geocode addresses goes from 34,149 to 38,463 per second (+13%), `parse_tokens` +19%, and
   `parse_many` on four threads from 113,873 to 137,876 (+21%); one address in Rust takes 12.4 µs instead of 17.3 µs

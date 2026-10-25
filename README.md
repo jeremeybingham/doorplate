@@ -322,7 +322,7 @@ and size figures, are in [`docs/benchmarks.md`](docs/benchmarks.md#031-to-040)):
 
 | | 0.3.1 | 0.4.0 |
 |---|---|---|
-| Suite, `natural` stratum / whole suite | 98.3% / 92.3% | 98.3% / 92.3% |
+| Suite, `natural` stratum / whole suite | 98.3% / 92.2% | 98.3% / 92.3% |
 | Geocode benchmark, dev | 94.4% | 94.5% |
 | Fields input right / unit number right | 98.9% / 96.8% | 99.1% / 97.8% |
 | Wrong parses that raised a warning | 43.9% | 54.7% |
