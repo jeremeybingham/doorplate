@@ -29,6 +29,27 @@ impl KeyOptions {
 }
 
 impl ParsedAddress {
+    /// The house number as the key writes it. In Queens the hyphen of
+    /// `37-12` is dropped, so the building keys the same as its unhyphenated
+    /// twin `3712` (#109); one to three digits, a hyphen, two digits and an
+    /// optional letter. Elsewhere a hyphenated number is kept (`20-22` in
+    /// Manhattan is two numbers).
+    fn key_number(&self) -> Option<String> {
+        let n = self.street_number.as_deref()?;
+        let queens_form = n.split_once('-').is_some_and(|(a, b)| {
+            let digits = |s: &str| !s.is_empty() && s.bytes().all(|c| c.is_ascii_digit());
+            let end = b
+                .strip_suffix(|c: char| c.is_ascii_alphabetic())
+                .unwrap_or(b);
+            digits(a) && a.len() <= 3 && digits(end) && end.len() == 2
+        });
+        if queens_form && crate::place::in_queens(self) {
+            Some(n.replace('-', ""))
+        } else {
+            Some(n.to_string())
+        }
+    }
+
     /// The canonical match key, or `None` when the address has nothing to key
     /// on: no street, PO box, route, military line or general delivery, or a
     /// placeholder such as "NO SITUS", or an intersection (the first street
@@ -86,7 +107,7 @@ impl ParsedAddress {
                 None => self.street_name.clone().unwrap_or_default(),
             };
             segs.extend([
-                self.street_number.as_deref().map(esc).unwrap_or_default(),
+                self.key_number().map(|n| esc(&n)).unwrap_or_default(),
                 self.street_dir_prefix
                     .map(|d| d.abbr().to_string())
                     .unwrap_or_default(),

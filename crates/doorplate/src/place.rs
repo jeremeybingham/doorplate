@@ -20,18 +20,22 @@ pub(crate) fn resolve(addr: &mut ParsedAddress, lex: &Lexicons, hint: Option<&'s
     queens_number(addr);
 }
 
+/// Whether the resolved place is in Queens, NY.
+pub(crate) fn in_queens(addr: &ParsedAddress) -> bool {
+    addr.place
+        .as_ref()
+        .is_some_and(|m| m.place.state() == "NY" && m.place.county() == "QUEENS")
+}
+
 /// In Queens the part of a house number before the hyphen is the cross street
 /// (`21-77 31ST ST`), so a hyphenated number whose second part is larger is
 /// one address, not a range of two. The tagger raises `multiple_addresses`
 /// for it before the place is known; this takes the warning back when the
 /// place's county is Queens and the range was the warning's only cause (a list
-/// or a second house number would have left text unparsed). The number and the
-/// key are not touched.
+/// or a second house number would have left text unparsed). The number is not
+/// touched; the key drops its hyphen (`emit::key`).
 fn queens_number(addr: &mut ParsedAddress) {
-    let queens = addr
-        .place
-        .as_ref()
-        .is_some_and(|m| m.place.state() == "NY" && m.place.county() == "QUEENS");
+    let queens = in_queens(addr);
     let range = addr
         .street_number
         .as_deref()
