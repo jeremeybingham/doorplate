@@ -9,6 +9,13 @@ change to what an input produces needs a new key version.
 
 ### Changed
 
+- **`CR` is CIRCLE and `CTY HWY`, `CTY RD`, `CTY ROAD` are county roads in every state** (#108, **held for the `k3`**: 8,080 keys
+  change): three readings that only Florida had, because that is where the evidence was first collected. `CR` after a
+  street name was `CREEK` outside Florida; it is now `CIRCLE` (`12 BAYVIEW CR` is `BAYVIEW CIR`), still with
+  `non_standard_abbreviation`, and `CR` before a route number stays `COUNTY ROAD`. `CTY HWY`, `CTY RD` and `CTY ROAD` before
+  a route number are `COUNTY HIGHWAY` and `COUNTY ROAD` (a Minnesota `3709 CTY RD 214` was a street `CTY`, suffix `RD`,
+  unit `214`, and the route number was lost); `CTY` alone stays `CITY`. The two Florida overrides are gone; `SR` stays
+  Florida's. Measured: 8,080 keys change in the seven large sources (carrier census 6,801, amateur radio 852, IRS 177, NY corporations 147, NC voter 80, NAD 19, Netsyms 4): `CR` to `CIR` 3,149, `CTY RD` and `CTY ROAD` to `COUNTY ROAD` 3,939, `CTY HWY` to `COUNTY HIGHWAY` 992; nothing else changes.
 - **Pre-split fields get the state's data for highways** (#110, **held for the `k3`**: 1,086 keys change): in Florida
   `22200 SR 60` was `STATE ROAD 60` on one line (`parse("22200 SR 60, LAKE WALES, FL 33898")`) but a street named `SR 60`
   through `parse_fields`, so one address had two keys; `CTY HWY` had the same gap. The highway pass now gets the state

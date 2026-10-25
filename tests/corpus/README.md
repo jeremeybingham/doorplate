@@ -45,6 +45,7 @@ Every parsing bug fixed gets a case here (`CONTRIBUTING.md`).
   `hn-` (hyphenated house number with a letter, `hyphen.jsonl`),
   `rb-` (a spaced letter after a rural route box number, `rrbox.jsonl`),
   `ff-` (state data on pre-split fields, `fields-state.jsonl`),
+  `cy-` (CR as CIRCLE and the CTY highway spellings, `county.jsonl`),
   `lp-` (LOOP and a number after a name, `loop.jsonl`),
   `rc-` (recipient text ahead of the address, `recipient.jsonl`),
   `un-` (units left in the street name, `units.jsonl`),
@@ -321,6 +322,12 @@ a letter on the next line).
 Ids `ff-001` to `ff-005` (#110). A reading only a state's data has (Florida `SR 60` is `STATE ROAD 60`, `CTY HWY` is
 `COUNTY HIGHWAY`) applies to pre-split fields as it does to one-line input, with a state, with a ZIP alone; and the near
 misses that must not change (another state, no state or ZIP).
+
+### `county.jsonl`
+
+Ids `cy-001` to `cy-009` (#108). `CR` after a name is `CIRCLE` in every state; `CTY RD`, `CTY ROAD` and `CTY HWY` before a
+route number are `COUNTY ROAD` and `COUNTY HIGHWAY` outside Florida too; and the near misses that must not change (`CR`
+before a route number, `CO RD`, `CTY` as `CITY`, a street named `CTY`).
 
 ### `country.jsonl`
 

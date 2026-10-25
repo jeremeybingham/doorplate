@@ -120,13 +120,20 @@ observed = ["HGWY"]
 standard = "COUNTY ROAD"
 forms = ["COUNTY ROAD", "COUNTY RD", "CNTY RD", "CO RD", "CR"]
 # A typo for COUNTY ROAD, taken only before a route number (10 COUNTRY ROAD
-# 3668); COUNTRY ROAD alone stays a street name.
-observed = ["COUNTRY ROAD", "COUNTRY RD"]
+# 3668); COUNTRY ROAD alone stays a street name. CTY is COUNTY (CO and CNTY
+# are Appendix F spellings; CTY is not): 1,397 CTY RD and 114 CTY ROAD lines
+# before a route number in five all-state sources, mostly MN, CO, AL, TX and
+# OH (issue #108). CTY is also CITY (PANAMA CTY BCH), so it counts only
+# before a route number.
+observed = ["COUNTRY ROAD", "COUNTRY RD", "CTY RD", "CTY ROAD"]
 
 [[highway]]
 # Appendix F: COUNTY HIGHWAY, COUNTY HWY, CNTY HWY.
 standard = "COUNTY HIGHWAY"
 forms = ["COUNTY HIGHWAY", "COUNTY HWY", "CNTY HWY", "CO HWY"]
+# CTY HWY before a route number: 235 lines in five all-state sources, mostly
+# MN (155), NY, OH, IL, WI and FL (8); not in Appendix F (issue #108).
+observed = ["CTY HWY"]
 
 [[highway]]
 # Appendix F: ST HIGHWAY, STATE HWY.

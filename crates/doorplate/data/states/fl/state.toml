@@ -11,7 +11,7 @@
 # zips_observed.tsv  zip, place, addresses: more shared places, seen in
 #             Florida address data
 # overrides.toml  suffix and highway spellings read differently in Florida
-#             (CR = CIRCLE, SR = STATE ROAD)
+#             (SR = STATE ROAD)
 #
 # The files are edited by hand; each addition names its evidence.
 
