@@ -53,9 +53,9 @@ about 10% from run to run on its own), and package and import sizes were unchang
 
 ## 0.3.1 to 0.4.0
 
-The same benchmarks on the 0.3.1 build and on `main` at 9f6a4a7 (0.4.0-dev), on one machine on 2026-10-25. The 0.3.1
-accuracy figures are the ones this page recorded (the 0.3.1 rerun matched 0.3.0); the 0.4.0 column was measured the same
-way. Speed is a back-to-back A/B: 0.3.1 was built from the `v0.3.1` tag in its own directory, and both builds ran the same
+The same benchmarks on the 0.3.1 build and on `main` at 9f6a4a7 (0.4.0-dev), on one machine on 2026-10-25. Both columns were measured
+the same way, in the same session: the 0.3.1 suite, twin and speed tracks with the 0.3.1 Python package, the geocode splits with
+a 0.3.1 command-line binary built from the tag. Speed is a back-to-back A/B: 0.3.1 was built from the `v0.3.1` tag in its own directory, and both builds ran the same
 script on the same inputs, pinned to 4 CPUs (`taskset -c 0-3 env RAYON_NUM_THREADS=4`) on a quiet machine; the Rust
 (criterion) runs were unpinned, one after the other.
 
@@ -65,10 +65,10 @@ fields input, in units and in warnings.
 | | 0.3.1 | 0.4.0 | Change |
 |---|---|---|---|
 | Suite, `natural` stratum (16,001), whole address (coarse) | 98.3% | 98.3% | same |
-| Suite, whole (19,586) | 92.3% | 92.3% | same |
+| Suite, whole (19,586) | 92.2% | 92.3% | +0.1 |
 | Suite, `hard` stratum (2,585) | 54.3% | 54.6% | +0.3 |
-| Suite, `hand` stratum (1,000) | 94.3% | 94.3% | same |
-| Suite, the private twin, `natural` | 98.1% | 98.2% | +0.1 |
+| Suite, `hand` stratum (1,000) | 92.3% | 94.3% | +2.0 |
+| Suite, the private twin: `natural` / `hard` / `hand` | 98.1% / 53.9% / 92.3% | 98.2% / 54.2% / 94.3% | +0.1 / +0.3 / +2.0 |
 | Geocode benchmark, dev (60,522) | 94.4% | 94.5% | +0.1 |
 | Geocode benchmark, train (148,173) | 94.3% | 94.4% | +0.1 |
 | Geocode benchmark, the 20% of train held out (29,635) | 94.1% | 94.2% | +0.1 |
@@ -78,10 +78,11 @@ fields input, in units and in warnings.
 | Unit number right (fields input) | 96.8% | 97.8% | +1.0 |
 | Key stability, one key across two to four styles | 91.6% | 91.7% | +0.1 |
 | Records parsed wrong (fields input) that raised a warning | 43.9% (187) | 54.7% (159) | +10.8; 28 fewer wrong |
-| Records parsed right that raised a warning | 0.2% | 0.3% | +0.1 |
+| Records parsed right that raised a warning | 0.1% | 0.3% | +0.2 |
 | One-line Florida check (300,000 records, city right) | the same city on every record | | 0 gained, 0 lost |
 
-The differences in the first rows are inside the intervals. The one-line Florida row is a paired comparison of the two
+The `hand` gain is the tokenization change of #78 (`parse_tokens` cuts like `usaddress.tokenize`, so the suite's character-span
+scoring stops losing tokens to a different cut); the other differences in these rows are inside the intervals. The one-line Florida row is a paired comparison of the two
 binaries on one fixed sample (`tools/compare/oneline_fl.py` scores one build; the pairing is the check), and the
 geocode `city_diff` between the two builds gains 3 cities and loses none on the held-out split, and gains 2 and loses
 none on dev. `unit_number` and the warning figures are the likely home of the rules of 0.4.0 (a unit left in the street name,
@@ -108,10 +109,10 @@ fixed set, so both builds parsed the same strings):
 | doorplate `parse_many` (4 threads) | 169,532 | 193,058 | +14% |
 
 (Both builds read the same committed corpus, which has grown since 0.3.1, so these rows compare the builds, not the
-corpus with its older self.) The suite's own `speed` track, 4 CPUs: `parse_tokens` on one thread 33,862 to 38,305 per
-second (usaddress `parse` 9,142 and 8,937 in the two runs: the run to run noise of that track is about 2%), `parse_many`
-on one thread 36,364 to 43,657, and `parse_many` on four threads 127,001 to 152,376. Against usaddress that is 3.7x to 4.3x
-on one thread and 13.9x to 17.1x on four.
+corpus with its older self.) The suite's own `speed` track, 4 CPUs, both builds measured in this session: `parse_tokens` on one thread 33,630 to 38,305 per
+second (+14%; usaddress `parse` 9,015 and 8,937 in the two runs, so the run to run noise of that track is about 1%),
+`parse_many` on one thread 37,357 to 43,657 (+17%), and `parse_many` on four threads 118,441 to 152,376 (+29%). Against
+usaddress that is 3.7x to 4.3x on one thread and 13.1x to 17.1x on four.
 
 **Speed, Rust** (criterion, median, unpinned, 0.3.1 built from the tag in its own target directory):
 
