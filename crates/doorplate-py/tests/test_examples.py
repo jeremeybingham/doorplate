@@ -41,7 +41,7 @@ def test_duckdb_pipeline(capsys):
     rows = run_script("duckdb_pipeline.py")
     assert len(rows) == 12
     out = capsys.readouterr().out
-    assert "k2:S|412|N|HARBOR|ST||FL|33602" in out
+    assert "k3:S|412|N|HARBOR|ST||FL|33602" in out
     assert "row(s) with warnings" in out
     assert [r[0] for r in rows].count(None) == 0  # the id column is kept
 
@@ -61,14 +61,14 @@ def test_notebook_executes():
     text = "".join(
         o.get("text", "") for c in nb.cells if c.cell_type == "code" for o in c.outputs
     )
-    assert "k2:S|123|N|MAIN|ST||FL|33101" in text
+    assert "k3:S|123|N|MAIN|ST||FL|33101" in text
     assert "intersection_detected" in text
     assert "123 N Main St Apt 4" in text  # to_display
     assert "123 North Main Street Apartment 4" in text  # to_long
     assert "100 Northeast 5th Avenue Southwest" in text
-    assert "k2:R|RR|2|152|MO|65801" in text  # rare shapes
+    assert "k3:R|RR|2|152|MO|65801" in text  # rare shapes
     assert "PENSACOLA" in text  # place data, from a ZIP
-    assert "k2:S|412|N|HARBOR|ST||FL|33602" in text  # Polars, DuckDB and pandas sections
+    assert "k3:S|412|N|HARBOR|ST||FL|33602" in text  # Polars, DuckDB and pandas sections
     assert "'StreetNamePostType'" in text  # usaddress-style labels
     assert "parse_fields_many" in "".join(
         "".join(c.source) for c in nb.cells if c.cell_type == "code"

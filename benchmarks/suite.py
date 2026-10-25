@@ -302,7 +302,7 @@ def run_doorplate(args):
         if ks[0]:
             keys[ks[0]] += 1
     collide = sum(v for v in keys.values() if v > 1)
-    out += ["### Key stability (`k2`)", "", f"The same record written in two to four styles gives one key: {cell(stable, total_k)} of {total_k:,} records.",
+    out += ["### Key stability (`k3`)", "", f"The same record written in two to four styles gives one key: {cell(stable, total_k)} of {total_k:,} records.",
             f"Records whose key is shared with a different record: {collide:,} of {sum(keys.values()):,} ({100 * collide / max(1, sum(keys.values())):.2f}%).", ""]
     out += ["### Warnings", "", "| Fields-input result | Records | Raised a warning |", "|---|---|---|",
             f"| Parsed wrong | {warned[False][0]:,} | {cell(warned[False][1], warned[False][0])} |",

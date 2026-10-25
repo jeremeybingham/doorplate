@@ -89,6 +89,9 @@ def diff(args):
     # The key with letters as a and digits as 9, so counts can be given without street text. A SQL macro,
     # not a Python function: DuckDB 2.0 needs numpy for those.
     con.execute("create macro shape(k) as regexp_replace(regexp_replace(k, '\\p{L}', 'a', 'g'), '\\p{Nd}', '9', 'g')")
+    # The version prefix (`k2`, `k3`) is left out of the comparison, so the keys of the cut compare row by row with
+    # the frozen keys of the version before it: a changed key is a changed layout or value, not the new prefix.
+    con.execute("create macro body(k) as regexp_replace(k, '^k[0-9]+', 'k')")
     total_changed = 0
     for n in names:
         va = json.loads((a / f"{n}.json").read_text())
@@ -99,7 +102,7 @@ def diff(args):
             print(f"\n== {n}: {va['doorplate']} -> {vb['doorplate']}, rows {va['rows']} / {vb['rows']}")
             res = con.execute("""
                 select x.role, count(*) n,
-                  sum(case when x.key is distinct from y.key then 1 else 0 end) key_changed,
+                  sum(case when body(x.key) is distinct from body(y.key) then 1 else 0 end) key_changed,
                   sum(case when x.warnings is distinct from y.warnings then 1 else 0 end) warn_changed
                 from x join y using (rn) group by 1 order by 1""").fetchall()
             for role, rows, kc, wc in res:
@@ -109,7 +112,7 @@ def diff(args):
                 print("  shapes of changed keys (top 5, before):")
                 for s, c in con.execute("""
                     select shape(x.key), count(*) c from x join y using (rn)
-                    where x.key is distinct from y.key group by 1 order by c desc limit 5""").fetchall():
+                    where body(x.key) is distinct from body(y.key) group by 1 order by c desc limit 5""").fetchall():
                     print(f"    {c:>8}  {s}")
         except Exception as e:
             # a parser error quotes only our SQL; anything else may quote rows

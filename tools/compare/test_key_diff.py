@@ -23,8 +23,8 @@ def dump(tmp_path, name, key):
 
 
 def test_diff_counts_a_changed_key_and_prints_only_its_shape(tmp_path):
-    a = dump(tmp_path, "a", "k2:S|1||MAIN|ST||FL|33101")
-    b = dump(tmp_path, "b", "k2:S|1||MAIN|AVE||FL|33101")
+    a = dump(tmp_path, "a", "k3:S|1||MAIN|ST||FL|33101")
+    b = dump(tmp_path, "b", "k3:S|1||MAIN|AVE||FL|33101")
     r = subprocess.run([sys.executable, str(SCRIPT), "diff", str(a), str(b)], capture_output=True, text=True)
     assert r.returncode == 1, r.stderr  # a changed key is a non-zero exit
     assert "key changed        1" in r.stdout
@@ -33,8 +33,8 @@ def test_diff_counts_a_changed_key_and_prints_only_its_shape(tmp_path):
 
 
 def test_diff_of_equal_dumps_exits_zero(tmp_path):
-    a = dump(tmp_path, "a", "k2:S|1||MAIN|ST||FL|33101")
-    b = dump(tmp_path, "b", "k2:S|1||MAIN|ST||FL|33101")
+    a = dump(tmp_path, "a", "k3:S|1||MAIN|ST||FL|33101")
+    b = dump(tmp_path, "b", "k3:S|1||MAIN|ST||FL|33101")
     r = subprocess.run([sys.executable, str(SCRIPT), "diff", str(a), str(b)], capture_output=True, text=True)
     assert r.returncode == 0, r.stderr
     assert "total rows with a changed key: 0" in r.stdout

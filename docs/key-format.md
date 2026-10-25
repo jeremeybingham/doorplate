@@ -1,10 +1,10 @@
-# Canonical key and slug spec (version k2)
+# Canonical key and slug spec (version k3)
 
 This page specifies the **key** (below) and the **slug** (last section).
 
 The key is versioned, and a given version is a contract: stored keys must keep
 meaning the same thing, so any change to what an input produces needs a new version
-prefix (`k3:`) and an update here. `k2` is never edited in place.
+prefix (`k4:`) and an update here. `k3` is never edited in place.
 
 **This is an alpha release.** Expect new key versions as the parser improves: the
 parser's behavior is still settling, and every fix that changes how an input is read
@@ -19,14 +19,14 @@ does not say the address exists or is deliverable (see README).
 ## Format
 
 ```
-k2:S|<number>|<predir>|<name>|<suffix>|<postdir>|<state>|<zip5>[|<unit>|<unit2>]
-k2:P|<box>|<state>|<zip5>
-k2:R|<RR|HC>|<route>|<box>|<state>|<zip5>
-k2:M|<kind>|<number>|<box>|<post office>|<state>|<zip5>
-k2:G|<state>|<zip5>
+k3:S|<number>|<predir>|<name>|<suffix>|<postdir>|<state>|<zip5>[|<unit>|<unit2>]
+k3:P|<box>|<state>|<zip5>
+k3:R|<RR|HC>|<route>|<box>|<state>|<zip5>
+k3:M|<kind>|<number>|<box>|<post office>|<state>|<zip5>
+k3:G|<state>|<zip5>
 ```
 
-- Prefix `k2:`, then a one-letter **form**, then segments separated by `|`.
+- Prefix `k3:`, then a one-letter **form**, then segments separated by `|`.
   Every form has a fixed number of segments, and an empty value leaves an
   empty segment (`...||...`).
 - Forms: `S` street, `P` PO Box, `R` rural or highway contract route, `M`
@@ -65,8 +65,8 @@ k2:G|<state>|<zip5>
 
 ## Strong and partial keys
 
-A key with both a state and a ZIP5 uses the `k2:` prefix. If either is
-missing, the prefix is `k2n:` and the same body follows (`k2n:S|123||MAIN|ST||FL|`).
+A key with both a state and a ZIP5 uses the `k3:` prefix. If either is
+missing, the prefix is `k3n:` and the same body follows (`k3n:S|123||MAIN|ST||FL|`).
 A partial key matches less reliably, and it can never equal a located key, so
 the two kinds do not mix in a join by accident. `MissingState` or
 `MissingZip` is also set in the diagnostics.
@@ -102,7 +102,7 @@ Applied to every free-text segment (number, name, route, box, unit):
 Spelling variants (`North`/`N`, `Street`/`ST`, `Florida`/`FL`) are resolved by
 the parser through the Pub 28 tables, not by the key. Sources for those
 tables: `docs/usps-pub28-notes.md`. The key format itself (segments, form
-letters, dropped unit type, `k2n`) is this library's own convention, not a
+letters, dropped unit type, `k3n`) is this library's own convention, not a
 USPS rule.
 
 ## No key
@@ -115,9 +115,9 @@ address on it.
 
 ## Stability
 
-`k2` is the format as of version 0.3.0. The key is a function of the parse, and
+`k3` is the format as of version 0.4.0. The key is a function of the parse, and
 the parse is a function of the shipped tables and rules: a bug fix that changes what
-an input produces is a key change and needs `k3`. The slug and `place` are not part
+an input produces is a key change and needs `k4`. The slug and `place` are not part
 of the key and may change with parser improvements.
 
 ## Changing the key
@@ -157,13 +157,18 @@ how smoothly the items progress.
 
 ## Version history
 
+- **`k3`** (this page) starts with 0.4.0. The segment layout is the same as `k2` (decided 2026-10-25: no rule on the
+  0.4.0 list needed a layout change); the value of some keys changes, because 0.4.0 reads some inputs differently:
+  the rules are listed in the changelog (each is marked "held for the `k3`") and measured in
+  [`backlog.md`](backlog.md). The prefix is the only change to a key that no rule touched, so re-keying is a re-parse.
+  Frozen from there: a change to what an input produces needs `k4`.
+
 - **`k1`** was the key of versions 0.1.0 and 0.2.0. It is retired: the library no longer
   produces it and cannot compute it. The segment layout is the same as `k2`; `k2` exists
   because 0.3.0 changes how some inputs are read, and a changed reading changes the key
   (the changes are listed in the changelog).
-- **`k2`** (this page) starts with 0.3.0, released 2026-10-20, and is frozen from there: a change
-  to what an input produces now needs `k3`. Key-affecting changes found since are held for it (see
-  "Changing the key"). **One exception: 0.3.1** (2026-10-22) corrected the keys of inputs with a `%` care-of
+- **`k2`** started with 0.3.0, released 2026-10-20, and was frozen from there; it is retired with 0.4.0 (the library no
+  longer produces it). Key-affecting changes found after the freeze were held for `k3` (see "Changing the key"). **One exception: 0.3.1** (2026-10-22) corrected the keys of inputs with a `%` care-of
   line or `IN CARE OF` (issue #97). 0.3.0 left the care-of text over, which pushed the tail of line 1 into the street
   name, so those keys were wrong; they were corrected under `k2` instead of waiting for `k3`, by the owner's
   call, because the project has no users yet. Measured against 0.3.0 over about 19 million rows: 172,455 of the

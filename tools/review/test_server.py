@@ -45,9 +45,9 @@ def test_a_corrected_answer_needs_the_string_and_keeps_the_page_parses(review):
     with pytest.raises(ValueError):
         review.answer({"id": "inv|site|1", "verdict": "corrected", "corrected": "  "})
     rec = review.answer({"id": "inv|site|1", "verdict": "corrected", "corrected": " 123 QUINCEWOOD ST, MIAMI FL 33101 ",
-                         "parse": {"key": "k2:old"}, "corrected_parse": {"key": "k2:new"}, "note": " the number twice "})
+                         "parse": {"key": "k3:old"}, "corrected_parse": {"key": "k3:new"}, "note": " the number twice "})
     assert rec["corrected"] == "123 QUINCEWOOD ST, MIAMI FL 33101"
-    assert rec["parse"] == {"key": "k2:old"} and rec["corrected_parse"] == {"key": "k2:new"}
+    assert rec["parse"] == {"key": "k3:old"} and rec["corrected_parse"] == {"key": "k3:new"}
     assert rec["note"] == "the number twice"
     assert rec["input"]["line1"] == "123 456 QUINCEWOOD ST" and rec["cluster"]["size"] == 3
 

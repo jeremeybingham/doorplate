@@ -2,13 +2,20 @@
 
 All notable changes are listed here, newest first. The project follows
 [Semantic Versioning](https://semver.org/). The canonical key format has its own
-version (currently `k2`), tracked separately in [`docs/key-format.md`](docs/key-format.md): a
+version (currently `k3`), tracked separately in [`docs/key-format.md`](docs/key-format.md): a
 change to what an input produces needs a new key version.
 
 ## [Unreleased]
 
 ### Changed
 
+- **The key is now `k3`** (**breaking**: every stored key re-keys; store the prefix, re-parse to re-key). The segment layout
+  is the same as `k2`; the prefix is `k3:` (`k3n:` with no state or ZIP), and the value of some keys changes because 0.4.0
+  reads some inputs differently, each marked "held for the `k3`" below. Measured against the frozen `k2` keys of the
+  foundation checkpoint (the prefix left out of the comparison) over 36,920,703 rows in seven large sources: **482,869 keys
+  change (1.31%)**: NY corporations 331,765, Netsyms 56,947, carrier census 47,439, NC voter 17,971, IRS 16,987, amateur
+  radio 7,758, NAD 4,002. The Queens house number (#109) is most of it (383,510 of the 482,869 when measured on its own,
+  79%). Every other key keeps its value and changes only the prefix. A full Netsyms run on `main` (146,622,381 US rows) finished with no errors.
 - **A lone directional on line 2 is a unit** (#170, **held for the `k3`**: 712 keys change): `123 MAIN ST` / `N` had the
   postdirectional `N` (`second_line_in_street`); NAD's labels say a unit for 88.8% of such rows (584 of 658). Now a lone
   directional of at most two letters on line 2, after a line 1 that already ends in its street suffix, is the unit `N`.
