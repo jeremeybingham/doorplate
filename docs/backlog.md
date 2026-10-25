@@ -13,10 +13,10 @@ project has no users and the foundation went quickly; it saves a version and a r
 | Milestone | What it is | Gate |
 |---|---|---|
 | **0.4.0** | **Phase 1, the foundation:** the architecture (state data folded into the core, an extension-ready lexicon) and the breaking API cleanup, with the key unchanged (`k2`) and no parsing changes. **Phase 2, the `k3`:** the parser rules already listed in #138, key-affecting or not (warnings and diagnostics included), cut together; the list is closed (see "Scope" below) | Phase 1 ends at the **checkpoint**: zero key differences with 0.3.1 over the large sources, and those keys frozen as the baseline. The release: the measured before and after against that baseline, in [`key-format.md`](key-format.md) ("Changing the key"). The checkpoint passed on 2026-10-23 (commit `1819acd`: zero differences over 36.9M rows) |
-| **0.4.x** | Extensibility (the custom layer #3, columnar output #24, the usaddress-shaped module #36) and the tooling around it; additive changes only, no key change | Tracker #200 |
+| **0.4.x** | **Tooling, documentation and extensibility**, no key change: the anonymizer (#105), harness scorers (#112), review tool v2 (#132), per-state counts (#53), the documentation site (#107), the custom layer (#3), columnar output (#24) and the usaddress-shaped module (#36) | Tracker #200 |
 | **0.5.0** | The next key-changing release, the `k4`: the parser rules that change keys (#131 first, #196, #29, #11, #8, #92; #193 rides along). Held until the 0.4.x work has produced evidence | Tracker #201; the measured before and after against the `k3` keys, as for the `k3` |
 | **Later** | Wanted, not planned for a release: new API surface, anything waiting on demand or a decision | |
-| **Tooling** | Harness, review tool, benchmarks, CI: never shipped, never closed | |
+| **Tooling** | Tooling that is not planned for a release (the harness, review tool, benchmarks and CI items waiting for a rule or a decision): never shipped, never closed. Empty after the 0.4.x plan moved its items | |
 
 `main` is the 0.4 line and carries the version `0.4.0-dev` (a build from `main` never reports a released version; the
 release pull request sets `0.4.0`): there is no 0.3.2. The project has no users, so a release is not made for a minor
@@ -29,7 +29,7 @@ was merged into it), #200 for 0.4.x and #201 for 0.5.0.
 **Scope of phase 2** (decided 2026-10-23, issue #138). The list of rules is closed: phase 2 works the issues that are in the 0.4.0 milestone and does not go looking for new rules, so the backlog does not grow faster than it is worked. In practice:
 
 - A finding that surfaces while working an issue is filed under **Later**, unless the issue cannot be fixed correctly without it (then it is part of that issue).
-- Tooling is built **just in time**, for a rule that is in the list (as the checkpoint tool was), and not as a standing evidence phase. Tooling that only finds new things (the review tool's comparison mode, #132) or that no listed rule needs (#112, #53) waits in the **Tooling** milestone.
+- Tooling is built **just in time**, for a rule that is in the list (as the checkpoint tool was), and not as a standing evidence phase. Tooling that only finds new things (the review tool's comparison mode, #132) or that no listed rule needs (#112, #53) waited in the **Tooling** milestone (moved to 0.4.x after the release, #200).
 - The state-dependent rules and the reading that feeds them (#8, #11, #29, #92) are in **Later**; #110, the small architectural fix, stays.
 
 **The checkpoint.** Until it is passed, no parsing change merges, so that the comparison with 0.3.1 can be zero
@@ -81,5 +81,5 @@ project**. An issue that is `version:K` is in 0.4.0, phase 2, if it is in the li
 
 - At each release, refresh the milestones: move what slipped, close the finished milestone, and update
   [`roadmap.md`](roadmap.md) from them.
-- #103 holds the history of the first review (2026-10-20); a new full review is only needed if the structure
+- #103 (closed 2026-10-25) holds the history of the first review (2026-10-20); a new full review is only needed if the structure
   here stops fitting.

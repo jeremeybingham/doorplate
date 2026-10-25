@@ -65,10 +65,12 @@ source and evidence. The order is in #138. `k2` started with 0.3.0; the route-nu
 
 Two trackers set the order ([`backlog.md`](backlog.md)); nothing is started.
 
-- **0.4.x (#200): extensibility and tooling.** The custom layer (#3), a columnar result (#24) and a usaddress-shaped
-  module (#36), all additive with no key change; and the tooling that feeds the rules: an anonymizing tool (#105),
-  harness fixes (#112), the review tool's comparison mode (#132) and per-state counts (#53).
-- **0.5.0 (#201): the `k4`.** The key-changing rules, cut together once the 0.4.x work has produced evidence: the
+- **0.4.x (#200): tooling, documentation and extensibility.** No key change.
+  - *Tooling:* an anonymizing tool for sharing messy data (#105), less noise in the harness's scorers (#112), the
+    review tool's comparison mode against usaddress (#132) and per-state street-pattern counts (#53).
+  - *Documentation:* a searchable, versioned documentation site (#107).
+  - *Extensibility:* the custom layer (#3), a columnar result (#24) and a usaddress-shaped module (#36).
+- **0.5.0 (#201): the `k4`.** The key-changing rules, cut together once the 0.4.x tooling has produced evidence: the
   remaining research from the first review (#131), two bare numbers glued into a unit (#196), the state-dependent
   rules and their reading (#8, #11, #29, #92), with the bare `BAY` warning (#193) riding along.
 
@@ -78,10 +80,8 @@ Two trackers set the order ([`backlog.md`](backlog.md)); nothing is started.
   0.5.0 tracker, #201): state road conventions such as Texas `RR`, `PR 462` and county road names (#8),
   Florida place gaps (#11), the [geocode benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark)'s place-name gap (#29), Puerto Rico and the uncited parts of Pub 28
   (#92), with the per-state counts that decide them (#53); `CMR` only if a real case shows up (#77, decided: left out).
-- **Tooling that finds new things** (Tooling milestone, ordered in #200): the review tool's comparison mode and
-  second source (#132), less noise in the harness's scorers (#112). Built when a listed rule needs them.
 
-- **A custom layer** (#3, first in the 0.4.x tracker): a way to add your own spellings, places, ZIPs and state-scoped readings
+- **A custom layer** (#3, in the 0.4.x tracker): a way to add your own spellings, places, ZIPs and state-scoped readings
   without editing the shipped tables, loaded at run time, validated on load, deterministic, and
   reported in the output so stored keys can be tied to the layer in use. Today the tables are fixed
   at compile time, and a misparse is fixed by reporting it. The design is settled; it waits for real
@@ -97,16 +97,14 @@ Two trackers set the order ([`backlog.md`](backlog.md)); nothing is started.
 - **A columnar or Arrow result for DataFrames** (#24), after profiling: reading attributes from Python objects
   is most of the time in a pandas or Polars pipeline. A Polars expression namespace only if there is demand.
   Done so far: `to_display()`, `to_long()` and `parse_fields_many`.
-- **A documentation site** (#107), once the docs stop moving, and a second post comparing with usaddress (#88).
+- **A second post comparing with usaddress** (#88), once the figures are final. The documentation site (#107) is in 0.4.x.
 - **usaddress compatibility** (#9, decided): the address-structure labels (#35) and a drop-in module
   (#36) proceed when someone needs them. Recipient and name lines, landmarks and street corners stay
   out of scope; that text goes to `unparsed`.
-- **Tooling, never in a release** (milestone `Tooling`): the review tool's v2, with a comparison mode against
-  usaddress (#132), an anonymizing tool for sharing messy data (#105), harness fixes (#112) and a coverage badge
-  (#121).
+- **Tooling:** the 0.4.x items are above; later tooling goes in the `Tooling` milestone (never in a release).
 - **Data and benchmarks:** a benchmark built from a national address source rendered in several styles
   and compared per state and per shape; a cleaner blind test, a hand-labeled sample of real messy data
-  in the shapes people actually have; per-state street-pattern counts to decide the state rules (#53);
+  in the shapes people actually have; per-state street-pattern counts to decide the state rules (#53, in 0.4.x);
   and more of the `parse` slowdown (about 8% of an earlier build's speed is still spread across
   allocation in the place keys and `Vec` growth).
 

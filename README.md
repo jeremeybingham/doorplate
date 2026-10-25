@@ -372,21 +372,16 @@ The specification of the suite and the rules that keep it fair: [`docs/benchmark
 
 ## Where it is going
 
-The next work, roughly in this order, depends on what real data shows:
+0.4.0 is out (an alpha: the `k3` key is new and a `k4` may follow). The next point release, 0.4.x, is about tooling,
+documentation and extensibility; the key-changing rules wait for the release after it. Roughly in this order:
 
-- **0.4.0, the foundation, then a `k3`.** One release in two phases. First the architecture and the breaking
-  cleanup, done with the key unchanged (the Florida state data folded into the core as built-in state data, an
-  extension-ready core, the unused reserved field removed, a review of every public name, `parse_tokens` cut like
-  usaddress, and the parser about 30% faster); a checkpoint proves no key moved. Then the parser rules together: a table of how reliable each warning is, line-2
-  diagnostics, and the key-affecting fixes cut as a `k3`, so stored keys are re-keyed once.
-- **A custom layer.** A way to add your own spellings, places, ZIPs and state-specific readings
-  without editing the shipped tables, loaded at run time. Not in this release; examples of what
-  you would add are the best input.
-- **State data beyond Florida.** A state's data starts from real data for that state.
-- **More address shapes and rules.** Named buildings without a building word, a few
-  highway and unit forms, and more (the gaps are listed in the roadmap).
-- **More output.** A columnar result for DataFrames (the display and long forms and
-  the batch call for pre-split fields are in).
+- **Tooling.** An anonymizing tool so messy data can be shared safely, quieter harness scorers, a review tool that
+  compares doorplate with usaddress, and per-state street-pattern counts.
+- **Documentation.** A searchable, versioned documentation site.
+- **Extensibility.** A custom layer: your own spellings, places, ZIPs and state-specific readings, loaded at run
+  time without editing the shipped tables; a columnar result for DataFrames; a usaddress-shaped module.
+- **0.5.0, a `k4`.** The parser rules that change keys, cut together, once the tooling has produced evidence: the
+  state-dependent road conventions, the Florida place gaps, and the rest of the research on real data.
 
 The details, and what is deliberately not planned (validation, geocoding, international
 addresses), are in [`docs/roadmap.md`](docs/roadmap.md).
@@ -469,3 +464,12 @@ Licensed under either of [MIT](LICENSE-MIT) or [Apache-2.0](LICENSE-APACHE) at y
 option. The ZIP tables in `crates/doorplate/data/states/` and
 `crates/doorplate/data/places/` are GeoNames data under CC BY 4.0; see
 [`NOTICE`](NOTICE).
+
+## About the author
+
+I am Jeremey Bingham. I have worked in technology since 2007, with Python for about ten years
+and Rust for about two. I spent years inside real estate data: the Realtor Association of the
+Palm Beaches and [BeachesMLS](https://www.beachesmls.com/), the [Massachusetts Association of Realtors](https://www.marealtor.com/), where I was Director of
+Information Technology, and [HouseCanary](https://www.housecanary.com/), where I built APIs over residential property records. I
+also published [reso-client](https://github.com/jeremeybingham/reso_client), a Rust client for the
+RESO Web API. My resume is at [resume.jeremeybingham.com](https://resume.jeremeybingham.com).
