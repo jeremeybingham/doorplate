@@ -9,6 +9,10 @@ change to what an input produces needs a new key version.
 
 ### Changed
 
+- **A letter after a hyphenated house number is part of the number** (#100, **held for the `k3`**: 4,998 keys change): `12-34A MAIN ST` had no
+  street number (`missing_street_number`, the number left in the street name `12-34A MAIN`). Now `12-34A` is the number, as
+  `12-34` and `1234A` already were. One letter only; `12-34AB` and `12A-34` are unchanged, and `1204-1206A` is a number, not
+  a range. Measured against the build before this rule: 4,998 keys change in the seven large sources (NY corporations 4,286, carrier census 560, amateur radio 84, IRS 44, Netsyms 16, NC voter 8, NAD 0), and `missing_street_number` is removed from every one.
 - **`LOOP` after a street name is the suffix, and a number after it a unit** (#145, **held for the `k3`**: 518 keys change): `1305 MAPLE COVE
   LOOP 412` had the street name `MAPLE COVE LOOP 412` with no suffix, because `LOOP` is a highway word (`LOOP 410`) and a
   number after a highway word is its route. Now `LOOP` with a name before it is a suffix like `CIR` or `DR`, so the number

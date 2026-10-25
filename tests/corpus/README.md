@@ -42,6 +42,7 @@ Every parsing bug fixed gets a case here (`CONTRIBUTING.md`).
   `dp-` (department names, `dept.jsonl`),
   `gl-` (a word glued to a state-like suffix, `glue.jsonl`),
   `by-` (BAY in a street name, `bay.jsonl`),
+  `hn-` (hyphenated house number with a letter, `hyphen.jsonl`),
   `lp-` (LOOP and a number after a name, `loop.jsonl`),
   `rc-` (recipient text ahead of the address, `recipient.jsonl`),
   `un-` (units left in the street name, `units.jsonl`),
@@ -300,6 +301,12 @@ street named `BAY` or `OYSTER BAY BLVD`).
 
 Ids `lp-001` to `lp-007` (#145). `LOOP` after a street name, then a number (`MAPLE COVE LOOP 412`) is the suffix and a
 bare unit; and the near misses that must not change (no number, a designator, `LOOP 410` at the start of the street).
+
+### `hyphen.jsonl`
+
+Ids `hn-001` to `hn-009` (#100). The Queens house number with one trailing letter (`12-34A`, `123-45A`), alone, with an
+ordinal street and with a unit; and the near misses that must not change (no letter, a letter on a plain number) or stay
+unparsed (two letters, a letter on the first part).
 
 ### `country.jsonl`
 
