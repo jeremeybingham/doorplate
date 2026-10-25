@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Introducing doorplate"
-description: "doorplate is an open-source US address parser in Rust with a first-class Python package and a command-line tool: components, USPS Publication 28 and RESO output, a stable match key and warnings. Version 0.3.0, an alpha that needs your messy addresses."
+description: "doorplate is an open-source US address parser in Rust with a first-class Python package and a command-line tool: components, USPS Publication 28 and RESO output, a stable match key and warnings. Version 0.4.0, an alpha that needs your messy addresses."
 date: 2026-10-21
 tags: [python, rust, address-parsing, usps, reso, real-estate, mls]
 ---
@@ -10,7 +10,7 @@ tags: [python, rust, address-parsing, usps, reso, real-estate, mls]
 parser written in Rust, with a [Python package](https://pypi.org/project/doorplate/) and a [command-line tool](https://crates.io/crates/doorplate-cli). Give it an address,
 as one line or as separate fields, and it returns the components, [USPS Publication 28](https://pe.usps.com/text/pub28/) and
 [RESO Data Dictionary 2.0](https://www.reso.org/data-dictionary/) output, a stable match key, and warnings that say when it is not
-sure. It is version 0.3.0, an alpha, and I am announcing it now because it gets better
+sure. It is version 0.4.0, an alpha, and I am announcing it now because it gets better
 with real, messy addresses and with people who use it.
 
 *doorplate parses and formats addresses. It does not validate that an address exists or
@@ -31,7 +31,7 @@ a = doorplate.parse("123 north main street apt 4, Miami FL 33101")
 a.street_name, a.unit_number        # ("MAIN", "4")
 a.to_usps()["line1"]                # "123 N MAIN ST APT 4"       (USPS Pub 28)
 a.to_reso()                         # RESO Data Dictionary 2.0 fields
-a.key()                             # "k2:S|123|N|MAIN|ST||FL|33101"
+a.key()                             # "k3:S|123|N|MAIN|ST||FL|33101"
 a.warnings                          # []
 ```
 
@@ -63,11 +63,11 @@ dependencies and downloads nothing, so there are no transitive dependencies to a
 | | doorplate | usaddress |
 |---|---|---|
 | Benchmark suite, `natural` stratum (16,001 addresses) | 98.3% | 96.1% |
-| Benchmark suite, whole suite (19,586) | 92.2% | 85.5% |
-| [Geocode benchmark](https://github.com/jeremeybingham/doorplate/blob/main/docs/benchmarks.md#geocode-benchmark-one-line-no-commas), `dev` split (60,522) | 94.4% | 88.1% |
+| Benchmark suite, whole suite (19,586) | 92.3% | 85.5% |
+| [Geocode benchmark](https://github.com/jeremeybingham/doorplate/blob/main/docs/benchmarks.md#geocode-benchmark-one-line-no-commas), `dev` split (60,522) | 94.5% | 88.1% |
 | usaddress's own regression tests (2,248 addresses) | 99.2% | **100.0%** |
-| Addresses per second, one thread | 33,862 | 9,142 |
-| Addresses per second, `parse_many`, 4 threads | 127,001 | (no batch call) |
+| Addresses per second, one thread | 38,305 | 8,937 |
+| Addresses per second, `parse_many`, 4 threads | 152,376 | (no batch call) |
 | Installed size | 1.8 MB | 4.8 MB |
 | Import time | 1 ms | 10 ms |
 
@@ -153,7 +153,7 @@ RESO Web API. My resume is at [resume.jeremeybingham.com](https://resume.jeremey
 
 ## When, and what is next
 
-doorplate 0.3.0 is available now and is an alpha. The match key is versioned, so store the
+doorplate 0.4.0 is available now and is an alpha. The match key is versioned, so store the
 version prefix with your keys and plan to re-key as the parser improves, and names in the API
 and warning codes may still change before 1.0. I plan to keep developing it if there is activity,
 users and interest.
