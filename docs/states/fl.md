@@ -43,7 +43,7 @@ address exists or can receive mail.
 | Place list, county, kind, variants, shared ZIPs | Curated by the authors from the sources below and from Florida county listings | MIT OR Apache-2.0 |
 | Place names (`census` in `sources`) | US Census Bureau, 2024 Gazetteer Files, places, Florida | Public domain |
 | ZIP to main place (`geonames` in `sources`) | GeoNames postal code export, `US.zip`, Florida rows, https://download.geonames.org/export/zip/ | CC BY 4.0, attribution in `NOTICE` |
-| Observed ZIP places (`zips_observed.tsv`), added communities and spellings, the `CR` and `SR` overrides | A Florida public-record address export (2025-10-10, 445,252 Florida addresses) and four further public-record address files (961,275 distinct Florida addresses together); and, from data version 2026.10.5, the Florida DBPR licensee files (downloaded 2026-10-18; 1,794,538 distinct Florida street addresses with a city, from licensees' mailing and location addresses). Only city, ZIP and the parsed street key were used; no names are kept | Florida public record (Chapter 119, Florida Statutes) |
+| Observed ZIP places (`zips_observed.tsv`), added communities and spellings, the `SR` override and the evidence for `CR` and `CTY HWY`, which moved to the base tables (#108) | A Florida public-record address export (2025-10-10, 445,252 Florida addresses) and four further public-record address files (961,275 distinct Florida addresses together); and, from data version 2026.10.5, the Florida DBPR licensee files (downloaded 2026-10-18; 1,794,538 distinct Florida street addresses with a city, from licensees' mailing and location addresses). Only city, ZIP and the parsed street key were used; no names are kept | Florida public record (Chapter 119, Florida Statutes) |
 
 `zips.tsv` is GeoNames data: each ZIP's main place is GeoNames' place name for
 it, copied as is. The `shared` column was curated by the authors. In
@@ -116,22 +116,21 @@ It is not reported in parser output.
   state data, not a wrong address (`FORT MCCOY` with 32182). On 440,000 distinct
   Florida addresses it fires on about 0.4%, mostly a nearby big city written
   for a suburb.
-- **`CR` is CIRCLE** (`overrides.toml`). The base table reads `CR` after a
-  street name as CREEK (an older Appendix C1 transcription). In the Florida
-  address data 333 street lines end a name in `CR`; for 277 the same street
-  in the same ZIP is also written CIRCLE or CIR, for none CREEK or CRK, and
-  the other 56 have no other spelling. So in Florida (the address's state, or
-  with none its ZIP's) `CR` is CIR, still with `non_standard_abbreviation`.
-  `CR` before a route number stays COUNTY ROAD.
-- **`SR` is STATE ROAD, `CTY HWY` is COUNTY HIGHWAY** (`overrides.toml`
-  `[[highway]]`). Appendix F writes `SR 220` as `STATE ROAD 220` and `SR MM` as
-  `STATE ROUTE MM`, so `SR` is left out of the base table. In the Florida
-  address data 139 street lines have `SR` before a route number
-  (`22200 SR 60`, `177 N SR 51`) and none writes STATE ROUTE, so in Florida
-  the tagger reads `SR 60` as a highway and the USPS output is
-  `STATE ROAD 60`. It is a listed variant, with no warning. Outside Florida
-  `SR 60` stays a street name as written. `CTY HWY` (5 rows,
-  `3709 CTY HWY 214`) is COUNTY HIGHWAY, raising `non_standard_abbreviation`.
+- **`CR` is CIRCLE, `CTY HWY` is COUNTY HIGHWAY** (the base tables since #108; the evidence was
+  first collected here). The base table read `CR` after a street name as CREEK (an older
+  Appendix C1 transcription). In the Florida address data 333 street lines end a name in `CR`;
+  for 277 the same street in the same ZIP is also written CIRCLE or CIR, for none CREEK or
+  CRK, and the other 56 have no other spelling; the all-state sources agree (817 of 1,742
+  street and ZIP combinations Circle, 6 Creek). So `CR` is CIR in every state, still with
+  `non_standard_abbreviation`; `CR` before a route number stays COUNTY ROAD. `CTY HWY` (5 rows
+  here, 235 in all-state sources, mostly Minnesota) is COUNTY HIGHWAY, and `CTY RD` and
+  `CTY ROAD` are COUNTY ROAD, before a route number, raising `non_standard_abbreviation`.
+- **`SR` is STATE ROAD** (`overrides.toml` `[[highway]]`). Appendix F writes `SR 220` as
+  `STATE ROAD 220` and `SR MM` as `STATE ROUTE MM`, so `SR` is left out of the base table. In
+  the Florida address data 139 street lines have `SR` before a route number
+  (`22200 SR 60`, `177 N SR 51`) and none writes STATE ROUTE, so in Florida the tagger reads
+  `SR 60` as a highway and the USPS output is `STATE ROAD 60`. It is a listed variant, with
+  no warning. Outside Florida `SR 60` stays a street name as written.
   Not covered: a letter route (`SR E 70`, 1 row) and `SR` run into its number
   (`SR200`). The tagger and the assembler ask `Lexicons::highway_in` with the
   address's state (its own, or the ZIP's).

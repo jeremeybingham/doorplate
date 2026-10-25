@@ -299,8 +299,7 @@ impl Lexicons {
     }
 
     /// Street suffix as read in `state` (a USPS code): a state data may read
-    /// a spelling as another suffix (`CR` is CIRCLE in Florida, CREEK in the
-    /// base table), always as [`MatchKind::Observed`]. Otherwise the same as
+    /// a spelling as another suffix, always as [`MatchKind::Observed`]. Otherwise the same as
     /// [`Self::suffix`].
     pub fn suffix_in(&self, state: &str, s: &str) -> Option<Lookup<StreetSuffix>> {
         let key = format!("{state}|{}", normalize_key(s));
@@ -1172,12 +1171,16 @@ mod tests {
 
     #[test]
     fn state_suffix_override() {
-        // CR is CREEK in the base table and CIRCLE in the Florida state data.
-        assert_eq!(LEX.suffix("CR").unwrap().value.abbr(), "CRK");
+        // CR is an observed CIRCLE spelling everywhere (#108), so no state
+        // data overrides it; `suffix_in` falls back to the base table.
+        let base = LEX.suffix("CR").unwrap();
+        assert_eq!(base.value.abbr(), "CIR");
+        assert_eq!(base.kind, MatchKind::Observed);
         let fl = LEX.suffix_in("FL", "cr").unwrap();
         assert_eq!(fl.value.abbr(), "CIR");
         assert_eq!(fl.kind, MatchKind::Observed);
-        assert_eq!(LEX.suffix_in("CO", "CR").unwrap().value.abbr(), "CRK");
+        assert_eq!(LEX.suffix_in("CO", "CR").unwrap().value.abbr(), "CIR");
+        assert_eq!(LEX.suffix("CK").unwrap().value.abbr(), "CRK");
         assert_eq!(LEX.suffix_in("FL", "CIRCLE").unwrap().value.abbr(), "CIR");
         // An observed ZIP place (zips_observed.tsv): CORAL GABLES in 33134.
         let gables = LEX.place("FL", "CORAL GABLES").unwrap().value;

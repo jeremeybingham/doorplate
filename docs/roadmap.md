@@ -58,8 +58,8 @@ source and evidence. The order is in #138. `k2` started with 0.3.0; the route-nu
   (#144), `LOOP` plus a number read as a route (#145).
 - **Number forms:** a letter after a hyphenated house number (#100); a spaced letter after a rural route box (#95);
   Queens-style numbers and their unhyphenated twins keyed the same (#109).
-- **`CR` and `CTY`** read as CIRCLE and COUNTY nationally, not only in Florida (#108), and the Florida data's
-  scoped readings applied on pre-split input (#110).
+- **`CR` and `CTY`** read as CIRCLE and COUNTY nationally, not only in Florida (#108), and the state data's
+  readings applied on pre-split input (#110).
 
 ### Later, waiting on data or demand
 

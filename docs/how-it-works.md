@@ -201,7 +201,7 @@ table.
 Layering is add-only: a later layer adds names, variants and ZIPs and never replaces
 or removes an earlier entry, and a conflict fails the build. The one exception is a
 state data's `overrides.toml`, which can read a spelling the base table has as another
-suffix in that state (`CR` is CIRCLE in Florida) or add a highway prefix (`SR` is
+suffix in that state or add a highway prefix (`SR` is
 STATE ROAD); each entry names its evidence. The shipped tables and state data are fixed
 at compile time.
 

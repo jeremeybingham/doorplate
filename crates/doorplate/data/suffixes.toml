@@ -150,6 +150,11 @@ forms = ["CENTERS", "CTRS"]
 name = "CIRCLE"
 abbr = "CIR"
 forms = ["CIR", "CIRC", "CIRCL", "CIRCLE", "CRCL", "CRCLE"]
+# observed: CR after a street name (CR before a route number stays COUNTY ROAD).
+# Street lines that end in CR are written out as Circle or CIR (817 of 1,742
+# street and ZIP combinations in four all-state sources, 6 as Creek or CRK;
+# issue #108).
+observed = ["CR"]
 
 [[suffix]]
 name = "CIRCLES"
@@ -223,7 +228,8 @@ name = "CREEK"
 abbr = "CRK"
 forms = ["CREEK", "CRK"]
 # observed: a spelling from older copies of C1; not in the current Appendix C1
-observed = ["CK", "CR"]
+# (CR was here too; it is CIRCLE, see there)
+observed = ["CK"]
 
 [[suffix]]
 name = "CRESCENT"
