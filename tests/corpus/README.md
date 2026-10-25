@@ -43,6 +43,7 @@ Every parsing bug fixed gets a case here (`CONTRIBUTING.md`).
   `gl-` (a word glued to a state-like suffix, `glue.jsonl`),
   `by-` (BAY in a street name, `bay.jsonl`),
   `hn-` (hyphenated house number with a letter, `hyphen.jsonl`),
+  `rb-` (a spaced letter after a rural route box number, `rrbox.jsonl`),
   `lp-` (LOOP and a number after a name, `loop.jsonl`),
   `rc-` (recipient text ahead of the address, `recipient.jsonl`),
   `un-` (units left in the street name, `units.jsonl`),
@@ -307,6 +308,12 @@ bare unit; and the near misses that must not change (no number, a designator, `L
 Ids `hn-001` to `hn-009` (#100). The Queens house number with one trailing letter (`12-34A`, `123-45A`), alone, with an
 ordinal street and with a unit; and the near misses that must not change (no letter, a letter on a plain number) or stay
 unparsed (two letters, a letter on the first part).
+
+### `rrbox.jsonl`
+
+Ids `rb-001` to `rb-008` (#95). A lone letter after a numeric rural route or highway contract box number (`RR 2 BOX 45 A`)
+is part of the box (`45A`); and the near misses that must not change (the joined form, no letter, a PO Box, two letters,
+a letter on the next line).
 
 ### `country.jsonl`
 

@@ -1424,6 +1424,16 @@ impl Tagger<'_> {
                                 tags.push((word.start..v, Tag::Skip));
                                 tags.push((v..v + 1, Tag::BoxNumber));
                                 end = v + 1;
+                                // `RR 2 BOX 45 A`: a lone letter after a
+                                // numeric box is part of it (#95).
+                                if end < hi
+                                    && all_digits(self.text(v))
+                                    && is_letter(self.text(end))
+                                    && self.toks[end].seg == self.toks[v].seg
+                                {
+                                    tags.push((end..end + 1, Tag::BoxLetter));
+                                    end += 1;
+                                }
                             }
                             return Some(SpecialMatch {
                                 tags,
