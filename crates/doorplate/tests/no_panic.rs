@@ -457,3 +457,27 @@ fn bay_never_panics() {
         }
     }
 }
+
+/// `LOOP` after a name, ahead of a value, a hash or a directional, in every
+/// position (#145).
+#[test]
+fn loop_never_panics() {
+    let parser = Parser::new();
+    for lead in ["", "1305", "1305 MAPLE", "1305 N", "# ", "LOOP"] {
+        for tail in [
+            "LOOP",
+            "LOOP 412",
+            "LOOP # 412",
+            "LOOP W 45",
+            "LOOP LOOP 4",
+            "LOOP ST",
+            "LOOP UNIT 2B",
+        ] {
+            for sep in [" ", ", ", " , "] {
+                let line = format!("{lead}{sep}{tail}");
+                let _ = parser.parse(&line);
+                let _ = parser.parse(&format!("{line}, MIAMI FL 33101"));
+            }
+        }
+    }
+}
