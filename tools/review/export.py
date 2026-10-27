@@ -56,6 +56,41 @@ def input_shape(inp):
     return clip(" | ".join(shape(p) for p in parts if p), 120)
 
 
+LABEL = re.compile(r"^(\(unplaced\)|[A-Za-z]+)$")  # a usaddress or doorplate label, never a value
+
+
+def compare_safe(c):
+    """A comparison row's class, the label pairs that differ with their token counts, and usaddress's labels
+    in order: a fixed vocabulary, no token values."""
+    ok = lambda v: isinstance(v, str) and bool(LABEL.match(v))  # noqa: E731
+    return {"class": c.get("class") if c.get("class") in ("silent", "giveup", "control") else None,
+            "differs": [[o, t, n] for o, t, n in c.get("differs") or [] if ok(o) and ok(t) and isinstance(n, int)],
+            "usaddress_labels": [t[1] for t in c.get("usaddress") or [] if len(t) == 2 and ok(t[1])]}
+
+
+def compare_table(answers, top=15):
+    """Markdown: for each class, the label pairs that differ (the first, biggest one of a row) by who was right.
+    Counts and labels only."""
+    verdicts = ("doorplate_right", "usaddress_right", "both_right", "both_wrong", "other")
+    rows = {}
+    for a in answers:
+        c = a.get("compare")
+        if not c:
+            continue
+        safe_c = compare_safe(c)
+        pair = safe_c["differs"][0][:2] if safe_c["differs"] else ["?", "?"]
+        v = a["verdict"] if a["verdict"] in verdicts else "other"
+        key = (safe_c["class"] or "?", f"{pair[0]} / {pair[1]}")
+        rows.setdefault(key, dict.fromkeys(verdicts, 0))[v] += 1
+    if not rows:
+        return "No comparison answers.\n"
+    out = ["| class | doorplate / usaddress label | rows | " + " | ".join(v.replace("_", " ") for v in verdicts) + " |",
+           "|---|---|---|" + "---|" * len(verdicts)]
+    for (cls, pair), n in sorted(rows.items(), key=lambda kv: (["silent", "giveup", "control", "?"].index(kv[0][0]), -sum(kv[1].values()), kv[0][1]))[:top * 3]:
+        out.append(f"| {cls} | {pair} | {sum(n.values())} | " + " | ".join(str(n[v]) for v in verdicts) + " |")
+    return "\n".join(out) + "\n"
+
+
 def safe(a, with_source=False):
     """One answer, reduced to what may be shared."""
     p, c = a.get("parse") or {}, a.get("corrected_parse") or {}
@@ -72,7 +107,9 @@ def safe(a, with_source=False):
     out["key"] = key_shape(p.get("key"))
     if a["verdict"] == "right":
         out["warning"] = a.get("warning") if a.get("warning") in ("fair", "noise") else None
-    if a["verdict"] == "corrected":
+    if a.get("compare"):
+        out["compare"] = compare_safe(a["compare"])
+    if a["verdict"] in ("corrected", "both_wrong"):
         out["corrected"] = clip(shape(a.get("corrected") or ""), 120)
         out["corrected_warnings"] = codes(c.get("warnings"))
         out["corrected_components"] = component_shapes(c.get("components"))
@@ -111,12 +148,16 @@ def main(argv=None):
     ap.add_argument("answers", nargs="?", type=Path, default=DEFAULT_ANSWERS)
     ap.add_argument("--out", type=Path, default=DEFAULT_OUT)
     ap.add_argument("--with-source", action="store_true", help="keep the source name (a private source may not be named)")
+    ap.add_argument("--table", action="store_true", help="print the comparison answers by label pair and who was right (counts only)")
     ap.add_argument("--full", action="store_true", help="the full-text export for the sources in full-ok.txt (stays in local-data/)")
     ap.add_argument("--allow", type=Path, default=DEFAULT_ALLOW, help="the allowlist for --full (default local-data/review/full-ok.txt)")
     args = ap.parse_args(argv)
     if not args.answers.exists():
         sys.exit(f"no answers at {args.answers}")
     answers = list(load_answers(args.answers).values())
+    if args.table:
+        print(compare_table(answers))
+        return 0
     if args.full:
         return write_full(answers, args)
     args.out.parent.mkdir(parents=True, exist_ok=True)

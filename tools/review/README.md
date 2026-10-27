@@ -33,6 +33,53 @@ benchmark: `docs/benchmark-suite.md` says the suite is not a work list, and the 
 while rules were written, so review answers on them would tune the parser to the score. Adding
 benchmark rows needs a decision recorded on issue #122 first.
 
+A repeated input (same lines, city, state and ZIP) is queued once. `--group coarse` groups by the warnings and the shape
+of line 1's first word instead of the whole input shape: a second pass on a source, when `--per-shape 2` never used its second
+row because every group was a different shape (#132).
+
+## The comparison queue (`compare_sample.py`): where does doorplate lose to usaddress?
+
+There is no ground truth on a real source, so this finds rows where doorplate and usaddress **disagree** and lets a person say
+who was right. The rows where usaddress is right are the classes where doorplate chooses badly; "both right" separates a real
+error from a labeling convention. It reads a source's `records.parquet` (not a harness run), samples `--rows` (200,000, about
+25 seconds of usaddress) rows with `--seed`, joins each to one line as the harness does, and compares the two parses token by token
+on coarse labels (the rules of `tools/compare/compare_usaddress.py` and `docs/usaddress-compat.md`: the street parts fold into
+one, `Subaddress*` is `Occupancy*`, and the labels doorplate does not model, such as `Recipient` and `LandmarkName`, are not
+scored). It needs `usaddress` in the environment (`uv pip install usaddress`).
+
+```sh
+python tools/review/compare_sample.py local-data/fmcsa-census-2026/records.parquet --provider US          # the plan
+python tools/review/compare_sample.py local-data/fmcsa-census-2026/records.parquet --provider US --confirm
+python tools/review/server.py local-data/review/queue-compare.jsonl                                         # then review as usual
+python tools/review/export.py --table                                                                       # who was right, by label pair
+```
+
+Disagreements fall in three classes, queued in this order (the shares are `--silent 0.7` and `--giveup 0.2`; the rest is control):
+
+| Class | Meaning |
+|---|---|
+| `silent` | doorplate raised no warning and left nothing unplaced, but usaddress reads a part differently: the riskiest |
+| `giveup` | doorplate warned or left text unplaced, while usaddress produced a full-looking parse (a house number or box, a place and a state) |
+| `control` | the rest of the disagreements |
+
+Within a class the rows are grouped by the pair of labels that differ (doorplate `StreetName`, usaddress
+`OccupancyIdentifier`), the biggest groups first, `--per-group` (2) rows each. A class with too few rows gives its quota to the
+next. A repeated input is skipped, and so is a string in `--exclude-training FILE` (usaddress's training strings, one per line,
+lowercase with whitespace collapsed; `tools/compare/training_overlap.py` fetches them for the test files). The queue stores usaddress's
+parse of each row, so the page needs no usaddress. It refuses the benchmark suite, the geocode benchmark and usaddress's test files,
+and `--out` must be under `local-data/`.
+
+On the page a comparison row shows doorplate's parse, usaddress's as chips, and the label pairs that differ. The verdicts are `1`
+doorplate right, `2` usaddress right, `3` both right (another convention; one verdict, by decision on #132), `4` both wrong (type the
+correct string, Enter saves it), `5` can't tell, `6` not an address, `7` source noise, `8` skip. `export.py --table` prints counts by class
+and label pair for each verdict (labels and counts only), and the shape-only export keeps the class, the differing label pairs and
+usaddress's labels in order, never a token. The "usaddress right" groups become issues through the same loop as #125.
+
+**Limit.** Disagreement finds where the parsers differ, not every place doorplate is wrong: a row both read wrongly in the same
+way is not queued. The first queue (FMCSA US carriers, 2026-10-27): of 193,511 distinct sampled strings 5,057 disagree (2.6%), 2,975 silent, 1,754
+give-ups and 328 control; the biggest silent groups are `OccupancyIdentifier`/`StreetName`, `PlaceName`/`StreetName` and
+`StreetName`/`OccupancyIdentifier`.
+
 ## The page (`server.py`)
 
 Binds to `127.0.0.1` only (and refuses requests for another host name), logs no requests, and uses
@@ -109,5 +156,6 @@ This library formats and parses; it does not validate that an address exists or 
 
 ## Later
 
-Marking the parts of the string and assigning components (a more precise label than a rewrite), using
-#105 so real-looking rows can be shared, feeding the answers to `label_score.py` as a labeled source.
+Marking the parts of the string and assigning components (a more precise label than a rewrite), a
+"move the first N words to the care-of line" action, using #105 so real-looking rows can be shared, and
+feeding the answers to `label_score.py` as a labeled source.

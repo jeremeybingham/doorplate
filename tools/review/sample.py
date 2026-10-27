@@ -8,7 +8,10 @@ Takes the rows a run flagged with a warning or an `unparsed` remainder, groups t
 failure shape (the shape of the input lines and the warning codes, as tools/harness/shapes_report.py
 does), and keeps `--per-shape` random rows from each of the biggest groups, so a review of
 a hundred rows covers the biggest shapes instead of the same one many times. The first row of
-every group comes before the second row of any. The seed makes the sample repeatable.
+every group comes before the second row of any. The seed makes the sample repeatable. An input that
+repeats one already in the pool (same lines, city, state and ZIP) is queued once. `--group coarse`
+groups by the warnings and the shape of line 1's first word instead of the whole input shape: a second
+pass on a source, when 150 rows covered 150 groups and `--per-shape 2` never used its second row.
 
 The rows are real addresses: the queue stays in `local-data/` (docs/data-policy.md). Without
 `--confirm` it prints the plan (counts only) and exits.
@@ -42,7 +45,8 @@ def refuse_benchmarks(manifest):
 
 
 def build(con, args):
-    """The sample as a list of dicts, biggest groups first."""
+    """The sample as a list of dicts, biggest groups first. One row per distinct input; with
+    `--group coarse` the groups are the warnings and the shape of line 1's first word."""
     where = ["(coalesce(f.warnings, '') <> '' or coalesce(f.unparsed, '') <> '')"]
     params = []
     if args.source:
@@ -54,18 +58,24 @@ def build(con, args):
     sql = f"""
     with joined as (
       select f.source, f.role, f.provider, f.record_id, coalesce(f.warnings, '') as warnings,
-             r.line1, r.line2, r.last_line, x.city, x.state, x.zip, {sr.INPUT_SHAPE} as input_shape
+             r.line1, r.line2, r.last_line, x.city, x.state, x.zip,
+             {"shape(split_part(trim(coalesce(r.line1, '')), ' ', 1))" if args.group == "coarse" else sr.INPUT_SHAPE} as input_shape,
+             lower(regexp_replace(concat_ws('|', r.line1, r.line2, r.last_line, x.city, x.state, x.zip),
+                                  '\\s+', ' ', 'g')) as ikey
       from flagged f join recs r
         on f.source = r.source and f.role = r.role and f.record_id = r.record_id
       left join recx x
         on f.source = x.source and f.role = x.role and f.record_id = x.record_id
       where {' and '.join(where)}
       qualify row_number() over (partition by f.source, f.role, f.record_id order by r.line1) = 1
+    ), uniq as (
+      select * from joined
+      qualify row_number() over (partition by source, role, ikey order by hash(record_id || '|' || ?)) = 1
     ), ranked as (
       select *, count(*) over (partition by source, role, input_shape, warnings) as size,
              row_number() over (partition by source, role, input_shape, warnings
                                 order by hash(record_id || '|' || ?)) as nth
-      from joined
+      from uniq
     )
     select source, role, provider, record_id, warnings, line1, line2, last_line, city, state, zip,
            input_shape, size, nth
@@ -73,7 +83,7 @@ def build(con, args):
     order by nth, size desc, input_shape, hash(record_id || '|' || ?)
     limit ?"""
     seed = str(args.seed)
-    rows = con.execute(sql, params + [seed, args.per_shape, args.min_cluster, seed, args.limit]).fetchall()
+    rows = con.execute(sql, params + [seed, seed, args.per_shape, args.min_cluster, seed, args.limit]).fetchall()
     cols = ["source", "role", "provider", "record_id", "warnings", "line1", "line2", "last_line",
             "city", "state", "zip", "input_shape", "size", "nth"]
     return [dict(zip(cols, r)) for r in rows]
@@ -96,6 +106,8 @@ def main(argv=None):
     ap.add_argument("--limit", type=int, default=150, help="rows in the queue (default 150)")
     ap.add_argument("--per-shape", type=int, default=2, help="rows kept from each shape group (default 2)")
     ap.add_argument("--min-cluster", type=int, default=1, help="skip groups smaller than this (default 1)")
+    ap.add_argument("--group", choices=("shape", "coarse"), default="shape",
+                    help="group by the whole input shape (default) or the warnings and line 1's first word")
     ap.add_argument("--seed", type=int, default=7)
     ap.add_argument("--source", help="only this source")
     ap.add_argument("--role", help="only this role")

@@ -26,6 +26,7 @@
   button:hover { background: #8882; }
   label kbd { font: .7rem ui-monospace, monospace; border: 1px solid #8886; border-radius: 3px; padding: 0 .25rem; }
   button kbd { font: .7rem ui-monospace, monospace; opacity: .65; margin-left: .35rem; }
+  [hidden] { display: none !important; }
   .row { display: flex; flex-wrap: wrap; gap: .5rem; margin: .5rem 0; }
   .ok { color: #1a7f37; } .bad { color: #c62828; }
   @media (prefers-color-scheme: dark) { .ok { color: #5fd97d; } .bad { color: #ff8a80; } }
@@ -62,6 +63,12 @@
     <div class="kv" id="origkv"></div>
   </div>
 
+  <div class="card" id="theirs" hidden>
+    <div class="muted" id="theirshead"></div>
+    <div class="line" id="theirsview" style="margin-top:.5rem"></div>
+    <div class="kv" id="differs"></div>
+  </div>
+
   <div class="card">
     <label for="fix"><b>A string that should parse to the same door</b> <span class="muted">(starts as the original in one line; press <kbd>f</kbd> to edit it, Enter saves it as a correction)</span></label>
     <input type="text" id="fix" autocomplete="off" spellcheck="false">
@@ -70,7 +77,17 @@
     <div class="kv" id="fixkv"></div>
   </div>
 
-  <div class="row">
+  <div class="row" id="cmpbuttons" hidden>
+    <button data-v="doorplate_right">doorplate right<kbd>1</kbd></button>
+    <button data-v="usaddress_right">usaddress right<kbd>2</kbd></button>
+    <button data-v="both_right">Both right (another convention)<kbd>3</kbd></button>
+    <button data-v="both_wrong" id="bboth">Both wrong: save correction<kbd>4 / Enter</kbd></button>
+    <button data-v="unclear">I can't tell<kbd>5</kbd></button>
+    <button data-v="junk">Not an address<kbd>6</kbd></button>
+    <button data-v="noise">Source noise<kbd>7</kbd></button>
+    <button data-v="skip">Skip<kbd>8</kbd></button>
+  </div>
+  <div class="row" id="vbuttons">
     <button data-v="right" data-w="fair">Parse right, warning fair<kbd>1</kbd></button>
     <button data-v="right" data-w="noise">Parse right, warning is noise<kbd>2</kbd></button>
     <button data-v="corrected" id="bcorr">Save correction<kbd>3 / Enter</kbd></button>
@@ -78,8 +95,8 @@
     <button data-v="junk">Not an address<kbd>5</kbd></button>
     <button data-v="noise">Source noise<kbd>6</kbd></button>
     <button data-v="skip">Skip<kbd>7</kbd></button>
-    <button id="undo">Undo last<kbd>u</kbd></button>
   </div>
+  <div class="row"><button id="undo">Undo last<kbd>u</kbd></button></div>
   <label for="note" class="muted">Note (optional)</label>
   <input type="text" id="note" autocomplete="off">
   <p class="muted"><b>Parse right, warning fair</b>: the components are correct and the warning rightly flags something doubtful (a true range of numbers, a cut-off line).
@@ -166,11 +183,34 @@
              library_version: r.provenance && r.provenance.library_version };
   }
 
+  var USA = { AddressNumber: "number", USPSBoxID: "special", USPSBoxType: "special", USPSBoxGroupType: "special",
+              USPSBoxGroupID: "special", PlaceName: "city", StateName: "state", ZipCode: "zip", ZipPlus4: "zip",
+              BuildingName: "note", Recipient: "note" };
+  function usaKind(l) {
+    if (USA[l]) return USA[l];
+    if (/Directional/.test(l)) return "dir"; if (/PostType|PreType/.test(l)) return "suffix";
+    if (/^StreetName/.test(l)) return "street"; if (/Occupancy|Subaddress/.test(l)) return "unit";
+    return "note";
+  }
+  function theirsChips(box, toks) {
+    box.textContent = "";
+    toks.forEach(function (t) {
+      var chip = el("span", "chip g-" + usaKind(t[1] || ""));
+      chip.appendChild(el("b", null, t[0])); chip.appendChild(el("i", null, t[1] || "(none)")); box.appendChild(chip);
+    });
+  }
   function show(it, stats) {
     $("progress").textContent = stats.answered + " of " + stats.total + " answered";
     if (!it) { $("app").hidden = true; $("done").hidden = false; return; }
     $("done").hidden = true; $("app").hidden = false;
     item = it;
+    var cmp = it.compare;
+    $("theirs").hidden = !cmp; $("cmpbuttons").hidden = !cmp; $("vbuttons").hidden = !!cmp;
+    if (cmp) {
+      $("theirshead").textContent = "usaddress read it like this (" + cmp.class + "):";
+      theirsChips($("theirsview"), cmp.usaddress || []);
+      $("differs").textContent = "differs (doorplate / usaddress): " + (cmp.differs || []).map(function (d) { return d[0] + " / " + d[1] + " x" + d[2]; }).join(", ");
+    }
     var c = it.cluster || {};
     $("cluster").textContent = "Shape group of " + c.size + " row(s): " + c.shape + "   [" + (c.warnings || "no warnings") + "]   " + it.source + " / " + it.role;
     var p = parseItem(it); origParse = p.parse;
@@ -202,7 +242,7 @@
     if (!item) return;
     var body = { id: item.id, verdict: verdict, note: $("note").value, parse: summary(origParse) };
     if (verdict === "right") body.warning = warning;
-    if (verdict === "corrected") {
+    if (verdict === "corrected" || verdict === "both_wrong") {
       body.corrected = $("fix").value;
       body.corrected_parse = summary(call("parse", body.corrected));
     }
@@ -215,12 +255,15 @@
   $("undo").addEventListener("click", undo);
   function undo() { api("/api/undo", {}).then(function () { return api("/api/next"); }).then(function (j) { show(j.item, j.stats); }); }
   $("fix").addEventListener("input", renderFix);
-  $("fix").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); send("corrected"); } if (e.key === "Escape") e.target.blur(); });
+  $("fix").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); send(item && item.compare ? "both_wrong" : "corrected"); } if (e.key === "Escape") e.target.blur(); });
   $("note").addEventListener("keydown", function (e) { if (e.key === "Escape") e.target.blur(); });
   document.addEventListener("keydown", function (e) {
     if (/^(INPUT|TEXTAREA)$/.test(document.activeElement.tagName) || e.ctrlKey || e.metaKey || e.altKey) return;
-    var v = { "1": ["right", "fair"], "2": ["right", "noise"], "3": ["corrected"], "4": ["unclear"], "5": ["junk"],
-              "6": ["noise"], "7": ["skip"] }[e.key];
+    var v = (item && item.compare
+      ? { "1": ["doorplate_right"], "2": ["usaddress_right"], "3": ["both_right"], "4": ["both_wrong"], "5": ["unclear"],
+          "6": ["junk"], "7": ["noise"], "8": ["skip"] }
+      : { "1": ["right", "fair"], "2": ["right", "noise"], "3": ["corrected"], "4": ["unclear"], "5": ["junk"],
+          "6": ["noise"], "7": ["skip"] })[e.key];
     if (v) { e.preventDefault(); send(v[0], v[1]); }
     else if (e.key === "u") undo();
     else if (e.key === "f") { e.preventDefault(); $("fix").focus(); $("fix").select(); }

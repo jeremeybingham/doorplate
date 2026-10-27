@@ -21,6 +21,11 @@ change to what an input produces needs a new key version.
   places, so the zip-city check and the state-from-ZIP rule use it). Parsing without a layer is unchanged on 100,000 sampled rows (same keys,
   USPS lines, last lines and warnings; the same speed). The command line (`--custom-layer DIR` on `parse`, `parse-file` and `corpus test`, `doorplate layer check DIR`, and `provenance.custom_layer` in the JSON) and Python (`load_layer`, `CustomLayer`, `custom_layer=` on `Parser` and every call and helper, `ParsedAddress.custom_layer`, `LayerError`) read a layer from a folder. Size: the `toml` parser and the loader add about 0.55 MB to the CLI binary (5.83 to 6.38 MB, unstripped) and about 0.24 MB to the Linux wheel (1.89 to 2.13 MB); the default Rust library build is unchanged (the feature is off by default).
 
+- **Review tool v2: a comparison mode** (#132, tooling only): `tools/review/compare_sample.py` samples a real source, parses each row
+  with doorplate and usaddress, and queues the disagreements (silent ones first, then give-ups, then a control) for a person to judge
+  as doorplate right, usaddress right, both right or both wrong; the page shows both parses side by side, and `export.py --table`
+  counts who was right by label pair. The v1 queue skips repeated inputs and has `--group coarse`.
+
 - **Quieter harness scorers** (#112, tooling only): `label_score.py` treats a label's `EXT` post-modifier as the suffix, accepts a
   suffix inside the label's name when the type is empty, and counts a labeled unit that is not in the parsed text apart (NC pair
   score: suffix differences 3,000 to 1,292, name 2.33% to 2.05%, unit 0.58% to 0.39%); `--examples FILE` writes the
