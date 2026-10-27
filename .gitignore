@@ -17,3 +17,6 @@ dist/
 /fuzz/corpus
 /fuzz/runs
 site/demo/*.wasm
+
+# The documentation site build (mkdocs.yml: site_dir)
+/build/

@@ -1,0 +1,74 @@
+site_name: doorplate
+site_description: Parse US addresses into components, USPS Publication 28 and RESO output, with a match key and diagnostics. It formats and parses; it does not validate that an address exists or can receive mail.
+site_url: https://doorplate.readthedocs.io/
+repo_url: https://github.com/jeremeybingham/doorplate
+repo_name: jeremeybingham/doorplate
+edit_uri: edit/main/docs/
+
+docs_dir: docs
+# Not the default `site/`: that folder is the blog and the live demo (Jekyll), and a build cleans its output folder.
+site_dir: build/docs
+exclude_docs: |
+  requirements.txt
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle: {icon: material/weather-night, name: Switch to dark mode}
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle: {icon: material/weather-sunny, name: Switch to light mode}
+  features:
+    - navigation.sections
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+
+# GitHub and the site show the same Markdown. Links out of docs/ go to GitHub (tools/docs/links.py).
+hooks:
+  - tools/docs/links.py
+
+markdown_extensions:
+  - toc:
+      permalink: true
+  - admonition
+  - pymdownx.superfences
+
+validation:
+  nav:
+    omitted_files: warn       # a page in docs/ that is not in the nav fails the strict build
+    not_found: warn
+    absolute_links: warn
+  links:
+    not_found: warn
+    anchors: warn
+    absolute_links: warn
+    unrecognized_links: warn
+
+# The documentation index (docs/README.md) is the home page. Add a new page here and to that index.
+nav:
+  - Home: README.md
+  - Start:
+      - How it works: how-it-works.md
+      - Warnings: warnings.md
+      - The match key: key-format.md
+  - Guides:
+      - Custom layers: custom-layers.md
+      - Coming from usaddress: usaddress-compat.md
+      - Anonymizing data: anonymizing.md
+  - Reference:
+      - RESO mapping: reso-mapping.md
+      - USPS Publication 28 notes: usps-pub28-notes.md
+      - API surface: api-surface.md
+  - Data:
+      - Places: places.md
+      - State data: states/README.md
+      - Florida: states/fl.md
+      - Data policy: data-policy.md
+  - Project:
+      - Benchmarks: benchmarks.md
+      - Benchmark suite: benchmark-suite.md
+      - Roadmap: roadmap.md
+      - Backlog: backlog.md
