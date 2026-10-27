@@ -23,6 +23,7 @@ imply otherwise in docs or code comments.
 | Output fields | [`docs/reso-mapping.md`](docs/reso-mapping.md), `to_usps()`, `to_display()`, `to_long()` |
 | The public API surface and the decisions behind each name | [`docs/api-surface.md`](docs/api-surface.md) |
 | Coming from usaddress | [`docs/usaddress-compat.md`](docs/usaddress-compat.md) |
+| Sharing messy data without sharing the data (`doorplate anonymize`) | [`docs/anonymizing.md`](docs/anonymizing.md) |
 | Accuracy and speed, and how to rerun them | [`docs/benchmarks.md`](docs/benchmarks.md), [`benchmarks/README.md`](benchmarks/README.md) (every benchmark and which to run) |
 | The benchmark suite: what it holds and the rules that keep it fair (it is not a work list) | [`docs/benchmark-suite.md`](docs/benchmark-suite.md); data in [`benchmarks/suite/`](benchmarks/suite/README.md) |
 | How the parser works | [`docs/how-it-works.md`](docs/how-it-works.md) |
@@ -94,7 +95,7 @@ Plain `cargo test` needs no Python. Rust 1.80 or later; the Python extension nee
 ## Where things are
 
 - `crates/doorplate/src/`: `clean`, `tokenize`, `tagger/`, `classify`, `assemble`,
-  `lexicon`, `emit/` (`usps`, `reso`, `key`, `slug`, `usaddress`, `display`), `parser`.
+  `lexicon`, `emit/` (`usps`, `reso`, `key`, `slug`, `usaddress`, `display`), `parser`, `anonymize`.
 - `crates/doorplate/data/`: the Pub 28 tables, the national place list and state data.
 - `tests/corpus/`: the golden corpus. `examples/`: runnable examples.
 - `docs/`: design notes and the sources of every rule. `tools/`: verification, fuzzing,

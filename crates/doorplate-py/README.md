@@ -88,6 +88,7 @@ pytest tests
 | `Parser(default_state=None)` | an object with the same `parse`, `parse_fields` and `parse_many` |
 | `tag(text)` | `(dict, type)` with usaddress's labels and `"Street Address"` / `"PO Box"` / `"Ambiguous"` |
 | `parse_tokens(text)` | `[(token, label)]` with usaddress's labels |
+| `Anonymizer(seed=None)`, `.anonymize(text)`, `.anonymize_many(texts)`; `anonymize(text, seed=None)` | an `Anonymized` (`text`, `faithful`) or a list of them; just the text for `anonymize()`. See [Sharing messy data](#sharing-messy-data) |
 | `address_type(text)` | `street`, `po_box`, `rural_route`, `military`, `general_delivery`, `dual` or `unknown` |
 
 A `ParsedAddress` is read-only and typed (`py.typed`, stubs in `__init__.pyi`). It
@@ -117,7 +118,7 @@ Pick the call that matches how your addresses arrive; all of them give the same 
 | Separate columns (street line, unit line, city, state, ZIP), complete or with gaps | `parse_fields_many(line1=[...], ...)`, or `doorplate_parse_fields(...)` in DuckDB |
 | A mix of street addresses, PO boxes, rural routes, military, units in line 2, missing ZIPs | one call parses them all; `address_type`, `warnings` and `key` say which is which |
 | Any list of strings | `parse_many` (all cores, GIL released) |
-| Messy rows you want to share (same shape, other digits and names; obfuscation, not anonymity) | `doorplate.Anonymizer(seed=None).anonymize_many(lines)`, or `doorplate.anonymize(text)` |
+| Messy rows you want to share (same shape, other digits and names; obfuscation, not anonymity) | `doorplate.Anonymizer(seed=None).anonymize_many(lines)`, or `doorplate.anonymize(text)` ([how it works](#sharing-messy-data)) |
 | A CSV file with no Python | the `doorplate` command: [`doorplate-cli`](https://crates.io/crates/doorplate-cli), `doorplate parse-file in.csv --column address -o out.csv` |
 
 Runnable versions with several data shapes: the
@@ -231,6 +232,36 @@ Calling `to_dict()` on every row costs about as much as parsing again (a loop wi
 `to_dict` ran at 26,000 per second), and reading attributes from 100,000 Python
 objects is now most of the time, so pick columns when you can. Pre-split columns
 (`line1`, `city`, ...): call `parse_fields_many(line1=df["line1"].tolist(), city=...)`.
+
+## Sharing messy data
+
+A bug report is easier to act on with a real address, and a real address is private. `doorplate.Anonymizer` rewrites
+address-like text so it keeps its shape and loses its names and numbers, even when the text does not parse:
+
+```python
+import doorplate
+
+a = doorplate.Anonymizer(seed=7)     # seed=None (the default) is random; a published seed lets anyone test a guess
+r = a.anonymize("123 N Zephyrmill Ave Apt 4, Miami, FL 33101")
+r.text       # '316 N Hadujapigu Ave Apt 3, Miami, FL 33116'
+r.faithful   # True: the parser reads the copy the way it read the original
+
+rows = a.anonymize_many(df["line1"].fillna("").astype(str).tolist())   # a list of Anonymized, in order
+df["line1"] = [r.text for r in rows]
+doorplate.anonymize("55 Bayview Dr")                                   # just the text, with a new random seed
+```
+
+Digits become other digits of the same length (never equal; leading zeros, letters and `1/2` stay), every other word
+becomes an invented word of the same length and case, and what decides how a line is read stays: punctuation, case,
+street suffixes, directionals, unit designators, states, `PO BOX` and `RR` forms, the city, and the first three ZIP digits.
+The same value gets the same replacement within one seed, so duplicates stay duplicates. `faithful` says whether the
+parse of the copy has the same address type, warnings, suffix, directionals, unit designators, state and city, and the
+same shapes for the number and name. `repr(Anonymized)` hides the text.
+
+**It is obfuscation, not anonymity.** A word the lexicons know (a street named `HARBOR` or `PARK`), the city and the ZIP
+prefix stay, and the tool cannot tell a name from any other word it does not know. Read the output before you share
+it. The full rules, the limits, what it can leak and how well it works on real data are in
+[Anonymizing address data](https://github.com/jeremeybingham/doorplate/blob/main/docs/anonymizing.md); the command is `doorplate anonymize` ([doorplate-cli](https://crates.io/crates/doorplate-cli)).
 
 ## Coming from usaddress
 

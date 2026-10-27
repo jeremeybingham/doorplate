@@ -282,7 +282,7 @@ crates/
                             places/ (national list) and states/fl/ (Florida)
     src/                    clean, tokenize, classify, tagger/, assemble, parser, input,
                             place, lexicon, country, intersection, types,
-                            emit/{key,usps,reso,slug,display,usaddress}, corpus
+                            emit/{key,usps,reso,slug,display,usaddress}, anonymize, corpus
     tests/                  corpus, property tests, usaddress score floor
     benches/                criterion benchmarks
   doorplate-cli/            the `doorplate` binary
@@ -354,6 +354,7 @@ docs/                       this page and the references below
 | [`warnings.md`](warnings.md) | What each warning tells you and how often it is wrong |
 | [`api-surface.md`](api-surface.md) | The API surface audit: every public name and the decision for it |
 | [`usaddress-compat.md`](usaddress-compat.md) | usaddress-shaped output, label mapping, migration |
+| [`anonymizing.md`](anonymizing.md) | Sharing messy data: the anonymizer, its rules, limits and measured rates |
 | [`benchmarks.md`](benchmarks.md) | Accuracy, speed and size: the results |
 | [`benchmark-suite.md`](benchmark-suite.md) | The benchmark suite: what it holds, how it was built, the rules that keep it fair |
 | [`data-policy.md`](data-policy.md) | What data the project uses, what may be committed, and what may be said about data that is not ours to publish |

@@ -8,7 +8,9 @@ labels: parsing
 <!--
 Thank you. Real, messy addresses are the most useful thing you can give this project.
 Please do not paste personal data: anonymize first (keep the shape, swap the names,
-numbers and places). See "Sharing messy data" in CONTRIBUTING.md. If you cannot share
+numbers and places). `doorplate anonymize` does the mechanical part (read its output
+before you paste it; it is obfuscation, not anonymity: docs/anonymizing.md). See
+"Sharing messy data" in CONTRIBUTING.md. If you cannot share
 even anonymized samples, say so below and describe the shapes in words.
 -->
 

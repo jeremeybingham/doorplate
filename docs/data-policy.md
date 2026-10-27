@@ -16,7 +16,9 @@ and none of the data below is used to claim otherwise.
    exception is the benchmark suite: anonymized NAD rows, made as
    `docs/benchmark-suite.md` describes (see "The National Address Database" below).
 3. **Examples are invented.** A corpus case, a doc example or a bug report uses an
-   invented address of the same shape (`CONTRIBUTING.md#sharing-messy-data`).
+   invented address of the same shape (`CONTRIBUTING.md#sharing-messy-data`). The
+   anonymizer (`docs/anonymizing.md`) is for people sharing *their* data with us; its output keeps the shape
+   but is not anonymity, so the project's own docs and issues still use invented examples, not anonymized rows.
 4. **A person's answers are private data too.** `tools/review/` records real addresses the reviewer
    saw; they stay in `local-data/review/`. Only its shape-only export (`tools/review/export.py`:
    shapes, codes and component names, no values) may leave, and the review tool reads harness runs of

@@ -17,6 +17,10 @@
 //! Emitters: [`ParsedAddress::to_usps`], [`ParsedAddress::to_reso`],
 //! [`ParsedAddress::key`], [`ParsedAddress::slug`] and
 //! [`ParsedAddress::to_usaddress_tags`].
+//!
+//! To share a messy address without sharing its names and numbers, [`Anonymizer`] rewrites
+//! address-like text and keeps its shape (obfuscation, not anonymity: read the output before you
+//! share it).
 
 mod anonymize;
 mod assemble;

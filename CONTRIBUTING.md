@@ -28,7 +28,8 @@ mechanical part, even for lines that do not parse: it replaces digits, names and
 length and case and keeps the suffixes, directionals, unit designators, state, city and the first three ZIP digits.
 **It is obfuscation that keeps the shape, not anonymity.** It keeps every word the lexicons know (a street named
 `HARBOR` or `PARK`), the city and the ZIP prefix, and it cannot tell a name in a free-text field from any other word
-it does not know, so read the output before you send it, and drop what still identifies someone. By hand, the same
+it does not know, so read the output before you send it, and drop what still identifies someone. What it changes and keeps, its
+options, and what it can leak are in [`docs/anonymizing.md`](docs/anonymizing.md). By hand, the same
 rules apply; an anonymized sample is just as useful as
 long as it keeps the *shape* of each address:
 
