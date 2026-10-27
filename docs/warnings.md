@@ -23,7 +23,7 @@ The groups below are documentation, not an API: nothing in the library separates
   out, and two providers can label the same text two ways (see `ambiguous_number_letter`). A disagreement is a question,
   not a bug count.
 - A warning is read against **the fields it is about**; the other columns of the full output are in the report. The
-  table is regenerated with `tools/harness/label_score.py RECORDS --by-warning --confirm`
+  figures are regenerated with `tools/harness/label_score.py RECORDS --by-warning --confirm`
   ([`docs/tools/harness.md`](tools/harness.md)), after a rule change.
 
 Baselines (every row): in NAD the number differs on 0.9%, the street name on 4.4%, the unit on 3.6%, the suffix on 0.1%;
@@ -34,19 +34,87 @@ there includes voters who moved within a ZIP code).
 
 The parse may be wrong or incomplete.
 
-| Code | What it means | Rows in NAD (of 1M) | Measured (differ / labeled, in the field it is about) |
-|---|---|---|---|
-| `unparsed_remainder` | Some text could not be placed; it is in `unparsed`. | 17,245 | unit 38.6% (3,593 / 9,319; baseline 3.6%), name 8.5%, number 6.1% |
-| `missing_street_number` | A street with no house number. | 262 | number 100% (the labels have one) |
-| `missing_street_name` | A house number with no street: with a unit (`123 APT 4`), or a lone number (`4871`, #130). The key is `None`. | 11 | name 100% |
-| `ambiguous_street_number` | The number runs into a numbered street (`409742ND SQ`): a guess. | 0 | too few rows |
-| `multiple_addresses` | Several addresses in one input (`5210/5212 BRISTO ST`). | 1,390 | number 67.5% (938 / 1,390) |
-| `possibly_truncated` | The input looks cut off at a field-length limit. | 1,549 | suffix 76.3% (100 / 131), postdirectional 92.9% (13 / 14), name 21.0%, unit 15.4% |
-| `missing_unit_number` | A designator that needs a number has none (`APT`, `#`). | 1,101 | unit 97.1% (569 / 586) |
-| `ambiguous_number_letter` | One letter after the house number was read into the street name (`123 A MAIN ST`): it may be the number's suffix. | 4,676 | NAD labels it the number's suffix: number 79.8%, name 80.2%. NC voter: number 1.0%, name 0.5% (3,139 rows) |
-| `second_line_in_street` | Line 2 became part of the street that line 1 began (a route, a suffix, a directional). | 767 | postdirectional 91.0% (61 / 67), unit 88.8% (584 / 658): a lone letter on line 2 is often a unit; since #170 a lone directional after a suffix on line 1 is read as the unit and does not raise this |
-| `invalid_zip` | A ZIP that is not 5 digits, or ZIP+4 that is not 4. | 1,320 | name 13.4% (baseline 4.4%) |
-| `unknown_state` | A state-position token that is not a USPS code or a known name. | 0 | too few rows |
+Each code has its own section: what it means, how many of the 1,000,000 NAD rows carry it, and how often those rows differ from the labels in the field the code is about.
+
+### unparsed_remainder
+
+Some text could not be placed; it is in `unparsed`.
+
+- **Rows in NAD (of 1M):** 17,245
+- **Measured:** unit 38.6% (3,593 / 9,319; baseline 3.6%), name 8.5%, number 6.1%
+
+### missing_street_number
+
+A street with no house number.
+
+- **Rows in NAD (of 1M):** 262
+- **Measured:** number 100% (the labels have one)
+
+### missing_street_name
+
+A house number with no street: with a unit (`123 APT 4`), or a lone number (`4871`, #130). The key is `None`.
+
+- **Rows in NAD (of 1M):** 11
+- **Measured:** name 100%
+
+### ambiguous_street_number
+
+The number runs into a numbered street (`409742ND SQ`): a guess.
+
+- **Rows in NAD (of 1M):** 0
+- **Measured:** too few rows
+
+### multiple_addresses
+
+Several addresses in one input (`5210/5212 BRISTO ST`).
+
+- **Rows in NAD (of 1M):** 1,390
+- **Measured:** number 67.5% (938 / 1,390)
+
+### possibly_truncated
+
+The input looks cut off at a field-length limit.
+
+- **Rows in NAD (of 1M):** 1,549
+- **Measured:** suffix 76.3% (100 / 131), postdirectional 92.9% (13 / 14), name 21.0%, unit 15.4%
+
+### missing_unit_number
+
+A designator that needs a number has none (`APT`, `#`).
+
+- **Rows in NAD (of 1M):** 1,101
+- **Measured:** unit 97.1% (569 / 586)
+
+### ambiguous_number_letter
+
+One letter after the house number was read into the street name (`123 A MAIN ST`): it may be the number's suffix.
+
+- **Rows in NAD (of 1M):** 4,676
+- **Measured:** NAD labels it the number's suffix: number 79.8%, name 80.2%. NC voter: number 1.0%, name 0.5% (3,139 rows)
+
+### second_line_in_street
+
+Line 2 became part of the street that line 1 began (a route, a suffix, a directional).
+
+- **Rows in NAD (of 1M):** 767
+- **Measured:** postdirectional 91.0% (61 / 67), unit 88.8% (584 / 658): a lone letter on line 2 is often a unit; since #170 a lone directional after a suffix on line 1 is read as the unit and does not raise this
+
+### invalid_zip
+
+A ZIP that is not 5 digits, or ZIP+4 that is not 4.
+
+- **Rows in NAD (of 1M):** 1,320
+- **Measured:** name 13.4% (baseline 4.4%)
+
+### unknown_state
+
+A state-position token that is not a USPS code or a known name.
+
+- **Rows in NAD (of 1M):** 0
+- **Measured:** too few rows
+
+
+### Reading the first group
 
 How to read the strongest ones: `missing_street_number`, `missing_street_name` and `missing_unit_number` are 100% or close
 by construction (the label has the part, we have none). `possibly_truncated` and `multiple_addresses` are the
@@ -64,23 +132,122 @@ what the warning reports. (Changing which reading is the default would change ke
 
 The parser did something, or the input lacks a part. A parse with one of these is not necessarily wrong.
 
-| Code | What it means | Rows in NAD (of 1M) | Measured |
-|---|---|---|---|
-| `missing_zip` | No ZIP in the input. | 71,219 | name 9.9% (baseline 4.4%), number 1.2%, unit 3.2%. NC voter (112 rows): number 83% |
-| `missing_city`, `missing_state` | No city, or no state, in the input. | 66, 0 | NAD: too few rows. NC voter (94 and 78 rows): number 94% and 100%, the one-line form is short of its own number |
-| `non_standard_abbreviation` | A spelling Pub 28 does not list was normalized (`TRC` for `TRACE`). | 94 | name 77.7%, suffix 37.0%: the labels write the name differently |
-| `zero_street_number` | House number 0, usually vacant land; treated as no number. | 8 | number 100% (the label keeps the `0`) |
-| `dual_address` | A street address and a PO Box in one record; both kept. | 6 | too few rows |
-| `second_line_skipped` | Line 2 was a copy or a no-data line and was dropped. | 34 | too few rows (unit 87.5%, 7 / 8) |
-| `second_line_building` | Line 2 is the building name, which no emitter prints. | 103 | number and name within 2% |
-| `country_ignored` | A trailing `USA`, `US` or `UNITED STATES` was dropped, or a street field that was only a country. | 66 | too few rows |
-| `placeholder` | The street line is stand-in text (`NO SITUS`); the key is `None`. | 0 | NC voter: 86 rows, number 100% (the snapshot has a number the stand-in text hides) |
-| `intersection_detected` | Two streets joined by `&`, `AND`, `@` or `AT`: a corner; the key is `None`. | 18 | too few rows |
-| `zip_city_mismatch` | The city is a known place, but the place list does not give the ZIP to it. Only in a state with curated data (Florida). | 0 | not measured: no labeled Florida sample |
-| `city_is_county` | The city is no place of the state but the name of one of its counties (`HENNEPIN`, `MIAMI DADE`); `place` is empty. | 0 | not measured: no labeled sample. On the self-entered sources it is on 0.013% (amateur licenses), 0.017% (tax-exempt list) and 0.024% (carrier census) of the rows, and 1 of 1,138,982 Netsyms sample rows |
-| `default_state_applied` | A `default_state` hint decided a place or a reading; the state stays empty. | 0 | only with the option |
-| `repeated_label` | Reported by `tag()` only: a usaddress label appears in two runs. | 0 | `tag()` only |
-| `ambiguous_token` | Reserved: defined, but the parser does not raise it today. | 0 | none |
+Each code has its own section: what it means, how many of the 1,000,000 NAD rows carry it, and how often those rows differ from the labels in the field the code is about.
+
+### missing_zip
+
+No ZIP in the input.
+
+- **Rows in NAD (of 1M):** 71,219
+- **Measured:** name 9.9% (baseline 4.4%), number 1.2%, unit 3.2%. NC voter (112 rows): number 83%
+
+### missing_city
+
+No city in the input. `missing_state` is the same for the state; the two are measured together.
+
+- **Rows in NAD (of 1M):** 66
+- **Measured (both codes):** NAD: too few rows. NC voter (94 `missing_city` and 78 `missing_state` rows): number 94% and 100%, the one-line form is short of its own number
+
+### missing_state
+
+No state in the input.
+
+- **Rows in NAD (of 1M):** 0
+- **Measured:** together with `missing_city`, above.
+
+### non_standard_abbreviation
+
+A spelling Pub 28 does not list was normalized (`TRC` for `TRACE`).
+
+- **Rows in NAD (of 1M):** 94
+- **Measured:** name 77.7%, suffix 37.0%: the labels write the name differently
+
+### zero_street_number
+
+House number 0, usually vacant land; treated as no number.
+
+- **Rows in NAD (of 1M):** 8
+- **Measured:** number 100% (the label keeps the `0`)
+
+### dual_address
+
+A street address and a PO Box in one record; both kept.
+
+- **Rows in NAD (of 1M):** 6
+- **Measured:** too few rows
+
+### second_line_skipped
+
+Line 2 was a copy or a no-data line and was dropped.
+
+- **Rows in NAD (of 1M):** 34
+- **Measured:** too few rows (unit 87.5%, 7 / 8)
+
+### second_line_building
+
+Line 2 is the building name, which no emitter prints.
+
+- **Rows in NAD (of 1M):** 103
+- **Measured:** number and name within 2%
+
+### country_ignored
+
+A trailing `USA`, `US` or `UNITED STATES` was dropped, or a street field that was only a country.
+
+- **Rows in NAD (of 1M):** 66
+- **Measured:** too few rows
+
+### placeholder
+
+The street line is stand-in text (`NO SITUS`); the key is `None`.
+
+- **Rows in NAD (of 1M):** 0
+- **Measured:** NC voter: 86 rows, number 100% (the snapshot has a number the stand-in text hides)
+
+### intersection_detected
+
+Two streets joined by `&`, `AND`, `@` or `AT`: a corner; the key is `None`.
+
+- **Rows in NAD (of 1M):** 18
+- **Measured:** too few rows
+
+### zip_city_mismatch
+
+The city is a known place, but the place list does not give the ZIP to it. Only in a state with curated data (Florida).
+
+- **Rows in NAD (of 1M):** 0
+- **Measured:** not measured: no labeled Florida sample
+
+### city_is_county
+
+The city is no place of the state but the name of one of its counties (`HENNEPIN`, `MIAMI DADE`); `place` is empty.
+
+- **Rows in NAD (of 1M):** 0
+- **Measured:** not measured: no labeled sample. On the self-entered sources it is on 0.013% (amateur licenses), 0.017% (tax-exempt list) and 0.024% (carrier census) of the rows, and 1 of 1,138,982 Netsyms sample rows
+
+### default_state_applied
+
+A `default_state` hint decided a place or a reading; the state stays empty.
+
+- **Rows in NAD (of 1M):** 0
+- **Measured:** only with the option
+
+### repeated_label
+
+Reported by `tag()` only: a usaddress label appears in two runs.
+
+- **Rows in NAD (of 1M):** 0
+- **Measured:** `tag()` only
+
+### ambiguous_token
+
+Reserved: defined, but the parser does not raise it today.
+
+- **Rows in NAD (of 1M):** 0
+- **Measured:** none
+
+
+### Reading the second group
 
 Why `missing_zip` is mild: the ZIP is the field it is about and NAD labels it in the input, so the rows are not wrong
 about it; the rest of the row is parsed without the ZIP's help (the street-name boundary is less certain: 9.9% against
