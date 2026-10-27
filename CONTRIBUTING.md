@@ -99,6 +99,11 @@ links in the three crate READMEs, since crates.io and PyPI do not resolve relati
 ones, and keep the statement that the library does not validate deliverability and the
 Disclaimer section.
 
+The READMEs are short on purpose. The tours live in `docs/` (`getting-started.md`, `python.md`,
+`command-line.md`, `rust.md`, `dataframes.md`, and the guides on custom layers, anonymizing and usaddress): put the detail
+there and have a README link to it instead of copying it. A README keeps its install lines, a quickstart and a two-row
+headline of figures (copied from `docs/benchmarks.md`).
+
 ## Documentation
 
 `docs/README.md` indexes all the documentation by topic, and `docs/change-checklist.md` is a table of what to

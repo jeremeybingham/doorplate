@@ -69,22 +69,29 @@ validation:
 # A page added to docs/ needs a nav entry here and a row in docs/README.md.
 nav:
   - Home: index.md
+  - Getting started: getting-started.md
   - About:
       - How it works: how-it-works.md
       - Warnings: warnings.md
       - The match key: key-format.md
-      - Accuracy and speed: benchmarks.md
+      - Accuracy: benchmarks.md
+      - Speed, size and memory: speed-and-size.md
       - RESO mapping: reso-mapping.md
       - USPS Publication 28 notes: usps-pub28-notes.md
   - Guides:
+      - pandas, Polars and DuckDB: dataframes.md
       - Custom layers: custom-layers.md
       - Anonymizing data: anonymizing.md
       - Coming from usaddress: usaddress-compat.md
   - Python:
+      - Python guide: python.md
       - Python reference: python-api.md
+      - Examples: https://github.com/jeremeybingham/doorplate/tree/main/examples
   - Command line:
+      - Command-line guide: command-line.md
       - Command-line reference: cli.md
   - Rust:
+      - Rust guide: rust.md
       - API on docs.rs: https://docs.rs/doorplate
   - Data:
       - Data policy: data-policy.md
@@ -100,6 +107,7 @@ nav:
           - Harness run columns: tools/harness-schema.md
           - The review tool: tools/review.md
           - The ingest tool: tools/ingest.md
+      - Repository layout and tests: repository.md
       - Tests:
           - The golden corpus: tests/corpus.md
           - usaddress test files: tests/usaddress-tests.md

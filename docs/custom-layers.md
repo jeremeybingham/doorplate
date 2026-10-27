@@ -5,10 +5,10 @@ suffix your data spells `TRAYL`, a unit word your county uses, a country word th
 state-specific reading of a spelling. It is loaded at run time, checked against the shipped tables, and reported in every
 parse it touches. This library formats and parses; it does not validate that an address exists or can receive mail.
 
-**Status (issue #3).** Complete: spellings, word lists, state-scoped readings, places and ZIPs, in the core library (the
-`custom-layer` cargo feature), the command line and Python, plus a [demo layer](#the-demo-layer), a
+A layer can hold spellings, word lists, state-scoped readings, places and ZIPs. It works in the core library (the
+`custom-layer` cargo feature), the command line and Python. This page has a [demo layer](#the-demo-layer), a
 [template](#writing-your-own-layer) to copy and a [prompt for an LLM](#a-prompt-for-an-llm) that drafts a layer from your misparsed
-addresses.
+addresses (tracked in [#3](https://github.com/jeremeybingham/doorplate/issues/3)).
 
 Contents: [What a layer is](#what-a-layer-is) · [The demo layer](#the-demo-layer) · [Writing your own layer](#writing-your-own-layer) ·
 [A prompt for an LLM](#a-prompt-for-an-llm) · [The files](#the-files) · [Rules](#rules) · [Checking a layer](#checking-a-layer) ·
