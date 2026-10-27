@@ -82,6 +82,9 @@ k3:S|123|N|MAIN|ST||FL|33101
   of into your database.
 - **Place data.** A national list of 50,375 places and 41,154 ZIPs finds the city on a line with no commas and
   completes a cut-off city; `default_state` is a hint for input with no state.
+- **Your own spellings and places.** A custom layer (a folder of small files) adds spellings, words, places and ZIPs your
+  data uses on top of the shipped tables, without editing them: `doorplate parse --custom-layer DIR`, `doorplate.load_layer`,
+  checked with `doorplate layer check`. A layer can change a key, so every parse reports it ([docs](docs/custom-layers.md)).
 - **Sharing messy data.** `doorplate anonymize` (and `Anonymizer` in Python and Rust) swaps the digits and names of
   address-like text, even text that does not parse, and keeps the shape, so a bug report can start from a real
   address. Obfuscation, not anonymity: read the output before you share it ([how it works](docs/anonymizing.md)).
@@ -265,6 +268,8 @@ doorplate parse "123 N Main St, Miami FL 33101" --display    # mixed case; --lon
 doorplate parse "123 N Main St, Miami FL 33101" --tag        # usaddress-style joined labels
 doorplate parse -  < addresses.txt                           # one address per line, JSON lines out
 doorplate anonymize in.csv --column address -o shareable.csv   # replace digits and names, keep the shape (read it before you share it)
+doorplate parse "123 Oak Trayl, Miami FL 33101" --custom-layer DIR   # your own spellings, places and ZIPs on top of the shipped tables
+doorplate layer check DIR                                    # load a custom layer: every problem, or what it holds
 ```
 
 `doorplate --help` lists every option.
@@ -423,6 +428,7 @@ and small invented sample files.
 | [`docs/reso-mapping.md`](docs/reso-mapping.md) | RESO field mapping |
 | [`docs/usps-pub28-notes.md`](docs/usps-pub28-notes.md) | The source of every table and parser rule |
 | [`docs/usaddress-compat.md`](docs/usaddress-compat.md) | usaddress-shaped output, labels, migration |
+| [`docs/custom-layers.md`](docs/custom-layers.md) | Custom layers: your own spellings, words, places and ZIPs |
 | [`docs/anonymizing.md`](docs/anonymizing.md) | Sharing messy data: the anonymizer, what it keeps, its limits |
 | [`docs/benchmarks.md`](docs/benchmarks.md) | Accuracy, speed and size |
 | [`docs/roadmap.md`](docs/roadmap.md) | Planned work, what is not planned, and what data would help |

@@ -462,3 +462,62 @@ fn the_fingerprint_follows_places_and_zips() {
     let b = CustomLayer::from_sources(&LayerSources::new(LAYER).places(PLACES).zips(ZIPS)).unwrap();
     assert_ne!(a.info().fingerprint, b.info().fingerprint);
 }
+
+// ---- folders ----
+
+fn write_dir(tag: &str, files: &[(&str, &str)]) -> std::path::PathBuf {
+    let dir =
+        std::env::temp_dir().join(format!("doorplate-core-layer-{tag}-{}", std::process::id()));
+    std::fs::remove_dir_all(&dir).ok();
+    std::fs::create_dir_all(&dir).unwrap();
+    for (n, t) in files {
+        std::fs::write(dir.join(n), t).unwrap();
+    }
+    dir
+}
+
+#[test]
+fn from_dir_reads_the_files_and_matches_from_sources() {
+    let aliases = "[[suffix]]\nabbr = \"TRL\"\nspellings = [\"TRAYL\"]\nevidence = \"x\"\n";
+    let dir = write_dir(
+        "ok",
+        &[
+            ("layer.toml", LAYER),
+            ("aliases.toml", aliases),
+            ("NOTES.md", "ignored"),
+            ("data.csv", "ignored"),
+        ],
+    );
+    let from_dir = CustomLayer::from_dir(&dir).unwrap();
+    let from_text = CustomLayer::from_sources(&LayerSources::new(LAYER).aliases(aliases)).unwrap();
+    assert_eq!(from_dir, from_text, "the same content is the same layer");
+    assert_eq!(from_dir.counts(), vec![("suffix spellings", 1)]);
+    std::fs::remove_dir_all(&dir).ok();
+}
+
+#[test]
+fn from_dir_reports_misspelled_files_with_the_other_problems() {
+    let bad = "[[suffix]]\nabbr = \"TRL\"\nspellings = [\"ST\"]\nevidence = \"x\"\n";
+    let dir = write_dir(
+        "bad",
+        &[
+            ("layer.toml", LAYER),
+            ("aliases.toml", bad),
+            ("place.tsv", "typo"),
+        ],
+    );
+    let e = CustomLayer::from_dir(&dir).unwrap_err();
+    let p = e.problems();
+    assert_eq!(p.len(), 2, "{p:?}");
+    assert!(p[0].ends_with("place.tsv: not a layer file (a layer folder holds layer.toml, aliases.toml, overrides.toml, places.tsv, zips.tsv); is it a misspelling?"), "{p:?}");
+    assert!(p[1].contains("already in the shipped tables"), "{p:?}");
+    std::fs::remove_dir_all(&dir).ok();
+    let empty = write_dir("empty", &[]);
+    assert!(CustomLayer::from_dir(&empty).unwrap_err().problems()[0].contains("has no layer.toml"));
+    std::fs::remove_dir_all(&empty).ok();
+    let missing = CustomLayer::from_dir(std::path::Path::new("/no/such/folder")).unwrap_err();
+    assert!(
+        missing.problems()[0].contains("could not read the folder"),
+        "{missing}"
+    );
+}

@@ -4,6 +4,7 @@
 use std::collections::hash_map::Entry;
 use std::collections::{HashMap, HashSet};
 use std::fmt;
+use std::path::Path;
 use std::sync::{Mutex, OnceLock};
 
 use toml::{Table, Value};
@@ -159,6 +160,113 @@ impl CustomLayer {
         let layer: &'static Layer = Box::leak(Box::new(data.into_layer(info)));
         store.insert(fingerprint, layer);
         Ok(CustomLayer(layer))
+    }
+}
+
+/// The files a layer folder holds.
+const LAYER_FILES: [&str; 5] = [
+    "layer.toml",
+    "aliases.toml",
+    "overrides.toml",
+    "places.tsv",
+    "zips.tsv",
+];
+
+impl CustomLayer {
+    /// Load a layer from a folder holding `layer.toml` and any of `aliases.toml`, `overrides.toml`,
+    /// `places.tsv` and `zips.tsv` (see [`CustomLayer::from_sources`]). A `.toml` or `.tsv` file
+    /// with another name (a misspelling such as `alias.toml`) is an error, so a typo cannot leave a
+    /// file silently unused; other files (notes, data) are ignored.
+    pub fn from_dir(dir: &Path) -> Result<CustomLayer, LayerError> {
+        let mut errs = Errors::default();
+        let shown = dir.display().to_string();
+        let entries = match std::fs::read_dir(dir) {
+            Ok(e) => e,
+            Err(e) => {
+                errs.add(&shown, format!("could not read the folder ({})", e.kind()));
+                return Err(errs.into_error());
+            }
+        };
+        for entry in entries.flatten() {
+            let name = entry.file_name().to_string_lossy().into_owned();
+            let ext = Path::new(&name).extension().and_then(|e| e.to_str());
+            if LAYER_FILES.contains(&name.as_str())
+                || !matches!(ext, Some("toml" | "tsv"))
+                || entry.path().is_dir()
+            {
+                continue;
+            }
+            errs.add(
+                &format!("{shown}/{name}"),
+                format!(
+                    "not a layer file (a layer folder holds {}); is it a misspelling?",
+                    LAYER_FILES.join(", ")
+                ),
+            );
+        }
+        let mut read = |name: &str| -> Option<String> {
+            match std::fs::read_to_string(dir.join(name)) {
+                Ok(s) => Some(s),
+                Err(e) if e.kind() == std::io::ErrorKind::NotFound => None,
+                Err(e) => {
+                    errs.add(
+                        &format!("{shown}/{name}"),
+                        format!("could not read the file ({})", e.kind()),
+                    );
+                    None
+                }
+            }
+        };
+        let layer = read("layer.toml");
+        let aliases = read("aliases.toml");
+        let overrides = read("overrides.toml");
+        let places = read("places.tsv");
+        let zips = read("zips.tsv");
+        let Some(layer) = layer else {
+            if errs.0.is_empty() {
+                errs.add(&shown, "has no layer.toml (name and version)");
+            }
+            return Err(errs.into_error());
+        };
+        if errs.0.iter().any(|e| e.contains("could not read")) {
+            return Err(errs.into_error());
+        }
+        let mut sources = LayerSources::new(&layer);
+        sources.aliases = aliases.as_deref();
+        sources.overrides = overrides.as_deref();
+        sources.places = places.as_deref();
+        sources.zips = zips.as_deref();
+        // The loader lists its own problems; the folder's (a misspelled file) come first.
+        match Self::from_sources(&sources) {
+            Ok(l) if errs.0.is_empty() => Ok(l),
+            Ok(_) => Err(errs.into_error()),
+            Err(e) => {
+                errs.0.extend(e.problems);
+                Err(errs.into_error())
+            }
+        }
+    }
+
+    /// What the layer holds, as (what, how many), leaving out what is empty: for a summary.
+    pub fn counts(&self) -> Vec<(&'static str, usize)> {
+        let l = self.0;
+        [
+            ("suffix spellings", l.suffix.len()),
+            ("unit spellings", l.unit.len()),
+            ("directional spellings", l.directional.len()),
+            ("state spellings", l.state.len()),
+            ("special-word spellings", l.special.len()),
+            ("highway spellings", l.highway.len()),
+            ("state suffix readings", l.state_suffix.len()),
+            ("state highway readings", l.state_highway.len()),
+            ("words", l.words.count()),
+            ("places", l.places.len()),
+            ("place spellings", l.place_index.len() - l.places.len()),
+            ("ZIPs", l.zips.len()),
+        ]
+        .into_iter()
+        .filter(|(_, n)| *n > 0)
+        .collect()
     }
 }
 

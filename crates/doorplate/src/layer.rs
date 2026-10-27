@@ -105,3 +105,18 @@ pub(crate) struct WordLists {
     pub(crate) country: HashSet<String>,
     pub(crate) place_prefix: HashSet<String>,
 }
+
+#[cfg(feature = "custom-layer")]
+impl WordLists {
+    /// The number of words in all the lists.
+    pub(crate) fn count(&self) -> usize {
+        self.building.len()
+            + self.area.len()
+            + self.city_head.len()
+            + self.non_recipient.len()
+            + self.numbered_street.len()
+            + self.placeholder.len()
+            + self.country.len()
+            + self.place_prefix.len()
+    }
+}

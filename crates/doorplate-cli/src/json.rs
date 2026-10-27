@@ -110,11 +110,16 @@ pub fn record(a: &ParsedAddress) -> Value {
             },
             "source": m.source.code(),
         })),
-        // Which release and which state data produced this record. A group, not
-        // bare keys, so a custom layer's name (#3) can join it.
+        // Which release, which state data and which custom layer (#3) produced this
+        // record. A group, not bare keys.
         "provenance": {
             "library_version": a.diagnostics.library_version,
             "state_data_version": a.diagnostics.state_data_version,
+            "custom_layer": a.diagnostics.custom_layer.map(|l| json!({
+                "name": l.name,
+                "version": l.version,
+                "fingerprint": l.fingerprint,
+            })),
         },
     })
 }

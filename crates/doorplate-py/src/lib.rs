@@ -8,13 +8,14 @@
 //! Built with maturin as the extension module `doorplate._core`; the
 //! package (`python/doorplate/`) re-exports it.
 
+use std::path::PathBuf;
 use std::sync::OnceLock;
 
 use doorplate::{
-    Anonymizer, Fields, Highway, KeyOptions, OptionsError, ParseError as CoreParseError,
-    ParseOptions, ParsedAddress, Parser, PlaceKind,
+    Anonymizer, CustomLayer, Fields, Highway, KeyOptions, OptionsError,
+    ParseError as CoreParseError, ParseOptions, ParsedAddress, Parser, PlaceKind,
 };
-use pyo3::exceptions::PyValueError;
+use pyo3::exceptions::{PyTypeError, PyValueError};
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 
@@ -25,18 +26,113 @@ pyo3::create_exception!(
     "The input has no address text at all (empty or only punctuation)."
 );
 
+pyo3::create_exception!(
+    _core,
+    LayerError,
+    PyValueError,
+    "A custom layer that cannot be loaded; the message lists every problem."
+);
+
+/// A loaded custom layer (#3): your own spellings, words, places and ZIPs on top of the shipped
+/// tables. Load one with `doorplate.load_layer(folder)` and pass it as `custom_layer=`. A layer
+/// can change a key: keep `fingerprint` with stored keys.
+#[pyclass(name = "CustomLayer", module = "doorplate", frozen)]
+#[derive(Clone)]
+struct PyCustomLayer {
+    inner: CustomLayer,
+}
+
+#[pymethods]
+impl PyCustomLayer {
+    #[getter]
+    fn name(&self) -> &'static str {
+        self.inner.info().name
+    }
+
+    #[getter]
+    fn version(&self) -> &'static str {
+        self.inner.info().version
+    }
+
+    /// 16 hex digits over the layer's files; it changes when any byte changes.
+    #[getter]
+    fn fingerprint(&self) -> &'static str {
+        self.inner.info().fingerprint
+    }
+
+    /// What the layer holds, as `{what: count}` (what is empty is left out).
+    fn counts<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyDict>> {
+        let d = PyDict::new(py);
+        for (what, n) in self.inner.counts() {
+            d.set_item(what, n)?;
+        }
+        Ok(d)
+    }
+
+    fn __repr__(&self) -> String {
+        let i = self.inner.info();
+        format!("CustomLayer({} {}, {})", i.name, i.version, i.fingerprint)
+    }
+
+    fn __eq__(&self, other: &Self) -> bool {
+        self.inner == other.inner
+    }
+}
+
+fn layer_err(e: &doorplate::LayerError) -> PyErr {
+    LayerError::new_err(e.to_string())
+}
+
+/// Load a custom layer from a folder (`layer.toml` and any of `aliases.toml`, `overrides.toml`,
+/// `places.tsv`, `zips.tsv`). Raises `LayerError` listing every problem.
+#[pyfunction]
+fn load_layer(path: PathBuf) -> PyResult<PyCustomLayer> {
+    CustomLayer::from_dir(&path)
+        .map(|inner| PyCustomLayer { inner })
+        .map_err(|e| layer_err(&e))
+}
+
+/// A `custom_layer=` argument: a `CustomLayer`, or the path of a layer folder (loaded now).
+fn resolve_layer(layer: Option<&Bound<'_, PyAny>>) -> PyResult<Option<CustomLayer>> {
+    let Some(l) = layer.filter(|l| !l.is_none()) else {
+        return Ok(None);
+    };
+    if let Ok(c) = l.extract::<PyRef<'_, PyCustomLayer>>() {
+        return Ok(Some(c.inner));
+    }
+    let path: PathBuf = l.extract().map_err(|_| {
+        PyTypeError::new_err(
+            "custom_layer must be a doorplate.CustomLayer or the path of a layer folder",
+        )
+    })?;
+    CustomLayer::from_dir(&path)
+        .map(Some)
+        .map_err(|e| layer_err(&e))
+}
+
 fn parse_err(e: &CoreParseError) -> PyErr {
     ParseError::new_err(e.to_string())
 }
 
-/// The parser for a `default_state` hint (`None` is the shared default one).
-fn parser_for(default_state: Option<&str>) -> PyResult<Parser> {
+/// The parser for a `default_state` hint and a custom layer (`None` and `None` is the shared
+/// default one).
+fn parser_for(
+    default_state: Option<&str>,
+    custom_layer: Option<&Bound<'_, PyAny>>,
+) -> PyResult<Parser> {
     static DEFAULT: OnceLock<Parser> = OnceLock::new();
-    match default_state {
-        None => Ok(DEFAULT.get_or_init(Parser::new).clone()),
-        Some(s) => Parser::with_options(ParseOptions::new().default_state(s))
-            .map_err(|e: OptionsError| PyValueError::new_err(e.to_string())),
+    let layer = resolve_layer(custom_layer)?;
+    if default_state.is_none() && layer.is_none() {
+        return Ok(DEFAULT.get_or_init(Parser::new).clone());
     }
+    let mut options = ParseOptions::new();
+    if let Some(s) = default_state {
+        options = options.default_state(s);
+    }
+    if let Some(l) = layer {
+        options = options.custom_layer(l);
+    }
+    Parser::with_options(options).map_err(|e: OptionsError| PyValueError::new_err(e.to_string()))
 }
 
 /// A parsed address. Read-only; the values are the core's.
@@ -265,6 +361,13 @@ impl PyParsedAddress {
         self.inner.diagnostics.state_data_version
     }
 
+    /// The custom layer the parse used, as `{name, version, fingerprint}`, or `None`. A layer can
+    /// change a key: keep the fingerprint with stored keys.
+    #[getter]
+    fn custom_layer<'py>(&self, py: Python<'py>) -> PyResult<Option<Bound<'py, PyDict>>> {
+        layer_dict(py, self.inner.diagnostics.custom_layer)
+    }
+
     /// `street`, `po_box`, `rural_route`, `military`, `general_delivery`,
     /// `dual` or `unknown`.
     fn address_type(&self) -> &'static str {
@@ -409,6 +512,10 @@ impl PyParsedAddress {
         let provenance = PyDict::new(py);
         provenance.set_item("library_version", a.inner.diagnostics.library_version)?;
         provenance.set_item("state_data_version", a.inner.diagnostics.state_data_version)?;
+        provenance.set_item(
+            "custom_layer",
+            layer_dict(py, a.inner.diagnostics.custom_layer)?,
+        )?;
         d.set_item("provenance", provenance)?;
         Ok(d)
     }
@@ -437,6 +544,18 @@ struct PyParser {
     inner: Parser,
 }
 
+fn layer_dict<'py>(
+    py: Python<'py>,
+    info: Option<doorplate::LayerInfo>,
+) -> PyResult<Option<Bound<'py, PyDict>>> {
+    let Some(i) = info else { return Ok(None) };
+    let d = PyDict::new(py);
+    d.set_item("name", i.name)?;
+    d.set_item("version", i.version)?;
+    d.set_item("fingerprint", i.fingerprint)?;
+    Ok(Some(d))
+}
+
 fn wrap(a: ParsedAddress) -> PyParsedAddress {
     PyParsedAddress { inner: a }
 }
@@ -447,10 +566,10 @@ impl PyParser {
     /// when the input names no state: it never fills `state`. Raises
     /// `ValueError` for anything that is not a US state, DC or territory.
     #[new]
-    #[pyo3(signature = (default_state=None))]
-    fn new(default_state: Option<&str>) -> PyResult<Self> {
+    #[pyo3(signature = (default_state=None, custom_layer=None))]
+    fn new(default_state: Option<&str>, custom_layer: Option<&Bound<'_, PyAny>>) -> PyResult<Self> {
         Ok(Self {
-            inner: parser_for(default_state)?,
+            inner: parser_for(default_state, custom_layer)?,
         })
     }
 
@@ -548,9 +667,13 @@ impl PyParser {
 
 /// Parse one address string (see `Parser.parse`).
 #[pyfunction]
-#[pyo3(signature = (text, default_state=None))]
-fn parse(text: &str, default_state: Option<&str>) -> PyResult<PyParsedAddress> {
-    parser_for(default_state)?
+#[pyo3(signature = (text, default_state=None, custom_layer=None))]
+fn parse(
+    text: &str,
+    default_state: Option<&str>,
+    custom_layer: Option<&Bound<'_, PyAny>>,
+) -> PyResult<PyParsedAddress> {
+    parser_for(default_state, custom_layer)?
         .parse(text)
         .map(wrap)
         .map_err(|e| parse_err(&e))
@@ -558,7 +681,7 @@ fn parse(text: &str, default_state: Option<&str>) -> PyResult<PyParsedAddress> {
 
 /// Parse pre-split fields (see `Parser.parse_fields`).
 #[pyfunction]
-#[pyo3(signature = (line1=None, line2=None, city=None, state=None, zip=None, default_state=None))]
+#[pyo3(signature = (line1=None, line2=None, city=None, state=None, zip=None, default_state=None, custom_layer=None))]
 fn parse_fields(
     line1: Option<String>,
     line2: Option<String>,
@@ -566,8 +689,9 @@ fn parse_fields(
     state: Option<String>,
     zip: Option<String>,
     default_state: Option<&str>,
+    custom_layer: Option<&Bound<'_, PyAny>>,
 ) -> PyResult<PyParsedAddress> {
-    parser_for(default_state)?
+    parser_for(default_state, custom_layer)?
         .parse_fields(&Fields {
             line1,
             line2,
@@ -581,21 +705,23 @@ fn parse_fields(
 
 /// Parse a batch (see `Parser.parse_many`).
 #[pyfunction]
-#[pyo3(signature = (texts, default_state=None))]
+#[pyo3(signature = (texts, default_state=None, custom_layer=None))]
 fn parse_many(
     py: Python<'_>,
     texts: Vec<String>,
     default_state: Option<&str>,
+    custom_layer: Option<&Bound<'_, PyAny>>,
 ) -> PyResult<Vec<Option<PyParsedAddress>>> {
     let parser = PyParser {
-        inner: parser_for(default_state)?,
+        inner: parser_for(default_state, custom_layer)?,
     };
     Ok(parser.parse_many(py, texts))
 }
 
 /// Parse a batch of pre-split addresses (see `Parser.parse_fields_many`).
 #[pyfunction]
-#[pyo3(signature = (line1=None, line2=None, city=None, state=None, zip=None, default_state=None))]
+#[allow(clippy::too_many_arguments)]
+#[pyo3(signature = (line1=None, line2=None, city=None, state=None, zip=None, default_state=None, custom_layer=None))]
 fn parse_fields_many(
     py: Python<'_>,
     line1: Option<Vec<Option<String>>>,
@@ -604,40 +730,47 @@ fn parse_fields_many(
     state: Option<Vec<Option<String>>>,
     zip: Option<Vec<Option<String>>>,
     default_state: Option<&str>,
+    custom_layer: Option<&Bound<'_, PyAny>>,
 ) -> PyResult<Vec<Option<PyParsedAddress>>> {
     let parser = PyParser {
-        inner: parser_for(default_state)?,
+        inner: parser_for(default_state, custom_layer)?,
     };
     parser.parse_fields_many(py, line1, line2, city, state, zip)
 }
 
 /// The counterpart of `usaddress.tag()`: `(dict, address_type)`.
 #[pyfunction]
-#[pyo3(signature = (text, default_state=None))]
+#[pyo3(signature = (text, default_state=None, custom_layer=None))]
 fn tag<'py>(
     py: Python<'py>,
     text: &str,
     default_state: Option<&str>,
+    custom_layer: Option<&Bound<'_, PyAny>>,
 ) -> PyResult<(Bound<'py, PyDict>, &'static str)> {
-    parse(text, default_state)?.tag(py)
+    parse(text, default_state, custom_layer)?.tag(py)
 }
 
 /// The counterpart of `usaddress.parse()`: `[(token, label)]`.
 #[pyfunction]
-#[pyo3(signature = (text, default_state=None))]
+#[pyo3(signature = (text, default_state=None, custom_layer=None))]
 fn parse_tokens(
     text: &str,
     default_state: Option<&str>,
+    custom_layer: Option<&Bound<'_, PyAny>>,
 ) -> PyResult<Vec<(String, Option<&'static str>)>> {
-    Ok(parse(text, default_state)?.to_usaddress_tags())
+    Ok(parse(text, default_state, custom_layer)?.to_usaddress_tags())
 }
 
 /// The kind of address in `text`: `street`, `po_box`, `rural_route`,
 /// `military`, `general_delivery`, `dual` or `unknown`.
 #[pyfunction]
-#[pyo3(signature = (text, default_state=None))]
-fn address_type(text: &str, default_state: Option<&str>) -> PyResult<&'static str> {
-    Ok(parse(text, default_state)?.address_type())
+#[pyo3(signature = (text, default_state=None, custom_layer=None))]
+fn address_type(
+    text: &str,
+    default_state: Option<&str>,
+    custom_layer: Option<&Bound<'_, PyAny>>,
+) -> PyResult<&'static str> {
+    Ok(parse(text, default_state, custom_layer)?.address_type())
 }
 
 /// The result of `Anonymizer.anonymize`: the obfuscated `text` and whether the parser
@@ -721,6 +854,9 @@ fn anonymize(text: &str, seed: Option<u64>) -> String {
 fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add("__version__", doorplate::VERSION)?;
     m.add("ParseError", m.py().get_type::<ParseError>())?;
+    m.add("LayerError", m.py().get_type::<LayerError>())?;
+    m.add_class::<PyCustomLayer>()?;
+    m.add_function(wrap_pyfunction!(load_layer, m)?)?;
     m.add_class::<PyParser>()?;
     m.add_class::<PyParsedAddress>()?;
     m.add_class::<PyAnonymizer>()?;

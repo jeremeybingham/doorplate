@@ -102,6 +102,7 @@ assert!(a.text.contains(" N ") && a.text.contains(", FL 331") && !a.text.contain
 | `places-us` | yes | the national place and ZIP list, used to find and name the city |
 | `rayon` | no | parallel `Parser::parse_many` and `parse_fields_many` |
 | `corpus` | no | the golden-corpus loader and runner (`doorplate::corpus`); pulls in serde |
+| `custom-layer` | no | `CustomLayer::from_sources` and `from_dir`: your own spellings, words, places and ZIPs on top of the shipped tables, reported in `Diagnostics::custom_layer`; pulls in `toml`. A layer can change a key ([Custom layers](https://github.com/jeremeybingham/doorplate/blob/main/docs/custom-layers.md)) |
 
 ## Accuracy and speed
 

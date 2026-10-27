@@ -1,4 +1,5 @@
 """Type stubs for doorplate (the compiled module is `_core`)."""
+import os
 from collections.abc import Sequence
 from typing import TypedDict
 
@@ -53,11 +54,19 @@ class Display(TypedDict):
     zip: str | None
     last_line: str
 
+class LayerInfoDict(TypedDict):
+    """The custom layer a parse used: its name, version and content fingerprint."""
+
+    name: str
+    version: str
+    fingerprint: str
+
 class Provenance(TypedDict):
-    """Which release and which state data produced the result; more keys may join it (#3)."""
+    """Which release, which state data and which custom layer produced the result."""
 
     library_version: str
     state_data_version: str | None
+    custom_layer: LayerInfoDict | None
 
 class ParsedAddressDict(TypedDict):
     input: str
@@ -151,6 +160,8 @@ class ParsedAddress:
     def library_version(self) -> str: ...
     @property
     def state_data_version(self) -> str | None: ...
+    @property
+    def custom_layer(self) -> LayerInfoDict | None: ...
     def address_type(self) -> str: ...
     def key(self, unit: bool = False) -> str | None: ...
     def slug(self) -> str | None: ...
@@ -183,8 +194,29 @@ class Anonymizer:
 
 def anonymize(text: str, seed: int | None = None) -> str: ...
 
+class LayerError(ValueError):
+    """A custom layer that cannot be loaded; the message lists every problem."""
+
+class CustomLayer:
+    """A loaded custom layer: your own spellings, words, places and ZIPs on top of the shipped
+    tables. A layer can change a key: keep `fingerprint` with stored keys."""
+
+    @property
+    def name(self) -> str: ...
+    @property
+    def version(self) -> str: ...
+    @property
+    def fingerprint(self) -> str: ...
+    def counts(self) -> dict[str, int]: ...
+
+def load_layer(path: str | os.PathLike[str]) -> CustomLayer: ...
+
 class Parser:
-    def __init__(self, default_state: str | None = None) -> None: ...
+    def __init__(
+        self,
+        default_state: str | None = None,
+        custom_layer: CustomLayer | str | os.PathLike[str] | None = None,
+    ) -> None: ...
     def parse(self, text: str) -> ParsedAddress: ...
     def parse_fields(
         self,
@@ -204,7 +236,11 @@ class Parser:
         zip: Sequence[str | None] | None = None,
     ) -> list[ParsedAddress | None]: ...
 
-def parse(text: str, default_state: str | None = None) -> ParsedAddress: ...
+def parse(
+    text: str,
+    default_state: str | None = None,
+    custom_layer: CustomLayer | str | os.PathLike[str] | None = None,
+) -> ParsedAddress: ...
 def parse_fields(
     line1: str | None = None,
     line2: str | None = None,
@@ -212,9 +248,12 @@ def parse_fields(
     state: str | None = None,
     zip: str | None = None,
     default_state: str | None = None,
+    custom_layer: CustomLayer | str | os.PathLike[str] | None = None,
 ) -> ParsedAddress: ...
 def parse_many(
-    texts: Sequence[str], default_state: str | None = None
+    texts: Sequence[str],
+    default_state: str | None = None,
+    custom_layer: CustomLayer | str | os.PathLike[str] | None = None,
 ) -> list[ParsedAddress | None]: ...
 def parse_fields_many(
     line1: Sequence[str | None] | None = None,
@@ -223,9 +262,20 @@ def parse_fields_many(
     state: Sequence[str | None] | None = None,
     zip: Sequence[str | None] | None = None,
     default_state: str | None = None,
+    custom_layer: CustomLayer | str | os.PathLike[str] | None = None,
 ) -> list[ParsedAddress | None]: ...
-def tag(text: str, default_state: str | None = None) -> tuple[dict[str, str], str]: ...
+def tag(
+    text: str,
+    default_state: str | None = None,
+    custom_layer: CustomLayer | str | os.PathLike[str] | None = None,
+) -> tuple[dict[str, str], str]: ...
 def parse_tokens(
-    text: str, default_state: str | None = None
+    text: str,
+    default_state: str | None = None,
+    custom_layer: CustomLayer | str | os.PathLike[str] | None = None,
 ) -> list[tuple[str, str | None]]: ...
-def address_type(text: str, default_state: str | None = None) -> str: ...
+def address_type(
+    text: str,
+    default_state: str | None = None,
+    custom_layer: CustomLayer | str | os.PathLike[str] | None = None,
+) -> str: ...

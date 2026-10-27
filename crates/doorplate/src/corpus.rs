@@ -16,8 +16,7 @@ use std::path::{Path, PathBuf};
 use serde::Deserialize;
 
 use crate::{
-    Directional, Fields, Highway, KeyOptions, Lexicons, MatchKind, ParseOptions, ParsedAddress,
-    Parser, Warning,
+    Directional, Fields, Highway, KeyOptions, Lexicons, MatchKind, ParsedAddress, Parser, Warning,
 };
 
 #[derive(Debug, Deserialize)]
@@ -606,7 +605,7 @@ pub(crate) fn parse_case(parser: &Parser, c: &Case) -> Option<ParsedAddress> {
     let own;
     let parser = match &c.default_state {
         Some(s) => {
-            own = Parser::with_options(ParseOptions::new().default_state(s.clone())).ok()?;
+            own = parser.with_default_state(s).ok()?;
             &own
         }
         None => parser,

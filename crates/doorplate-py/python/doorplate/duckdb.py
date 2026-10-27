@@ -29,9 +29,11 @@ from ._columns import (
     columns_of,
     texts_of,
 )
-from ._core import parse_fields_many, parse_many
+from ._core import CustomLayer, load_layer, parse_fields_many, parse_many
 
 if TYPE_CHECKING:
+    import os
+
     import duckdb
 
 __all__ = ["AVAILABLE_COLUMNS", "DEFAULT_COLUMNS", "parse_column", "register"]
@@ -65,12 +67,22 @@ def _struct_type(names: Sequence[str]) -> str:
     return "STRUCT(" + ", ".join(f'"{n}" VARCHAR' for n in names) + ")"
 
 
+def _layer(
+    custom_layer: "CustomLayer | str | os.PathLike[str] | None",
+) -> CustomLayer | None:
+    """A layer object for a layer or a folder path, loaded once."""
+    if custom_layer is None or isinstance(custom_layer, CustomLayer):
+        return custom_layer
+    return load_layer(custom_layer)
+
+
 def register(
     con: "duckdb.DuckDBPyConnection",
     name: str = "doorplate_parse",
     *,
     columns: Sequence[str] | None = None,
     default_state: str | None = None,
+    custom_layer: "CustomLayer | str | os.PathLike[str] | None" = None,
 ) -> None:
     """Register `name` and `name + "_fields"` on `con`.
 
@@ -78,16 +90,23 @@ def register(
     state, zip)` parses pre-split fields (any argument may be NULL). Both
     return a STRUCT with one VARCHAR field per name in `columns` (default
     `DEFAULT_COLUMNS`), and NULL where there is no address text.
-    `default_state` is the lookup hint of `doorplate.parse`. Registering a name
+    `default_state` is the lookup hint of `doorplate.parse`; `custom_layer` is a
+    `doorplate.CustomLayer` (or a layer folder's path, loaded once) used on top of the
+    shipped tables. Registering a name
     twice on one connection is an error in DuckDB: use `con.remove_function`
     first to replace it.
     """
     pa = _imports()
     names = check_columns(columns)
     ret = _struct_type(names)
+    layer = _layer(custom_layer)
 
     def parse_texts(values: Any) -> Any:
-        parsed = parse_many(texts_of(values.to_pylist()), default_state=default_state)
+        parsed = parse_many(
+            texts_of(values.to_pylist()),
+            default_state=default_state,
+            custom_layer=layer,
+        )
         return _struct(pa, names, parsed)
 
     # DuckDB reads the parameter count from the signature, so no *args.
@@ -99,6 +118,7 @@ def register(
             state=state.to_pylist(),
             zip=zip.to_pylist(),
             default_state=default_state,
+            custom_layer=layer,
         )
         return _struct(pa, names, parsed)
 
@@ -126,6 +146,7 @@ def parse_column(
     columns: Sequence[str] | None = None,
     prefix: str = "addr_",
     default_state: str | None = None,
+    custom_layer: "CustomLayer | str | os.PathLike[str] | None" = None,
     connection: "duckdb.DuckDBPyConnection | None" = None,
 ) -> "duckdb.DuckDBPyRelation":
     """Parse the one-line addresses in `relation`'s column `column`.
@@ -147,10 +168,11 @@ def parse_column(
         # An attribute in older DuckDB releases, a function in newer ones.
         default = duckdb.default_connection
         con = default() if callable(default) else default
-    # One function per column choice and state hint, registered once.
-    fn = f"_doorplate_parse_{abs(hash((names, default_state)))}"
+    # One function per column choice, state hint and layer, registered once.
+    layer = _layer(custom_layer)
+    fn = f"_doorplate_parse_{abs(hash((names, default_state, layer.fingerprint if layer else None)))}"
     try:
-        register(con, fn, columns=names, default_state=default_state)
+        register(con, fn, columns=names, default_state=default_state, custom_layer=layer)
     except duckdb.NotImplementedException:  # already registered on this connection
         pass
     holder = "__doorplate_parsed"

@@ -12,6 +12,9 @@ from typing import TYPE_CHECKING
 from ._columns import AVAILABLE_COLUMNS, DEFAULT_COLUMNS, check_columns, extract
 
 if TYPE_CHECKING:
+    import os
+
+    from ._core import CustomLayer
     import pandas as pd
 
 __all__ = ["AVAILABLE_COLUMNS", "DEFAULT_COLUMNS", "parse_column"]
@@ -23,6 +26,7 @@ def parse_column(
     columns: Sequence[str] | None = None,
     prefix: str = "addr_",
     default_state: str | None = None,
+    custom_layer: "CustomLayer | str | os.PathLike[str] | None" = None,
 ) -> "pd.DataFrame":
     """Parse each one-line address in `series`.
 
@@ -32,6 +36,10 @@ def parse_column(
     `columns` defaults to `DEFAULT_COLUMNS`; `AVAILABLE_COLUMNS` lists the
     others. `warnings` is the warning codes joined by commas. Join the result
     back with `df.join(parse_column(df["address"]))`.
+
+    `custom_layer` is a `doorplate.CustomLayer` (or the path of a layer folder) whose
+    spellings, words, places and ZIPs are used on top of the shipped tables; a layer
+    can change a key, so keep its `fingerprint` with stored keys.
     """
     try:
         import pandas as pd
@@ -40,7 +48,7 @@ def parse_column(
             "doorplate.pandas needs pandas: pip install 'doorplate[pandas]'"
         ) from e
     check_columns(columns)
-    names, data = extract(series, columns, default_state)
+    names, data = extract(series, columns, default_state, custom_layer)
     return pd.DataFrame(
         {f"{prefix}{n}": data[n] for n in names},
         index=series.index,

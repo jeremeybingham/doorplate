@@ -5,12 +5,12 @@ suffix your data spells `TRAYL`, a unit word your county uses, a country word th
 state-specific reading of a spelling. It is loaded at run time, checked against the shipped tables, and reported in every
 parse it touches. This library formats and parses; it does not validate that an address exists or can receive mail.
 
-**Status (issue #3).** This page describes the parts built so far, in the core library (the `custom-layer` cargo feature):
-spellings, word lists, state-scoped readings, places and ZIPs. The command line (`--custom-layer`, `doorplate layer check`),
-Python (`Parser(custom_layer=...)`), a demo layer and a guide for writing one (with an LLM prompt) follow in the next parts
-of the same issue, and this page grows with them.
+**Status (issue #3).** This page describes the parts built so far: spellings, word lists, state-scoped readings, places and
+ZIPs, in the core library (the `custom-layer` cargo feature), the command line and Python. A demo layer and a guide for writing
+one (with a template and an LLM prompt) come in the last part of the same issue, and this page grows with them.
 
-Contents: [What a layer is](#what-a-layer-is) · [The files](#the-files) · [Rules](#rules) · [Using it from Rust](#using-it-from-rust) ·
+Contents: [What a layer is](#what-a-layer-is) · [The files](#the-files) · [Rules](#rules) · [Checking a layer](#checking-a-layer) ·
+[Using it from the command line](#using-it-from-the-command-line) · [From Python](#from-python) · [From Rust](#from-rust) ·
 [What it reports, and keys](#what-it-reports-and-keys) · [What a layer cannot change](#what-a-layer-cannot-change)
 
 ## What a layer is
@@ -164,7 +164,76 @@ The reading applies to an address in that state (its state, or with none, its ZI
 A layer entry defaults to `observed`, so a parse that uses it carries `non_standard_abbreviation`, the same as the shipped
 `observed` spellings. Use `kind = "variant"` for a spelling that is standard where you work.
 
-## Using it from Rust
+## Checking a layer
+
+A layer is a **folder**:
+
+```text
+county-extras/
+  layer.toml        required: name, version, notes
+  aliases.toml      optional
+  overrides.toml    optional
+  places.tsv        optional
+  zips.tsv          optional
+  NOTES.md          anything else is ignored (notes, data), except a .toml or .tsv with another name:
+                    that is an error, so a misspelling (`alias.toml`, `place.tsv`) cannot leave a file unused
+```
+
+```sh
+$ doorplate layer check county-extras
+ok: layer county-extras 2026.10.1 (fingerprint 2ca8edfe22b5e7fc)
+  1 suffix spellings
+  1 places
+  1 place spellings
+  1 ZIPs
+A layer can change a key: keep the fingerprint with keys stored under it.
+```
+
+On any problem nothing loads, the command exits 2, and standard error lists every problem, each naming its file and entry or
+line (`county-extras/aliases.toml [[suffix]] #2: ...`). Fix them all and run it again. `doorplate layer check` is the loop for
+writing a layer: edit, check, repeat.
+
+## Using it from the command line
+
+`--custom-layer DIR` goes with `parse`, `parse-file` and `corpus test`:
+
+```sh
+doorplate parse "123 Oak Trayl, Miami, FL 33101" --custom-layer county-extras --pretty
+doorplate parse - --custom-layer county-extras < addresses.txt
+doorplate parse-file in.csv --column address --custom-layer county-extras -o out.csv
+doorplate corpus test --dir my-corpus --custom-layer county-extras   # your own golden cases, against your layer
+```
+
+Every JSON record carries `provenance.custom_layer` (`{"name", "version", "fingerprint"}`, or `null` when no layer was used). A
+layer that cannot be loaded is exit 2 with the problems on standard error. `corpus test` runs a corpus the way you would test any
+parser change ([`tests/corpus/README.md`](../tests/corpus/README.md)): write cases with the expected parse, keep a `passing.txt`,
+and a layer edit that breaks one fails the run. (The project's own corpus is for the shipped tables; point `--dir` at yours.)
+
+## From Python
+
+```python
+import doorplate
+
+layer = doorplate.load_layer("county-extras")        # raises doorplate.LayerError listing every problem
+layer.name, layer.version, layer.fingerprint         # ('county-extras', '2026.10.1', '2ca8edfe22b5e7fc')
+layer.counts()                                       # {'suffix spellings': 1, 'places': 1, ...}
+
+a = doorplate.parse("123 Oak Trayl, Miami, FL 33101", custom_layer=layer)
+a.street_suffix                                      # 'TRL'
+a.custom_layer                                       # {'name': 'county-extras', 'version': '2026.10.1', 'fingerprint': ...}
+a.to_dict()["provenance"]["custom_layer"]            # the same; None when no layer was used
+
+parser = doorplate.Parser(default_state="FL", custom_layer=layer)
+parser.parse_many(lines)                             # a Parser keeps the layer; parse_many releases the GIL
+```
+
+`custom_layer=` takes a `doorplate.CustomLayer` or the path of a layer folder (loaded on the spot, so load once and pass the
+object when you call often). It is accepted by `Parser`, `parse`, `parse_fields`, `parse_many`, `parse_fields_many`, `tag`,
+`parse_tokens`, `address_type`, and by `doorplate.pandas.parse_column`, `doorplate.polars.parse_column`, and
+`doorplate.duckdb.register` and `parse_column`. A runnable version is
+[`examples/custom_layer_example.py`](../examples/custom_layer_example.py).
+
+## From Rust
 
 ```rust
 use doorplate::{CustomLayer, LayerSources, ParseOptions, Parser};
@@ -182,7 +251,8 @@ assert_eq!(a.diagnostics.custom_layer.map(|l| l.name), Some("county"));
 ```
 
 Enable the feature: `doorplate = { version = "...", features = ["custom-layer"] }`. It adds one dependency, the `toml` parser; the
-default build has none. The core takes text, so you read the files yourself (`LayerSources` has `aliases`, `overrides`, `places` and `zips`; the command line and Python will read a folder).
+default build has none. `CustomLayer::from_sources` takes the text of the files (`LayerSources` has `aliases`, `overrides`, `places` and `zips`);
+`CustomLayer::from_dir(path)` reads a folder, as the command line and Python do, and `CustomLayer::counts()` summarizes one.
 A loaded layer lives for the rest of the process (its strings are leaked once, and loading the same text again returns the
 same layer), so load it once and reuse it.
 
