@@ -39,6 +39,10 @@ toml = { version = "0.8", default-features = false, features = ["parse"], option
 [build-dependencies]
 toml = { version = "0.8", default-features = false, features = ["parse"] }
 
+# docs.rs builds the documentation with every feature, so the custom layer and the corpus runner show.
+[package.metadata.docs.rs]
+all-features = true
+
 [dev-dependencies]
 # The corpus test needs the `corpus` feature; enabling it through a
 # self-dev-dependency keeps a plain `cargo test` running it.

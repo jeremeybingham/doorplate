@@ -23,6 +23,8 @@ change to what an input produces needs a new key version.
 
 - **A documentation site** (#107, phase 1, docs only): `mkdocs.yml`, `.readthedocs.yaml` and pinned `docs/requirements.txt` build the pages of `docs/` with MkDocs and the Material theme for Read the Docs; links from a page to a repository file are rewritten to GitHub in the site only (`tools/docs/links.py`), and a CI job builds the site with `--strict`.
 
+- **The Python and command-line reference** (#107, phase 2, docs only): `docs/python-api.md` is generated with `mkdocstrings` from the type stubs (`__init__.pyi` now has a docstring on every public function, class, method and property, taken from the Rust doc comments; the `Military` kinds were corrected to CPR, OPC, PSC, UPR and UNIT), so it describes `main` and needs no build of the extension; `docs/cli.md` lists the commands, options and exit codes. `pytest tools/docs` fails when a public name or a CLI option is missing from the pages. docs.rs builds the Rust API with all features.
+
 - **Review tool v2: a comparison mode** (#132, tooling only): `tools/review/compare_sample.py` samples a real source, parses each row
   with doorplate and usaddress, and queues the disagreements (silent ones first, then give-ups, then a control) for a person to judge
   as doorplate right, usaddress right, both right or both wrong; the page shows both parses side by side, and `export.py --table`

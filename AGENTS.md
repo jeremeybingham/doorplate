@@ -51,7 +51,10 @@ same change (a rule, a key, a warning code, an API or CLI option, a figure, the 
 the build commands all have related pages). When you add, rename or remove a page, update
 the index and the table above, and the navigation in `mkdocs.yml` when the page is in `docs/` (the documentation
 site is built on Read the Docs; CI runs `pip install -r docs/requirements.txt && mkdocs build --strict`, which fails on a
-broken link, a missing anchor or a page that is in `docs/` but not in the nav).
+broken link, a missing anchor or a page that is in `docs/` but not in the nav). The Python reference
+(`docs/python-api.md`) is generated from the docstrings in `crates/doorplate-py/python/doorplate/__init__.pyi`, so a new
+Python name gets a docstring there and a `:::` entry on that page, and a new CLI option gets a line in `docs/cli.md`;
+`pytest tools/docs` checks both.
 
 ## Build and test
 

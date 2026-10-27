@@ -250,7 +250,7 @@ impl PyParsedAddress {
         self.inner.general_delivery
     }
 
-    /// `{"kind": "PSC" | "CMR" | "UNIT" | ..., "number", "box"}`, or `None`.
+    /// `{"kind": "CPR" | "OPC" | "PSC" | "UPR" | "UNIT", "number", "box"}`, or `None`.
     #[getter]
     fn military<'py>(&self, py: Python<'py>) -> PyResult<Option<Bound<'py, PyDict>>> {
         dict_or_none(
