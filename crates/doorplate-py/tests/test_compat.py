@@ -1,9 +1,8 @@
 """`doorplate.compat`, the usaddress-shaped module (#36). Addresses are invented. These tests
 need no usaddress; `test_usaddress_compat.py` compares with it when it is installed."""
-import pytest
-
 import doorplate
 import doorplate.compat as usaddress
+import pytest
 
 TEXT = "123 N Main St Apt 4, Miami FL 33101"
 TWO_UNITS = "123 Main St Apt 4 Apt 5, Miami FL 33101"

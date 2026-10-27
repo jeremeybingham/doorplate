@@ -69,7 +69,7 @@ def parse(
     address_string: str,
     *,
     default_state: str | None = None,
-    custom_layer: "CustomLayer | str | os.PathLike[str] | None" = None,
+    custom_layer: CustomLayer | str | os.PathLike[str] | None = None,
 ) -> list[tuple[str, str | None]]:
     """`usaddress.parse`: `[(token, label)]`. A token the parser did not place has the
     label `None`. Blank input gives `[]`."""
@@ -85,7 +85,7 @@ def tag(
     *,
     strict: bool = False,
     default_state: str | None = None,
-    custom_layer: "CustomLayer | str | os.PathLike[str] | None" = None,
+    custom_layer: CustomLayer | str | os.PathLike[str] | None = None,
 ) -> tuple[OrderedDict[str, str], str]:
     """`usaddress.tag`: `(OrderedDict of label -> joined text, type)`, the type being
     `"Street Address"`, `"PO Box"` or `"Ambiguous"` (no `"Intersection"`: not modeled).
