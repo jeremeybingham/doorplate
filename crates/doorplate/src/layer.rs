@@ -18,8 +18,9 @@
 
 use std::collections::{HashMap, HashSet};
 
+use crate::lexicon::MatchKind;
 use crate::lexicon::{HighwayPrefix, Lookup, Special};
-use crate::types::StreetSuffix;
+use crate::types::{Place, StreetSuffix};
 use crate::types::{StateCode, UnitType};
 use crate::Directional;
 
@@ -74,6 +75,22 @@ pub(crate) struct Layer {
     /// `STATE|KEY` -> the highway prefix a spelling is read as in that state.
     pub(crate) state_highway: HashMap<String, Lookup<HighwayPrefix>>,
     pub(crate) words: WordLists,
+    /// The layer's places, in file order.
+    pub(crate) places: Vec<Place>,
+    /// `STATE|key` of a place name or spelling -> its index in `places` and how it was spelled.
+    pub(crate) place_index: HashMap<String, (usize, MatchKind)>,
+    /// The keys of the places' standard names, without the `STATE|`.
+    pub(crate) place_any: HashSet<String>,
+    /// `STATE|key` of the counties the places name.
+    pub(crate) counties: HashSet<String>,
+    pub(crate) zips: HashMap<String, LayerZip>,
+}
+
+/// A ZIP the layer adds: its main place and the places it shares.
+#[derive(Debug)]
+pub(crate) struct LayerZip {
+    pub(crate) main: Place,
+    pub(crate) shared: &'static [Place],
 }
 
 /// The tagger's word lists a layer may add to (`data/special.toml`).

@@ -201,3 +201,17 @@ new dependency, `toml`): `CustomLayer` (`from_sources`, `info`), `LayerSources` 
 | Conflicts | A shipped spelling or word, a duplicate, an unknown row, an unknown key and a missing `evidence` are load errors, all listed together. Only `overrides.toml` replaces a base reading, and not one the shipped state data already gives |
 | Provenance | `Diagnostics::custom_layer` carries the name, version and an FNV-1a 64 fingerprint of the files' bytes; it is `None` without a layer |
 | A layer is not "state data" | It does not turn on `has_state_data`, so it does not enable the ZIP-city mismatch warning for a state |
+
+### Part 2: places and ZIPs (#3)
+
+`LayerSources::places` and `::zips` (additive; `LayerSources` is `#[non_exhaustive]`). `Lexicons::place`, `is_place`, `is_county`,
+`zip_places` and `places` see a layer's places, counties and ZIPs after the shipped ones. Decisions (the implementer's):
+
+| Question | Decision |
+|---|---|
+| File format | Tab-separated with a header, columns in any order; `places.tsv`: `state`, `name`, `evidence` required, `county`, `kind`, `variants` optional; `zips.tsv`: `zip`, `state`, `place`, `evidence` required, `shared` optional. The state is a column because a layer, unlike a state folder, can span states |
+| Place keys | A layer place is keyed with the layer's own suffix and directional spellings, the way a lookup computes it, so a layer alias (`HGTZ` as `HEIGHTS`) works inside a place name |
+| Conflicts | A key the national list or the shipped state data already has is an error, as is a ZIP the shipped list has; the layer adds, never replaces |
+| ZIP places | A ZIP names its main place (from the national list, the shipped state data or the layer) and optional shared places; `ZipPlaces` now holds either shipped rows or a layer's places |
+| State data | Still not created by a layer: `zip_city_mismatch` is checked only for states with shipped state data |
+| Place length | A name longer than `MAX_PLACE_WORDS` is an error, because the tokenizer would never find it |

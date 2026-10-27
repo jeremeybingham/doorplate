@@ -17,8 +17,9 @@ change to what an input produces needs a new key version.
   entry, and every problem is listed. `ParseOptions::custom_layer` puts a layer on a `Parser`, and every parse reports it in
   `Diagnostics::custom_layer` (name, version, content fingerprint). A layer can change a key, so stored keys need a fixed layer
   ([`docs/key-format.md`](docs/key-format.md)). Parsing without a layer is unchanged: identical keys, USPS lines and warnings on
-  100,000 sampled rows, and the same speed (about 108,000 parses per second on both). Places, ZIPs, the command line and Python follow in
-  the next parts of #3.
+  100,000 sampled rows, and the same speed (about 108,000 parses per second on both). The layer also takes places (with their misspellings and county) and ZIPs (`places.tsv`, `zips.tsv`; a ZIP names its main and shared
+  places, so the zip-city check and the state-from-ZIP rule use it). Parsing without a layer is unchanged on 100,000 sampled rows (same keys,
+  USPS lines, last lines and warnings; the same speed). The command line and Python follow in the next parts of #3.
 
 - **`doorplate anonymize`, `doorplate::Anonymizer` and `doorplate.Anonymizer`** (#105, additive, no key change): rewrites
   address-like text so it can be shared, even text that does not parse. Digit runs become other digits of the same length,

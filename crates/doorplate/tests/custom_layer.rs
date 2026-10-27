@@ -287,3 +287,178 @@ fn a_state_scoped_highway_spelling_is_read_in_that_state_only() {
     let oh = p.parse("9100 RM 1960, Dayton, OH 45402").unwrap();
     assert!(oh.highway.is_none());
 }
+
+// ---- places and ZIPs ----
+
+const PLACES: &str = "state\tname\tcounty\tkind\tvariants\tevidence\n\
+FL\tQUINCEWOOD HEIGHTS\tZEPHYR\tplace\tQUINCEWOD HEIGHTS;QUINCEWOODD HEIGHTS\tinvented for the test\n\
+FL\tBAYVIEW MILLS\t\tmunicipality\t\tinvented for the test\n";
+const ZIPS: &str = "zip\tstate\tplace\tshared\tevidence\n\
+33999\tFL\tQUINCEWOOD HEIGHTS\tBAYVIEW MILLS\tinvented for the test\n";
+
+fn places_layer() -> CustomLayer {
+    CustomLayer::from_sources(&LayerSources::new(LAYER).places(PLACES).zips(ZIPS)).unwrap()
+}
+
+#[test]
+fn a_layer_place_is_found_and_its_spellings_are_variants() {
+    use doorplate::Lexicons;
+    let _ = Lexicons::builtin();
+    let p = parser(places_layer());
+    let a = p.parse("12 Oak St, Quincewood Heights, FL 33999").unwrap();
+    assert_eq!(a.city.as_deref(), Some("QUINCEWOOD HEIGHTS"));
+    assert_eq!(
+        a.place.as_ref().map(|m| m.place.name()),
+        Some("QUINCEWOOD HEIGHTS")
+    );
+    assert_eq!(a.place.as_ref().map(|m| m.place.county()), Some("ZEPHYR"));
+    // A misspelling in the layer's variants resolves to the place.
+    let b = p.parse("12 Oak St, Quincewod Heights, FL 33999").unwrap();
+    assert_eq!(
+        b.place.as_ref().map(|m| m.place.name()),
+        Some("QUINCEWOOD HEIGHTS")
+    );
+    // Without the layer the place is unknown.
+    let base = Parser::new()
+        .parse("12 Oak St, Quincewood Heights, FL 33999")
+        .unwrap();
+    assert!(base.place.is_none());
+}
+
+#[test]
+fn a_layer_zip_names_its_place_and_state() {
+    // A ZIP the shipped list lacks: the layer gives the state and the place for an address with no state.
+    let p = parser(places_layer());
+    let a = p.parse("12 Oak St, Quincewood Heights 33999").unwrap();
+    assert_eq!(a.zip5.as_deref(), Some("33999"));
+    assert_eq!(a.city.as_deref(), Some("QUINCEWOOD HEIGHTS"));
+    let z = doorplate::Lexicons::builtin();
+    assert!(
+        z.zip_places("33999").is_none(),
+        "the shipped list has no 33999"
+    );
+}
+
+#[test]
+fn a_layer_place_key_follows_the_layers_suffix_spellings() {
+    let aliases = "[[suffix]]\nabbr = \"HTS\"\nspellings = [\"HGTZ\"]\nevidence = \"x\"\n";
+    let places = "state\tname\tevidence\nFL\tMILLER HGTZ\tinvented\n";
+    let l = CustomLayer::from_sources(&LayerSources::new(LAYER).aliases(aliases).places(places))
+        .unwrap();
+    // HGTZ is HEIGHTS in this layer, so the place is found by either spelling.
+    let a = parser(l)
+        .parse("12 Oak St, Miller Heights, FL 33101")
+        .unwrap();
+    assert_eq!(
+        a.place.as_ref().map(|m| m.place.name()),
+        Some("MILLER HGTZ")
+    );
+}
+
+#[test]
+fn a_layer_zip_lists_its_shared_places_for_the_zip_city_check() {
+    let p = parser(places_layer());
+    let codes = |t: &str| {
+        p.parse(t)
+            .unwrap()
+            .diagnostics
+            .warnings
+            .iter()
+            .map(|w| w.code())
+            .collect::<Vec<_>>()
+    };
+    // The main place and the shared place agree with the ZIP; Miami does not.
+    assert!(!codes("12 Oak St, Quincewood Heights, FL 33999").contains(&"zip_city_mismatch"));
+    assert!(!codes("12 Oak St, Bayview Mills, FL 33999").contains(&"zip_city_mismatch"));
+    assert!(codes("12 Oak St, Miami, FL 33999").contains(&"zip_city_mismatch"));
+}
+
+#[test]
+fn place_and_zip_conflicts_and_mistakes_are_rejected() {
+    let both = |places: &str, zips: &str| {
+        problems(
+            &LayerSources::new(LAYER)
+                .places(Box::leak(places.to_string().into_boxed_str()))
+                .zips(Box::leak(zips.to_string().into_boxed_str())),
+        )
+    };
+    // A place the national list already has.
+    let p = both(
+        "state\tname\tevidence\nFL\tMIAMI\tx\n",
+        "zip\tstate\tplace\tevidence\n",
+    );
+    assert!(
+        p.iter()
+            .any(|m| m.contains("places.tsv line 2")
+                && m.contains("already in the national place list")),
+        "{p:?}"
+    );
+    // A ZIP the shipped list already has.
+    let p = both(
+        "state\tname\tevidence\nFL\tAAA TOWN\tx\n",
+        "zip\tstate\tplace\tevidence\n33101\tFL\tAAA TOWN\tx\n",
+    );
+    assert!(
+        p.iter()
+            .any(|m| m.contains("33101 is already in the shipped ZIP list")),
+        "{p:?}"
+    );
+    // A ZIP naming an unknown place, a bad ZIP, a bad state, a missing evidence, a duplicate.
+    let p = both(
+        "state\tname\tcounty\tkind\tevidence\nFL\tAAA TOWN\t\tvillage\tx\nZZ\tBBB TOWN\t\t\tx\nFL\tCCC TOWN\t\t\t\nFL\tDDD TOWN\t\t\tx\nFL\tDDD TOWN\t\t\tx\n",
+        "zip\tstate\tplace\tevidence\n339\tFL\tDDD TOWN\tx\n33998\tFL\tNOWHERE\tx\n",
+    );
+    let j = p.join("\n");
+    assert!(
+        j.contains("`kind` is municipality, place or subdivision"),
+        "{j}"
+    );
+    assert!(j.contains("\"ZZ\" is not the code of a US state"), "{j}");
+    assert!(j.contains("needs an `evidence`"), "{j}");
+    assert!(j.contains("is the same place as one listed earlier"), "{j}");
+    assert!(j.contains("`zip` \"339\" is not five digits"), "{j}");
+    assert!(j.contains("the place \"NOWHERE\" is not in"), "{j}");
+}
+
+#[test]
+fn a_variant_that_keys_like_the_name_is_rejected_with_a_clear_message() {
+    let p = problems(
+        &LayerSources::new(LAYER)
+            .places("state\tname\tvariants\tevidence\nFL\tQUINCEWOOD HEIGHTS\tQUINCEWOOD HTS\tx\n"),
+    );
+    assert!(
+        p[0].contains("abbreviations such as HTS for HEIGHTS are already equal"),
+        "{p:?}"
+    );
+}
+
+#[test]
+fn tsv_headers_are_checked() {
+    let p = problems(&LayerSources::new(LAYER).places("state\tname\n"));
+    assert!(p[0].contains("no `evidence` column"), "{p:?}");
+    let p = problems(&LayerSources::new(LAYER).places("state\tname\tevidence\tcolour\n"));
+    assert!(p[0].contains("unknown column `colour`"), "{p:?}");
+    let p = problems(&LayerSources::new(LAYER).zips("\n# nothing\n"));
+    assert!(
+        p[0].contains("empty; the header line names the columns"),
+        "{p:?}"
+    );
+    let p = problems(&LayerSources::new(LAYER).places("state\tname\tevidence\nFL\tAAA\n"));
+    assert!(p[0].contains("2 columns, the header has 3"), "{p:?}");
+}
+
+#[test]
+fn a_place_name_longer_than_the_lookup_reads_is_rejected() {
+    let p = problems(
+        &LayerSources::new(LAYER)
+            .places("state\tname\tevidence\nFL\tONE TWO THREE FOUR FIVE SIX SEVEN EIGHT\tx\n"),
+    );
+    assert!(p[0].contains("more than"), "{p:?}");
+}
+
+#[test]
+fn the_fingerprint_follows_places_and_zips() {
+    let a = CustomLayer::from_sources(&LayerSources::new(LAYER).places(PLACES)).unwrap();
+    let b = CustomLayer::from_sources(&LayerSources::new(LAYER).places(PLACES).zips(ZIPS)).unwrap();
+    assert_ne!(a.info().fingerprint, b.info().fingerprint);
+}

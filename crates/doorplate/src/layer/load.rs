@@ -8,11 +8,12 @@ use std::sync::{Mutex, OnceLock};
 
 use toml::{Table, Value};
 
-use super::{CustomLayer, Layer, LayerInfo, WordLists};
+use super::{CustomLayer, Layer, LayerInfo, LayerZip, WordLists};
 use crate::lexicon::{
     normalize_key, HighwayPrefix, Lexicons, Lookup, MatchKind, Special, MAX_FORM_WORDS,
+    MAX_PLACE_WORDS,
 };
-use crate::types::{Directional, StateCode, StreetSuffix, UnitType};
+use crate::types::{Directional, Place, PlaceKind, StateCode, StateKind, StreetSuffix, UnitType};
 
 /// The text of a layer's files. Only `layer` (the `layer.toml`) is required.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
@@ -24,6 +25,10 @@ pub struct LayerSources<'a> {
     pub aliases: Option<&'a str>,
     /// `overrides.toml`: state-scoped readings of a spelling.
     pub overrides: Option<&'a str>,
+    /// `places.tsv`: places (and their misspellings) to add.
+    pub places: Option<&'a str>,
+    /// `zips.tsv`: ZIPs to add, each naming its place.
+    pub zips: Option<&'a str>,
 }
 
 impl<'a> LayerSources<'a> {
@@ -46,6 +51,20 @@ impl<'a> LayerSources<'a> {
     #[must_use]
     pub fn overrides(mut self, text: &'a str) -> Self {
         self.overrides = Some(text);
+        self
+    }
+
+    /// Add the text of `places.tsv`.
+    #[must_use]
+    pub fn places(mut self, text: &'a str) -> Self {
+        self.places = Some(text);
+        self
+    }
+
+    /// Add the text of `zips.tsv`.
+    #[must_use]
+    pub fn zips(mut self, text: &'a str) -> Self {
+        self.zips = Some(text);
         self
     }
 }
@@ -115,6 +134,12 @@ impl CustomLayer {
         if let Some(t) = &overrides {
             read_overrides(t, &mut data, &mut errs);
         }
+        if let Some(t) = src.places {
+            read_places(t, &mut data, &mut errs);
+        }
+        if let Some(t) = src.zips {
+            read_zips(t, &mut data, &mut errs);
+        }
         let Some((name, version)) = meta else {
             return Err(errs.into_error());
         };
@@ -163,6 +188,8 @@ fn fingerprint(src: &LayerSources<'_>) -> String {
         ("layer.toml", Some(src.layer)),
         ("aliases.toml", src.aliases),
         ("overrides.toml", src.overrides),
+        ("places.tsv", src.places),
+        ("zips.tsv", src.zips),
     ] {
         if let Some(t) = text {
             feed(label.as_bytes());
@@ -338,6 +365,11 @@ struct Data {
     state_suffix: HashMap<String, Lookup<StreetSuffix>>,
     state_highway: HashMap<String, Lookup<HighwayPrefix>>,
     words: WordLists,
+    places: Vec<Place>,
+    place_index: HashMap<String, (usize, MatchKind)>,
+    place_any: HashSet<String>,
+    counties: HashSet<String>,
+    zips: HashMap<String, LayerZip>,
 }
 
 impl Data {
@@ -353,6 +385,11 @@ impl Data {
             state_suffix: self.state_suffix,
             state_highway: self.state_highway,
             words: self.words,
+            places: self.places,
+            place_index: self.place_index,
+            place_any: self.place_any,
+            counties: self.counties,
+            zips: self.zips,
         }
     }
 }
@@ -744,5 +781,340 @@ fn read_overrides(t: &Table, d: &mut Data, errs: &mut Errors) {
                 format!("{spelling:?} in {state} is already overridden by another entry"),
             );
         }
+    }
+}
+
+// ---------------------------------------------------------------------------------------------
+// Places and ZIPs (TSV)
+
+/// The rows of a TSV file with a header: a column named in `required` must be there, one in
+/// `optional` may be; any other column is an error. Blank lines and `#` lines are skipped.
+/// Each row is a map from column name to its trimmed text, with the context for messages.
+fn read_tsv(
+    file: &str,
+    text: &str,
+    required: &[&str],
+    optional: &[&str],
+    errs: &mut Errors,
+) -> Vec<(String, HashMap<String, String>)> {
+    let mut lines = text
+        .lines()
+        .enumerate()
+        .filter(|(_, l)| !l.trim().is_empty() && !l.trim_start().starts_with('#'));
+    let Some((_, header)) = lines.next() else {
+        errs.add(
+            file,
+            format!(
+                "empty; the header line names the columns ({})",
+                required.join(", ")
+            ),
+        );
+        return Vec::new();
+    };
+    let cols: Vec<&str> = header.split('\t').map(str::trim).collect();
+    let mut ok = true;
+    for c in &cols {
+        if !required.contains(c) && !optional.contains(c) {
+            errs.add(
+                file,
+                format!(
+                    "unknown column `{c}` (columns: {})",
+                    required
+                        .iter()
+                        .chain(optional)
+                        .copied()
+                        .collect::<Vec<_>>()
+                        .join(", ")
+                ),
+            );
+            ok = false;
+        }
+    }
+    for r in required {
+        if !cols.contains(r) {
+            errs.add(
+                file,
+                format!("the header has no `{r}` column (separate columns with tabs)"),
+            );
+            ok = false;
+        }
+    }
+    if !ok {
+        return Vec::new();
+    }
+    let mut out = Vec::new();
+    for (n, line) in lines {
+        let ctx = format!("{file} line {}", n + 1);
+        let cells: Vec<&str> = line.split('\t').collect();
+        if cells.len() != cols.len() {
+            errs.add(
+                &ctx,
+                format!("{} columns, the header has {}", cells.len(), cols.len()),
+            );
+            continue;
+        }
+        let row = cols
+            .iter()
+            .zip(cells)
+            .map(|(c, v)| ((*c).to_string(), v.trim().to_string()))
+            .collect();
+        out.push((ctx, row));
+    }
+    out
+}
+
+fn need_row_evidence(ctx: &str, row: &HashMap<String, String>, errs: &mut Errors) {
+    if !matches!(row.get("evidence"), Some(e) if !e.is_empty()) {
+        errs.add(ctx, "needs an `evidence` (where the place was seen)");
+    }
+}
+
+/// A state code of a state, DC or territory (not a military "state").
+fn real_state(base: &Lexicons, ctx: &str, code: &str, errs: &mut Errors) -> Option<&'static str> {
+    match base.state_by_code(code) {
+        Some(l) if l.value.kind() != StateKind::Military => Some(l.value.code()),
+        _ => {
+            errs.add(
+                ctx,
+                format!("{code:?} is not the code of a US state, DC or territory"),
+            );
+            None
+        }
+    }
+}
+
+/// The place-name comparison key with the layer's own suffix and directional spellings, the way
+/// `Lexicons` computes it when the layer is in use.
+fn place_key_of(d: &Data, name: &str) -> String {
+    let base = Lexicons::builtin();
+    base.place_key_with(name, |w| {
+        let k = normalize_key(w);
+        base.directional(w)
+            .or_else(|| d.directional.get(&k).copied())
+            .map(|l| l.value.name())
+            .or_else(|| {
+                base.suffix(w)
+                    .or_else(|| d.suffix.get(&k).copied())
+                    .map(|l| l.value.name())
+            })
+    })
+}
+
+fn place_name(ctx: &str, raw: &str, what: &str, errs: &mut Errors) -> Option<String> {
+    let key = normalize_key(raw);
+    if key.is_empty() || !key.chars().any(char::is_alphabetic) {
+        errs.add(ctx, format!("{what} {raw:?} has no letters"));
+        return None;
+    }
+    if key.split(' ').count() > MAX_PLACE_WORDS {
+        errs.add(
+            ctx,
+            format!("{what} {raw:?} has more than {MAX_PLACE_WORDS} words, the longest the place lookup reads"),
+        );
+        return None;
+    }
+    Some(key)
+}
+
+fn read_places(text: &str, d: &mut Data, errs: &mut Errors) {
+    let file = "places.tsv";
+    let base = Lexicons::builtin();
+    let rows = read_tsv(
+        file,
+        text,
+        &["state", "name", "evidence"],
+        &["county", "kind", "variants"],
+        errs,
+    );
+    for (ctx, row) in &rows {
+        need_row_evidence(ctx, row, errs);
+        let Some(state) = real_state(&base, ctx, &row["state"], errs) else {
+            continue;
+        };
+        let Some(name) = place_name(ctx, &row["name"], "the name", errs) else {
+            continue;
+        };
+        let kind = match row.get("kind").map(String::as_str) {
+            None | Some("" | "place") => PlaceKind::Place,
+            Some("municipality") => PlaceKind::Municipality,
+            Some("subdivision") => PlaceKind::Subdivision,
+            Some(other) => {
+                errs.add(
+                    ctx,
+                    format!("`kind` is municipality, place or subdivision, not {other:?}"),
+                );
+                continue;
+            }
+        };
+        let county = match row.get("county").map(String::as_str) {
+            None | Some("") => None,
+            Some(c) => match place_name(ctx, c, "the county", errs) {
+                Some(c) => Some(c),
+                None => continue,
+            },
+        };
+        let key = format!("{state}|{}", place_key_of(d, &name));
+        // (key, how it is spelled, the text as written, for messages)
+        let mut keys = vec![(key, MatchKind::Standard, row["name"].clone())];
+        for v in row
+            .get("variants")
+            .map_or("", String::as_str)
+            .split(';')
+            .map(str::trim)
+            .filter(|v| !v.is_empty())
+        {
+            if let Some(vn) = place_name(ctx, v, "the variant", errs) {
+                keys.push((
+                    format!("{state}|{}", place_key_of(d, &vn)),
+                    MatchKind::Variant,
+                    v.to_string(),
+                ));
+            }
+        }
+        let mut clash = false;
+        for (i, (k, _, raw)) in keys.iter().enumerate() {
+            if base.base_place_by_key(k).is_some() {
+                errs.add(
+                    ctx,
+                    format!("{raw:?} is already in the national place list or the shipped {state} data; a layer only adds places"),
+                );
+                clash = true;
+            } else if d.place_index.contains_key(k) {
+                errs.add(ctx, format!("{raw:?} is the same place as one listed earlier (case, punctuation and abbreviations do not make a different place)"));
+                clash = true;
+            } else if keys[..i].iter().any(|(o, _, _)| o == k) {
+                errs.add(ctx, format!("{raw:?} matches the same as the name or another variant (case, punctuation and abbreviations such as HTS for HEIGHTS are already equal); drop it"));
+                clash = true;
+            }
+        }
+        if clash {
+            continue;
+        }
+        let idx = d.places.len();
+        d.places.push(Place {
+            state,
+            name: leak(name),
+            county: county.as_deref().map_or("", |c| leak(c.to_string())),
+            kind,
+        });
+        for (k, mk, _) in keys {
+            if mk == MatchKind::Standard {
+                d.place_any.insert(k[3..].to_string());
+            }
+            d.place_index.insert(k, (idx, mk));
+        }
+        if let Some(c) = county {
+            d.counties
+                .insert(format!("{state}|{}", place_key_of(d, &c)));
+        }
+    }
+}
+
+/// A place of `state` by name, among the layer's places and the shipped ones.
+fn find_place_of(d: &Data, state: &str, name: &str) -> Option<Place> {
+    let key = format!("{state}|{}", place_key_of(d, name));
+    match d.place_index.get(&key) {
+        Some(&(i, _)) => d.places.get(i).copied(),
+        None => Lexicons::builtin().base_place_by_key(&key),
+    }
+}
+
+fn read_zips(text: &str, d: &mut Data, errs: &mut Errors) {
+    let file = "zips.tsv";
+    let base = Lexicons::builtin();
+    let rows = read_tsv(
+        file,
+        text,
+        &["zip", "state", "place", "evidence"],
+        &["shared"],
+        errs,
+    );
+    for (ctx, row) in &rows {
+        need_row_evidence(ctx, row, errs);
+        let zip = &row["zip"];
+        if zip.len() != 5 || !zip.bytes().all(|b| b.is_ascii_digit()) {
+            errs.add(ctx, format!("`zip` {zip:?} is not five digits"));
+            continue;
+        }
+        if base.has_zip(zip) {
+            errs.add(
+                ctx,
+                format!("{zip} is already in the shipped ZIP list; a layer only adds ZIPs"),
+            );
+            continue;
+        }
+        if d.zips.contains_key(zip.as_str()) {
+            errs.add(ctx, format!("{zip} is listed twice"));
+            continue;
+        }
+        let Some(state) = real_state(&base, ctx, &row["state"], errs) else {
+            continue;
+        };
+        let Some(main) = find_place_of(d, state, &row["place"]) else {
+            errs.add(
+                ctx,
+                format!("the place {:?} is not in the national list, the shipped {state} data or this layer's places.tsv", row["place"]),
+            );
+            continue;
+        };
+        let mut shared = Vec::new();
+        let mut bad = false;
+        for name in row
+            .get("shared")
+            .map_or("", String::as_str)
+            .split(';')
+            .map(str::trim)
+            .filter(|n| !n.is_empty())
+        {
+            match find_place_of(d, state, name) {
+                Some(p) if p != main && !shared.contains(&p) => shared.push(p),
+                Some(_) => {
+                    errs.add(ctx, format!("the shared place {name:?} repeats the main place or another shared place"));
+                    bad = true;
+                }
+                None => {
+                    errs.add(
+                        ctx,
+                        format!("the shared place {name:?} is not a known place of {state}"),
+                    );
+                    bad = true;
+                }
+            }
+        }
+        if !bad {
+            let shared: &'static [Place] = Box::leak(shared.into_boxed_slice());
+            d.zips.insert(zip.clone(), LayerZip { main, shared });
+        }
+    }
+}
+
+#[cfg(test)]
+#[allow(clippy::unwrap_used)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn the_lexicon_sees_the_layer_places_zips_and_counties() {
+        let layer = CustomLayer::from_sources(
+            &LayerSources::new("name = \"t\"\nversion = \"1\"\n")
+                .places("state\tname\tcounty\tevidence\nFL\tQUINCEWOOD HEIGHTS\tZEPHYR\tx\nFL\tBAYVIEW MILLS\t\tx\n")
+                .zips("zip\tstate\tplace\tshared\tevidence\n33999\tFL\tQUINCEWOOD HEIGHTS\tBAYVIEW MILLS\tx\n"),
+        )
+        .unwrap();
+        let lex = Lexicons::with_layer(layer);
+        let base = Lexicons::builtin();
+        assert!(lex.is_place("Quincewood Hts") && !base.is_place("Quincewood Hts"));
+        assert!(lex.is_county("FL", "Zephyr County") && !base.is_county("FL", "Zephyr"));
+        let names: Vec<_> = lex.places().map(|p| p.name()).collect();
+        assert!(names.ends_with(&["QUINCEWOOD HEIGHTS", "BAYVIEW MILLS"]));
+        assert_eq!(base.places().count() + 2, lex.places().count());
+        let z = lex.zip_places("33999").unwrap();
+        assert_eq!(z.main().name(), "QUINCEWOOD HEIGHTS");
+        assert_eq!(
+            z.shared().map(|p| p.name()).collect::<Vec<_>>(),
+            ["BAYVIEW MILLS"]
+        );
+        assert!(z.contains(&lex.place("FL", "Bayview Mills").unwrap().value));
+        assert!(base.zip_places("33999").is_none());
     }
 }
