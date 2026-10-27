@@ -88,3 +88,30 @@ def test_a_repeated_label_is_joined_not_raised():
     assert kind == "Street Address"
     assert ours["OccupancyType"] == "Apt Ste"
     assert uap.parse(s).repeated_labels() == ["OccupancyType", "OccupancyIdentifier"]
+
+
+@pytest.mark.skipif(not FILES, reason="the vendored usaddress test files are not here")
+def test_compat_module_matches_the_top_level_functions_and_usaddress_errors():
+    """`doorplate.compat.tag` equals `doorplate.tag` (as a dict), and `strict=True` never raises
+    where usaddress does not. Recorded: on the 8,108 in-scope strings usaddress raises
+    RepeatedLabelError on 5 and doorplate on none of them (it labels those differently)."""
+    import doorplate.compat as compat
+
+    ours_only = usaddress_only = 0
+    for s in strings():
+        ours, our_type = compat.tag(s)
+        assert (dict(ours), our_type) == uap.tag(s)
+        try:
+            usaddress.tag(s)
+            theirs_raises = False
+        except usaddress.RepeatedLabelError:
+            theirs_raises = True
+        try:
+            compat.tag(s, strict=True)
+            ours_raises = False
+        except compat.RepeatedLabelError:
+            ours_raises = True
+        ours_only += ours_raises and not theirs_raises
+        usaddress_only += theirs_raises and not ours_raises
+    assert ours_only == 0
+    assert usaddress_only <= 10, usaddress_only

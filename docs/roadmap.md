@@ -69,7 +69,7 @@ Two trackers set the order ([`backlog.md`](backlog.md)). Shipped so far in 0.4.x
   - *Tooling:* an anonymizing tool for sharing messy data (#105, done), less noise in the harness's scorers (#112), the
     review tool's comparison mode against usaddress (#132) and per-state street-pattern counts (#53, done).
   - *Documentation:* a searchable, versioned documentation site (#107).
-  - *Extensibility:* the custom layer (#3), a columnar result (#24) and a usaddress-shaped module (#36).
+  - *Extensibility:* the custom layer (#3), a columnar result (#24, done: columns built in Rust) and a usaddress-shaped module (#36, `doorplate.compat`).
 - **0.5.0 (#201): the `k4`.** The key-changing rules, cut together once the 0.4.x tooling has produced evidence: the
   remaining research from the first review (#131), two bare numbers glued into a unit (#196), the state-dependent
   rules and their reading (#8, #11, #29, #92), with the bare `BAY` warning (#193) riding along.
@@ -93,12 +93,12 @@ Two trackers set the order ([`backlog.md`](backlog.md)). Shipped so far in 0.4.x
   (`NORTH HIGHWAY 71 BUSINESS LOWELL`); a comma after a directional (`3324 N, ANDREWS AVE`); a PO box
   on line 2 beside a street with no number; a unit followed by business words (`STE 903 BLU SPA`);
   and `possibly_truncated` firing on some complete units.
-- **A columnar or Arrow result for DataFrames** (#24), after profiling: reading attributes from Python objects
-  is most of the time in a pandas or Polars pipeline. A Polars expression namespace only if there is demand.
-  Done so far: `to_display()`, `to_long()` and `parse_fields_many`.
+- **A columnar or Arrow result for DataFrames** (#24, closed): the helpers now build their columns in Rust; a public
+  Arrow result and a Polars expression namespace only if there is demand.
+  Done so far: `to_display()`, `to_long()`, `parse_fields_many` and the Rust-built columns.
 - **A second post comparing with usaddress** (#88), once the figures are final. The documentation site (#107) is in 0.4.x.
 - **usaddress compatibility** (#9, decided): the address-structure labels (#35) and a drop-in module
-  (#36) proceed when someone needs them. Recipient and name lines, landmarks and street corners stay
+  (#36, done as `doorplate.compat`) proceed when someone needs them. Recipient and name lines, landmarks and street corners stay
   out of scope; that text goes to `unparsed`.
 - **Tooling:** the 0.4.x items are above; later tooling goes in the `Tooling` milestone (never in a release).
 - **Data and benchmarks:** a benchmark built from a national address source rendered in several styles

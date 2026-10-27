@@ -76,7 +76,8 @@ words. The mapping above goes into the documentation as the reference.
 1. `__all__` lists exactly the names of `_core` that are public: `ParsedAddress`, `ParseError`, `Parser`, `parse`,
    `parse_fields`, `parse_many`, `parse_fields_many`, `parse_tokens`, `tag`, `address_type`, `__version__`. The
    helper modules `doorplate.pandas`, `.polars` and `.duckdb` each export `AVAILABLE_COLUMNS`, `DEFAULT_COLUMNS`
-   and `parse_column` (DuckDB also `register`).
+   and `parse_column` (DuckDB also `register`). `doorplate.compat` is the usaddress-shaped module (`parse`, `tag`,
+   `RepeatedLabelError`; #36); it is not re-exported at the top level.
 2. `ParsedAddress.confidence` is gone in #136; `library_version` and `state_data_version` are properties, also in
    `to_dict()["provenance"]`.
 3. `repeated_labels()` is a method of `ParsedAddress` in Python and of `TaggedAddress` in Rust. It describes the

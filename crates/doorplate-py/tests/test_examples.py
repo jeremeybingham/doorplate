@@ -95,3 +95,11 @@ def test_custom_layer_example(capsys):
     out = capsys.readouterr().out
     assert "suffix=TRL" in out and "place=QUINCEWOOD HEIGHTS" in out
     assert "reported in every parse" in out
+
+
+def test_usaddress_migration_example(capsys):
+    results = run_script("usaddress_migration.py")
+    assert [kind for _, kind in results][:2] == ["Street Address", "PO Box"]
+    out = capsys.readouterr().out
+    assert "strict=True raises: OccupancyType" in out
+    assert "'City': 'Miami'" in out

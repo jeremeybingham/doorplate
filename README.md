@@ -391,7 +391,7 @@ documentation and extensibility; the key-changing rules wait for the release aft
   compares doorplate with usaddress.
 - **Documentation.** A searchable, versioned documentation site.
 - **Extensibility.** A custom layer: your own spellings, places, ZIPs and state-specific readings, loaded at run
-  time without editing the shipped tables; a columnar result for DataFrames; a usaddress-shaped module.
+  time without editing the shipped tables, and a usaddress-shaped module (`doorplate.compat`, in 0.4.x); a columnar result became faster `parse_column`.
 - **0.5.0, a `k4`.** The parser rules that change keys, cut together, once the tooling has produced evidence: the
   state-dependent road conventions, the Florida place gaps, and the rest of the research on real data.
 
@@ -400,7 +400,9 @@ addresses), are in [`docs/roadmap.md`](docs/roadmap.md).
 
 ## Coming from usaddress
 
-The labels are usaddress's, so a pipeline built on them keeps working:
+The labels are usaddress's, so a pipeline built on them keeps working. For a script that only calls `usaddress.parse` and
+`usaddress.tag`, change one import: `import doorplate.compat as usaddress` (label compatibility, not identical output; the
+differences are listed in [`docs/usaddress-compat.md`](docs/usaddress-compat.md)). The same calls under doorplate's own names:
 
 | usaddress | doorplate (Python) |
 |---|---|

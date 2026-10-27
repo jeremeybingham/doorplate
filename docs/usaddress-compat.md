@@ -10,6 +10,31 @@ compare the two. Accuracy and speed numbers are in
 ([`benchmark-suite.md`](benchmark-suite.md)), which scores both libraries on the
 same labeled addresses.
 
+## A drop-in module
+
+```python
+import doorplate.compat as usaddress    # was: import usaddress
+```
+
+`doorplate.compat` (Python) has `parse(s)`, `tag(s, tag_mapping=None)` and `RepeatedLabelError`, so a script that only calls
+those runs with the one import changed ([`examples/usaddress_migration.py`](../examples/usaddress_migration.py)). Decisions
+(issue #36), and where it differs from usaddress:
+
+| | usaddress | `doorplate.compat` |
+|---|---|---|
+| `parse(s)` | a label for every token | `parse_tokens`: a token the parser did not place has the label `None` (code that indexes a dict by label or calls a string method on it needs a guard) |
+| `tag(s)` | `OrderedDict` and `Street Address`, `PO Box`, `Ambiguous` or `Intersection` | the same shape; never `Intersection` (intersections are not modeled: the second street goes to `unparsed`, and `doorplate.parse` raises `intersection_detected`) |
+| A label in two runs | raises `RepeatedLabelError` | joins the runs; `tag(s, strict=True)` raises `RepeatedLabelError` (`original_string`, `parsed_string`, `message`, and `repeated_label(s)`), so existing `try/except` keeps its meaning when asked. On the 8,108 in-scope strings of usaddress's test files usaddress raises on 5 and doorplate on none of them (it labels those differently); the reverse never happens |
+| `tag_mapping` | renames labels | the same; two labels sent to one name are joined when neighbours and a repeat otherwise |
+| Blank input | `[]` and `({}, "Ambiguous")` | the same (the top-level `parse_tokens` and `tag` raise `ParseError`) |
+| `tokenize`, `TAGGER`, `LABELS`, training | present | not provided: there is no model |
+| Extras | | keyword-only `default_state` and `custom_layer` |
+
+The name is `doorplate.compat`, not `doorplate.usaddress`: a module called `usaddress` inside the package would be easy to
+confuse with the real one. Python only; the CLI has `doorplate parse --usaddress` and `--tag`. It is label compatibility, not
+identical output: doorplate is rules plus data, and a different parser disagrees at the edges (see "What differs" below).
+`tests/test_compat.py` checks the module alone and `tests/test_usaddress_compat.py` compares it with usaddress when installed.
+
 ## Output in usaddress's shape
 
 The labels are usaddress's, so a pipeline built on them keeps working:
