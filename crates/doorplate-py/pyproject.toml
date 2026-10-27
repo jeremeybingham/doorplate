@@ -36,7 +36,7 @@ duckdb = ["duckdb>=1.1", "pyarrow>=18"]
 [project.urls]
 Homepage = "https://github.com/jeremeybingham/doorplate"
 Repository = "https://github.com/jeremeybingham/doorplate"
-Documentation = "https://github.com/jeremeybingham/doorplate/blob/main/docs/how-it-works.md"
+Documentation = "https://doorplate.readthedocs.io/"
 Issues = "https://github.com/jeremeybingham/doorplate/issues"
 
 [tool.maturin]

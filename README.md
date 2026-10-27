@@ -389,7 +389,7 @@ documentation and extensibility; the key-changing rules wait for the release aft
 - **Tooling.** Done: `doorplate anonymize` ([docs](docs/anonymizing.md)), so messy data can be shared with its shape and
   not its names, and per-state street-pattern counts. To come: quieter harness scorers and a review tool that
   compares doorplate with usaddress.
-- **Documentation.** A searchable, versioned documentation site.
+- **Documentation.** A searchable documentation site is live (https://doorplate.readthedocs.io/). To come: a Python and command-line reference, and versions from tags.
 - **Extensibility.** A custom layer: your own spellings, places, ZIPs and state-specific readings, loaded at run
   time without editing the shipped tables, and a usaddress-shaped module (`doorplate.compat`, in 0.4.x); a columnar result became faster `parse_column`.
 - **0.5.0, a `k4`.** The parser rules that change keys, cut together, once the tooling has produced evidence: the
@@ -423,6 +423,8 @@ keys, messy lines, `parse_many`, a DataFrame, the CLI), Polars and pandas pipeli
 and small invented sample files.
 
 ## Documentation
+
+The pages below are also a searchable site: **<https://doorplate.readthedocs.io/>** (the same Markdown, built with MkDocs on Read the Docs).
 
 | Page | Contents |
 |---|---|
