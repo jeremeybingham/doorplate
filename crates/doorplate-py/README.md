@@ -252,7 +252,8 @@ parser = doorplate.Parser(default_state="FL", custom_layer=layer)   # also parse
 
 `custom_layer=` takes a `CustomLayer` or a folder path, and works in `doorplate.pandas`/`polars.parse_column` and the DuckDB
 helpers too. **A layer can change a key**: every parse reports it (`custom_layer`, and `to_dict()["provenance"]`), so store the
-`fingerprint` with the keys. The command is `doorplate layer check DIR`. The files, rules and limits are in
+`fingerprint` with the keys. The command is `doorplate layer check DIR`. The files, rules and limits, a demo layer, a template to copy
+and a prompt that has an LLM draft a layer from your misparsed lines are in
 [Custom layers](https://github.com/jeremeybingham/doorplate/blob/main/docs/custom-layers.md).
 
 ## Sharing messy data

@@ -492,3 +492,20 @@ fn corpus_test_can_run_a_corpus_against_a_layer() {
     std::fs::remove_dir_all(&layer).ok();
     std::fs::remove_dir_all(&corpus).ok();
 }
+
+#[test]
+fn the_shipped_demo_and_template_layers_check_ok() {
+    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../examples/layers");
+    for (name, layer) in [
+        ("riverbend-demo", "riverbend-demo 1"),
+        ("template", "my-layer 1"),
+    ] {
+        let dir = root.join(name);
+        let (out, err, code) = cli(&["layer", "check", path(&dir)], "");
+        assert_eq!(code, 0, "{name}: {err}");
+        assert!(
+            out.starts_with(&format!("ok: layer {layer} (fingerprint ")),
+            "{out}"
+        );
+    }
+}

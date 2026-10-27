@@ -1,0 +1,3 @@
+state	name	county	kind	variants	evidence
+# One row per place the national list lacks; variants are separated by ;
+WA	EXAMPLE FORD	RIVERBEND	place	EXMPLE FORD	EXAMPLE: 212 lines in the 2026 export

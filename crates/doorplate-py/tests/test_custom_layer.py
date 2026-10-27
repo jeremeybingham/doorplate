@@ -1,4 +1,6 @@
 """Custom layers (#3) from Python. Every spelling and address here is invented."""
+from pathlib import Path
+
 import pytest
 
 import doorplate
@@ -108,3 +110,47 @@ def test_duckdb_takes_a_layer(layer_dir):
     assert con.sql("select doorplate_parse(a).street_suffix from t").fetchall() == [("TRL",)]
     rel = parse_column(con.table("t"), "a", columns=["street_suffix"], custom_layer=layer_dir, connection=con)
     assert rel.fetchall()[0][-1] == "TRL"
+
+
+# ---- the demo layer, the template and the guide's prompt (part 4) ----
+ROOT = Path(__file__).resolve().parents[3]
+LAYERS = ROOT / "examples" / "layers"
+
+
+def test_the_demo_layer_loads_and_changes_what_it_says():
+    layer = doorplate.load_layer(LAYERS / "riverbend-demo")
+    assert layer.name == "riverbend-demo"
+    assert layer.counts()["places"] == 2 and layer.counts()["ZIPs"] == 1
+    text = "120 Fern Hollow Trayl, Fern Holow, WA 98991"
+    base, a = doorplate.parse(text), doorplate.parse(text, custom_layer=layer)
+    assert base.street_suffix is None and base.place is None
+    assert a.street_suffix == "TRL" and a.place["name"] == "FERN HOLLOW"
+    assert a.key() == "k3:S|120||FERN HOLLOW|TRL||WA|98991"
+    assert "non_standard_abbreviation" in a.warnings
+    lane = doorplate.parse("5 Pine Lanne, Lantrn Port, WA", custom_layer=layer)
+    assert lane.street_suffix == "LN" and "non_standard_abbreviation" not in lane.warnings  # kind = "variant"
+    unit = doorplate.parse("88 Nrth Lantern Rd Sute 4, Lantern Port WA 98991", custom_layer=layer)
+    assert (unit.street_dir_prefix, unit.unit_type, unit.unit_number) == ("N", "STE", "4")
+    assert doorplate.parse("9 Oak St 98991 Riverbend Territory", custom_layer=layer).place["name"] == "LANTERN PORT"
+
+
+def test_the_template_loads_with_every_table_used():
+    layer = doorplate.load_layer(LAYERS / "template")
+    assert layer.name == "my-layer"
+    counts = layer.counts()
+    for key in ("suffix spellings", "unit spellings", "directional spellings", "state spellings",
+                "special-word spellings", "highway spellings", "state suffix readings", "words",
+                "places", "ZIPs"):
+        assert counts[key] == 1, key
+
+
+def test_the_guides_prompt_names_every_table_and_word_list():
+    text = (ROOT / "docs" / "custom-layers.md").read_text()
+    prompt = text[text.index("````text"):text.index("````\n", text.index("````text") + 8)]
+    for table in ("suffix", "unit", "directional", "state", "special", "highway", "words"):
+        assert f"[[{table}]]" in prompt, table
+    for word in ("building", "area", "city_head", "non_recipient", "numbered_street",
+                 "placeholder", "country", "place_prefix",
+                 "po_box", "rural_route", "highway_contract", "general_delivery", "attention",
+                 "municipality", "subdivision", "overrides.toml", "places.tsv", "zips.tsv", "layer.toml"):
+        assert word in prompt, word

@@ -5,11 +5,13 @@ suffix your data spells `TRAYL`, a unit word your county uses, a country word th
 state-specific reading of a spelling. It is loaded at run time, checked against the shipped tables, and reported in every
 parse it touches. This library formats and parses; it does not validate that an address exists or can receive mail.
 
-**Status (issue #3).** This page describes the parts built so far: spellings, word lists, state-scoped readings, places and
-ZIPs, in the core library (the `custom-layer` cargo feature), the command line and Python. A demo layer and a guide for writing
-one (with a template and an LLM prompt) come in the last part of the same issue, and this page grows with them.
+**Status (issue #3).** Complete: spellings, word lists, state-scoped readings, places and ZIPs, in the core library (the
+`custom-layer` cargo feature), the command line and Python, plus a [demo layer](#the-demo-layer), a
+[template](#writing-your-own-layer) to copy and a [prompt for an LLM](#a-prompt-for-an-llm) that drafts a layer from your misparsed
+addresses.
 
-Contents: [What a layer is](#what-a-layer-is) · [The files](#the-files) · [Rules](#rules) · [Checking a layer](#checking-a-layer) ·
+Contents: [What a layer is](#what-a-layer-is) · [The demo layer](#the-demo-layer) · [Writing your own layer](#writing-your-own-layer) ·
+[A prompt for an LLM](#a-prompt-for-an-llm) · [The files](#the-files) · [Rules](#rules) · [Checking a layer](#checking-a-layer) ·
 [Using it from the command line](#using-it-from-the-command-line) · [From Python](#from-python) · [From Rust](#from-rust) ·
 [What it reports, and keys](#what-it-reports-and-keys) · [What a layer cannot change](#what-a-layer-cannot-change)
 
@@ -25,6 +27,143 @@ A layer is a folder of small files (or the text of them, if you load it from cod
   them, each naming its file and entry (`aliases.toml [[suffix]] #2: ...`).
 - **Documented by its entries.** Every entry needs an `evidence` or `note` string: where the spelling was seen, or why.
 - **Outside the tagger.** The layer is consulted by `Lexicons`, after the shipped tables, so the parser itself does not change.
+
+## The demo layer
+
+[`examples/layers/riverbend-demo/`](../examples/layers/riverbend-demo) is a small working layer for **Riverbend County**, an
+invented county in Washington state: two street-suffix spellings (one `observed`, one `variant`), a unit word, a directional,
+a country-like trailing word, two places with misspellings, and a ZIP the two places share. Every name, spelling and ZIP in it is
+invented. Try it:
+
+```sh
+$ doorplate layer check examples/layers/riverbend-demo
+ok: layer riverbend-demo 1 (fingerprint fa57dd40301d6dfe)
+$ doorplate parse "120 Fern Hollow Trayl, Fern Holow, WA 98991" --display
+120 Fern Hollow Trayl
+Fern Holow WA 98991
+$ doorplate parse "120 Fern Hollow Trayl, Fern Holow, WA 98991" --display --custom-layer examples/layers/riverbend-demo
+120 Fern Hollow Trl
+Fern Holow WA 98991
+```
+
+Without the layer `TRAYL` is part of the street name and `Fern Holow` is an unknown city; with it the suffix is `TRL`, the
+place is `FERN HOLLOW` (reported in `place`, with `source: "variant"`), and the key changes from
+`k3:S|120||FERN HOLLOW TRAYL|||WA|98991` to `k3:S|120||FERN HOLLOW|TRL||WA|98991`. The notebook
+([`examples/quickstart.ipynb`](../examples/quickstart.ipynb), "Your own spellings and places") and
+[`examples/custom_layer_example.py`](../examples/custom_layer_example.py) walk through it from Python.
+
+## Writing your own layer
+
+A layer is worth writing when the same misreading shows up many times in your data. One-off typos are not worth an entry.
+
+1. **Find the repeated misreadings.** Parse a sample and look at what the parser could not place. A spelling that is not a shipped
+   suffix ends up inside the street name, so tally the first and last words of street names that have no suffix, and the
+   words in `unparsed`:
+
+   ```python
+   from collections import Counter
+   import doorplate
+
+   parsed = doorplate.parse_many(lines)                  # your addresses, one string each
+   words = Counter()
+   for p in parsed:
+       if p.street_name and not p.street_suffix:
+           words[p.street_name.split()[-1]] += 1          # `OAK TRAYL`: TRAYL
+       if p.street_name:
+           words[p.street_name.split()[0]] += 1           # `NRTH LANTERN RD`: NRTH
+       words.update((p.unparsed or "").split())           # text that fit nowhere
+   print(words.most_common(40))                           # then look up the frequent, unfamiliar ones
+   print(Counter(w for p in parsed for w in p.warnings))  # missing_city, non_standard_abbreviation, ...
+   ```
+
+   A city that never matches is a place to add; a frequent word before or after the street is a suffix, unit, directional
+   or state spelling; a recurring word that is neither address nor recipient (a country, `NONE`, a building word) belongs in a
+   word list. Count each candidate in your data and keep its **evidence**: a line count and one invented-or-masked example.
+2. **Pick the file.**
+
+   | You see | Add | File |
+   |---|---|---|
+   | `TRAYL` instead of `TRL`/`TRAIL`, `SUTE` for `STE`, `NRTH` for `N`, a misspelled state | a spelling of the row | `aliases.toml` `[[suffix]]`, `[[unit]]`, `[[directional]]`, `[[state]]` |
+   | `POSTBX`, `CNTRY RD 12` | a special word or highway prefix | `aliases.toml` `[[special]]`, `[[highway]]` |
+   | a trailing word that is not part of the address, a building word, a stand-in such as `NONE` | a word | `aliases.toml` `[[words]]` (`country`, `building`, `placeholder`, `non_recipient`, ...) |
+   | a community or postal name the place list lacks, or a misspelling of one | a place | `places.tsv` |
+   | a ZIP the shipped list lacks | a ZIP and its place | `zips.tsv` |
+   | a shipped spelling that means something else in one state (`PL` is a plaza in this export) | a state reading | `overrides.toml` |
+
+3. **Copy the template.** [`examples/layers/template/`](../examples/layers/template) has one working entry per table, marked
+   `EXAMPLE`, with the options explained in comments. Copy the folder, rename it, set `name` and `version` in `layer.toml`, replace the
+   examples with your entries and delete the files and tables you do not use.
+4. **Check it.** `doorplate layer check my-layer` lists *every* problem at once, each naming its file and entry. The usual ones:
+   a spelling the shipped tables already have (drop it: it already works), two places whose names compare equal (drop the
+   variant), a ZIP whose place is unknown (add the place first), and a missing `evidence`.
+5. **Test it on your data.** Parse the same sample with and without `--custom-layer` and compare: the entries you meant should
+   change rows, and nothing else should. Write the cases you care about as a golden corpus and run
+   `doorplate corpus test --dir my-corpus --custom-layer my-layer` whenever the layer changes.
+6. **Keep the fingerprint with your keys.** A layer can change a key (see below). Store `layer.fingerprint` beside any stored
+   keys and re-key when it changes.
+
+Keep entries small and evidenced. A layer changes how addresses are *read*; it does not make an address exist, and the library
+does not validate that one can receive mail.
+
+## A prompt for an LLM
+
+An assistant can draft the layer from a list of misparsed lines. This prompt is written for that: paste it into a chat, then paste
+your lines after it. **Review what comes back** (the evidence, and that each spelling is real in your data), save the files in a
+folder, and run `doorplate layer check`; the checker's errors are exact, so paste them back to the assistant if there are any.
+Do not paste private data into a service you have not cleared; mask names and house numbers first
+([`anonymizing.md`](anonymizing.md) shows how, and `doorplate anonymize` does it for a file).
+
+````text
+You are helping me write a doorplate custom layer: a folder of small files that teaches the doorplate
+US address parser my data's own spellings and places. A layer only ADDS to the shipped tables; it
+never replaces or removes anything. Below my message is a list of addresses that parse wrongly, one
+per line, and (if I give it) what each should be.
+
+Write the files below. Rules:
+- Only add an entry when a spelling or place appears in my lines at least twice, or I tell you it
+  is common. Skip one-off typos. Do not invent evidence: `evidence` is a short string saying where
+  it was seen and how often, using only what my lines show.
+- Spellings are plain text; case, periods and spacing do not matter. Never add a spelling that is
+  already a standard USPS Publication 28 suffix, unit, directional or state spelling: it already
+  works and the loader rejects it.
+- Use these tables, and only these keys.
+  aliases.toml
+    [[suffix]]       abbr = "TRL"   spellings = ["TRAYL"]   kind = "observed" or "variant"   evidence = "..."
+                     (abbr is the standard Pub 28 abbreviation. "variant" means the spelling is standard
+                     where I work; "observed" is the default and raises a non_standard_abbreviation warning)
+    [[unit]]         abbr = "STE"   spellings = [...]   evidence
+    [[directional]]  abbr = one of N S E W NE NW SE SW   spellings = [...]   evidence
+    [[state]]        code = "FL" (USPS code)   spellings = [...]   evidence
+    [[special]]      form = one of po_box box rural_route highway_contract general_delivery attention
+                     spellings = [...]   evidence
+    [[highway]]      standard = "COUNTY ROAD" (a standard prefix name)   spellings = [...]   evidence
+    [[words]]        list = one of building area city_head non_recipient numbered_street placeholder
+                     country place_prefix   words = [...]   evidence
+  overrides.toml (a state reads a shipped spelling differently; use sparingly)
+    [[suffix]]       state = "OH"   spelling = "PL" (already a shipped spelling)   abbr = "PLZ"   evidence
+    [[highway]]      state = "TX"   spelling = "RM" (not a shipped spelling)   highway = "RANCH ROAD"   evidence
+  places.tsv (tab-separated, header line, `#` lines skipped)
+    columns: state  name  county  kind  variants  evidence
+    state = USPS code, name = the standard name, kind = municipality | place | subdivision,
+    variants = misspellings separated by ";" (a variant must differ from the name by more than case,
+    punctuation or spacing, or it is rejected)
+  zips.tsv (tab-separated, header line)
+    columns: zip  state  place  shared  evidence      (zip = 5 digits; place must be a real place of
+    that state or one in places.tsv; shared = other places using the ZIP, separated by ";")
+  layer.toml
+    name = "..."   version = "1"   notes = "..."
+
+Output exactly these files, each in its own code block headed by its file name, and leave out any
+file with no entries. Then list, in a short bulleted section called "Not added", the spellings
+you skipped and why (seen once, already standard, unsure what it stands for). Do not guess what
+an unfamiliar word means: put it in "Not added" and ask me.
+
+My addresses (one per line; masked values are fine):
+````
+
+The template and the demo layer follow the same file formats, so the assistant can also be given
+[`examples/layers/riverbend-demo/`](../examples/layers/riverbend-demo) as a worked example. The prompt is kept in step with the
+loader by a test (`crates/doorplate-py/tests/test_custom_layer.py`): it names every table and word list the loader accepts.
 
 ## The files
 

@@ -1,0 +1,4 @@
+# The layer's identity. The name and version are reported with every parse that uses the layer.
+name = "my-layer"          # 1 to 64 letters, digits, ".", "_" or "-"
+version = "1"              # yours: change it when the layer changes
+notes = "What this layer is for and where its spellings came from"   # optional

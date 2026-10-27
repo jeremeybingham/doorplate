@@ -84,7 +84,8 @@ k3:S|123|N|MAIN|ST||FL|33101
   completes a cut-off city; `default_state` is a hint for input with no state.
 - **Your own spellings and places.** A custom layer (a folder of small files) adds spellings, words, places and ZIPs your
   data uses on top of the shipped tables, without editing them: `doorplate parse --custom-layer DIR`, `doorplate.load_layer`,
-  checked with `doorplate layer check`. A layer can change a key, so every parse reports it ([docs](docs/custom-layers.md)).
+  checked with `doorplate layer check`. A layer can change a key, so every parse reports it. The guide has a demo layer, a template and a
+  prompt for an LLM ([docs](docs/custom-layers.md)).
 - **Sharing messy data.** `doorplate anonymize` (and `Anonymizer` in Python and Rust) swaps the digits and names of
   address-like text, even text that does not parse, and keeps the shape, so a bug report can start from a real
   address. Obfuscation, not anonymity: read the output before you share it ([how it works](docs/anonymizing.md)).

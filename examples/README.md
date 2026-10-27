@@ -13,6 +13,7 @@ that an address exists or can receive mail.
 | [`duckdb_pipeline.py`](duckdb_pipeline.py) | DuckDB: `doorplate_parse` and `doorplate_parse_fields` in SQL, and `parse_column` on a relation (needs `pip install "doorplate[duckdb]"`) |
 | [`anonymize_example.py`](anonymize_example.py) | `doorplate.Anonymizer`: obfuscate a messy file before sharing it, and how many lines still parse the same way (the CLI: `doorplate anonymize`; [the page](../docs/anonymizing.md)). The notebook has a section on it too |
 | [`custom_layer_example.py`](custom_layer_example.py) | A custom layer: writes a tiny one (a suffix spelling, a place and a ZIP), loads it with `doorplate.load_layer`, and shows the parse, the key and the `custom_layer` provenance with and without it (the CLI: `doorplate layer check` and `--custom-layer`; [the page](../docs/custom-layers.md)) |
+| [`layers/riverbend-demo/`](layers/riverbend-demo), [`layers/template/`](layers/template) | A working custom layer for an invented county (the guide's example, the notebook's "Your own spellings and places" section) and an annotated template to copy ([the guide](../docs/custom-layers.md), with a prompt for an LLM) |
 | [`data/addresses_oneline.csv`](data/addresses_oneline.csv) | One address per row in a single column (street, PO box, rural route, general delivery, a unit, a blank row) |
 | [`data/addresses_split.csv`](data/addresses_split.csv) | Line 1, line 2, city, state and ZIP in separate columns, with gaps |
 | [`data/addresses_messy.txt`](data/addresses_messy.txt) | One line per address as people type them: lowercase, `c/o`, a country, an intersection, no state |
@@ -40,5 +41,5 @@ target/release/doorplate anonymize examples/data/addresses_oneline.csv --column 
 target/release/doorplate parse "123 north main street apt 4, miami fl 33101" --display   # or --long, --usps
 ```
 
-The tests in `crates/doorplate-py/tests/test_examples.py` run both scripts and the
+The tests in `crates/doorplate-py/tests/test_examples.py` run the scripts and the
 notebook, so the examples stay current.

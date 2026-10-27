@@ -1,0 +1,7 @@
+# A state reads a spelling differently. Optional: delete the file if you do not need it.
+
+[[suffix]]
+state = "OH"
+spelling = "PL"              # must already be a shipped suffix spelling
+abbr = "PLZ"
+evidence = "EXAMPLE: in this Ohio export `PL` after a name is always a plaza"

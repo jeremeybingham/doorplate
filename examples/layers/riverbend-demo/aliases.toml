@@ -1,0 +1,27 @@
+# Spellings the invented Riverbend County export uses that the shipped tables do not know.
+
+[[suffix]]
+abbr = "TRL"
+spellings = ["TRAYL"]
+evidence = "invented Riverbend export: 41 lines like `120 FERN HOLLOW TRAYL`"
+
+[[suffix]]
+abbr = "LN"
+spellings = ["LANNE"]
+kind = "variant"              # standard where this county works, so no non_standard_abbreviation warning
+evidence = "invented Riverbend export: the county's road list spells every lane this way"
+
+[[unit]]
+abbr = "STE"
+spellings = ["SUTE"]
+evidence = "invented Riverbend export: 9 lines like `300 MILL ST SUTE 2`"
+
+[[directional]]
+abbr = "N"
+spellings = ["NRTH"]
+evidence = "invented Riverbend export: 14 lines like `88 NRTH LANTERN RD`"
+
+[[words]]
+list = "country"
+words = ["RIVERBEND TERRITORY"]
+evidence = "invented Riverbend export: a trailing country-like word the mail merge adds"

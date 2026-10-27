@@ -70,6 +70,8 @@ def test_notebook_executes():
     assert "PENSACOLA" in text  # place data, from a ZIP
     assert "k3:S|412|N|HARBOR|ST||FL|33602" in text  # Polars, DuckDB and pandas sections
     assert "'StreetNamePostType'" in text  # usaddress-style labels
+    assert "k3:S|120||FERN HOLLOW|TRL||WA|98991" in text  # the custom-layer section
+    assert "riverbend-demo" in text and "[('TRAYL', 2)" in text
     assert "parse_fields_many" in "".join(
         "".join(c.source) for c in nb.cells if c.cell_type == "code"
     )
