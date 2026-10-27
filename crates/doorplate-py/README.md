@@ -140,6 +140,8 @@ with 4 CPUs, the benchmark suite's profile (`crates/doorplate-py/benchmarks/benc
 | `parse_many` and a pandas DataFrame of 7 columns | 0.77 s | 131,000 | 2.3x |
 | `parse_many` and a Polars DataFrame of 7 columns | 0.69 s | 144,000 | 2.6x |
 | DuckDB, `doorplate_parse(a)` with 7 columns | 0.64 s | 157,000 | 2.8x |
+| `pandas.parse_column`, the 15 default columns | 0.83 s | 121,000 | 1.9x |
+| `polars.parse_column`, the 15 default columns | 0.70 s | 143,000 | 2.3x |
 
 **Helpers.** Install the extra and parse a column in one call:
 
@@ -231,7 +233,8 @@ For every field with pandas, use `to_dict()` and
 
 Calling `to_dict()` on every row costs about as much as parsing again (a loop with
 `to_dict` ran at 26,000 per second), and reading attributes from 100,000 Python
-objects is now most of the time, so pick columns when you can. Pre-split columns
+objects was most of the time, so the `parse_column` helpers and `doorplate.duckdb` build their columns in Rust, with no Python
+object per row (#24; before it, the 15-column rows above took 1.03 s for pandas and 0.86 s for Polars on 4 CPUs; on 14 CPUs the gain is about 1.4x). Pick columns when you can. Pre-split columns
 (`line1`, `city`, ...): call `parse_fields_many(line1=df["line1"].tolist(), city=...)`.
 
 ## Custom layers

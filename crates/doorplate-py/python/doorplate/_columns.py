@@ -1,14 +1,15 @@
 """Column extraction shared by the pandas, Polars and DuckDB helpers.
 
-Neither library is imported here. The helpers parse a batch with
-`parse_many` and read the chosen columns from the results.
+Neither library is imported here. `extract` parses a batch and builds the chosen
+columns in Rust (`_parse_columns`); `columns_of` reads them off already parsed
+results, for the pre-split path.
 """
 from __future__ import annotations
 
 import os
 from collections.abc import Callable, Iterable, Sequence
 
-from ._core import CustomLayer, ParsedAddress, parse_many
+from ._core import CustomLayer, ParsedAddress, _parse_columns
 
 DEFAULT_COLUMNS: tuple[str, ...] = (
     "street_number",
@@ -111,8 +112,21 @@ def extract(
 ) -> tuple[tuple[str, ...], dict[str, list[str | None]]]:
     """Parse `values` and return the column names and one list per column.
     A row with no address text is `None` in every column."""
+    names, data, _ = extract_present(values, columns, default_state, custom_layer)
+    return names, data
+
+
+def extract_present(
+    values: Iterable[object],
+    columns: Sequence[str] | None,
+    default_state: str | None,
+    custom_layer: "CustomLayer | str | os.PathLike[str] | None" = None,
+) -> tuple[tuple[str, ...], dict[str, list[str | None]], list[bool]]:
+    """`extract`, plus a list that is False for a row with no result (all its
+    columns are `None`, but so are those of a result that has none of them).
+    The columns are built in Rust, without a Python object per row."""
     names = check_columns(columns)
-    parsed = parse_many(
-        texts_of(values), default_state=default_state, custom_layer=custom_layer
+    lists, present = _parse_columns(
+        texts_of(values), list(names), default_state, custom_layer
     )
-    return names, columns_of(parsed, names)
+    return names, dict(zip(names, lists)), present

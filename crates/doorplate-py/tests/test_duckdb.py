@@ -105,8 +105,10 @@ def test_parse_column_uses_the_default_connection():
 
 def test_each_row_is_parsed_once(monkeypatch):
     seen = []
-    real = dd.parse_many
-    monkeypatch.setattr(dd, "parse_many", lambda t, **k: (seen.append(len(t)), real(t, **k))[1])
+    real = _columns._parse_columns
+    monkeypatch.setattr(
+        _columns, "_parse_columns", lambda t, *a: (seen.append(len(t)), real(t, *a))[1]
+    )
     c = duckdb.connect()
     dd.register(c)
     c.execute("create table big as select '123 N Main St, Miami FL 33101' a from range(5000)")

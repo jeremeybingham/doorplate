@@ -125,3 +125,36 @@ class TestPolars:
         assert out["p_city"][0] == "DOTHAN"
         with pytest.raises(ValueError):
             parse_column(df["address"], columns=["bogus"])
+
+
+def test_rust_columns_match_the_attributes_on_the_corpus():
+    """`extract` builds columns in Rust; they must equal reading the objects (#24)."""
+    import json
+    from pathlib import Path
+
+    import doorplate
+
+    root = Path(__file__).resolve().parents[3] / "tests" / "corpus"
+    texts = [
+        json.loads(line)["input"]
+        for path in sorted(root.glob("*.jsonl"))
+        for line in path.read_text().splitlines()
+        if line.strip() and json.loads(line).get("input")
+    ]
+    texts += ["", "   ", None, "PO Box 12, Tampa FL 33601"]
+    names = sorted(_columns.AVAILABLE_COLUMNS)
+    for state in (None, "FL"):
+        parsed = doorplate.parse_many(_columns.texts_of(texts), default_state=state)
+        expected = _columns.columns_of(parsed, names)
+        got_names, got, present = _columns.extract_present(texts, names, state)
+        assert got_names == tuple(names)
+        assert got == expected, [n for n in names if got[n] != expected[n]]
+        assert present == [a is not None for a in parsed]
+    assert present[-4:] == [False, False, False, True]
+
+
+def test_unknown_column_is_rejected_in_rust_too():
+    from doorplate._core import _parse_columns
+
+    with pytest.raises(ValueError):
+        _parse_columns(["1 Main St"], ["nope"])

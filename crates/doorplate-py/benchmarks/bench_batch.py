@@ -7,8 +7,8 @@ The input is the golden corpus's single-line addresses (tests/corpus),
 repeated to N (default 100,000). Each timing is the best of three runs. With
 `to_dict`, the Python objects are turned into dicts too. The last rows build
 a pandas and a polars DataFrame of seven chosen columns from the parsed
-addresses (the README recipes), and the last two time the DuckDB functions
-(`doorplate.duckdb`) over a table, when those libraries are installed.
+addresses (the README recipes), then `parse_column` (15 default columns, built in
+Rust since #24), and the last two time the DuckDB functions (`doorplate.duckdb`) over a table, when those libraries are installed.
 """
 import json
 import os
@@ -65,6 +65,10 @@ def main():
                  for a in dp.parse_many(texts)]
             ),
         ))
+        from doorplate.pandas import parse_column as pd_parse_column
+
+        pd_series = pd.Series(texts)
+        rows.append(("pandas parse_column, 15", lambda: pd_parse_column(pd_series)))
     except ImportError:
         pass
     try:
@@ -78,6 +82,10 @@ def main():
             )
 
         rows.append(("parse_many -> polars", to_polars))
+        from doorplate.polars import parse_column as pl_parse_column
+
+        series = pl.Series(texts)
+        rows.append(("polars parse_column, 15", lambda: pl_parse_column(series)))
     except ImportError:
         pass
     try:
