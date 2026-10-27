@@ -93,13 +93,14 @@ manifest, joined to the flagged rows by `(source, role, record_id)`; a `--db` ru
 gets the leftover shapes only. Counts only, so the report can be quoted (`docs/data-policy.md`).
 
 Two sections answer the two questions the shapes alone could not (#112). **`street` mismatch: top input shapes** lists the
-forms behind the `street` check (on the 2026-10-27 recheck of the schema 7 runs: FMCSA US carriers 2.5% of mailing and 2.9% of
-physical rows, down from the 3.7% to 4.2% of #96; NY corporations 1.0% to 2.6%; Netsyms 0.28%; the schema 8 ordinal rule is
-not in those runs). **`missing_street_number`: a spelled-out number and a street suffix** counts the rows of that code whose
-line 1 starts with a number word (`ONE` to `TWENTY`) and whose parse found a suffix, by word. It only measures: it is an upper
-bound for building numbers written as words (`ONE MILE RD` is a street too), and treating `ONE` as a number would change keys.
-On the NY registry it is 0 of 460,204 for `ceo`, 12,680 of 58,454 (21.7%) for `dos_process`, 825 of 5,096 for `location` and
-1,615 of 8,730 for `registered_agent`, mostly `ONE` (11,170 of 15,120); on Netsyms 0 of 6,615.
+forms behind the `street` check. **`missing_street_number`: a spelled-out number and a street suffix** counts the rows of that
+code whose line 1 starts with a number word (`ONE` to `TWENTY`) and whose parse found a suffix, by word. It only measures, and it
+reads the run's own parse: a run made before #129 (spelled-out numbers read as house numbers, 2026-10-24) still counts the rows
+that rule now fixes. Check the run's commit (`manifest.json`) against the rule you are asking about. On the `s9-*` runs
+(commit `140ccf72`, 2026-10-20, schema 7, before the `k3` rules) it was 15,120 NY registry rows; parsing those same 15,120 rows
+with the 2026-10-27 build, 1,523 still have no house number, mostly where the number word is part of a street name
+(`ONE HOLLOW ...`, `ONE WEST ...`, `ONE PARK ...`, `ONE UNION ...`). The `street` mismatch rates of those runs (FMCSA US
+carriers 2.5% and 2.9%, NY corporations 1.0% to 2.6%, Netsyms 0.28%) are likewise of the old build: rerun before quoting them.
 
 To see what the failing rows actually are, and to say what the right answer is, `tools/review/` draws a few rows from each of the biggest shapes of a run and shows them to a person (`tools/review/README.md`, issue #122).
 
