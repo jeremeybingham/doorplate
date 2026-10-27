@@ -48,19 +48,19 @@ New to the project? Read the [project README](../README.md), then
 | Page | What it covers |
 |---|---|
 | [`benchmarks.md`](benchmarks.md) | The results: the suite, the [geocode benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark), speed, size and memory |
-| [`benchmarks/README.md`](../benchmarks/README.md) | How to run every benchmark, and which one answers which question |
+| [`docs/running-benchmarks.md`](running-benchmarks.md) | How to run every benchmark, and which one answers which question |
 | [`benchmark-suite.md`](benchmark-suite.md) | The benchmark suite's specification: what it holds, how it was built and audited, the rules that keep it fair |
 | [`benchmarks/suite/README.md`](../benchmarks/suite/README.md), [`MANIFEST.md`](../benchmarks/suite/v1/MANIFEST.md) | The suite's data folder, and the composition and checksums of `v1` |
-| [`tools/harness/README.md`](../tools/harness/README.md), [`SCHEMA.md`](../tools/harness/SCHEMA.md) | The harness (parse-rule comparisons, the pre-release full run on private data, runs on any ingested source, scoring against labeled parts, and the shapes worklist) and the columns of a run |
-| [`tools/review/README.md`](../tools/review/README.md) | The review tool: a local page that shows the hard addresses of a harness run to a person, records the verdicts and corrections, and writes a shape-only export that may be shared |
-| [`tools/ingest/README.md`](../tools/ingest/README.md) | The record format every address source is turned into, how to write a spec for a source, and `inventory.py`, the table of what is in `local-data/` (issue #93) |
+| [`docs/tools/harness.md`](tools/harness.md), [`SCHEMA.md`](tools/harness-schema.md) | The harness (parse-rule comparisons, the pre-release full run on private data, runs on any ingested source, scoring against labeled parts, and the shapes worklist) and the columns of a run |
+| [`docs/tools/review.md`](tools/review.md) | The review tool: a local page that shows the hard addresses of a harness run to a person, records the verdicts and corrections, and writes a shape-only export that may be shared |
+| [`docs/tools/ingest.md`](tools/ingest.md) | The record format every address source is turned into, how to write a spec for a source, and `inventory.py`, the table of what is in `local-data/` (issue #93) |
 
 ## Test data
 
 | Page | What it covers |
 |---|---|
-| [`tests/corpus/README.md`](../tests/corpus/README.md) | The golden corpus: the record format, how it is run, the baseline |
-| [`tests/external/usaddress/README.md`](../tests/external/usaddress/README.md) | usaddress's labeled test files (vendored, MIT) and how they are used |
+| [`docs/tests/corpus.md`](tests/corpus.md) | The golden corpus: the record format, how it is run, the baseline |
+| [`docs/tests/usaddress-tests.md`](tests/usaddress-tests.md) | usaddress's labeled test files (vendored, MIT) and how they are used |
 
 ## Project, process and community
 
@@ -69,6 +69,7 @@ New to the project? Read the [project README](../README.md), then
 | [`CONTRIBUTING.md`](../CONTRIBUTING.md) | Reporting a misparse, sharing messy data, building and testing, fixing a bug, data changes, the READMEs, releasing |
 | [`AGENTS.md`](../AGENTS.md), [`CLAUDE.md`](../CLAUDE.md) | The tool-neutral guide for AI agents (also a map of the repository), and our own process for Claude Code |
 | [`CHANGELOG.md`](../CHANGELOG.md) | What changed in each release, and when keys changed |
+| [`change-checklist.md`](change-checklist.md) | What to check when you change something: the pages to update with each kind of change |
 | [`site/README.md`](../site/README.md) | The blog and the live demo (Jekyll, published to GitHub Pages): how to publish a post, how the demo is built and the rules for what a page may show |
 | [`api-surface.md`](api-surface.md) | The audit of every public name in Rust, Python and the command line, with one decision each (#135) |
 | [`backlog.md`](backlog.md) | How the issues are organized: the release plan, the labels and milestones, and the row-by-row key comparison that "key-neutral" means |
@@ -82,36 +83,6 @@ suite are commented in `tools/benchsuite/hand/shapes.txt`, and the Rust API is o
 [docs.rs](https://docs.rs/doorplate). Private notes live in `local-data/`, which is
 git-ignored and not part of the repository.
 
-## When you change something, check these
+## When you change something
 
-A page that describes the thing you changed is out of date the moment you change it.
-Look at this table before you open a pull request, and update every page in the row in
-the same pull request. The pull request template asks for it.
-
-| You change | Check |
-|---|---|
-| A parse rule or a table in `crates/doorplate/data/` | [`usps-pub28-notes.md`](usps-pub28-notes.md) (a row with its source); a golden-corpus case and `passing.txt`; [`how-it-works.md`](how-it-works.md) if the behavior it describes changed; [`CHANGELOG.md`](../CHANGELOG.md). If an input's key changes, the key row below |
-| What an input's key is | [`key-format.md`](key-format.md) (a new version, never an edit in place); `tests/corpus/keys.jsonl` and `tools/corpus/emit_expect.py`; the four READMEs; [`how-it-works.md`](how-it-works.md); [`CHANGELOG.md`](../CHANGELOG.md) |
-| A warning code | [`how-it-works.md`](how-it-works.md) (the list); [`warnings.md`](warnings.md) (the meaning and the measured rate; regenerate with `label_score.py --by-warning`); the four READMEs; the stubs in `crates/doorplate-py/python/doorplate/__init__.pyi` |
-| The API, a CLI flag or an output form (a function, a method, a field, a column) | The four READMEs; an example in `examples/` ([`examples/README.md`](../examples/README.md)); [`how-it-works.md`](how-it-works.md); [`usaddress-compat.md`](usaddress-compat.md) (its feature table); [`reso-mapping.md`](reso-mapping.md) if RESO output changed; [`CHANGELOG.md`](../CHANGELOG.md) |
-| The custom layer (its files, rules, loader or provenance) | [`custom-layers.md`](custom-layers.md) (and its LLM prompt, kept in step with the loader by `test_custom_layer.py`); `examples/layers/` (the demo and the template: `doorplate layer check` both) and the notebook section; [`key-format.md`](key-format.md) ("Stability"); [`how-it-works.md`](how-it-works.md) ("Lexicon layers"); [`api-surface.md`](api-surface.md); the four READMEs once the CLI and Python take a layer; [`CHANGELOG.md`](../CHANGELOG.md) |
-| The anonymizer (what it changes or keeps, its options, the faithfulness check, the measured rates) | [`anonymizing.md`](anonymizing.md); [`CONTRIBUTING.md`](../CONTRIBUTING.md) ("Sharing messy data"); the issue template; the CLI and Python READMEs; `examples/anonymize_example.py` and the notebook section; [`api-surface.md`](api-surface.md); [`data-policy.md`](data-policy.md) if what may be shared changes |
-| A Python function, method or property (its signature or what it does) | The docstring in [`__init__.pyi`](../crates/doorplate-py/python/doorplate/__init__.pyi) (the source of [`python-api.md`](python-api.md); `tools/docs` tests that every public name has one) and the Rust doc comment in `src/lib.rs` |
-| A CLI command or option | The `USAGE` text in `crates/doorplate-cli/src/main.rs` and [`cli.md`](cli.md) (`tools/docs` tests that every option is described); the CLI README |
-| A page added, renamed or removed in `docs/` | This index; the `nav` in [`mkdocs.yml`](../mkdocs.yml) (CI builds the site with `mkdocs build --strict`); the table in [`AGENTS.md`](../AGENTS.md) |
-| Output labels in usaddress's shape (`tag`, `parse_tokens`, `doorplate.compat`) | [`usaddress-compat.md`](usaddress-compat.md); the Python and root READMEs' "Coming from usaddress"; `examples/usaddress_migration.py` |
-| The RESO output | [`reso-mapping.md`](reso-mapping.md) (the table and the choices) and `tests/corpus/reso.jsonl` |
-| Accuracy or speed figures, or the benchmark scripts | [`benchmarks.md`](benchmarks.md); [`benchmarks/README.md`](../benchmarks/README.md); the figures in the four READMEs that quote them; [`CHANGELOG.md`](../CHANGELOG.md). The suite's `v1` files are never edited: a fix is a `v2` |
-| The benchmark suite (its generator, scoring or composition) | [`benchmark-suite.md`](benchmark-suite.md); [`benchmarks/README.md`](../benchmarks/README.md); [`benchmarks/suite/README.md`](../benchmarks/suite/README.md); [`benchmarks.md`](benchmarks.md) |
-| Place data or state data | [`places.md`](places.md) or [`states/fl.md`](states/fl.md); [`data-policy.md`](data-policy.md); [`NOTICE`](../NOTICE) when a source needs credit; [`how-it-works.md`](how-it-works.md) (the lexicon layers) |
-| How private data is used, or what leaves `local-data/` | [`data-policy.md`](data-policy.md); [`tools/harness/README.md`](../tools/harness/README.md); [`tools/ingest/README.md`](../tools/ingest/README.md); [`tools/review/README.md`](../tools/review/README.md) |
-| The golden corpus format or the way it runs | [`tests/corpus/README.md`](../tests/corpus/README.md); [`how-it-works.md`](how-it-works.md) ("Testing") |
-| Build commands, the repository layout, the CI jobs or the release steps | [`AGENTS.md`](../AGENTS.md); [`CLAUDE.md`](../CLAUDE.md); [`CONTRIBUTING.md`](../CONTRIBUTING.md); [`how-it-works.md`](how-it-works.md) ("Repository layout" and "Testing") |
-| A version number, the alpha notice or the disclaimer | The four READMEs; `Cargo.toml`; [`CHANGELOG.md`](../CHANGELOG.md); the references pull request in [`CONTRIBUTING.md`](../CONTRIBUTING.md) ("Releasing") |
-| Adding, renaming or removing a documentation page | This index; the "Using the library" table in [`AGENTS.md`](../AGENTS.md); [`how-it-works.md`](how-it-works.md) ("Reference pages") |
-
-The four READMEs are the project README and the three package pages (PyPI, crates.io
-for the library, crates.io for the command). They are published as they are, so their
-links are absolute in the three crate READMEs, and each keeps the statement that the
-library does not validate deliverability and the Disclaimer section ([`CONTRIBUTING.md`](../CONTRIBUTING.md),
-"Package pages and READMEs").
+The table of what to check before a pull request is [`change-checklist.md`](change-checklist.md).

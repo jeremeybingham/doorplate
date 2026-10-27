@@ -345,7 +345,7 @@ doorplate corpus test --dir my-corpus --custom-layer county-extras   # your own 
 
 Every JSON record carries `provenance.custom_layer` (`{"name", "version", "fingerprint"}`, or `null` when no layer was used). A
 layer that cannot be loaded is exit 2 with the problems on standard error. `corpus test` runs a corpus the way you would test any
-parser change ([`tests/corpus/README.md`](../tests/corpus/README.md)): write cases with the expected parse, keep a `passing.txt`,
+parser change ([`docs/tests/corpus.md`](tests/corpus.md)): write cases with the expected parse, keep a `passing.txt`,
 and a layer edit that breaks one fails the run. (The project's own corpus is for the shipped tables; point `--dir` at yours.)
 
 ## From Python

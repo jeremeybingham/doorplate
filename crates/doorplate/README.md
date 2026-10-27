@@ -114,7 +114,7 @@ assert!(a.text.contains(" N ") && a.text.contains(", FL 331") && !a.text.contain
 
 The suite and the [geocode benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark) are run from Python (the table compares with the Python library usaddress); see the
 [benchmarks](https://github.com/jeremeybingham/doorplate/blob/main/docs/benchmarks.md) for the suite's strata, method and caveats, and
-[`benchmarks/README.md`](https://github.com/jeremeybingham/doorplate/blob/main/benchmarks/README.md) to rerun them. These are
+[`docs/running-benchmarks.md`](https://github.com/jeremeybingham/doorplate/blob/main/docs/running-benchmarks.md) to rerun them. These are
 measurements on a few data sets, not promises for yours.
 
 ## The match key

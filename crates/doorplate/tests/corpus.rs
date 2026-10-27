@@ -1,5 +1,5 @@
 //! Golden-corpus test. The runner is `doorplate::corpus` (also behind
-//! `doorplate corpus test`); format and conventions: `tests/corpus/README.md`.
+//! `doorplate corpus test`); format and conventions: `docs/tests/corpus.md`.
 //!
 //! The corpus may be ahead of the parser, so a failing case alone does not
 //! fail the test. It fails when the corpus is malformed, or when a case

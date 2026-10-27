@@ -1,7 +1,7 @@
 # Benchmarks
 
 Accuracy, speed and size of doorplate, measured 2026-10-19 on 0.3.0 and rerun on 0.4.0 (2026-10-25). The scripts are in
-`benchmarks/` (`benchmarks/README.md`) so every number can be rerun. usaddress
+`benchmarks/` (`docs/running-benchmarks.md`) so every number can be rerun. usaddress
 (the Python CRF library, 0.5.16) is one reference point, not the frame: it is
 the tool people know, and the two libraries do different jobs (usaddress labels
 tokens; doorplate also standardizes, builds a key and a slug, and reports
@@ -12,7 +12,7 @@ the figures below say an address exists or can receive mail.
 
 This page holds the results. Which benchmark is which (the suite, the [geocode benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark), the speed and size
 scripts, the checks on private data) and how to run each: the table in the project README
-([Benchmarks](../README.md#benchmarks)) and [`benchmarks/README.md`](../benchmarks/README.md).
+([Benchmarks](../README.md#benchmarks)) and [`docs/running-benchmarks.md`](running-benchmarks.md).
 
 The benchmark suite that ships in the repository (`benchmarks/suite/v1/`, the specification in
 `docs/benchmark-suite.md`, issue #75) leads this page. It is 19,586 labeled addresses that neither
@@ -154,7 +154,7 @@ rules' new spellings. The wheel is compressed, so it did not move.
 ## The benchmark suite
 
 `benchmarks/suite/v1/` holds 19,586 labeled addresses and `python benchmarks/suite.py all` scores doorplate
-and usaddress on them (the runner, how to run it and the resource profile: `benchmarks/README.md`).
+and usaddress on them (the runner, how to run it and the resource profile: `docs/running-benchmarks.md`).
 It was built once, audited, and is frozen: `v1` is never edited, and label errors found later go into `v2`
 with both versions' scores kept here. Rows are anonymized National Address Database points (the real street,
 city, state and ZIP; invented house and unit numbers), Census TIGER street names for the six states NAD
@@ -512,8 +512,8 @@ ruled out anyway). The held-results memory in Python (2.46 KB each, against 928 
 
 ## Rerunning
 
-Every figure on this page can be rerun: `benchmarks/README.md` has one table of what to run for each question,
+Every figure on this page can be rerun: `docs/running-benchmarks.md` has one table of what to run for each question,
 the setup, and what each script needs. In short: `python benchmarks/suite.py all` for the suite, then
 `accuracy.py`, `speed_python.py`, `speed_rust.py` and `size_memory.py` for the older sets. The geocode
 benchmark is not redistributable, so it is not in the repository: download it into `local-data/geocode-benchmark/`
-(`benchmarks/README.md` says how); a script skips a source that is not there.
+(`docs/running-benchmarks.md` says how); a script skips a source that is not there.

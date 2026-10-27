@@ -24,7 +24,7 @@ contradictory row.
 
 A state also needs a golden-corpus file, `tests/corpus/<st>-state.jsonl`, with cases from that state (invented
 addresses). A test fails when a folder under `data/states/` has no such file. Add a doc page, `docs/states/<st>.md`,
-with the sources and the licenses, and check the table "When you change something" in [`../README.md`](../README.md).
+with the sources and the licenses, and check the table in [`../change-checklist.md`](../change-checklist.md).
 
 The zip-to-place warning (`zip_city_mismatch`) is raised only in a state with curated data
 (`Lexicons::has_state_data`): the national list names one place per ZIP, so elsewhere it would fire on addresses

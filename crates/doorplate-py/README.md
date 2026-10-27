@@ -335,7 +335,7 @@ rows with invented numbers, plus PO boxes, routes, military and hand-labeled sha
 libraries' known blind spots on purpose, so read its `natural` stratum as the estimate for ordinary input. Speed is
 on 4 CPUs, 8 GB. These are measurements on a few data sets, not promises for yours. Method and every other figure:
 [benchmarks](https://github.com/jeremeybingham/doorplate/blob/main/docs/benchmarks.md); how to rerun them:
-[`benchmarks/README.md`](https://github.com/jeremeybingham/doorplate/blob/main/benchmarks/README.md).
+[`docs/running-benchmarks.md`](https://github.com/jeremeybingham/doorplate/blob/main/docs/running-benchmarks.md).
 
 ## Disclaimer
 

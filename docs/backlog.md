@@ -70,9 +70,9 @@ project**. An issue that is `version:K` is in 0.4.0, phase 2, if it is in the li
 ## Where an issue comes from
 
 - **A misparse report** (the issue template) or a finding from a harness run goes through the rule loop in
-  [`tools/harness/README.md`](../tools/harness/README.md): reproduce with an invented address, find a source, add a
+  [`docs/tools/harness.md`](tools/harness.md): reproduce with an invented address, find a source, add a
   corpus case, measure before and after.
-- **A review of real rows** ([`tools/review/README.md`](../tools/review/README.md)) produces a tracker with the
+- **A review of real rows** ([`docs/tools/review.md`](tools/review.md)) produces a tracker with the
   counts (#125 was the first) and then one issue per finding, labeled as above. Examples in issues are invented
   from scratch, never real rows ([`data-policy.md`](data-policy.md)).
 - **A decision** is `size:D` and says what outcome would close it.

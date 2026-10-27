@@ -6,7 +6,7 @@
     python tools/harness/label_score.py local-data/nc-voter-2026/records_current.parquet \\
         --labels local-data/nc-voter-2026/records_snapshot.parquet --confirm
 
-A records file (tools/ingest/README.md) may carry `label_*` columns: the parts a source stores
+A records file (docs/tools/ingest.md) may carry `label_*` columns: the parts a source stores
 separately. The scorer parses each row's `line1`, `line2`, `city`, `state` and `zip` (or its
 `last_line`, joined as in run.py) and compares our parts with the labels wherever a label is
 present: the predirectional, postdirectional, suffix, unit, house number and street name. It

@@ -31,7 +31,7 @@ run directory. Counts only (never a row), so it may be quoted under docs/data-po
 library formats and parses; it does not validate that an address exists or can receive mail.
 
 This does not train the parser. Each shape is a question; a fix still needs a source for its
-rule (docs/usps-pub28-notes.md) and goes through the rule-PR loop in tools/harness/README.md.
+rule (docs/usps-pub28-notes.md) and goes through the rule-PR loop in docs/tools/harness.md.
 """
 import argparse
 import json
@@ -303,7 +303,7 @@ def main(argv=None):
                "Counts only. A shape turns letters into `a` and digits into `9` and collapses runs. A "
                "warning or a leftover is a question about the parser or about the source, not a verdict "
                "on either. Rule changes found here go through the rule-PR loop "
-               "(tools/harness/README.md); every rule needs a source.", ""]
+               "(docs/tools/harness.md); every rule needs a source.", ""]
         prev = None
         if args.before:
             brun, bman = open_run(args.before, args.partial)

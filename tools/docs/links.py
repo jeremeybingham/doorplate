@@ -1,6 +1,6 @@
 """A MkDocs hook: links from a page in docs/ to a file elsewhere in the repository.
 
-The pages link to the repository with relative paths (`../benchmarks/README.md`, `../tools/review/`),
+The pages link to the repository with relative paths (`../benchmarks/accuracy.py`, `../tools/review/`),
 which work on GitHub and in an editor. The documentation site holds only `docs/`, so those links would
 break there. This hook rewrites them, in the site only, to the file on GitHub (the `main` branch);
 the Markdown files are not touched. A link to another page of `docs/` stays a link inside the site.

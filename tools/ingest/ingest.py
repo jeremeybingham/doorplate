@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Turn one address source into the common record format (tools/ingest/README.md).
+"""Turn one address source into the common record format (docs/tools/ingest.md).
 
     python tools/ingest/ingest.py SPEC.toml              # print the plan
     python tools/ingest/ingest.py SPEC.toml --confirm    # write the records

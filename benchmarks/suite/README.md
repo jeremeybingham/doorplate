@@ -2,7 +2,7 @@
 
 `v1/` is the data of the benchmark suite: a fixed, versioned set of labeled US addresses. **How to run it**,
 the two tracks, the strata and the resource profile are in
-[`benchmarks/README.md`](../README.md#the-benchmark-suite); the specification, the sources and the rules that
+[`docs/running-benchmarks.md`](../../docs/running-benchmarks.md#the-benchmark-suite); the specification, the sources and the rules that
 keep it fair are in [`docs/benchmark-suite.md`](../../docs/benchmark-suite.md). Read the fairness rules before
 using a result to decide what to change: the suite is not a work list.
 

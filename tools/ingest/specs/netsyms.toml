@@ -1,4 +1,4 @@
-# The Netsyms sample (docs/data-policy.md; tools/harness/README.md), US rows only.
+# The Netsyms sample (docs/data-policy.md; docs/tools/harness.md), US rows only.
 # Same inputs as tools/harness/run.py: line 1 is number + street (`label_number` and `label_unit` are
 # the number and street2 fields, which step 2's number, street and unit checks use), line 2 street2, and the
 # ZIP is zipcode plus `-plus4` when there is one. For the full database, point `sqlite`

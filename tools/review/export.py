@@ -14,7 +14,7 @@ doorplate version and the day. What goes: every value, the record id, the source
 
 That is enough to see a rule: `% a a` -> `a a` says a percent sign marks a care-of line, without
 saying whose. It does not train anything; a rule from it still needs a source, a corpus case and
-a harness run (tools/harness/README.md). It is not anonymized text, so it does not replace #105
+a harness run (docs/tools/harness.md). It is not anonymized text, so it does not replace #105
 for sharing a real-looking row. This library formats and parses; it does not validate that an
 address exists or can receive mail.
 """

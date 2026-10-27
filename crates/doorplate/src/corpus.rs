@@ -1,5 +1,5 @@
 //! Golden-corpus loader and runner, behind the `corpus` feature. The format
-//! and labeling conventions are in `tests/corpus/README.md`.
+//! and labeling conventions are in `docs/tests/corpus.md`.
 //!
 //! Every case is parsed and compared field by field. The corpus may be
 //! ahead of the parser, so a failing case alone is not an error: callers

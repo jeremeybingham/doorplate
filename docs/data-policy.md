@@ -9,7 +9,7 @@ and none of the data below is used to claim otherwise.
 
 1. **`local-data/` is git-ignored and stays that way.** Source files, extracts, samples,
    profiles and reports live there. Never commit anything from it. A private source's
-   ingest spec (`tools/ingest/README.md`), notice and inventory live there with its data.
+   ingest spec (`docs/tools/ingest.md`), notice and inventory live there with its data.
 2. **Aggregate numbers and our own fixes ship; source rows do not.** Counts, rates and
    scores can be published. Rows, street names, house numbers, coordinates and
    personal names cannot, in commits, issues, pull requests, docs or comments. The one
