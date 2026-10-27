@@ -1,3 +1,5 @@
 # The documentation site (mkdocs.yml). Read the Docs and the CI `docs` job install these.
 mkdocs==1.6.1
 mkdocs-material==9.8.0
+mkdocstrings==1.0.8
+mkdocstrings-python==2.0.10

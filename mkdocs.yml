@@ -30,6 +30,23 @@ theme:
 hooks:
   - tools/docs/links.py
 
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          # The stubs and the pure-Python helpers are read as source; nothing is built or imported.
+          paths: [crates/doorplate-py/python]
+          options:
+            docstring_style: null
+            show_source: false
+            show_signature_annotations: true
+            separate_signature: true
+            show_root_heading: true
+            show_root_full_path: false
+            show_symbol_type_heading: true
+            filters: ["!^_[^_]"]
+
 markdown_extensions:
   - toc:
       permalink: true
@@ -61,6 +78,8 @@ nav:
   - Reference:
       - RESO mapping: reso-mapping.md
       - USPS Publication 28 notes: usps-pub28-notes.md
+      - Python reference: python-api.md
+      - Command-line reference: cli.md
       - API surface: api-surface.md
   - Data:
       - Places: places.md
