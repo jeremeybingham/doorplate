@@ -24,7 +24,7 @@ The groups below are documentation, not an API: nothing in the library separates
   not a bug count.
 - A warning is read against **the fields it is about**; the other columns of the full output are in the report. The
   table is regenerated with `tools/harness/label_score.py RECORDS --by-warning --confirm`
-  ([`tools/harness/README.md`](../tools/harness/README.md)), after a rule change.
+  ([`docs/tools/harness.md`](tools/harness.md)), after a rule change.
 
 Baselines (every row): in NAD the number differs on 0.9%, the street name on 4.4%, the unit on 3.6%, the suffix on 0.1%;
 in the NC voter pair the number on 1.2%, the name on 2.4%, the unit on 0.6%, the suffix on 0.1% (the number figure

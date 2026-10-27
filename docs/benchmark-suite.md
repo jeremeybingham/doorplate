@@ -82,7 +82,7 @@ A version directory is never edited after it is published (see "Versions").
 
 - `fields`: `{line1, line2, city, state, zip}`, the same record as `parse_fields` would get it.
 - `inputs`: the record written in two to four styles, for the key-stability measure.
-- `expect`: the components, named as in the golden corpus (`tests/corpus/README.md`), in
+- `expect`: the components, named as in the golden corpus (`docs/tests/corpus.md`), in
   Pub 28 standard form.
 - `usps`: the expected `to_usps()` delivery line and last line.
 
@@ -430,7 +430,7 @@ Built in these steps (issue #75), each a small pull request or a local step:
    count that differs from the gold in one parser; they are left as they are.
 5. **The runner**, `benchmarks/suite.py`, with the profile and the CI job. Done: `compare`, `doorplate`,
    `speed` and `all` (a full run takes about 20 seconds), the profile applied by the runner itself, the
-   `workflow_dispatch` job in `.github/workflows/suite.yml` and the how-to in `benchmarks/README.md`. The runner scores
+   `workflow_dispatch` job in `.github/workflows/suite.yml` and the how-to in `docs/running-benchmarks.md`. The runner scores
    by character span, treats a trailing country that doorplate drops as handled, and prints the `natural`
    stratum's figures first, since the hard stratum over-represents blind spots by design.
 6. **`v1` frozen and scored**: figures in `docs/benchmarks.md` and the READMEs. Done: `benchmarks/suite/v1/` is

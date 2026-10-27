@@ -16,7 +16,7 @@ through `usaddress.parse`. Run with usaddress available, for example:
         --out tag-report.md tag tests/external/usaddress/*.xml
 
 `gold` scores both against usaddress's own labeled test files (held out from
-its training data; see tests/external/usaddress/README.md). `raw` has no
+its training data; see docs/tests/usaddress-tests.md). `raw` has no
 labels: it reports where the two parsers disagree. `tag` compares the joined
 dicts of `ParsedAddress::tag()` (`doorplate parse --tag`) with `usaddress.tag()` on
 the strings of the same files, and the address types. The scoring rules are

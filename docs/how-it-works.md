@@ -334,8 +334,8 @@ docs/                       this page and the references below
   after comparison on a sample of the Netsyms address database for every parse-rule
   change, a full run over its 146.6 million US rows before a release (no panics, no failed
   rows, warning and mismatch counts compared with the previous run), the National Address
-  Database scorecard, and a one-line Florida check (`tools/harness/README.md`,
-  `benchmarks/README.md`, `data-policy.md`).
+  Database scorecard, and a one-line Florida check (`docs/tools/harness.md`,
+  `docs/running-benchmarks.md`, `data-policy.md`).
 - **Pub 28 check**: `tools/pub28/verify.py` compares the tables with the live
   Publication 28 pages and runs every Appendix F example through the parser.
 - **CI**: `cargo fmt --check`, `clippy -D warnings`, `cargo test --workspace
@@ -350,7 +350,7 @@ docs/                       this page and the references below
 
 | Page | Contents |
 |---|---|
-| [`README.md`](README.md) | The index of all the documentation, by topic, and what to check when you change something |
+| [`change-checklist.md`](change-checklist.md) | What to check when you change something |
 | [`key-format.md`](key-format.md) | The `k3` key and the slug: the contract |
 | [`reso-mapping.md`](reso-mapping.md) | RESO Data Dictionary field mapping |
 | [`usps-pub28-notes.md`](usps-pub28-notes.md) | The source of every table and parser rule |

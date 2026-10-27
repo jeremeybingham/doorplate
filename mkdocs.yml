@@ -10,6 +10,7 @@ docs_dir: docs
 site_dir: build/docs
 exclude_docs: |
   requirements.txt
+  /README.md
 theme:
   name: material
   palette:
@@ -64,30 +65,49 @@ validation:
     absolute_links: warn
     unrecognized_links: warn
 
-# The documentation index (docs/README.md) is the home page. Add a new page here and to that index.
+# docs/index.md is the home page. docs/README.md is the index for GitHub readers and is not part of the site.
+# A page added to docs/ needs a nav entry here and a row in docs/README.md.
 nav:
-  - Home: README.md
-  - Start:
+  - Home: index.md
+  - About:
       - How it works: how-it-works.md
       - Warnings: warnings.md
       - The match key: key-format.md
-  - Guides:
-      - Custom layers: custom-layers.md
-      - Coming from usaddress: usaddress-compat.md
-      - Anonymizing data: anonymizing.md
-  - Reference:
+      - Accuracy and speed: benchmarks.md
       - RESO mapping: reso-mapping.md
       - USPS Publication 28 notes: usps-pub28-notes.md
+  - Guides:
+      - Custom layers: custom-layers.md
+      - Anonymizing data: anonymizing.md
+      - Coming from usaddress: usaddress-compat.md
+  - Python:
       - Python reference: python-api.md
+  - Command line:
       - Command-line reference: cli.md
-      - API surface: api-surface.md
+  - Rust:
+      - API on docs.rs: https://docs.rs/doorplate
   - Data:
+      - Data policy: data-policy.md
       - Places: places.md
       - State data: states/README.md
       - Florida: states/fl.md
-      - Data policy: data-policy.md
-  - Project:
-      - Benchmarks: benchmarks.md
-      - Benchmark suite: benchmark-suite.md
-      - Roadmap: roadmap.md
-      - Backlog: backlog.md
+      - Notice and licenses: https://github.com/jeremeybingham/doorplate/blob/main/NOTICE
+  - Development:
+      - When you change something: change-checklist.md
+      - Contributing: https://github.com/jeremeybingham/doorplate/blob/main/CONTRIBUTING.md
+      - Tools:
+          - The harness: tools/harness.md
+          - Harness run columns: tools/harness-schema.md
+          - The review tool: tools/review.md
+          - The ingest tool: tools/ingest.md
+      - Tests:
+          - The golden corpus: tests/corpus.md
+          - usaddress test files: tests/usaddress-tests.md
+      - Benchmarks:
+          - Running the benchmarks: running-benchmarks.md
+          - The benchmark suite: benchmark-suite.md
+      - Project:
+          - Roadmap: roadmap.md
+          - Backlog: backlog.md
+          - API surface: api-surface.md
+          - Changelog: https://github.com/jeremeybingham/doorplate/blob/main/CHANGELOG.md

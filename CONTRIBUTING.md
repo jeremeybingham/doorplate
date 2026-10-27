@@ -61,12 +61,12 @@ pytest crates/doorplate-py/tests
 pytest tools/ingest tools/harness tools/review tools/compare   # the ingest tool (Python 3.11+), the harness, the review tool and the key comparison
 ```
 
-Rust 1.80 or later; the Python extension needs 1.83. Plain `cargo test` needs no Python. Nothing here is limited to a number of cores or an amount of memory; only the benchmark suite's runner pins its reference profile (4 CPUs, 8 GB, `benchmarks/README.md`). CI also reports line coverage of the Rust code to Codecov (a separate, informational job; `codecov.yml` lists what is left out): read it as a map of code the tests do not reach, not as a gate.
+Rust 1.80 or later; the Python extension needs 1.83. Plain `cargo test` needs no Python. Nothing here is limited to a number of cores or an amount of memory; only the benchmark suite's runner pins its reference profile (4 CPUs, 8 GB, `docs/running-benchmarks.md`). CI also reports line coverage of the Rust code to Codecov (a separate, informational job; `codecov.yml` lists what is left out): read it as a map of code the tests do not reach, not as a gate.
 
 ## Fixing a parsing bug
 
 1. Add a case to the golden corpus (`tests/corpus/`, format in
-   `tests/corpus/README.md`) that fails. Use an invented address of the same shape.
+   `docs/tests/corpus.md`) that fails. Use an invented address of the same shape.
 2. Fix the rule or the table. The tagger reads tables only through `Lexicons`; there
    is no state-specific logic in it.
 3. Add a row to `docs/usps-pub28-notes.md` for a new parser rule, with its source: a
@@ -101,7 +101,7 @@ Disclaimer section.
 
 ## Documentation
 
-`docs/README.md` indexes all the documentation by topic, and ends with a table of what to
+`docs/README.md` indexes all the documentation by topic, and `docs/change-checklist.md` is a table of what to
 check when you change something: a parse rule, a key, a warning code, the API or a CLI
 option, a figure, the layout, the build commands, a version number. Before you open a pull
 request, find your change in that table and update every page in its row in the same pull
@@ -140,7 +140,7 @@ notebook, so they cannot go stale silently.
 Maintainers only. The release issue for a version (#44 for 0.3.0, #133 for 0.3.1) is the checklist; the steps, in order:
 
 1. **Figures.** If the parser or the tables changed since the figures were taken, rerun `benchmarks/suite.py all` (and `benchmarks/suite.py compare --suite local-data/benchsuite/twin` for the private twin), `benchmarks/accuracy.py` and the speed and size scripts, and update the figures in `docs/benchmarks.md` and in the package READMEs that quote them (`CLAUDE.md` lists the four READMEs). The suite's `v1` files are never edited; a rebuilt suite is `v2`.
-2. **Checks on private data.** One full Netsyms run on the release commit, compared with the previous one (`tools/harness/README.md`), and `tools/compare/oneline_fl.py` and `tools/harness/nad_score.py` as regression checks. Ask before extracting the database or starting the run.
+2. **Checks on private data.** One full Netsyms run on the release commit, compared with the previous one (`docs/tools/harness.md`), and `tools/compare/oneline_fl.py` and `tools/harness/nad_score.py` as regression checks. Ask before extracting the database or starting the run.
 3. **CHANGELOG.** Rename `[Unreleased]` to the version and the date, add an empty `[Unreleased]` above it, and say when keys changed (store the key prefix, re-parse to re-key).
 4. **One pull request for the references, made last.** The workspace version and the `doorplate` dependency version in `Cargo.toml` (and `Cargo.lock`, with `cargo update -w`; between releases `main` carries the next version with a `-dev` suffix, such as `0.4.0-dev`, so a build from `main` never reports a released version, and this pull request sets the plain release version, which the tag must equal), the "Alpha release" notice in the four READMEs, and the docs that say which version is current. Leave history alone (older CHANGELOG entries, the `k1` notes in `docs/key-format.md`). CI and the wheel builds must be green on the merge commit. Optionally start the "Benchmark suite" workflow from the Actions tab, and run "Release crates.io" (a dry run: it packages `doorplate` and stops) and "Release PyPI" (it builds the wheels and the sdist and stops) by hand first.
 5. **Tag.** Tag the merge commit `vX.Y.Z`; the tag must equal the workspace version, and the crates.io job fails if it does not. Pushing a `v*` tag runs both release workflows. The `crates-io` and the `pypi` environments each need a manual approval before anything is published. crates.io gets `doorplate`, then `doorplate-cli` (the repository secret `CARGO_REGISTRY_TOKEN`); PyPI gets the abi3 wheels and the sdist through trusted publishing (no token).

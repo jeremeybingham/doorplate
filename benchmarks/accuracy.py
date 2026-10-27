@@ -4,7 +4,7 @@
     python benchmarks/accuracy.py
 
 Needs the release CLI and `usaddress` (pip install usaddress). The geocode
-benchmark is not in the repository (`benchmarks/README.md` says how to get it);
+benchmark is not in the repository (`docs/running-benchmarks.md` says how to get it);
 without it that part is skipped. Prints Markdown.
 """
 import re

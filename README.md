@@ -316,7 +316,7 @@ The headline numbers, then what each benchmark in the repository is, so you can 
 
 | | doorplate | usaddress |
 |---|---|---|
-| Whole address right, [benchmark suite](benchmarks/README.md#the-benchmark-suite), `natural` stratum (16,001 addresses written in five styles) | 98.3% | 96.1% |
+| Whole address right, [benchmark suite](docs/running-benchmarks.md#the-benchmark-suite), `natural` stratum (16,001 addresses written in five styles) | 98.3% | 96.1% |
 | Whole address right, [geocode benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark) dev split (60,522 one-line addresses) | 94.5% | 88.1% |
 | Addresses per second from Python, one thread (suite inputs; `parse_tokens` / `usaddress.parse`) | about 38,300 | about 8,900 |
 | Addresses per second, `parse_many` on 4 threads (usaddress has no batch call) | about 152,000 | about 8,900 |
@@ -366,7 +366,7 @@ reading the errors of its *test* split (96.8%), so that figure is optimistic; la
 part of the train split (20% of it held out, unread, 94.2%) and checked on dev, and 94.5% is the estimate for
 data of that shape (one line, US street addresses, a city and a state), not a guarantee for yours.
 
-How to run each, what it needs, and the resource profile: [`benchmarks/README.md`](benchmarks/README.md).
+How to run each, what it needs, and the resource profile: [`docs/running-benchmarks.md`](docs/running-benchmarks.md).
 The specification of the suite and the rules that keep it fair: [`docs/benchmark-suite.md`](docs/benchmark-suite.md).
 
 ## What it does not do
@@ -438,7 +438,7 @@ The pages below are also a searchable site: **<https://doorplate.readthedocs.io/
 | [`docs/benchmarks.md`](docs/benchmarks.md) | Accuracy, speed and size |
 | [`docs/roadmap.md`](docs/roadmap.md) | Planned work, what is not planned, and what data would help |
 | [`docs/places.md`](docs/places.md), [`docs/states/fl.md`](docs/states/fl.md) | The place list and the Florida state data: sources and licenses |
-| [`tests/corpus/README.md`](tests/corpus/README.md) | The golden corpus format |
+| [`docs/tests/corpus.md`](docs/tests/corpus.md) | The golden corpus format |
 | [`crates/doorplate-py/README.md`](crates/doorplate-py/README.md) | The Python package |
 | [`CHANGELOG.md`](CHANGELOG.md) | Release notes |
 

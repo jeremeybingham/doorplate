@@ -24,11 +24,12 @@ imply otherwise in docs or code comments.
 | The public API surface and the decisions behind each name | [`docs/api-surface.md`](docs/api-surface.md) |
 | Coming from usaddress | [`docs/usaddress-compat.md`](docs/usaddress-compat.md) |
 | Sharing messy data without sharing the data (`doorplate anonymize`) | [`docs/anonymizing.md`](docs/anonymizing.md) |
-| Accuracy and speed, and how to rerun them | [`docs/benchmarks.md`](docs/benchmarks.md), [`benchmarks/README.md`](benchmarks/README.md) (every benchmark and which to run) |
+| Accuracy and speed, and how to rerun them | [`docs/benchmarks.md`](docs/benchmarks.md), [`docs/running-benchmarks.md`](docs/running-benchmarks.md) (every benchmark and which to run) |
 | The benchmark suite: what it holds and the rules that keep it fair (it is not a work list) | [`docs/benchmark-suite.md`](docs/benchmark-suite.md); data in [`benchmarks/suite/`](benchmarks/suite/README.md) |
 | How the parser works | [`docs/how-it-works.md`](docs/how-it-works.md) |
 | What is planned and what is not | [`docs/roadmap.md`](docs/roadmap.md); how issues are organized: [`docs/backlog.md`](docs/backlog.md) |
-| Every page of documentation, by topic, and which pages to check when you change something | [`docs/README.md`](docs/README.md) |
+| Every page of documentation, by topic | [`docs/README.md`](docs/README.md) |
+| Which pages to check when you change something | [`docs/change-checklist.md`](docs/change-checklist.md) |
 | What data may be used and committed | [`docs/data-policy.md`](docs/data-policy.md) |
 
 Parsing never raises on odd input: it returns a `ParsedAddress` with `warnings` (stable
@@ -41,12 +42,12 @@ Report security problems privately ([`SECURITY.md`](SECURITY.md)); conduct is co
 [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md). For everything else start with
 [`CONTRIBUTING.md`](CONTRIBUTING.md): reporting a misparse, fixing a parsing bug, data
 changes, and the rules for code. The golden corpus
-([`tests/corpus/README.md`](tests/corpus/README.md)) is the regression suite; every
+([`docs/tests/corpus.md`](docs/tests/corpus.md)) is the regression suite; every
 parsing bug fixed gets a case. Open issues are the backlog (organized as `docs/backlog.md` says).
 
-**Documentation.** [`docs/README.md`](docs/README.md) indexes all the documentation by topic and has
-a table of what to check when you change something. Look at it before you finish a
-change: find the thing you changed in that table and update every page in its row in the
+**Documentation.** [`docs/README.md`](docs/README.md) indexes all the documentation by topic, and
+[`docs/change-checklist.md`](docs/change-checklist.md) is the table of what to check when you change something. Look at the
+table before you finish a change: find the thing you changed in it and update every page in its row in the
 same change (a rule, a key, a warning code, an API or CLI option, a figure, the layout or
 the build commands all have related pages). When you add, rename or remove a page, update
 the index and the table above, and the navigation in `mkdocs.yml` when the page is in `docs/` (the documentation
@@ -75,7 +76,7 @@ python benchmarks/suite.py all
 
 **Resources.** Builds, tests, the harness, the key comparison and the data tools use all the cores and memory
 the machine has. Only the benchmark suite's runner (`benchmarks/suite.py`) and a speed figure you intend to quote pin
-the reference profile (4 CPUs, 8 GB; [`benchmarks/README.md`](benchmarks/README.md)).
+the reference profile (4 CPUs, 8 GB; [`docs/running-benchmarks.md`](docs/running-benchmarks.md)).
 
 Plain `cargo test` needs no Python. Rust 1.80 or later; the Python extension needs 1.83. CI also uploads Rust line coverage to Codecov (informational; `codecov.yml`).
 

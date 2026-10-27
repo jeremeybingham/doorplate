@@ -105,7 +105,7 @@ This is obfuscation that keeps the shape, not anonymity: read the output before 
 doorplate corpus test --dir my-corpus --custom-layer my-layer
 ```
 
-Runs a golden corpus (the record format is in the [corpus README](../tests/corpus/README.md)) and compares it
+Runs a golden corpus (the record format is in the [corpus page](tests/corpus.md)) and compares it
 with the baseline, `passing.txt`. Exit 3 on a regression.
 
 | Option | Meaning |

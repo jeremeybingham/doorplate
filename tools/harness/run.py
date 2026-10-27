@@ -11,7 +11,7 @@ the Netsyms records give the same numbers).
 
 Without `--confirm` it only prints the plan (input, row range, chunks, paths, disk
 budget) and exits. With it, it writes a run directory under
-`local-data/netsyms-runs/<run-id>/` (see tools/harness/README.md and SCHEMA.md).
+`local-data/netsyms-runs/<run-id>/` (see docs/tools/harness.md and SCHEMA.md).
 
 The input stays in `local-data/` and is never copied into the repository. See
 docs/data-policy.md: only aggregate numbers leave the run directory. This library
@@ -36,7 +36,7 @@ HERE = Path(__file__).resolve().parent
 SCHEMA_VERSION = 8
 REQUIRED = ["zipcode", "number", "street", "street2", "city", "state", "plus4", "country", "source"]
 GB = 1 << 30
-# The columns of a row as the checks see it (tools/ingest/README.md has their meaning).
+# The columns of a row as the checks see it (docs/tools/ingest.md has their meaning).
 COLS = ["record_id", "source", "role", "provider", "line1", "line2", "city", "state", "zip",
         "last_line", "label_number"]
 # Columns whose presence in a role decides which consistency checks run on its rows.
@@ -554,7 +554,7 @@ def main(argv=None):
                         "budget_gb": args.budget_gb},
         }
         manifest_path.write_text(json.dumps(manifest, indent=2) + "\n")
-        shutil.copy(HERE / "SCHEMA.md", run / "SCHEMA.md")
+        shutil.copy(ROOT / "docs" / "tools" / "harness-schema.md", run / "SCHEMA.md")
         (run / "README_RUN.md").write_text(readme_run(manifest))
     log = open(run / "progress.log", "a", buffering=1)
 
