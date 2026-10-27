@@ -331,6 +331,7 @@ def examples_path(path):
 
 def write_examples(res, path):
     """One tab-separated line per kept example; returns how many. Never printed."""
+    Path(path).parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w") as f:
         f.write("source\trole\tfield\trecord_id\tpair_id\tlabel\tours\n")
         for row in res.examples:

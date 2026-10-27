@@ -144,8 +144,8 @@ def test_examples_file_holds_ids_and_values_and_is_never_printed(tmp_path, capsy
     rows = [(str(i), "t", "site", f"{i} OAK DR", None, "MIAMI", "FL", "33101", None, str(i), None, "OAK", "CT", None, None)
             for i in range(1, 9)]
     write(f, rows, COLS)
-    local = ls.ROOT / "local-data"
-    out = local / f"_test_examples_{tmp_path.name}.tsv"
+    monkeypatch.setattr(ls, "ROOT", tmp_path)  # a fresh clone has no local-data/; the file must be created
+    out = tmp_path / "local-data" / "nested" / "examples.tsv"
     try:
         res, _ = scored(str(f), "--examples", str(out), "--examples-max", "3")
         assert len(res.examples) == 3  # 8 disagreements of one pair, capped at 3
