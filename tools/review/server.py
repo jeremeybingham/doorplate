@@ -17,6 +17,11 @@ For each row the page shows the parse and the warnings, and you choose a verdict
 - `noise`: the source cut it off or mangled it;
 - `skip`: not now.
 
+A comparison queue (`tools/review/compare_sample.py`, issue #132) shows doorplate's parse beside
+usaddress's, and the verdicts are `doorplate_right`, `usaddress_right`, `both_right` (a different
+convention, both fine), `both_wrong` (with a corrected string, as for `corrected`), and the
+`unclear`, `junk`, `noise` and `skip` above.
+
 Every answer is appended to the answers file, one JSON object per line; an undo appends a
 marker, so the file is never rewritten. Answers already given are not shown again, so a session
 can stop and resume. The parser is the doorplate WebAssembly build (`cargo build -p doorplate-wasm
@@ -43,6 +48,7 @@ DEFAULT_ANSWERS = ROOT / "local-data" / "review" / "answers.jsonl"
 DEFAULT_WASM = ROOT / "target" / "wasm32-unknown-unknown" / "release" / "doorplate_wasm.wasm"
 BUILD_WASM = "cargo build -p doorplate-wasm --target wasm32-unknown-unknown --release"
 VERDICTS = ("right", "corrected", "unclear", "junk", "noise", "skip")
+COMPARE_VERDICTS = ("doorplate_right", "usaddress_right", "both_right", "both_wrong")  # for a comparison row
 WARNING_VERDICTS = ("fair", "noise")  # for a `right` parse: was the warning justified?
 MAX_BODY = 64 * 1024
 INPUT_KEYS = ("line1", "line2", "city", "state", "zip", "last_line", "provider")
@@ -102,13 +108,16 @@ class Review:
         if item is None:
             raise ValueError("unknown id")
         verdict = body.get("verdict")
-        if verdict not in VERDICTS:
+        if verdict in COMPARE_VERDICTS:
+            if "compare" not in item:
+                raise ValueError("that verdict is for a comparison row")
+        elif verdict not in VERDICTS or (verdict in ("right", "corrected") and "compare" in item):
             raise ValueError("unknown verdict")
         warning = body.get("warning")
         if verdict == "right" and warning not in WARNING_VERDICTS:
             raise ValueError("a right parse needs a warning verdict: fair or noise")
         corrected = (body.get("corrected") or "").strip()
-        if verdict == "corrected" and not corrected:
+        if verdict in ("corrected", "both_wrong") and not corrected:
             raise ValueError("a corrected answer needs the corrected string")
         rec = {"ts": datetime.now(timezone.utc).isoformat(timespec="seconds"), "id": item["id"],
                "seq": item["seq"], "source": item["source"], "role": item["role"],
@@ -116,7 +125,9 @@ class Review:
                "verdict": verdict, "note": (body.get("note") or "").strip()[:2000]}
         if verdict == "right":
             rec["warning"] = warning
-        if verdict == "corrected":
+        if "compare" in item:
+            rec["compare"] = item["compare"]
+        if verdict in ("corrected", "both_wrong"):
             rec["corrected"] = corrected[:1000]
         for k in ("parse", "corrected_parse"):  # summaries the page computed with the same parser
             v = body.get(k)

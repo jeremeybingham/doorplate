@@ -31,7 +31,7 @@ ROWS = [
 ]
 
 
-def make_run(tmp_path, input_dir="inputs"):
+def make_run(tmp_path, input_dir="inputs", rows=ROWS):
     d = tmp_path / input_dir
     d.mkdir()
     recs = d / "records.parquet"
@@ -39,7 +39,7 @@ def make_run(tmp_path, input_dir="inputs"):
     con.execute("create table t (record_id varchar, source varchar, role varchar, provider varchar, "
                 "line1 varchar, line2 varchar, city varchar, state varchar, zip varchar)")
     con.executemany("insert into t values (?,?,?,?,?,?,?,?,?)",
-                    [(str(i), "inv", "site", "p", *r) for i, r in enumerate(ROWS)])
+                    [(str(i), "inv", "site", "p", *r) for i, r in enumerate(rows)])
     con.execute(f"copy t to '{recs}' (format parquet)")
     root = tmp_path / "runs"
     res = subprocess.run(
@@ -102,3 +102,24 @@ def test_a_benchmark_input_is_refused(tmp_path):
         sample.main([str(run), "--out", str(tmp_path / "q.jsonl"), "--confirm"])
     assert "not a work list" in str(e.value)
     assert not (tmp_path / "q.jsonl").exists()
+
+
+def test_a_repeated_input_is_queued_once(tmp_path):
+    rows = ROWS + [("123 456 QUINCEWOOD ST", None, "MIAMI", "FL", "33101"),  # the first row again, another id
+                   ("123  456  quincewood st", None, "miami", "fl", "33101")]  # and with other spacing and case
+    run = make_run(tmp_path, rows=rows)
+    out = tmp_path / "q.jsonl"
+    assert sample.main([str(run), "--out", str(out), "--confirm", "--per-shape", "9"]) == 0
+    q = read(out)
+    inputs = [" ".join(f"{e.get('line1')} {e.get('city')}".lower().split()) for e in q]
+    assert len(inputs) == len(set(inputs))
+    assert sum(1 for e in q if "quincewood" in e["line1"].lower() and e["line1"].startswith("12")) == 3  # 123, 124, 125
+
+
+def test_coarse_grouping_groups_by_warnings_and_the_first_word(tmp_path):
+    run = make_run(tmp_path)
+    out = tmp_path / "q.jsonl"
+    assert sample.main([str(run), "--out", str(out), "--confirm", "--group", "coarse", "--per-shape", "9"]) == 0
+    q = read(out)
+    # `123`, `124` and `125` are all `9` + the same warnings: one group of three rows
+    assert max(e["cluster"]["size"] for e in q) == 3 and {e["cluster"]["shape"] for e in q} == {"9"}

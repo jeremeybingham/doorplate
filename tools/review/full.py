@@ -144,7 +144,11 @@ def entry(n, a, mask):
     shown = [f"{k}={mk(inp[k])!r}" for k in FIELDS if inp.get(k)]
     lines.append("- input: " + "; ".join(shown))
     lines.append(f"- parse: {parse_line(mk(a.get('parse')))}")
-    if a["verdict"] == "corrected":
+    if a.get("compare"):
+        c = a["compare"]
+        lines.append(f"- comparison ({c.get('class')}): differs {c.get('differs')}")
+        lines.append("- usaddress read: " + " ".join(f"{mk(t)}/{l}" for t, l in c.get("usaddress") or []))
+    if a["verdict"] in ("corrected", "both_wrong"):
         original = one_line(inp)
         lines.append(f"- corrected: {mk(a.get('corrected'))!r}")
         lines.append(f"- corrected parse: {parse_line(mk(a.get('corrected_parse')))}")
