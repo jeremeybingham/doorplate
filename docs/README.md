@@ -12,6 +12,9 @@ New to the project? Read the [project README](../README.md), then
 
 | Page | What it covers |
 |---|---|
+| [`index.md`](index.md), [`getting-started.md`](getting-started.md) | The home page of the site; install, a first parse, what it does not do |
+| [`python.md`](python.md), [`command-line.md`](command-line.md), [`rust.md`](rust.md) | The tour for each way of using it: Python, the command, the Rust crate |
+| [`dataframes.md`](dataframes.md) | pandas, Polars and DuckDB: a column, a table or a file, with timings |
 | [`README.md`](../README.md) | What it is, quickstart, features, working with pandas, Polars, DuckDB and CSV files, the benchmarks at a glance |
 | [`crates/doorplate-py/README.md`](../crates/doorplate-py/README.md) | The Python package (PyPI): install, the API, batches and DataFrames, coming from usaddress |
 | [`crates/doorplate/README.md`](../crates/doorplate/README.md) | The Rust library (crates.io): install, API, features, batches |
@@ -47,7 +50,7 @@ New to the project? Read the [project README](../README.md), then
 
 | Page | What it covers |
 |---|---|
-| [`benchmarks.md`](benchmarks.md) | The results: the suite, the [geocode benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark), speed, size and memory |
+| [`benchmarks.md`](benchmarks.md), [`speed-and-size.md`](speed-and-size.md) | The results (accuracy; speed, size and memory): the suite, the [geocode benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark), speed, size and memory |
 | [`docs/running-benchmarks.md`](running-benchmarks.md) | How to run every benchmark, and which one answers which question |
 | [`benchmark-suite.md`](benchmark-suite.md) | The benchmark suite's specification: what it holds, how it was built and audited, the rules that keep it fair |
 | [`benchmarks/suite/README.md`](../benchmarks/suite/README.md), [`MANIFEST.md`](../benchmarks/suite/v1/MANIFEST.md) | The suite's data folder, and the composition and checksums of `v1` |
@@ -68,6 +71,7 @@ New to the project? Read the [project README](../README.md), then
 |---|---|
 | [`CONTRIBUTING.md`](../CONTRIBUTING.md) | Reporting a misparse, sharing messy data, building and testing, fixing a bug, data changes, the READMEs, releasing |
 | [`AGENTS.md`](../AGENTS.md), [`CLAUDE.md`](../CLAUDE.md) | The tool-neutral guide for AI agents (also a map of the repository), and our own process for Claude Code |
+| [`repository.md`](repository.md) | The repository layout and how it is tested |
 | [`CHANGELOG.md`](../CHANGELOG.md) | What changed in each release, and when keys changed |
 | [`change-checklist.md`](change-checklist.md) | What to check when you change something: the pages to update with each kind of change |
 | [`site/README.md`](../site/README.md) | The blog and the live demo (Jekyll, published to GitHub Pages): how to publish a post, how the demo is built and the rules for what a page may show |

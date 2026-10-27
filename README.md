@@ -95,20 +95,8 @@ k3:S|123|N|MAIN|ST||FL|33101
   command line share one parser.
 
 ## Works with your data
-
-Addresses arrive in different shapes. Pick the call that matches yours; all of them give the same components,
-keys and warnings.
-
-| Your data | Use |
-|---|---|
-| A column of whole addresses (`123 N Main St Apt 4, Miami FL 33101`) in **pandas** or **Polars** | `doorplate.pandas.parse_column` / `doorplate.polars.parse_column` |
-| The same, in **DuckDB** (a table, or a CSV or Parquet file it reads; `parse_column` is lazy, so tables larger than memory work) | `doorplate_parse(address)` in SQL, or `doorplate.duckdb.parse_column` on a relation |
-| Separate columns (street line, unit line, city, state, ZIP), complete or with gaps | `parse_fields_many` (lists), `doorplate_parse_fields(...)` in DuckDB |
-| A **CSV file**, without writing any Python | `doorplate parse-file in.csv --column address -o out.csv`, or `--column line1 --line2 ... --city ... --state ... --zip ...` for split columns |
-| Messy real addresses you want to share in a bug report | `doorplate anonymize` (CLI) or `doorplate.Anonymizer` (Python): same shape, other digits and names. Obfuscation, not anonymity: [what it keeps](docs/anonymizing.md) |
-| One address per line in a text file or a pipe | `doorplate parse - < addresses.txt` (JSON lines out) |
-| A mix of street addresses, PO boxes, rural routes, military, units in line 2, missing ZIPs | One call parses them all; the `address_type`, `warnings` and `key` columns say which is which |
-| Any list of strings, in code | `parse_many` (all cores, GIL released) |
+Addresses arrive as a column, split fields, a CSV file or a table. One call per shape gives the same components, keys and
+warnings:
 
 ```python
 import pandas as pd
@@ -118,42 +106,13 @@ df = pd.read_csv("addresses.csv")                                # a column name
 out = df.join(parse_column(df["address"], default_state="FL"))   # addr_street_name, addr_zip5, addr_key, addr_warnings, ...
 ```
 
-```python
-import polars as pl
-import doorplate as dp
-from doorplate.polars import parse_column
-
-df = pl.read_csv("addresses.csv")
-out = df.hstack(parse_column(df["address"]))                     # whole addresses in one column
-
-split = pl.read_csv("split.csv", infer_schema_length=0)          # line1, line2, city, state, zip, with gaps
-rows = dp.parse_fields_many(line1=split["line1"].to_list(), line2=split["line2"].to_list(),
-                            city=split["city"].to_list(), state=split["state"].to_list(),
-                            zip=split["zip"].to_list())          # one ParsedAddress per row
-```
-
-```python
-import duckdb
-from doorplate import duckdb as dd
-
-con = duckdb.connect()
-dd.register(con, columns=["street_name", "city", "state", "zip5", "key", "warnings"])
-con.sql("SELECT id, doorplate_parse(address).key AS key FROM read_csv('addresses.csv')")
-con.sql("SELECT doorplate_parse_fields(line1, line2, city, state, zip).key FROM read_csv('split.csv', all_varchar=true)")
-```
-
 ```sh
-doorplate parse-file addresses.csv --column address -o parsed.csv                       # appends addr_* columns
-doorplate parse-file split.csv --column line1 --line2 line2 --city city --state state --zip zip -o parsed.csv
+doorplate parse-file addresses.csv --column address -o parsed.csv    # a CSV file, no Python
 ```
 
-Every helper adds the same columns: the components, `address_type`, `key`, `slug`, `warnings` (codes joined by
-commas), and optionally the USPS lines, the unit-level key and the unparsed text. A blank or missing row stays
-blank instead of failing. The helpers are built over `parse_many`, which parses on every core it is given: on
-the benchmark suite's inputs, under its 4-CPU, 8 GB profile, it handles about 152,000 addresses per second
-(`usaddress.parse` in a loop: about 8,900). Runnable versions with data of several shapes are in [`examples/`](examples/README.md) (a notebook, a pandas, a Polars and a DuckDB
-pipeline); the full API and the recipes are in
-[`crates/doorplate-py/README.md`](crates/doorplate-py/README.md).
+Polars, DuckDB (in SQL), split columns and the timings are in [pandas, Polars and DuckDB](https://doorplate.readthedocs.io/en/latest/dataframes/); on the benchmark suite's
+inputs `parse_many` handles about 152,000 addresses per second on 4 CPUs (`usaddress.parse` in a loop: about 8,900).
+Runnable versions: [`examples/`](examples/README.md).
 
 ## What you get
 
@@ -213,74 +172,9 @@ cd crates/doorplate-py && pip install maturin && maturin develop --release
 ```
 
 ## Using it
-
-### Python
-
-```python
-import doorplate
-
-doorplate.parse_fields(line1="THE COVE", line2="1111 ASBURY WAY",
-                       city="Orlando", state="FL", zip="32801")   # pre-split fields
-doorplate.parse_many(["1 Main St, Miami FL", "PO Box 5, Tampa FL"])  # parallel, GIL released
-doorplate.parse_fields_many(line1=["1 Main St", "PO Box 5"],            # pre-split columns, same
-                            city=["Miami", "Tampa"], state=["FL", "FL"])  # but a batch
-doorplate.parse("281 EVELYN DR DOTHAN", default_state="AL").city     # "DOTHAN"
-doorplate.tag("PO Box 12, Tampa FL 33601")    # ({...usaddress labels...}, "PO Box")
-```
-
-`parse_many` and `parse_fields_many` (pre-split columns) parse a list on all cores
-and keep the order. For a pandas or
-Polars column, `doorplate.pandas.parse_column` and `doorplate.polars.parse_column`
-return component columns in one call; `doorplate.duckdb` adds `doorplate_parse(...)` functions
-and `parse_column` for DuckDB (`pip install "doorplate[duckdb]"`). Details, the DataFrame recipes and the
-types: [`crates/doorplate-py/README.md`](crates/doorplate-py/README.md).
-
-### Rust
-
-```rust
-use doorplate::{KeyOptions, Parser};
-
-let parser = Parser::new();
-let a = parser.parse("123 north main street apt 4, Miami FL 33101")?;
-assert_eq!(a.street_name.as_deref(), Some("MAIN"));
-assert_eq!(a.unit_number.as_deref(), Some("4"));
-
-a.to_usps().line1;                // Some("123 N MAIN ST APT 4")
-a.to_reso();                      // RESO Data Dictionary 2.0 fields
-a.key(KeyOptions::property());    // Some("k3:S|123|N|MAIN|ST||FL|33101")
-a.slug();                         // Some("123-n-main-st-apt-4-miami-fl-33101"), display only
-a.to_display().line1;             // Some("123 N Main St Apt 4"); to_long(): "123 North Main Street Apartment 4"
-a.diagnostics.warnings;           // e.g. MissingZip, UnparsedRemainder
-```
-
-`Parser::parse_fields` takes pre-split fields (`Fields`); `Parser::parse_many` and
-`Parser::parse_fields_many` parse a batch, in parallel with the `rayon` feature.
-`Parser::with_options(ParseOptions::new().default_state("FL"))?` sets a
-state hint.
-
-### Command line
-
-```sh
-doorplate parse "123 N Main St, Miami FL 33101" --pretty     # JSON: components, output, key, warnings, provenance
-doorplate --version                                          # the library version, also in the JSON as provenance.library_version (and provenance.state_data_version)
-doorplate parse-file in.csv --column address -o out.csv      # appends addr_* columns
-doorplate parse "281 EVELYN DR DOTHAN" --default-state AL
-doorplate parse "123 N Main St, Miami FL 33101" --display    # mixed case; --long spells words out (not Pub 28)
-doorplate parse "123 N Main St, Miami FL 33101" --tag        # usaddress-style joined labels
-doorplate parse -  < addresses.txt                           # one address per line, JSON lines out
-doorplate anonymize in.csv --column address -o shareable.csv   # replace digits and names, keep the shape (read it before you share it)
-doorplate parse "123 Oak Trayl, Miami FL 33101" --custom-layer DIR   # your own spellings, places and ZIPs on top of the shipped tables
-doorplate layer check DIR                                    # load a custom layer: every problem, or what it holds
-```
-
-`doorplate --help` lists every option.
-
-### A state hint
-
-When the input names no state and has no known ZIP, `default_state` lets the parser
-look the city up in that state: `281 EVELYN DR DOTHAN` finds `DOTHAN` with `AL`. It
-is a hint, never a fill: `state` stays empty, `missing_state` still fires, and
-`default_state_applied` says when the hint decided something.
+The tours, one per way of using it: the [Python guide](https://doorplate.readthedocs.io/en/latest/python/), the [command-line guide](https://doorplate.readthedocs.io/en/latest/command-line/) and the
+[Rust guide](https://doorplate.readthedocs.io/en/latest/rust/). The functions and options are in the [Python reference](https://doorplate.readthedocs.io/en/latest/python-api/) and the
+[command-line reference](https://doorplate.readthedocs.io/en/latest/cli/), and the Rust API is on [docs.rs](https://docs.rs/doorplate).
 
 ## How it works
 
@@ -311,63 +205,17 @@ what the input said; the place found is reported beside it. Sources and licenses
 [`docs/places.md`](docs/places.md) and [`docs/states/fl.md`](docs/states/fl.md).
 
 ## Benchmarks
-
-The headline numbers, then what each benchmark in the repository is, so you can tell them apart.
-
 | | doorplate | usaddress |
 |---|---|---|
-| Whole address right, [benchmark suite](docs/running-benchmarks.md#the-benchmark-suite), `natural` stratum (16,001 addresses written in five styles) | 98.3% | 96.1% |
+| Whole address right, [benchmark suite](docs/running-benchmarks.md), `natural` stratum (16,001 addresses written in five styles) | 98.3% | 96.1% |
 | Whole address right, [geocode benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark) dev split (60,522 one-line addresses) | 94.5% | 88.1% |
-| Addresses per second from Python, one thread (suite inputs; `parse_tokens` / `usaddress.parse`) | about 38,300 | about 8,900 |
-| Addresses per second, `parse_many` on 4 threads (usaddress has no batch call) | about 152,000 | about 8,900 |
-| Installed size | 1.8 MB wheel | 4.8 MB with dependencies |
+| Addresses per second from Python, one thread (suite inputs) | about 38,300 | about 8,900 |
 
-The accuracy and speed rows of the suite come from `python benchmarks/suite.py all` (4 CPUs, 8 GB; the speed is
-the best of three runs on one machine, so read the ratios: about 4.3x on one thread and 17x on four; the recorded run, and 0.3.1 against 0.4.0, are in `docs/benchmarks.md`). The geocode row is
-an outside data set, and the size row is from `benchmarks/size_memory.py`. They were measured on a few data
-sets and are not promised for yours. Method, every other figure and the caveats:
-[`docs/benchmarks.md`](docs/benchmarks.md).
-
-**0.3.1 to 0.4.0**, the same benchmarks on both builds, back to back on one machine (the full tables, with the Rust
-and size figures, are in [`docs/benchmarks.md`](docs/benchmarks.md#031-to-040)):
-
-| | 0.3.1 | 0.4.0 |
-|---|---|---|
-| Suite, `natural` stratum / whole suite | 98.3% / 92.2% | 98.3% / 92.3% |
-| Geocode benchmark, dev | 94.4% | 94.5% |
-| Fields input right / unit number right | 98.9% / 96.8% | 99.1% / 97.8% |
-| Wrong parses that raised a warning | 43.9% | 54.7% |
-| Python `parse`, geocode addresses, one thread | 34,149/s | 38,463/s (+13%) |
-| Python `parse_many`, 4 threads | 113,873/s | 137,876/s (+21%) |
-| One address in Rust, full one line | 17.3 µs | 12.4 µs (-28%) |
-
-### The benchmarks, and which to run
-
-| Name | What it measures | Run it | Data | For |
-|---|---|---|---|---|
-| **Benchmark suite** | Accuracy next to usaddress on 19,586 labeled addresses neither library was made from, a doorplate-only track (fields input, Pub 28 output, key stability, warnings), and speed under a fixed 4-CPU, 8 GB profile | `python benchmarks/suite.py all` (about 20 s) | In the repository (`benchmarks/suite/v1/`) | Anyone. **Start here** |
-| **[Geocode benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark)** | Accuracy on one-line, uppercase, comma-free US street addresses from an outside data set (60,522 in the `dev` split) | `python benchmarks/accuracy.py` | Not redistributable: download it into `local-data/` | Maintainers; the check that a rule fix generalizes |
-| **Speed** | Addresses per second: Python (`speed_python.py`), batches and pandas, Polars and DuckDB frames (`bench_batch.py`), Rust (`speed_rust.py`, criterion) | the scripts in `benchmarks/` | Committed, invented addresses | Anyone; absolute figures belong to one machine, so read ratios |
-| **Size and memory** | Wheel, binary and installed size; import time; resident memory, against usaddress | `python benchmarks/size_memory.py` | None | Anyone |
-| **Checks on private data** | Rule changes and releases on real data: the Netsyms address database, the National Address Database sample, Florida records | `tools/harness/`, `tools/compare/` | `local-data/`, never published | Maintainers |
-
-Two things that look like benchmarks are not: the **golden corpus** (`tests/corpus/`) is a regression set that
-doorplate passes by construction, and **usaddress's own test files** are usaddress's regression tests (it
-scores about 100% on them). Neither says how accurate either library is on new data.
-
-On the suite, the `hard` stratum holds both libraries' known blind spots on purpose (doorplate 54%,
-usaddress 18%), so read the `natural` figure as the estimate for ordinary input. doorplate scores 0% on a
-house number with a letter prefix (`W 615 County Road C`). The suite's rows are anonymized National Address
-Database rows (real streets, cities and ZIP codes, invented numbers), and a private twin built from an
-unpublished seed checks that the public set was not tuned to.
-
-The [geocode benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark)'s figure needs a caveat: the rules and the place list were first developed while
-reading the errors of its *test* split (96.8%), so that figure is optimistic; later rules were fixed against
-part of the train split (20% of it held out, unread, 94.2%) and checked on dev, and 94.5% is the estimate for
-data of that shape (one line, US street addresses, a city and a state), not a guarantee for yours.
-
-How to run each, what it needs, and the resource profile: [`docs/running-benchmarks.md`](docs/running-benchmarks.md).
-The specification of the suite and the rules that keep it fair: [`docs/benchmark-suite.md`](docs/benchmark-suite.md).
+The suite is 19,586 labeled addresses neither library was made from; it keeps both libraries' blind spots on purpose, so read
+its `natural` stratum as the estimate for ordinary input. Speed is on 4 CPUs, 8 GB (read the ratios). These are measurements on
+a few data sets, not promises for yours. The method, every other figure and the caveats are in
+[accuracy](docs/benchmarks.md) and [speed, size and memory](docs/speed-and-size.md); how to rerun each benchmark is in
+[running the benchmarks](docs/running-benchmarks.md).
 
 ## What it does not do
 
@@ -382,39 +230,15 @@ The specification of the suite and the rules that keep it fair: [`docs/benchmark
   and places is not part of this release.
 
 ## Where it is going
-
-0.4.0 is out (an alpha: the `k3` key is new and a `k4` may follow). The next point release, 0.4.x, is about tooling,
-documentation and extensibility; the key-changing rules wait for the release after it. Roughly in this order:
-
-- **Tooling.** Done: `doorplate anonymize` ([docs](docs/anonymizing.md)), so messy data can be shared with its shape and
-  not its names, and per-state street-pattern counts. To come: quieter harness scorers and a review tool that
-  compares doorplate with usaddress.
-- **Documentation.** A searchable documentation site is live (https://doorplate.readthedocs.io/). To come: a Python and command-line reference, and versions from tags.
-- **Extensibility.** A custom layer: your own spellings, places, ZIPs and state-specific readings, loaded at run
-  time without editing the shipped tables, and a usaddress-shaped module (`doorplate.compat`, in 0.4.x); a columnar result became faster `parse_column`.
-- **0.5.0, a `k4`.** The parser rules that change keys, cut together, once the tooling has produced evidence: the
-  state-dependent road conventions, the Florida place gaps, and the rest of the research on real data.
-
-The details, and what is deliberately not planned (validation, geocoding, international
-addresses), are in [`docs/roadmap.md`](docs/roadmap.md).
+0.4.0 is out (an alpha: the `k3` key is new and a `k4` may follow). The 0.4.x releases are about tooling, documentation and
+extensibility; the key-changing rules wait for 0.5.0 (`k4`). What is planned, what depends on what, and what is deliberately not
+planned (validation, geocoding, international addresses) are in [`docs/roadmap.md`](docs/roadmap.md).
 
 ## Coming from usaddress
-
 The labels are usaddress's, so a pipeline built on them keeps working. For a script that only calls `usaddress.parse` and
-`usaddress.tag`, change one import: `import doorplate.compat as usaddress` (label compatibility, not identical output; the
-differences are listed in [`docs/usaddress-compat.md`](docs/usaddress-compat.md)). The same calls under doorplate's own names:
-
-| usaddress | doorplate (Python) |
-|---|---|
-| `usaddress.parse(s)`: `[(token, label)]` | `doorplate.parse_tokens(s)` |
-| `usaddress.tag(s)`: `(dict, type)` | `doorplate.tag(s)` |
-| `RepeatedLabelError` | not raised: the runs are joined and `parse(s).repeated_labels()` lists the labels |
-| `Street Address`, `PO Box`, `Ambiguous` | `parse(s).address_type()` is finer; `tag(s)` returns the three |
-
-On the joined dicts of usaddress's own test files the two agree on 99.3% of 8,103
-addresses. Tokens doorplate cannot place are left out of `tag()`, and some labels
-(landmarks, corners, recipients) are not modeled. The full mapping, the differences
-and a feature comparison: [`docs/usaddress-compat.md`](docs/usaddress-compat.md).
+`usaddress.tag`, change one import: `import doorplate.compat as usaddress` (label compatibility, not identical output). On the joined
+dicts of usaddress's own test files the two agree on 99.3% of 8,103 addresses. The mapping, the differences and a feature comparison:
+[`docs/usaddress-compat.md`](docs/usaddress-compat.md).
 
 ## Examples
 
@@ -423,24 +247,16 @@ keys, messy lines, `parse_many`, a DataFrame, the CLI), Polars and pandas pipeli
 and small invented sample files.
 
 ## Documentation
-
-The pages below are also a searchable site: **<https://doorplate.readthedocs.io/>** (the same Markdown, built with MkDocs on Read the Docs).
+**<https://doorplate.readthedocs.io/en/latest/>** is a searchable site built from the Markdown in [`docs/`](docs/README.md) (the index of every page, for
+GitHub readers). Start with [Getting started](https://doorplate.readthedocs.io/en/latest/getting-started/); the pages most people want:
 
 | Page | Contents |
 |---|---|
-| [`docs/how-it-works.md`](docs/how-it-works.md) | The pipeline, the design choices, the layout |
-| [`docs/key-format.md`](docs/key-format.md) | The `k3` key and the slug: the contract |
-| [`docs/reso-mapping.md`](docs/reso-mapping.md) | RESO field mapping |
-| [`docs/usps-pub28-notes.md`](docs/usps-pub28-notes.md) | The source of every table and parser rule |
-| [`docs/usaddress-compat.md`](docs/usaddress-compat.md) | usaddress-shaped output, labels, migration |
-| [`docs/custom-layers.md`](docs/custom-layers.md) | Custom layers: your own spellings, words, places and ZIPs |
-| [`docs/anonymizing.md`](docs/anonymizing.md) | Sharing messy data: the anonymizer, what it keeps, its limits |
+| [`docs/how-it-works.md`](docs/how-it-works.md) | The pipeline, the design choices |
+| [`docs/key-format.md`](docs/key-format.md), [`docs/warnings.md`](docs/warnings.md) | The `k3` key (the contract) and what each warning tells you |
+| [`docs/custom-layers.md`](docs/custom-layers.md), [`docs/anonymizing.md`](docs/anonymizing.md) | Your own spellings and places; sharing messy data |
 | [`docs/benchmarks.md`](docs/benchmarks.md) | Accuracy, speed and size |
-| [`docs/roadmap.md`](docs/roadmap.md) | Planned work, what is not planned, and what data would help |
-| [`docs/places.md`](docs/places.md), [`docs/states/fl.md`](docs/states/fl.md) | The place list and the Florida state data: sources and licenses |
-| [`docs/tests/corpus.md`](docs/tests/corpus.md) | The golden corpus format |
-| [`crates/doorplate-py/README.md`](crates/doorplate-py/README.md) | The Python package |
-| [`CHANGELOG.md`](CHANGELOG.md) | Release notes |
+| [`docs/roadmap.md`](docs/roadmap.md), [`CHANGELOG.md`](CHANGELOG.md) | Planned work; release notes |
 
 ## Development
 

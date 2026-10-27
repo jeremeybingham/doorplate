@@ -44,3 +44,14 @@ def test_the_build_does_not_clean_the_blog_folder():
     text = (ROOT / "mkdocs.yml").read_text()
     out = [l.split(":", 1)[1].strip() for l in text.splitlines() if l.startswith("site_dir:")]
     assert out and out[0].strip("/") not in ("site", ""), out
+
+
+def test_an_issue_number_in_prose_becomes_a_link():
+    assert links.link_issues("see #105 and (#135).") == (
+        "see [#105](https://github.com/jeremeybingham/doorplate/issues/105) and "
+        "([#135](https://github.com/jeremeybingham/doorplate/issues/135)).")
+
+
+def test_issue_numbers_in_code_links_and_anchors_are_left_alone():
+    for t in ("`#105`", "```\n#105\n```", "[#105](x.md)", "[the audit of #137](x.md)", "<https://x.org/issues/1#2>", "[a](#105)", "[a](b.md#031-to-040)", "a#1", "&#39;", "#install", "## Heading #1x"):
+        assert links.link_issues(t) == t

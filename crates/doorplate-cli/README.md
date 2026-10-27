@@ -50,74 +50,26 @@ k3:S|123|N|MAIN|ST||FL|33101
 `doorplate --help` lists every option.
 
 ## CSV files
-
-`parse-file` reads a CSV file and writes it back with the parsed columns appended, so it works on the shape your
-data already has:
+`parse-file` reads a CSV file and writes it back with the parsed columns appended (`addr_street_number`, `addr_key`,
+`addr_warnings`, ...). Every input column is kept, and a blank row stays blank instead of stopping the run:
 
 ```sh
-# a column of whole addresses
-doorplate parse-file addresses.csv --column address -o parsed.csv
-
-# street line, unit line, city, state and ZIP in separate columns (any of them may be empty)
-doorplate parse-file split.csv --column line1 --line2 line2 --city city --state state --zip zip -o parsed.csv
-
-# a state hint for rows that name no state
-doorplate parse-file addresses.csv --column address --default-state FL -o parsed.csv
+doorplate parse-file addresses.csv --column address -o parsed.csv                                    # a column of whole addresses
+doorplate parse-file split.csv --column line1 --line2 line2 --city city --state state --zip zip -o parsed.csv   # split columns
 ```
 
-Every input column is kept, and the new `addr_` columns are the components (`street_number`, `street_name`,
-`unit_number`, `city`, `state`, `zip5`, ...), the shapes (`po_box`, `rural_route`, `military`, `general_delivery`),
-`place`, the USPS lines, `key`, `key_unit`, `slug`, `warnings` (stable codes joined by commas; [what each tells you](https://github.com/jeremeybingham/doorplate/blob/main/docs/warnings.md)) and `unparsed`. PO
-boxes, routes, military addresses and street addresses can share one file. A blank row, or a row with no address
-text, is written with empty new columns and counted on standard error instead of stopping the run. Without `-o`
-the CSV goes to standard output, so it composes with other tools. On a Florida file with five address columns it
-ran at about 30,000 rows per second on one thread, including reading and writing about 30 columns
-([benchmarks](https://github.com/jeremeybingham/doorplate/blob/main/docs/benchmarks.md)).
+The columns, the state hint and the speed are in the [command-line guide](https://doorplate.readthedocs.io/en/latest/command-line/).
 
 ## Custom layers
-
-Your data spells `TRAIL` as `TRAYL`, or lives in a community the shipped place list lacks? A **custom layer** is a folder of
-small files that adds your own spellings, words, places and ZIPs on top of the shipped tables (it never replaces them):
-
-```sh
-doorplate layer check county-extras                       # load it: every problem listed, or what it holds
-doorplate parse "123 Oak Trayl, Miami, FL 33101" --custom-layer county-extras
-doorplate parse-file in.csv --column address --custom-layer county-extras -o out.csv
-doorplate corpus test --dir my-corpus --custom-layer county-extras   # your own golden cases against your layer
-```
-
-Every JSON record reports the layer in `provenance.custom_layer` (name, version, fingerprint; `null` without one). **A layer
-can change a key**, so keep its fingerprint with the keys you store. The files, the rules, what a layer cannot change, a demo layer,
-a template to copy and a prompt for an LLM that drafts a layer from your misparsed lines are in
-[Custom layers](https://github.com/jeremeybingham/doorplate/blob/main/docs/custom-layers.md).
+`doorplate layer check DIR` and `--custom-layer DIR` add your own spellings, words, places and ZIPs on top of the shipped
+tables. A layer can change a key, so every record reports it (`provenance.custom_layer`). The files, the rules and a template
+are in [Custom layers](https://doorplate.readthedocs.io/en/latest/custom-layers/).
 
 ## Sharing messy data
-
-`doorplate anonymize` rewrites address-like text so it can go into a bug report, even when the text does not parse:
-
-```sh
-doorplate anonymize in.csv --column address --column line2 -o shareable.csv   # other columns are copied
-doorplate anonymize - < lines.txt                                             # one value per line
-```
-
-Digit runs become other digits of the same length (never equal; leading zeros, hyphens, letters and `1/2` stay), every
-other word becomes an invented word of the same length and case, and what decides how a line is read stays:
-punctuation, case, street suffixes, directionals, unit designators, states, `PO BOX` and the like, the city, and the
-first three ZIP digits. The same value gets the same replacement in a run; `--seed N` repeats a run, and without it the
-seed is random (a seed you publish lets anyone check a guess). Standard error says how many values the parser reads the
-same way after the change.
-
-**This is obfuscation that keeps the shape, not anonymity.** A word the lexicons know is kept (a street named `HARBOR`,
-`PARK` or `SUMMIT`), so is the city, and a name that is not a word the parser recognizes in some free-text field can
-still be one you meant to remove. Read the output before you share it. Errors name the problem, never a row. The rules, the options, what it can leak and how well it works on real data are in
-[Anonymizing address data](https://github.com/jeremeybingham/doorplate/blob/main/docs/anonymizing.md).
-
-For a data frame, SQL or a notebook, the [Python package](https://pypi.org/project/doorplate/) has pandas, Polars
-and DuckDB helpers over the same parser. On the benchmark suite (19,586 labeled addresses neither library was made
-from) it gets 98.3% of whole addresses right on the `natural` stratum, against 96.1% for the Python library
-usaddress; the method, the caveats and the blind spots are in the
-[benchmarks](https://github.com/jeremeybingham/doorplate/blob/main/docs/benchmarks.md). These are measurements on a
-few data sets, not promises for yours.
+`doorplate anonymize in.csv --column address -o shareable.csv` rewrites address-like text so it keeps its shape and loses its
+names and numbers, even when it does not parse. **It is obfuscation, not anonymity:** read the output before you share it.
+The rules and limits are in [Anonymizing data](https://doorplate.readthedocs.io/en/latest/anonymizing/). For a data frame, SQL or a notebook, the
+[Python package](https://pypi.org/project/doorplate/) has pandas, Polars and DuckDB helpers over the same parser.
 
 ## Disclaimer
 
@@ -135,11 +87,9 @@ US Postal Service, RESO, DataMade (the authors of usaddress) or any data source 
 names are used only to say what the output follows or is compared with.
 
 ## More
-
-- [Documentation site](https://doorplate.readthedocs.io/).
-- [Project README](https://github.com/jeremeybingham/doorplate#readme), [how it works](https://github.com/jeremeybingham/doorplate/blob/main/docs/how-it-works.md) and the
-  [key format](https://github.com/jeremeybingham/doorplate/blob/main/docs/key-format.md).
-- The library is [`doorplate`](https://crates.io/crates/doorplate); the Python package
-  is [`doorplate` on PyPI](https://pypi.org/project/doorplate/).
+- [Documentation site](https://doorplate.readthedocs.io/en/latest/): the [command-line guide](https://doorplate.readthedocs.io/en/latest/command-line/) and [reference](https://doorplate.readthedocs.io/en/latest/cli/), the [key](https://doorplate.readthedocs.io/en/latest/key-format/) and [how it works](https://doorplate.readthedocs.io/en/latest/how-it-works/).
+- [Project README](https://github.com/jeremeybingham/doorplate#readme).
+- The library is [`doorplate`](https://crates.io/crates/doorplate); the Python package is [`doorplate` on PyPI](https://pypi.org/project/doorplate/).
 
 Licensed under either of MIT or Apache-2.0 at your option.
+

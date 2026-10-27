@@ -36,8 +36,22 @@ def rewrite(markdown, src_path, docs_dir, repo_root):
     return LINK.sub(fix, markdown)
 
 
+# `#123` in prose: an issue or a pull request. Not in code, not inside a link (text or target), not an anchor (`](#123)`).
+ISSUE = re.compile(r"(?<![\w/&#\[`-])(?<!\]\()#(\d{1,4})\b(?![\w-])")
+CODE = re.compile(r"(```.*?```|`[^`\n]*`|\[[^\]\n]*\]\([^)\n]*\)|<https?://[^>\n]*>)", re.S)
+
+
+def link_issues(markdown):
+    """`markdown` with each `#123` in prose turned into a link to that issue on GitHub (GitHub does this itself)."""
+    pieces = CODE.split(markdown)  # the odd pieces are code or links and stay as they are
+    for i in range(0, len(pieces), 2):
+        pieces[i] = ISSUE.sub(lambda m: f"[#{m.group(1)}]({REPO}/issues/{m.group(1)})", pieces[i])
+    return "".join(pieces)
+
+
 def on_page_markdown(markdown, page, config, files):
     from pathlib import Path
 
     repo_root = Path(config["config_file_path"]).resolve().parent
-    return rewrite(markdown, page.file.src_path.replace("\\", "/"), config["docs_dir"], repo_root)
+    markdown = rewrite(markdown, page.file.src_path.replace("\\", "/"), config["docs_dir"], repo_root)
+    return link_issues(markdown)

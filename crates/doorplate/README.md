@@ -58,42 +58,12 @@ a.diagnostics.state_data_version; // Some("2026.10.5") for Florida, None for a s
   `ParsedAddress` with warnings (stable snake_case codes; [what each one tells you, and how often
   it is wrong](https://github.com/jeremeybingham/doorplate/blob/main/docs/warnings.md)) and the text it could not place.
 
-Addresses arrive in different shapes. Whole lines, split columns, PO boxes, rural routes, military and
-general delivery, units on a second line, and rows with gaps all go through the same calls:
-
-```rust
-use doorplate::{Fields, Parser};
-
-let parser = Parser::new();
-let rows = vec![
-    Fields { line1: Some("412 N HARBOR ST".into()), line2: Some("APT 3B".into()),
-             city: Some("TAMPA".into()), state: Some("FL".into()), zip: Some("33602".into()) },
-    Fields { line1: Some("PO BOX 4821".into()), city: Some("JACKSONVILLE".into()),
-             state: Some("FL".into()), ..Fields::default() },
-    Fields::default(), // no address text: an error for this row only
-];
-for r in parser.parse_fields_many(&rows) {
-    match r {
-        Ok(a) => println!("{:?} {:?}", a.to_display().lines(), a.diagnostics.warnings),
-        Err(e) => println!("{e}"),
-    }
-}
-```
-
-The runnable tour is [`examples/quickstart.rs`](https://github.com/jeremeybingham/doorplate/blob/main/crates/doorplate/examples/quickstart.rs)
+Batches, pre-split fields (`Fields`), PO boxes, military and general delivery go through the same calls; `doorplate::Anonymizer`
+rewrites address-like text so it can be shared (obfuscation, not anonymity). These are in the [Rust guide](https://doorplate.readthedocs.io/en/latest/rust/). The runnable
+tour is [`examples/quickstart.rs`](https://github.com/jeremeybingham/doorplate/blob/main/crates/doorplate/examples/quickstart.rs)
 (`cargo run -p doorplate --example quickstart` in a clone). For CSV files without writing code, install
 [`doorplate-cli`](https://crates.io/crates/doorplate-cli); for pandas, Polars and DuckDB, use the
 [Python package](https://pypi.org/project/doorplate/), which wraps this crate.
-
-`doorplate::Anonymizer` rewrites address-like text so it can be shared: digits and unknown words are replaced by
-others of the same length and case, and what decides how the parser reads a line stays. It is obfuscation that keeps
-the shape, not anonymity; read the output before you share it. The rules and limits are in
-[Anonymizing address data](https://github.com/jeremeybingham/doorplate/blob/main/docs/anonymizing.md).
-
-```rust
-let a = doorplate::Anonymizer::with_seed(7).anonymize("123 N Zephyrmill Ave Apt 4, Miami, FL 33101");
-assert!(a.text.contains(" N ") && a.text.contains(", FL 331") && !a.text.contains("Zephyrmill"));
-```
 
 ## Features
 
@@ -112,9 +82,8 @@ assert!(a.text.contains(" N ") && a.text.contains(", FL 331") && !a.text.contain
 | Whole address right, [geocode benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark) dev split (60,522 one-line addresses) | 94.5% | 88.1% |
 | One address in Rust (median of the corpus shapes, criterion; `cargo bench -p doorplate --bench parse`) | 5 to 12 µs | |
 
-The suite and the [geocode benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark) are run from Python (the table compares with the Python library usaddress); see the
-[benchmarks](https://github.com/jeremeybingham/doorplate/blob/main/docs/benchmarks.md) for the suite's strata, method and caveats, and
-[`docs/running-benchmarks.md`](https://github.com/jeremeybingham/doorplate/blob/main/docs/running-benchmarks.md) to rerun them. These are
+The suite and the geocode benchmark are run from Python (the table compares with the Python library usaddress); see the
+[accuracy](https://doorplate.readthedocs.io/en/latest/benchmarks/) and [speed](https://doorplate.readthedocs.io/en/latest/speed-and-size/) pages for the method and caveats, and [running the benchmarks](https://doorplate.readthedocs.io/en/latest/running-benchmarks/) to rerun them. These are
 measurements on a few data sets, not promises for yours.
 
 ## The match key
@@ -140,14 +109,9 @@ US Postal Service, RESO, DataMade (the authors of usaddress) or any data source 
 names are used only to say what the output follows or is compared with.
 
 ## More
-
+- [Rust guide](https://doorplate.readthedocs.io/en/latest/rust/), [API documentation](https://docs.rs/doorplate) and the [documentation site](https://doorplate.readthedocs.io/en/latest/) (how it works, the key, warnings, custom layers).
 - [Project README](https://github.com/jeremeybingham/doorplate#readme): what it does, accuracy and speed, the Python package.
-- [API documentation](https://docs.rs/doorplate) and the [guide pages](https://doorplate.readthedocs.io/) (how it works, the key, warnings, custom layers).
-- [How it works](https://github.com/jeremeybingham/doorplate/blob/main/docs/how-it-works.md),
-  [Pub 28 and rule sources](https://github.com/jeremeybingham/doorplate/blob/main/docs/usps-pub28-notes.md),
-  [RESO mapping](https://github.com/jeremeybingham/doorplate/blob/main/docs/reso-mapping.md) and the
-  [roadmap](https://github.com/jeremeybingham/doorplate/blob/main/docs/roadmap.md).
-- The command-line tool is [`doorplate-cli`](https://crates.io/crates/doorplate-cli);
-  the Python package is [`doorplate` on PyPI](https://pypi.org/project/doorplate/).
+- The command-line tool is [`doorplate-cli`](https://crates.io/crates/doorplate-cli); the Python package is [`doorplate` on PyPI](https://pypi.org/project/doorplate/).
 
 Licensed under either of MIT or Apache-2.0 at your option.
+
