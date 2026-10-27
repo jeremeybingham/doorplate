@@ -14,7 +14,8 @@ aggregate numbers leave `local-data/`, and nothing is committed from it.
 | `label_score.py` | Scores any records file that has `label_*` columns against our parse, or against another file's labels paired by `pair_id` (counts only) |
 | `nad_score.py` | The NAD scorecard: makes the NAD sample, then runs `label_score.py` on it |
 | `shapes_report.py` | The worklist for a run: warning rates, the share with an `unparsed` remainder, and the top failure shapes per source and role; with `--before RUN`, what changed |
-| `test_run.py`, `test_label_score.py`, `test_shapes_report.py` | Tests on invented rows (`pytest tools/harness`) |
+| `state_patterns.py` | Per-state counts of street patterns (Texas `RR`, `PR 123`, county roads, hyphenated numbers, `URB`, state-route spellings, a trailing number, a last word not in the suffix table) from a records file or the NAD Parquet: the evidence for the state rules (#53). Counts only |
+| `test_run.py`, `test_label_score.py`, `test_shapes_report.py`, `test_state_patterns.py` | Tests on invented rows (`pytest tools/harness`) |
 | `SCHEMA.md` | The artifacts' columns and the comparison rules (copied into every run) |
 
 ## Safe by default
