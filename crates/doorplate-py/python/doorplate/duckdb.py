@@ -27,9 +27,9 @@ from ._columns import (
     DEFAULT_COLUMNS,
     check_columns,
     columns_of,
-    texts_of,
+    extract_present,
 )
-from ._core import CustomLayer, load_layer, parse_fields_many, parse_many
+from ._core import CustomLayer, load_layer, parse_fields_many
 
 if TYPE_CHECKING:
     import os
@@ -57,9 +57,12 @@ def _imports() -> Any:
 
 def _struct(pa: Any, names: Sequence[str], parsed: Sequence[Any]) -> Any:
     """A StructArray of the columns; a row with no result is a NULL struct."""
-    data = columns_of(parsed, names)
+    return _struct_of(pa, names, columns_of(parsed, names), [a is not None for a in parsed])
+
+
+def _struct_of(pa: Any, names: Sequence[str], data: Any, present: Sequence[bool]) -> Any:
     arrays = [pa.array(data[n], type=pa.string()) for n in names]
-    mask = pa.array([a is None for a in parsed], type=pa.bool_())
+    mask = pa.array([not p for p in present], type=pa.bool_())
     return pa.StructArray.from_arrays(arrays, names=list(names), mask=mask)
 
 
@@ -102,12 +105,10 @@ def register(
     layer = _layer(custom_layer)
 
     def parse_texts(values: Any) -> Any:
-        parsed = parse_many(
-            texts_of(values.to_pylist()),
-            default_state=default_state,
-            custom_layer=layer,
+        _, data, present = extract_present(
+            values.to_pylist(), names, default_state, layer
         )
-        return _struct(pa, names, parsed)
+        return _struct_of(pa, names, data, present)
 
     # DuckDB reads the parameter count from the signature, so no *args.
     def parse_split(line1: Any, line2: Any, city: Any, state: Any, zip: Any) -> Any:

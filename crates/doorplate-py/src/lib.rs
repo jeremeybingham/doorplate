@@ -17,7 +17,7 @@ use doorplate::{
 };
 use pyo3::exceptions::{PyTypeError, PyValueError};
 use pyo3::prelude::*;
-use pyo3::types::PyDict;
+use pyo3::types::{PyDict, PyList};
 
 pyo3::create_exception!(
     _core,
@@ -738,6 +738,93 @@ fn parse_fields_many(
     parser.parse_fields_many(py, line1, line2, city, state, zip)
 }
 
+/// One column of string values from parsed results (the names `doorplate._columns` accepts); a
+/// row with no result is `None`. `None` for a name that is not a column.
+fn column_of(parsed: &[Option<ParsedAddress>], name: &str) -> Option<Vec<Option<String>>> {
+    type Get = fn(&ParsedAddress) -> Option<String>;
+    let get: Get = match name {
+        "street_number" => |a| a.street_number.clone(),
+        "street_dir_prefix" => |a| a.street_dir_prefix.map(|d| d.abbr().to_string()),
+        "street_name" => |a| a.street_name.clone(),
+        "street_suffix" => |a| a.street_suffix.map(|s| s.abbr().to_string()),
+        "street_dir_suffix" => |a| a.street_dir_suffix.map(|d| d.abbr().to_string()),
+        "unit_type" => |a| a.unit_type.map(|u| u.abbr().to_string()),
+        "unit_number" => |a| a.unit_number.clone(),
+        "second_unit_type" => |a| a.second_unit_type.map(|u| u.abbr().to_string()),
+        "second_unit_number" => |a| a.second_unit_number.clone(),
+        "po_box" => |a| a.po_box.clone(),
+        "military_post_office" => |a| a.military_post_office.map(|m| m.abbr().to_string()),
+        "attention" => |a| a.attention.clone(),
+        "building" => |a| a.building.clone(),
+        "city" => |a| a.city.clone(),
+        "state" => |a| a.state.map(|s| s.code().to_string()),
+        "zip5" => |a| a.zip5.clone(),
+        "zip4" => |a| a.zip4.clone(),
+        "unparsed" => |a| a.diagnostics.unparsed.clone(),
+        "address_type" => |a| Some(a.address_type().code().to_string()),
+        "key" => |a| a.key(KeyOptions::property()),
+        "key_unit" => |a| a.key(KeyOptions::unit()),
+        "slug" => |a| a.slug(),
+        "warnings" => |a| {
+            let codes: Vec<&str> = a.diagnostics.warnings.iter().map(|w| w.code()).collect();
+            Some(codes.join(","))
+        },
+        "usps_line1" => |a| a.to_usps().line1,
+        "usps_line2" => |a| a.to_usps().line2,
+        "usps_last_line" => |a| Some(a.to_usps().last_line()),
+        _ => return None,
+    };
+    Some(parsed.iter().map(|a| a.as_ref().and_then(get)).collect())
+}
+
+/// Parse a batch and return `(columns, present)`: one list of strings per column name, in
+/// `columns` order, with the same values as reading the attributes off `parse_many`'s results
+/// but without a Python object per row, and `present[i]`, False for a row with no result
+/// (that row is `None` in every column). Private: `doorplate.pandas`, `.polars` and
+/// `.duckdb` use it. The GIL is released while Rust parses and builds the columns (a thread
+/// per column).
+#[pyfunction]
+#[pyo3(signature = (texts, columns, default_state=None, custom_layer=None))]
+fn _parse_columns<'py>(
+    py: Python<'py>,
+    texts: Vec<String>,
+    columns: Vec<String>,
+    default_state: Option<&str>,
+    custom_layer: Option<&Bound<'_, PyAny>>,
+) -> PyResult<(Vec<Bound<'py, PyList>>, Bound<'py, PyList>)> {
+    if let Some(bad) = columns.iter().find(|c| column_of(&[], c).is_none()) {
+        return Err(PyValueError::new_err(format!("unknown column {bad:?}")));
+    }
+    let parser = parser_for(default_state, custom_layer)?;
+    let (built, present) = py.detach(|| {
+        let refs: Vec<&str> = texts.iter().map(String::as_str).collect();
+        let parsed: Vec<Option<ParsedAddress>> = parser
+            .parse_many(&refs)
+            .into_iter()
+            .map(Result::ok)
+            .collect();
+        let present: Vec<bool> = parsed.iter().map(Option::is_some).collect();
+        let built = std::thread::scope(|scope| {
+            let handles: Vec<_> = columns
+                .iter()
+                .map(|name| scope.spawn(|| column_of(&parsed, name).unwrap_or_default()))
+                .collect();
+            handles
+                .into_iter()
+                .map(|h| h.join().ok())
+                .collect::<Option<Vec<_>>>()
+        });
+        (built, present)
+    });
+    let built =
+        built.ok_or_else(|| PyValueError::new_err("internal error while building the columns"))?;
+    let lists = built
+        .into_iter()
+        .map(|col| PyList::new(py, col))
+        .collect::<PyResult<Vec<_>>>()?;
+    Ok((lists, PyList::new(py, present)?))
+}
+
 /// The counterpart of `usaddress.tag()`: `(dict, address_type)`.
 #[pyfunction]
 #[pyo3(signature = (text, default_state=None, custom_layer=None))]
@@ -864,6 +951,7 @@ fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(parse, m)?)?;
     m.add_function(wrap_pyfunction!(parse_fields, m)?)?;
     m.add_function(wrap_pyfunction!(parse_many, m)?)?;
+    m.add_function(wrap_pyfunction!(_parse_columns, m)?)?;
     m.add_function(wrap_pyfunction!(parse_fields_many, m)?)?;
     m.add_function(wrap_pyfunction!(tag, m)?)?;
     m.add_function(wrap_pyfunction!(parse_tokens, m)?)?;

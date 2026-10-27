@@ -395,6 +395,8 @@ corpus addresses, 4 CPUs): a loop of `parse` 1.58 s, `parse_many` 0.54 s (2.9x),
 `parse_many` into a pandas frame of seven columns 0.71 s (2.2x), into a Polars
 frame 0.64 s (2.5x). Reading attributes from 100,000 Python objects is now
 most of the time; `to_dict()` on every row costs about as much as parsing again.
+**Columns built in Rust (#24, 2026-10-27, measured before and after on the same inputs).** `parse_column` used to read each column off the Python objects (serial, about as long as the parse itself); it now asks Rust for the columns (`_parse_columns`: one list of strings per column, built on a thread per column with the GIL released), with identical values (a test compares every column on the whole corpus). The 15 default columns of 100,000 corpus addresses: pandas 1.03 s to 0.83 s, Polars 0.86 s to 0.70 s, DuckDB 0.79 s to 0.70 s (4 CPUs, the profile above); on 14 CPUs, where the parse is cheap, pandas 0.76 s to 0.54 s, Polars 0.61 s to 0.42 s, DuckDB 0.65 s to 0.51 s. The gain is 1.1x to 1.25x on 4 CPUs and 1.3x to 1.5x on 14, and it grows with the number of columns. No Arrow dependency was added; a public Arrow result is not built (the issue's option 2) because the remaining cost is Python strings, and no user has asked for it. The pre-split path (`parse_fields_many`) still goes through Python objects.
+
 The DuckDB functions (`doorplate.duckdb`) parse a 100,000-row table in 0.59 s with seven
 struct fields (2.7x a loop of `parse`) and 0.86 s with all fifteen (1.8x): the cost of
 building the Arrow struct grows with the columns, so ask for only those you need. A
