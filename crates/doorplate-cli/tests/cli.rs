@@ -13,12 +13,12 @@ fn cli(args: &[&str], stdin: &str) -> (String, String, i32) {
         .stderr(Stdio::piped())
         .spawn()
         .expect("spawn doorplate");
-    child
+    // A command that rejects its arguments may exit before it reads stdin: a broken pipe is fine.
+    let _ = child
         .stdin
         .take()
         .expect("stdin")
-        .write_all(stdin.as_bytes())
-        .expect("write stdin");
+        .write_all(stdin.as_bytes());
     let out = child.wait_with_output().expect("wait");
     (
         String::from_utf8_lossy(&out.stdout).into_owned(),
@@ -180,4 +180,126 @@ fn help_prints_the_usage_and_succeeds() {
     let (_, err, code) = cli(&[], "");
     assert_eq!(code, 1);
     assert!(err.contains("usage:"));
+}
+
+#[test]
+fn anonymize_stdin_keeps_the_shape_and_reports() {
+    let line = "123 N Zephyrmill Ave Apt 4, Miami, FL 33101";
+    let (out, err, code) = cli(&["anonymize", "--seed", "3"], &format!("{line}\n\n"));
+    assert_eq!(code, 0);
+    let lines: Vec<&str> = out.lines().collect();
+    assert_eq!(lines.len(), 2);
+    assert_eq!(lines[1], "", "an empty line stays empty");
+    assert_ne!(lines[0], line);
+    assert_eq!(lines[0].chars().count(), line.chars().count());
+    assert!(
+        lines[0].contains(" N ")
+            && lines[0].contains(" Ave Apt ")
+            && lines[0].contains("Miami, FL 331")
+    );
+    assert!(!lines[0].contains("Zephyrmill"));
+    assert!(
+        err.contains("1 value(s) anonymized") && err.contains("obfuscation, not anonymity"),
+        "{err}"
+    );
+    // The same seed repeats the output; a different one does not.
+    let (again, _, _) = cli(&["anonymize", "--seed", "3"], &format!("{line}\n\n"));
+    assert_eq!(out, again);
+    let (other, _, _) = cli(&["anonymize", "--seed", "4"], &format!("{line}\n\n"));
+    assert_ne!(out, other);
+}
+
+#[test]
+fn anonymize_csv_changes_only_the_named_columns() {
+    let dir = std::env::temp_dir().join(format!("doorplate-anon-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let input = dir.join("in.csv");
+    let output = dir.join("out.csv");
+    std::fs::write(
+        &input,
+        "id,street,city\n1,55 Bayview Dr,Tampa\n2,55 Bayview Dr,Tampa\n",
+    )
+    .unwrap();
+    let (_, err, code) = cli(
+        &[
+            "anonymize",
+            input.to_str().unwrap(),
+            "--column",
+            "street",
+            "-o",
+            output.to_str().unwrap(),
+            "--seed",
+            "1",
+        ],
+        "",
+    );
+    assert_eq!(code, 0, "{err}");
+    let text = std::fs::read_to_string(&output).unwrap();
+    let rows: Vec<Vec<&str>> = text.lines().map(|l| l.split(',').collect()).collect();
+    assert_eq!(rows[0], ["id", "street", "city"]);
+    assert_eq!(rows[1][0], "1");
+    assert_eq!(rows[1][2], "Tampa");
+    assert_ne!(rows[1][1], "55 Bayview Dr");
+    assert_eq!(
+        rows[1][1], rows[2][1],
+        "the same value gets the same replacement"
+    );
+    std::fs::remove_dir_all(&dir).unwrap();
+}
+
+#[test]
+fn anonymize_errors_do_not_quote_the_data() {
+    let dir = std::env::temp_dir().join(format!("doorplate-anon-err-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let input = dir.join("in.csv");
+    std::fs::write(&input, "street\nSECRETROW 1\nSECRET,TOO,MANY\n").unwrap();
+    let (_, err, code) = cli(
+        &["anonymize", input.to_str().unwrap(), "--column", "street"],
+        "",
+    );
+    assert_eq!(code, 2);
+    assert!(!err.contains("SECRET"), "{err}");
+    let (_, _, code) = cli(&["anonymize", input.to_str().unwrap()], "");
+    assert_eq!(code, 1, "--column is required for a file");
+    std::fs::remove_dir_all(&dir).unwrap();
+}
+
+#[test]
+fn anonymize_usage_errors_and_empty_input() {
+    let (_, err, code) = cli(&["anonymize", "--column", "street"], "55 Bayview Dr\n");
+    assert_eq!(code, 1);
+    assert!(err.contains("--column needs an input CSV file"), "{err}");
+    let (_, err, code) = cli(&["anonymize", "a.csv", "b.csv"], "");
+    assert_eq!(code, 1);
+    assert!(err.contains("at most one input"), "{err}");
+    let (_, _, code) = cli(&["anonymize", "--seed", "x"], "");
+    assert_eq!(code, 1);
+    // No input at all is not an error; nothing is anonymized and the report says so.
+    let (out, err, code) = cli(&["anonymize", "-"], "");
+    assert_eq!((out.as_str(), code), ("", 0));
+    assert!(
+        err.contains("0 value(s) anonymized") && err.contains("(100.0%)"),
+        "{err}"
+    );
+}
+
+#[test]
+fn anonymize_csv_unknown_column_and_missing_file() {
+    let dir = std::env::temp_dir().join(format!("doorplate-anon-col-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let input = dir.join("in.csv");
+    std::fs::write(&input, "street\n55 Bayview Dr\n").unwrap();
+    let (_, err, code) = cli(
+        &["anonymize", input.to_str().unwrap(), "--column", "nope"],
+        "",
+    );
+    assert_eq!(code, 2);
+    assert!(err.contains("no column named \"nope\""), "{err}");
+    let (_, err, code) = cli(
+        &["anonymize", "/no/such/file.csv", "--column", "street"],
+        "",
+    );
+    assert_eq!(code, 2);
+    assert!(err.contains("could not open"), "{err}");
+    std::fs::remove_dir_all(&dir).unwrap();
 }

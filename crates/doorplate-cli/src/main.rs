@@ -6,6 +6,8 @@
 //! doorplate parse --line1 X [--line2 X] [--city X] [--state X] [--zip X]
 //! doorplate parse            (no argument or "-": one address per stdin line, JSONL out)
 //! doorplate parse-file IN.csv --column NAME [-o OUT.csv] [--default-state ST]
+//! doorplate anonymize [-] [--seed N]
+//! doorplate anonymize IN.csv --column NAME [--column NAME ...] [-o OUT.csv] [--seed N]
 //! doorplate corpus test [--dir DIR] [--verbose] [--update-baseline]
 //! ```
 //!
@@ -13,7 +15,7 @@
 
 mod json;
 
-use doorplate::{corpus, Fields, ParseError, ParseOptions, ParsedAddress, Parser};
+use doorplate::{corpus, Anonymizer, Fields, ParseError, ParseOptions, ParsedAddress, Parser};
 use std::fs::File;
 use std::io::{self, BufRead, Write};
 use std::process::ExitCode;
@@ -32,6 +34,14 @@ const USAGE: &str = "usage:
                   [--zip NAME] [-o OUT.csv] [--default-state ST]
                                  --default-state: look cities up in ST when the
                                  input names no state (a hint, never a fill)
+  doorplate anonymize [-] [--seed N]
+                                 read one line per stdin line and write it back with the
+                                 digits and unknown words replaced (same shape; obfuscation,
+                                 not proof of anonymity: read the output before you share it)
+  doorplate anonymize IN.csv --column NAME [--column NAME ...] [-o OUT.csv] [--seed N]
+                                 the same for the named CSV columns; other columns are copied.
+                                 --seed N repeats the output (a published seed lets anyone check
+                                 a guess; leave it out for a random one)
   doorplate corpus test [--dir DIR] [--verbose] [--update-baseline]
                                  run the golden corpus (default dir: tests/corpus)
   doorplate --version | -V       print the version (the library's, as recorded in the JSON)
@@ -42,6 +52,7 @@ fn main() -> ExitCode {
     let result = match args.first().map(String::as_str) {
         Some("parse") => parse_cmd(&args[1..]),
         Some("parse-file") => parse_file_cmd(&args[1..]),
+        Some("anonymize") => anonymize_cmd(&args[1..]),
         Some("corpus") => corpus_cmd(&args[1..]),
         Some("--version" | "-V") => {
             // The library's version, the same one `parse` records in its JSON.
@@ -119,6 +130,13 @@ impl Opts {
         self.values
             .iter()
             .find(|(k, _)| k == name)
+            .map(|(_, v)| v.as_str())
+    }
+
+    fn values_of<'a>(&'a self, name: &'a str) -> impl Iterator<Item = &'a str> {
+        self.values
+            .iter()
+            .filter(move |(k, _)| k == name)
             .map(|(_, v)| v.as_str())
     }
 
@@ -337,6 +355,110 @@ fn parse_file_cmd(args: &[String]) -> Result<ExitCode, CliError> {
     if empty_rows > 0 {
         eprintln!("{empty_rows} row(s) had no address text; their new columns are empty");
     }
+    Ok(ExitCode::SUCCESS)
+}
+
+type Sink = dyn Fn(&Opts) -> Result<Box<dyn Write>, CliError>;
+
+/// The stdin form of `anonymize`: one value per line.
+fn anonymize_stdin(
+    o: &Opts,
+    sink: &Sink,
+    run: &mut dyn FnMut(&str) -> String,
+) -> Result<(), CliError> {
+    if o.values_of("--column").next().is_some() {
+        return Err(CliError::Usage("--column needs an input CSV file".into()));
+    }
+    let mut out = io::BufWriter::new(sink(o)?);
+    for line in io::stdin().lock().lines() {
+        let line = line.map_err(|_| CliError::Failed("could not read stdin".into()))?;
+        writeln!(out, "{}", run(&line))?;
+    }
+    out.flush()?;
+    Ok(())
+}
+
+/// `doorplate anonymize`: obfuscate address-like text, keeping its shape. Errors never
+/// quote the data (a CSV error can name a row), only what went wrong.
+fn anonymize_cmd(args: &[String]) -> Result<ExitCode, CliError> {
+    let o = Opts::parse(args, &["--column", "-o", "--seed"], &[])?;
+    let anonymizer = match o.value("--seed") {
+        Some(s) => Anonymizer::with_seed(
+            s.parse::<u64>()
+                .map_err(|_| CliError::Usage("--seed needs a whole number".into()))?,
+        ),
+        None => Anonymizer::new(),
+    };
+    let (mut total, mut faithful) = (0usize, 0usize);
+    let mut run = |text: &str| -> String {
+        if text.trim().is_empty() {
+            return text.to_string();
+        }
+        let r = anonymizer.anonymize(text);
+        total += 1;
+        faithful += usize::from(r.faithful);
+        r.text
+    };
+    let sink = |o: &Opts| -> Result<Box<dyn Write>, CliError> {
+        Ok(match o.value("-o") {
+            Some(path) => Box::new(File::create(path)?),
+            None => Box::new(io::stdout()),
+        })
+    };
+    match o.positional.as_slice() {
+        [] => anonymize_stdin(&o, &sink, &mut run)?,
+        [p] if p == "-" => anonymize_stdin(&o, &sink, &mut run)?,
+        [input] => {
+            let columns: Vec<&str> = o.values_of("--column").collect();
+            if columns.is_empty() {
+                return Err(CliError::Usage("--column NAME is required".into()));
+            }
+            let failed = |what: &str| CliError::Failed(format!("{what} {input}"));
+            let mut reader = csv::Reader::from_path(input).map_err(|_| failed("could not open"))?;
+            let headers = reader
+                .headers()
+                .map_err(|_| failed("could not read the header of"))?
+                .clone();
+            let mut idx = Vec::new();
+            for c in &columns {
+                idx.push(headers.iter().position(|h| h == *c).ok_or_else(|| {
+                    CliError::Failed(format!("--column: no column named {c:?} in {input}"))
+                })?);
+            }
+            let mut writer = csv::Writer::from_writer(sink(&o)?);
+            writer
+                .write_record(&headers)
+                .map_err(|_| CliError::Failed("could not write the output".into()))?;
+            for rec in reader.records() {
+                let rec = rec.map_err(|_| failed("could not read a row of"))?;
+                let row: Vec<String> = rec
+                    .iter()
+                    .enumerate()
+                    .map(|(i, v)| {
+                        if idx.contains(&i) {
+                            run(v)
+                        } else {
+                            v.to_string()
+                        }
+                    })
+                    .collect();
+                writer
+                    .write_record(&row)
+                    .map_err(|_| CliError::Failed("could not write the output".into()))?;
+            }
+            writer.flush()?;
+        }
+        _ => return Err(CliError::Usage("give at most one input".into())),
+    }
+    let pct = if total == 0 {
+        100.0
+    } else {
+        100.0 * faithful as f64 / total as f64
+    };
+    eprintln!(
+        "{total} value(s) anonymized; the parser reads {faithful} ({pct:.1}%) the same as before.\n\
+         This keeps the shape; it is obfuscation, not anonymity. Read the output before you share it."
+    );
     Ok(ExitCode::SUCCESS)
 }
 

@@ -37,6 +37,7 @@ doorplate parse "281 EVELYN DR DOTHAN" --default-state AL    # state hint
 doorplate parse "123 N Main St, Miami FL 33101" --display    # mixed case; --long spells words out (not Pub 28)
 doorplate parse "123 N Main St, Miami FL 33101" --tag        # usaddress-style joined labels
 doorplate parse -  < addresses.txt                           # one address per line, JSON lines out
+doorplate anonymize in.csv --column address -o shareable.csv   # same shape, other digits and names
 ```
 
 ```sh
@@ -70,6 +71,26 @@ text, is written with empty new columns and counted on standard error instead of
 the CSV goes to standard output, so it composes with other tools. On a Florida file with five address columns it
 ran at about 30,000 rows per second on one thread, including reading and writing about 30 columns
 ([benchmarks](https://github.com/jeremeybingham/doorplate/blob/main/docs/benchmarks.md)).
+
+## Sharing messy data
+
+`doorplate anonymize` rewrites address-like text so it can go into a bug report, even when the text does not parse:
+
+```sh
+doorplate anonymize in.csv --column address --column line2 -o shareable.csv   # other columns are copied
+doorplate anonymize - < lines.txt                                             # one value per line
+```
+
+Digit runs become other digits of the same length (never equal; leading zeros, hyphens, letters and `1/2` stay), every
+other word becomes an invented word of the same length and case, and what decides how a line is read stays:
+punctuation, case, street suffixes, directionals, unit designators, states, `PO BOX` and the like, the city, and the
+first three ZIP digits. The same value gets the same replacement in a run; `--seed N` repeats a run, and without it the
+seed is random (a seed you publish lets anyone check a guess). Standard error says how many values the parser reads the
+same way after the change.
+
+**This is obfuscation that keeps the shape, not anonymity.** A word the lexicons know is kept (a street named `HARBOR`,
+`PARK` or `SUMMIT`), so is the city, and a name that is not a word the parser recognizes in some free-text field can
+still be one you meant to remove. Read the output before you share it. Errors name the problem, never a row.
 
 For a data frame, SQL or a notebook, the [Python package](https://pypi.org/project/doorplate/) has pandas, Polars
 and DuckDB helpers over the same parser. On the benchmark suite (19,586 labeled addresses neither library was made

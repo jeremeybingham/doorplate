@@ -11,6 +11,7 @@ that an address exists or can receive mail.
 | [`polars_pipeline.py`](polars_pipeline.py) | Polars: `parse_column` on a CSV, picking columns, finding rows with warnings, duplicates by key, pre-split columns with `parse_fields_many`, a display column |
 | [`pandas_pipeline.py`](pandas_pipeline.py) | The same with pandas |
 | [`duckdb_pipeline.py`](duckdb_pipeline.py) | DuckDB: `doorplate_parse` and `doorplate_parse_fields` in SQL, and `parse_column` on a relation (needs `pip install "doorplate[duckdb]"`) |
+| [`anonymize_example.py`](anonymize_example.py) | `doorplate.Anonymizer`: obfuscate a messy file before sharing it, and how many lines still parse the same way (the CLI: `doorplate anonymize`) |
 | [`data/addresses_oneline.csv`](data/addresses_oneline.csv) | One address per row in a single column (street, PO box, rural route, general delivery, a unit, a blank row) |
 | [`data/addresses_split.csv`](data/addresses_split.csv) | Line 1, line 2, city, state and ZIP in separate columns, with gaps |
 | [`data/addresses_messy.txt`](data/addresses_messy.txt) | One line per address as people type them: lowercase, `c/o`, a country, an intersection, no state |
@@ -34,6 +35,7 @@ The CLI on a file (build it with `cargo build --release -p doorplate-cli`):
 target/release/doorplate parse-file examples/data/addresses_oneline.csv --column address -o /tmp/parsed.csv
 target/release/doorplate parse-file examples/data/addresses_split.csv --column line1 --line2 line2 --city city --state state --zip zip
 target/release/doorplate parse - < examples/data/addresses_messy.txt
+target/release/doorplate anonymize examples/data/addresses_oneline.csv --column address -o /tmp/anon.csv --seed 1   # or: anonymize - < file.txt
 target/release/doorplate parse "123 north main street apt 4, miami fl 33101" --display   # or --long, --usps
 ```
 

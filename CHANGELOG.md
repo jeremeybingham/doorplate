@@ -7,6 +7,17 @@ change to what an input produces needs a new key version.
 
 ## [Unreleased]
 
+### Added
+
+- **`doorplate anonymize`, `doorplate::Anonymizer` and `doorplate.Anonymizer`** (#105, additive, no key change): rewrites
+  address-like text so it can be shared, even text that does not parse. Digit runs become other digits of the same length,
+  other words become invented words of the same length and case, and suffixes, directionals, unit designators, states, the
+  city and the first three ZIP digits stay. The CLI takes stdin lines or named CSV columns (`--column`, `-o`, `--seed`),
+  Python has `Anonymizer(seed)`, `anonymize_many` and `anonymize`, and each value is checked by parsing before and after
+  (`faithful`). **Obfuscation that keeps the shape, not anonymity**: lexicon words and the city stay, so read the output
+  before you share it. On 100,000 sampled street lines from each of nine local sources the parser reads 96.7% to 99.9%
+  the same after the change, and no digit run stays as it was except the single-digit fractions (`1/2`), which stay by design.
+
 ## [0.4.0] - 2026-10-25
 
 ### Changed

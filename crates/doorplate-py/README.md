@@ -117,6 +117,7 @@ Pick the call that matches how your addresses arrive; all of them give the same 
 | Separate columns (street line, unit line, city, state, ZIP), complete or with gaps | `parse_fields_many(line1=[...], ...)`, or `doorplate_parse_fields(...)` in DuckDB |
 | A mix of street addresses, PO boxes, rural routes, military, units in line 2, missing ZIPs | one call parses them all; `address_type`, `warnings` and `key` say which is which |
 | Any list of strings | `parse_many` (all cores, GIL released) |
+| Messy rows you want to share (same shape, other digits and names; obfuscation, not anonymity) | `doorplate.Anonymizer(seed=None).anonymize_many(lines)`, or `doorplate.anonymize(text)` |
 | A CSV file with no Python | the `doorplate` command: [`doorplate-cli`](https://crates.io/crates/doorplate-cli), `doorplate parse-file in.csv --column address -o out.csv` |
 
 Runnable versions with several data shapes: the

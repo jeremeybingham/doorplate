@@ -98,6 +98,7 @@ keys and warnings.
 | The same, in **DuckDB** (a table, or a CSV or Parquet file it reads; `parse_column` is lazy, so tables larger than memory work) | `doorplate_parse(address)` in SQL, or `doorplate.duckdb.parse_column` on a relation |
 | Separate columns (street line, unit line, city, state, ZIP), complete or with gaps | `parse_fields_many` (lists), `doorplate_parse_fields(...)` in DuckDB |
 | A **CSV file**, without writing any Python | `doorplate parse-file in.csv --column address -o out.csv`, or `--column line1 --line2 ... --city ... --state ... --zip ...` for split columns |
+| Messy real addresses you want to share in a bug report | `doorplate anonymize` (CLI) or `doorplate.Anonymizer` (Python): same shape, other digits and names. Obfuscation, not anonymity: [what it keeps](https://github.com/jeremeybingham/doorplate/blob/main/CONTRIBUTING.md#sharing-messy-data) |
 | One address per line in a text file or a pipe | `doorplate parse - < addresses.txt` (JSON lines out) |
 | A mix of street addresses, PO boxes, rural routes, military, units in line 2, missing ZIPs | One call parses them all; the `address_type`, `warnings` and `key` columns say which is which |
 | Any list of strings, in code | `parse_many` (all cores, GIL released) |
@@ -260,6 +261,7 @@ doorplate parse "281 EVELYN DR DOTHAN" --default-state AL
 doorplate parse "123 N Main St, Miami FL 33101" --display    # mixed case; --long spells words out (not Pub 28)
 doorplate parse "123 N Main St, Miami FL 33101" --tag        # usaddress-style joined labels
 doorplate parse -  < addresses.txt                           # one address per line, JSON lines out
+doorplate anonymize in.csv --column address -o shareable.csv   # replace digits and names, keep the shape (read it before you share it)
 ```
 
 `doorplate --help` lists every option.

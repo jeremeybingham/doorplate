@@ -11,8 +11,8 @@
 use std::sync::OnceLock;
 
 use doorplate::{
-    Fields, Highway, KeyOptions, OptionsError, ParseError as CoreParseError, ParseOptions,
-    ParsedAddress, Parser, PlaceKind,
+    Anonymizer, Fields, Highway, KeyOptions, OptionsError, ParseError as CoreParseError,
+    ParseOptions, ParsedAddress, Parser, PlaceKind,
 };
 use pyo3::exceptions::PyValueError;
 use pyo3::prelude::*;
@@ -640,12 +640,91 @@ fn address_type(text: &str, default_state: Option<&str>) -> PyResult<&'static st
     Ok(parse(text, default_state)?.address_type())
 }
 
+/// The result of `Anonymizer.anonymize`: the obfuscated `text` and whether the parser
+/// reads it like the original (`faithful`).
+#[pyclass(name = "Anonymized", module = "doorplate", frozen, get_all)]
+struct PyAnonymized {
+    text: String,
+    faithful: bool,
+}
+
+#[pymethods]
+impl PyAnonymized {
+    fn __repr__(&self) -> String {
+        format!(
+            "Anonymized(text=<{} chars>, faithful={})",
+            self.text.chars().count(),
+            if self.faithful { "True" } else { "False" }
+        )
+    }
+}
+
+/// Shape-preserving obfuscation of address-like text. This is not anonymity: read the output
+/// before you share it.
+#[pyclass(name = "Anonymizer", module = "doorplate", frozen)]
+struct PyAnonymizer {
+    inner: Anonymizer,
+}
+
+#[pymethods]
+impl PyAnonymizer {
+    /// `seed=None` picks a random seed; a fixed seed repeats the output.
+    #[new]
+    #[pyo3(signature = (seed=None))]
+    fn new(seed: Option<u64>) -> Self {
+        PyAnonymizer {
+            inner: seed.map_or_else(Anonymizer::new, Anonymizer::with_seed),
+        }
+    }
+
+    #[getter]
+    fn seed(&self) -> u64 {
+        self.inner.seed()
+    }
+
+    fn anonymize(&self, text: &str) -> PyAnonymized {
+        let r = self.inner.anonymize(text);
+        PyAnonymized {
+            text: r.text,
+            faithful: r.faithful,
+        }
+    }
+
+    /// A batch; the same value gets the same replacement across it. Releases the GIL.
+    fn anonymize_many(&self, py: Python<'_>, texts: Vec<String>) -> Vec<PyAnonymized> {
+        let a = &self.inner;
+        py.detach(|| {
+            texts
+                .iter()
+                .map(|t| {
+                    let r = a.anonymize(t);
+                    PyAnonymized {
+                        text: r.text,
+                        faithful: r.faithful,
+                    }
+                })
+                .collect()
+        })
+    }
+}
+
+/// Obfuscate one text with a new random seed (or `seed`). Returns the text only.
+#[pyfunction]
+#[pyo3(signature = (text, seed=None))]
+fn anonymize(text: &str, seed: Option<u64>) -> String {
+    seed.map_or_else(Anonymizer::new, Anonymizer::with_seed)
+        .anonymize(text)
+        .text
+}
+
 #[pymodule]
 fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add("__version__", doorplate::VERSION)?;
     m.add("ParseError", m.py().get_type::<ParseError>())?;
     m.add_class::<PyParser>()?;
     m.add_class::<PyParsedAddress>()?;
+    m.add_class::<PyAnonymizer>()?;
+    m.add_class::<PyAnonymized>()?;
     m.add_function(wrap_pyfunction!(parse, m)?)?;
     m.add_function(wrap_pyfunction!(parse_fields, m)?)?;
     m.add_function(wrap_pyfunction!(parse_many, m)?)?;
@@ -653,5 +732,6 @@ fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(tag, m)?)?;
     m.add_function(wrap_pyfunction!(parse_tokens, m)?)?;
     m.add_function(wrap_pyfunction!(address_type, m)?)?;
+    m.add_function(wrap_pyfunction!(anonymize, m)?)?;
     Ok(())
 }
