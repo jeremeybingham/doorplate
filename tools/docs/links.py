@@ -8,7 +8,7 @@ A link to a repository path that does not exist is left alone, so the strict bui
 """
 import posixpath
 import re
-from pathlib import PurePosixPath
+from pathlib import Path, PurePosixPath
 
 REPO = "https://github.com/jeremeybingham/doorplate"
 # [text](target) and reference-style definitions; skips images' targets only by being rewritten too.
@@ -49,9 +49,28 @@ def link_issues(markdown):
     return "".join(pieces)
 
 
-def on_page_markdown(markdown, page, config, files):
-    from pathlib import Path
+# [`warnings.md`](warnings.md): on GitHub a file name is a fine link text, on the site a reader wants the page's title.
+FILE_LINK = re.compile(r"\[`[^`\n]+\.md`\]\(([^)\s#:]+\.md)((?:#[^)\s]*)?)\)")
 
+
+def title_links(markdown, src_path, docs_dir):
+    """`markdown` with each link whose text is a page's file name, to a page in docs_dir, showing that page's title."""
+    page_dir = PurePosixPath(src_path).parent
+
+    def fix(m):
+        target = posixpath.normpath(str(page_dir / m.group(1)))
+        path = Path(docs_dir) / target
+        if target.startswith("..") or not path.is_file():
+            return m.group(0)
+        first = next((l for l in path.read_text(encoding="utf-8").splitlines() if l.startswith("# ")), None)
+        return f"[{first[2:].strip()}]({m.group(1)}{m.group(2)})" if first else m.group(0)
+
+    return FILE_LINK.sub(fix, markdown)
+
+
+def on_page_markdown(markdown, page, config, files):
     repo_root = Path(config["config_file_path"]).resolve().parent
-    markdown = rewrite(markdown, page.file.src_path.replace("\\", "/"), config["docs_dir"], repo_root)
+    src = page.file.src_path.replace("\\", "/")
+    markdown = rewrite(markdown, src, config["docs_dir"], repo_root)
+    markdown = title_links(markdown, src, config["docs_dir"])
     return link_issues(markdown)

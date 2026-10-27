@@ -55,3 +55,13 @@ def test_an_issue_number_in_prose_becomes_a_link():
 def test_issue_numbers_in_code_links_and_anchors_are_left_alone():
     for t in ("`#105`", "```\n#105\n```", "[#105](x.md)", "[the audit of #137](x.md)", "<https://x.org/issues/1#2>", "[a](#105)", "[a](b.md#031-to-040)", "a#1", "&#39;", "#install", "## Heading #1x"):
         assert links.link_issues(t) == t
+
+
+def test_a_file_name_as_link_text_becomes_the_page_title_on_the_site():
+    assert links.title_links("[`warnings.md`](warnings.md)", "how-it-works.md", ROOT / "docs") == "[What each warning tells you](warnings.md)"
+    assert links.title_links("see [`../warnings.md`](../warnings.md#x).", "states/fl.md", ROOT / "docs") == "see [What each warning tells you](../warnings.md#x)."
+
+
+def test_other_link_texts_and_missing_pages_are_left_alone():
+    for t in ("[the warnings](warnings.md)", "[`warnings.md`](nope.md)", "[`CONTRIBUTING.md`](https://x.org/a.md)", "[`a.md`](../README.md)"):
+        assert links.title_links(t, "how-it-works.md", ROOT / "docs") == t
