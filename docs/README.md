@@ -5,7 +5,7 @@ to check when you change something. This library formats and parses; it does not
 validate that an address exists or can receive mail, and no page here says otherwise.
 
 New to the project? Read the [project README](../README.md), then
-[How doorplate works](how-it-works.md). These pages are also published as a searchable site on Read the Docs
+[How doorplate works](how-it-works.md). These pages are also published as a searchable site, <https://doorplate.readthedocs.io/>, built on Read the Docs
 (`mkdocs.yml`; a page added here needs a `nav` entry there).
 
 ## Using the library

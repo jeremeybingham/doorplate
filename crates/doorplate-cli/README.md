@@ -136,6 +136,7 @@ names are used only to say what the output follows or is compared with.
 
 ## More
 
+- [Documentation site](https://doorplate.readthedocs.io/).
 - [Project README](https://github.com/jeremeybingham/doorplate#readme), [how it works](https://github.com/jeremeybingham/doorplate/blob/main/docs/how-it-works.md) and the
   [key format](https://github.com/jeremeybingham/doorplate/blob/main/docs/key-format.md).
 - The library is [`doorplate`](https://crates.io/crates/doorplate); the Python package

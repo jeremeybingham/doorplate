@@ -354,6 +354,7 @@ names are used only to say what the output follows or is compared with.
 
 ## More
 
+- [Documentation site](https://doorplate.readthedocs.io/) (guides, the key, warnings, custom layers).
 - [Project README](https://github.com/jeremeybingham/doorplate#readme): what it does,
   the Rust library, the command-line tool.
 - [How it works](https://github.com/jeremeybingham/doorplate/blob/main/docs/how-it-works.md),

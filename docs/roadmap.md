@@ -68,7 +68,7 @@ Two trackers set the order ([`backlog.md`](backlog.md)). Shipped so far in 0.4.x
 - **0.4.x (#200): tooling, documentation and extensibility.** No key change.
   - *Tooling:* an anonymizing tool for sharing messy data (#105, done), less noise in the harness's scorers (#112, done), the
     review tool's comparison mode against usaddress (#132) and per-state street-pattern counts (#53, done).
-  - *Documentation:* a searchable, versioned documentation site (#107).
+  - *Documentation:* a searchable documentation site (#107): phase 1 is live at https://doorplate.readthedocs.io/; the Python and CLI reference and versions from tags are next.
   - *Extensibility:* the custom layer (#3), a columnar result (#24, done: columns built in Rust) and a usaddress-shaped module (#36, `doorplate.compat`).
 - **0.5.0 (#201): the `k4`.** The key-changing rules, cut together once the 0.4.x tooling has produced evidence: the
   remaining research from the first review (#131), two bare numbers glued into a unit (#196), the state-dependent

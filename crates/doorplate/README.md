@@ -142,7 +142,7 @@ names are used only to say what the output follows or is compared with.
 ## More
 
 - [Project README](https://github.com/jeremeybingham/doorplate#readme): what it does, accuracy and speed, the Python package.
-- [API documentation](https://docs.rs/doorplate).
+- [API documentation](https://docs.rs/doorplate) and the [guide pages](https://doorplate.readthedocs.io/) (how it works, the key, warnings, custom layers).
 - [How it works](https://github.com/jeremeybingham/doorplate/blob/main/docs/how-it-works.md),
   [Pub 28 and rule sources](https://github.com/jeremeybingham/doorplate/blob/main/docs/usps-pub28-notes.md),
   [RESO mapping](https://github.com/jeremeybingham/doorplate/blob/main/docs/reso-mapping.md) and the
