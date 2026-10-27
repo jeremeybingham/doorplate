@@ -120,6 +120,14 @@ the parse is a function of the shipped tables and rules: a bug fix that changes 
 an input produces is a key change and needs `k4`. The slug and `place` are not part
 of the key and may change with parser improvements.
 
+**A custom layer can change a key.** A layer ([`custom-layers.md`](custom-layers.md), #3) adds spellings
+and words the shipped tables do not have, so the same input can parse, and key, differently with and
+without it, or with another layer. This is not a key change in the sense above (the format and the
+shipped rules are the same; `k3` stays `k3`), but stored keys are only comparable when they come from
+the same layer. Every parse reports the layer it used (`Diagnostics::custom_layer`: its name, version
+and a content fingerprint); store the fingerprint beside the keys, and re-key when the layer changes.
+A parse with no layer is identical to one from a build without the feature.
+
 ## Changing the key
 
 **What counts as key-affecting.** Anything that changes what an input parses to in the parts

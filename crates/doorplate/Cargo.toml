@@ -23,6 +23,9 @@ rayon = ["dep:rayon"]
 # test and `doorplate corpus test`. Pulls in serde; the default build has no
 # dependencies.
 corpus = ["dep:serde", "dep:serde_json"]
+# Custom layers (`doorplate::CustomLayer::from_sources`, #3): your own spellings and word lists,
+# loaded at run time. Pulls in the `toml` parser; the default build has no dependencies.
+custom-layer = ["dep:toml"]
 
 [lints]
 workspace = true
@@ -31,6 +34,7 @@ workspace = true
 rayon = { version = "1.10", optional = true }
 serde = { version = "1", features = ["derive"], optional = true }
 serde_json = { version = "1", optional = true }
+toml = { version = "0.8", default-features = false, features = ["parse"], optional = true }
 
 [build-dependencies]
 toml = { version = "0.8", default-features = false, features = ["parse"] }
@@ -38,7 +42,7 @@ toml = { version = "0.8", default-features = false, features = ["parse"] }
 [dev-dependencies]
 # The corpus test needs the `corpus` feature; enabling it through a
 # self-dev-dependency keeps a plain `cargo test` running it.
-doorplate = { path = ".", features = ["corpus"] }
+doorplate = { path = ".", features = ["corpus", "custom-layer"] }
 proptest = "1"
 criterion = { version = "0.5", default-features = false }
 

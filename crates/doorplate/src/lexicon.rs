@@ -15,6 +15,9 @@ mod place_key;
 pub use key::normalize_key;
 use key::normalize_key_cow;
 
+use std::collections::HashSet;
+
+use crate::layer::{CustomLayer, Layer, LayerInfo};
 use crate::types::{
     Directional, MilitaryKind, MilitaryPostOffice, Place, PlaceKind, StateCode, StateKind,
     StreetSuffix, UnitType,
@@ -276,17 +279,35 @@ fn find<'a, V>(index: &'a [(&'static str, V)], key: &str) -> Option<&'a V> {
 /// form has more than [`MAX_FORM_WORDS`] words.
 #[derive(Debug, Clone, Copy, Default)]
 pub struct Lexicons {
-    _private: (),
+    /// The custom layer consulted after the shipped tables, if any (`crate::layer`).
+    layer: Option<&'static Layer>,
 }
 
 impl Lexicons {
     /// The built-in tables (Pub 28 base lexicon).
     pub const fn builtin() -> Self {
-        Lexicons { _private: () }
+        Lexicons { layer: None }
+    }
+
+    /// The built-in tables plus a custom layer's spellings and words.
+    pub(crate) fn with_layer(layer: CustomLayer) -> Self {
+        Lexicons {
+            layer: Some(layer.0),
+        }
+    }
+
+    /// The custom layer in use, if any.
+    pub fn layer(&self) -> Option<LayerInfo> {
+        self.layer.map(|l| l.info)
     }
 
     /// Street suffix: `"AVENUE"`, `"Ave."`, `"AVNUE"` -> AVE.
     pub fn suffix(&self, s: &str) -> Option<Lookup<StreetSuffix>> {
+        self.suffix_base(s)
+            .or_else(|| self.layer?.suffix.get(&*normalize_key_cow(s)).copied())
+    }
+
+    fn suffix_base(&self, s: &str) -> Option<Lookup<StreetSuffix>> {
         let (i, kind) = *find(tables::SUFFIX_INDEX, &normalize_key_cow(s))?;
         let row = tables::SUFFIXES.get(usize::from(i))?;
         Some(Lookup {
@@ -303,6 +324,9 @@ impl Lexicons {
     /// [`Self::suffix`].
     pub fn suffix_in(&self, state: &str, s: &str) -> Option<Lookup<StreetSuffix>> {
         let key = format!("{state}|{}", normalize_key(s));
+        if let Some(hit) = self.layer.and_then(|l| l.state_suffix.get(&key)) {
+            return Some(*hit);
+        }
         let Some(&i) = find(tables::STATE_SUFFIX_INDEX, &key) else {
             return self.suffix(s);
         };
@@ -318,6 +342,11 @@ impl Lexicons {
 
     /// Directional: `"NORTH EAST"`, `"N.E."`, `"ne"` -> NE.
     pub fn directional(&self, s: &str) -> Option<Lookup<Directional>> {
+        self.directional_base(s)
+            .or_else(|| self.layer?.directional.get(&*normalize_key_cow(s)).copied())
+    }
+
+    fn directional_base(&self, s: &str) -> Option<Lookup<Directional>> {
         let (value, kind) = *find(tables::DIRECTIONAL_INDEX, &normalize_key_cow(s))?;
         Some(Lookup { value, kind })
     }
@@ -325,6 +354,11 @@ impl Lexicons {
     /// Secondary unit designator: `"Suite"` -> STE. Does not match `"#"`,
     /// which stands in for an unknown designator and is handled by the tagger.
     pub fn unit(&self, s: &str) -> Option<Lookup<UnitType>> {
+        self.unit_base(s)
+            .or_else(|| self.layer?.unit.get(&*normalize_key_cow(s)).copied())
+    }
+
+    fn unit_base(&self, s: &str) -> Option<Lookup<UnitType>> {
         let (i, kind) = *find(tables::UNIT_INDEX, &normalize_key_cow(s))?;
         let row = tables::UNITS.get(usize::from(i))?;
         Some(Lookup {
@@ -340,6 +374,11 @@ impl Lexicons {
     /// State or possession, by code, full name or traditional abbreviation:
     /// `"fl"`, `"Florida"`, `"Fla."` -> FL.
     pub fn state(&self, s: &str) -> Option<Lookup<StateCode>> {
+        self.state_base(s)
+            .or_else(|| self.layer?.state.get(&*normalize_key_cow(s)).copied())
+    }
+
+    fn state_base(&self, s: &str) -> Option<Lookup<StateCode>> {
         let (i, kind) = *find(tables::STATE_INDEX, &normalize_key_cow(s))?;
         let row = tables::STATES.get(usize::from(i))?;
         Some(Lookup {
@@ -354,12 +393,22 @@ impl Lexicons {
 
     /// Special address word: `"P.O. Box"` -> PO BOX, `"Rural Route"` -> RR.
     pub fn special(&self, s: &str) -> Option<Lookup<Special>> {
+        self.special_base(s)
+            .or_else(|| self.layer?.special.get(&*normalize_key_cow(s)).copied())
+    }
+
+    fn special_base(&self, s: &str) -> Option<Lookup<Special>> {
         let (value, kind) = *find(tables::SPECIAL_INDEX, &normalize_key_cow(s))?;
         Some(Lookup { value, kind })
     }
 
     /// Highway prefix: `"County Rd"` -> COUNTY ROAD, `"HWY"` -> HIGHWAY.
     pub fn highway(&self, s: &str) -> Option<Lookup<HighwayPrefix>> {
+        self.highway_base(s)
+            .or_else(|| self.layer?.highway.get(&*normalize_key_cow(s)).copied())
+    }
+
+    fn highway_base(&self, s: &str) -> Option<Lookup<HighwayPrefix>> {
         let (i, kind) = *find(tables::HIGHWAY_INDEX, &normalize_key_cow(s))?;
         let standard = *tables::HIGHWAYS.get(usize::from(i))?;
         Some(Lookup {
@@ -374,6 +423,9 @@ impl Lexicons {
     /// as the state data says. Otherwise the same as [`Self::highway`].
     pub fn highway_in(&self, state: &str, s: &str) -> Option<Lookup<HighwayPrefix>> {
         let key = format!("{state}|{}", normalize_key(s));
+        if let Some(hit) = self.layer.and_then(|l| l.state_highway.get(&key)) {
+            return Some(*hit);
+        }
         let Some(&(i, kind)) = find(tables::STATE_HIGHWAY_INDEX, &key) else {
             return self.highway(s);
         };
@@ -403,7 +455,9 @@ impl Lexicons {
     /// Whether `s` is a name of the United States (`USA`, `UNITED STATES`).
     /// Source: `data/special.toml` `[country]`.
     pub(crate) fn is_country(&self, s: &str) -> bool {
-        find_str(tables::COUNTRIES, &normalize_key_cow(s))
+        self.in_words(tables::COUNTRIES, &normalize_key_cow(s), |l| {
+            &l.words.country
+        })
     }
 
     /// The place named after a municipality-type prefix (`PINECREST` in
@@ -415,7 +469,9 @@ impl Lexicons {
         let rest = rest.trim();
         (of.eq_ignore_ascii_case("OF")
             && !rest.is_empty()
-            && find_str(tables::PLACE_PREFIXES, &normalize_key_cow(first)))
+            && self.in_words(tables::PLACE_PREFIXES, &normalize_key_cow(first), |l| {
+                &l.words.place_prefix
+            }))
         .then_some(rest)
     }
 
@@ -423,32 +479,50 @@ impl Lexicons {
     /// recipient name (`BLOCK`, `MILEPOST`, `NO`, `URB`). Source:
     /// `data/special.toml` `[non_recipient]`.
     pub(crate) fn is_non_recipient_word(&self, s: &str) -> bool {
-        find_str(tables::NON_RECIPIENT_WORDS, &normalize_key_cow(s))
+        self.in_words(tables::NON_RECIPIENT_WORDS, &normalize_key_cow(s), |l| {
+            &l.words.non_recipient
+        })
     }
 
     /// Whether `s`, right after a spelled-out number at the start of a line,
     /// makes the number part of the street name (`MILE` in `ONE MILE RD`).
     /// Source: `data/special.toml` `[numbered_street]`.
     pub(crate) fn is_numbered_street_word(&self, s: &str) -> bool {
-        find_str(tables::NUMBERED_STREET_WORDS, &normalize_key_cow(s))
+        self.in_words(tables::NUMBERED_STREET_WORDS, &normalize_key_cow(s), |l| {
+            &l.words.numbered_street
+        })
     }
 
     /// A word that ends a building name (`TOWER` in `EAST TOWER`).
     /// Source: `data/special.toml` `[building]`.
     pub(crate) fn is_building_word(&self, s: &str) -> bool {
-        find_str(tables::BUILDING_WORDS, &normalize_key_cow(s))
+        self.in_words(tables::BUILDING_WORDS, &normalize_key_cow(s), |l| {
+            &l.words.building
+        })
     }
 
     /// A word that opens a neighborhood or district name before a city
     /// (`DOWNTOWN` in `DOWNTOWN MIAMI`). Source: `data/special.toml` `[area]`.
     pub(crate) fn is_area_word(&self, s: &str) -> bool {
-        find_str(tables::AREA_WORDS, &normalize_key_cow(s))
+        self.in_words(tables::AREA_WORDS, &normalize_key_cow(s), |l| &l.words.area)
     }
 
     /// A suffix word that also opens a city name (`LAKE` in `LAKE GENEVA`).
     /// Source: `data/special.toml` `[city_head]`.
     pub(crate) fn is_city_head(&self, s: &str) -> bool {
-        find_str(tables::CITY_HEADS, &normalize_key_cow(s))
+        self.in_words(tables::CITY_HEADS, &normalize_key_cow(s), |l| {
+            &l.words.city_head
+        })
+    }
+
+    /// Whether `key` is a placeholder phrase (`data/special.toml` `[placeholder]`, or the layer's).
+    pub(crate) fn is_placeholder_phrase(&self, key: &str) -> bool {
+        self.in_words(tables::PLACEHOLDERS, key, |l| &l.words.placeholder)
+    }
+
+    /// Whether `key` is a word of a word list: the shipped list, or the layer's.
+    fn in_words(&self, base: &[&str], key: &str, pick: fn(&Layer) -> &HashSet<String>) -> bool {
+        find_str(base, key) || self.layer.is_some_and(|l| pick(l).contains(key))
     }
 
     pub(crate) fn is_placeholder(&self, s: &str) -> bool {
@@ -460,7 +534,7 @@ impl Lexicons {
             Some((zeros, rest)) if zeros.bytes().all(|b| b == b'0') => rest,
             _ => key.as_str(),
         };
-        if find_str(tables::PLACEHOLDERS, rest) {
+        if self.is_placeholder_phrase(rest) {
             return true;
         }
         // "UNASSIGNED LOCATION RE": a trailing code of up to two letters.
@@ -497,7 +571,7 @@ impl Lexicons {
     /// A single no-data marker: `NULL`, `NONE` and the other one-word
     /// placeholder phrases, or a run of nine or more nines.
     fn is_no_data_token(&self, t: &str) -> bool {
-        (t.len() >= 9 && t.bytes().all(|b| b == b'9')) || find_str(tables::PLACEHOLDERS, t)
+        (t.len() >= 9 && t.bytes().all(|b| b == b'9')) || self.is_placeholder_phrase(t)
     }
 
     /// A filler word between a unit designator and its value: `SUITE NO. 407`,
@@ -663,6 +737,67 @@ impl Lexicons {
             name: r.name,
             kind: r.kind,
         })
+    }
+}
+
+/// Lookups by a table row's own name, and the shipped state readings, for the layer loader.
+#[cfg(feature = "custom-layer")]
+impl Lexicons {
+    pub(crate) fn suffix_by_abbr(&self, abbr: &str) -> Option<StreetSuffix> {
+        tables::SUFFIXES
+            .iter()
+            .find(|r| r.abbr == abbr)
+            .map(|r| StreetSuffix {
+                abbr: r.abbr,
+                name: r.name,
+            })
+    }
+
+    pub(crate) fn unit_by_abbr(&self, abbr: &str) -> Option<UnitType> {
+        tables::UNITS
+            .iter()
+            .find(|r| r.abbr == abbr)
+            .map(|r| UnitType {
+                abbr: r.abbr,
+                name: r.name,
+                range_required: r.range_required,
+            })
+    }
+
+    pub(crate) fn state_by_code(&self, code: &str) -> Option<Lookup<StateCode>> {
+        tables::STATES
+            .iter()
+            .find(|r| r.code == code)
+            .map(|r| Lookup {
+                value: StateCode {
+                    code: r.code,
+                    name: r.name,
+                    kind: r.kind,
+                },
+                kind: MatchKind::Standard,
+            })
+    }
+
+    pub(crate) fn highway_by_standard(&self, standard: &str) -> Option<HighwayPrefix> {
+        tables::HIGHWAYS
+            .iter()
+            .find(|h| **h == standard)
+            .map(|h| HighwayPrefix { standard: h })
+    }
+
+    /// Whether the shipped state data reads the spelling `STATE|KEY` as another suffix.
+    pub(crate) fn has_state_suffix_override(&self, state_key: &str) -> bool {
+        find(tables::STATE_SUFFIX_INDEX, state_key).is_some()
+    }
+
+    /// Whether the shipped state data adds the highway spelling `STATE|KEY`.
+    pub(crate) fn has_state_highway_override(&self, state_key: &str) -> bool {
+        find(tables::STATE_HIGHWAY_INDEX, state_key).is_some()
+    }
+
+    /// Whether `key` is a place-prefix word (`VILLAGE` in `VILLAGE OF PINECREST`).
+    pub(crate) fn is_place_prefix_word(&self, key: &str) -> bool {
+        find_str(tables::PLACE_PREFIXES, key)
     }
 }
 

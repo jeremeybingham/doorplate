@@ -183,3 +183,21 @@ public form on 2026-10-27; the rest are the implementer's, open to overruling):
 | City and ZIP | The city and state the parser finds stay, and so do the first three ZIP digits; the rest of a ZIP is replaced. Swapping a city within its state needs place data for every state and would change the split the parser makes |
 | The check | Each value is parsed before and after; `faithful` is true when the address type, warnings, suffix, directionals, unit designators, state and city are equal and the number, name, unit number and leftover text have the same shape |
 | Errors | The CLI says what went wrong, never a row (`docs/data-policy.md`, principle 4) |
+
+## Added in 0.4.x: the custom layer, part 1 (#3)
+
+New public API, additive (`version:O`); a parse with no layer is unchanged. Rust, behind the `custom-layer` cargo feature (one
+new dependency, `toml`): `CustomLayer` (`from_sources`, `info`), `LayerSources` (`new`, `aliases`, `overrides`; `#[non_exhaustive]`),
+`LayerError` (`problems`). Always present: `LayerInfo { name, version, fingerprint }` (`#[non_exhaustive]`),
+`ParseOptions::custom_layer`, and `Diagnostics::custom_layer`. The command line and Python follow in the next parts. Decisions
+(the implementer's, open to overruling):
+
+| Question | Decision |
+|---|---|
+| How a layer reaches the lookups | `Lexicons` stays `Copy`: it holds `Option<&'static Layer>`, the layer is leaked once and deduplicated by content, and `Lexicons::builtin()` is unchanged. A parser without a layer pays one `Option` check (parse speed measured equal) |
+| Strings | A layer maps spellings onto existing shipped rows, so those lookups need no new strings; only the layer's own name, version and fingerprint are leaked |
+| TOML at run time | A cargo feature, off by default, so the default build keeps no dependencies; the CLI and Python enable it. The core takes text; files are read by the callers |
+| Entry keys | `abbr`/`code`/`standard` name a shipped row; `spellings` lists the new spellings; `kind` is `observed` (default) or `variant`; `form` names a special word's kind; `evidence` or `note` is required on every entry |
+| Conflicts | A shipped spelling or word, a duplicate, an unknown row, an unknown key and a missing `evidence` are load errors, all listed together. Only `overrides.toml` replaces a base reading, and not one the shipped state data already gives |
+| Provenance | `Diagnostics::custom_layer` carries the name, version and an FNV-1a 64 fingerprint of the files' bytes; it is `None` without a layer |
+| A layer is not "state data" | It does not turn on `has_state_data`, so it does not enable the ZIP-city mismatch warning for a state |

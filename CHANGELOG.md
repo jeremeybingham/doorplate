@@ -9,6 +9,17 @@ change to what an input produces needs a new key version.
 
 ### Added
 
+- **The custom layer, first part** (#3, additive, **no key change without a layer**): `CustomLayer::from_sources` (cargo feature
+  `custom-layer`; the core takes the text of the files) loads your own spellings and word lists on top of the shipped tables:
+  extra spellings of suffixes, unit designators, directionals, states, special words and highway prefixes; additions to the
+  tagger's word lists (building, area, city head, non-recipient, numbered street, placeholder, country and place-prefix words); and
+  state-scoped readings of a spelling. It is add-only: a spelling the shipped tables already have is a load error that names the file and
+  entry, and every problem is listed. `ParseOptions::custom_layer` puts a layer on a `Parser`, and every parse reports it in
+  `Diagnostics::custom_layer` (name, version, content fingerprint). A layer can change a key, so stored keys need a fixed layer
+  ([`docs/key-format.md`](docs/key-format.md)). Parsing without a layer is unchanged: identical keys, USPS lines and warnings on
+  100,000 sampled rows, and the same speed (about 108,000 parses per second on both). Places, ZIPs, the command line and Python follow in
+  the next parts of #3.
+
 - **`doorplate anonymize`, `doorplate::Anonymizer` and `doorplate.Anonymizer`** (#105, additive, no key change): rewrites
   address-like text so it can be shared, even text that does not parse. Digit runs become other digits of the same length,
   other words become invented words of the same length and case, and suffixes, directionals, unit designators, states, the

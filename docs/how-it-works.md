@@ -205,6 +205,11 @@ suffix in that state or add a highway prefix (`SR` is
 STATE ROAD); each entry names its evidence. The shipped tables and state data are fixed
 at compile time.
 
+4. **A custom layer** (#3, `custom-layer` cargo feature): the one runtime layer. It is loaded from text
+   ([`custom-layers.md`](custom-layers.md)), checked against the shipped tables (a conflict is an error), and consulted by
+   `Lexicons` after them; the tagger does not change. It adds spellings of existing rows and words to the word
+   lists, and can read a spelling differently in one state.
+
 ### What a layer can extend (the audit of #137)
 
 Everything the tagger and tokenizer know about words goes through `Lexicons`; the audit of 2026-10-23 found no
@@ -282,7 +287,7 @@ crates/
                             places/ (national list) and states/fl/ (Florida)
     src/                    clean, tokenize, classify, tagger/, assemble, parser, input,
                             place, lexicon, country, intersection, types,
-                            emit/{key,usps,reso,slug,display,usaddress}, anonymize, corpus
+                            emit/{key,usps,reso,slug,display,usaddress}, anonymize, layer, corpus
     tests/                  corpus, property tests, usaddress score floor
     benches/                criterion benchmarks
   doorplate-cli/            the `doorplate` binary
@@ -354,6 +359,7 @@ docs/                       this page and the references below
 | [`warnings.md`](warnings.md) | What each warning tells you and how often it is wrong |
 | [`api-surface.md`](api-surface.md) | The API surface audit: every public name and the decision for it |
 | [`usaddress-compat.md`](usaddress-compat.md) | usaddress-shaped output, label mapping, migration |
+| [`custom-layers.md`](custom-layers.md) | The custom layer: files, rules, provenance |
 | [`anonymizing.md`](anonymizing.md) | Sharing messy data: the anonymizer, its rules, limits and measured rates |
 | [`benchmarks.md`](benchmarks.md) | Accuracy, speed and size: the results |
 | [`benchmark-suite.md`](benchmark-suite.md) | The benchmark suite: what it holds, how it was built, the rules that keep it fair |

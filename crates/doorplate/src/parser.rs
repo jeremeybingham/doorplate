@@ -10,6 +10,7 @@ use crate::clean::clean;
 use crate::country::strip_trailing;
 use crate::input::Fields;
 use crate::intersection;
+use crate::layer::CustomLayer;
 use crate::lexicon::Lexicons;
 use crate::place;
 use crate::tagger::{tag_fields, tag_line, LineLengths};
@@ -45,12 +46,23 @@ pub struct ParseOptions {
     /// unchanged. [`Warning::DefaultStateApplied`] says when it decided
     /// something.
     pub default_state: Option<String>,
+    /// A custom layer (#3): your own spellings and word lists, consulted after the shipped
+    /// tables. A layer can change a key; store the layer fingerprint (reported in
+    /// [`crate::Diagnostics::custom_layer`]) with the keys.
+    pub custom_layer: Option<CustomLayer>,
 }
 
 impl ParseOptions {
     /// Options with every setting at its default.
     pub fn new() -> Self {
         Self::default()
+    }
+
+    /// Set [`ParseOptions::custom_layer`].
+    #[must_use]
+    pub fn custom_layer(mut self, layer: CustomLayer) -> Self {
+        self.custom_layer = Some(layer);
+        self
     }
 
     /// Set [`ParseOptions::default_state`].
@@ -96,7 +108,9 @@ impl Parser {
     /// A parser with settings. Fails only for a `default_state` that is not
     /// a US state, DC or territory (a military "state" such as `AE` is not).
     pub fn with_options(options: ParseOptions) -> Result<Self, OptionsError> {
-        let lex = Lexicons::builtin();
+        let lex = options
+            .custom_layer
+            .map_or_else(Lexicons::builtin, Lexicons::with_layer);
         let default_state = match options.default_state.as_deref().map(str::trim) {
             None | Some("") => None,
             Some(s) => {
@@ -154,6 +168,7 @@ impl Parser {
             .state
             .as_ref()
             .and_then(|s| self.lex.state_data_version(s.code()));
+        addr.diagnostics.custom_layer = self.lex.layer();
         if country {
             addr.diagnostics.warn(Warning::CountryIgnored);
         }
@@ -240,6 +255,7 @@ impl Parser {
             .state
             .as_ref()
             .and_then(|s| self.lex.state_data_version(s.code()));
+        addr.diagnostics.custom_layer = self.lex.layer();
         if country {
             addr.diagnostics.warn(Warning::CountryIgnored);
         }
@@ -322,29 +338,20 @@ mod tests {
     }
 
     fn hinted(state: &str) -> Parser {
-        Parser::with_options(ParseOptions {
-            default_state: Some(state.to_string()),
-        })
-        .unwrap()
+        Parser::with_options(ParseOptions::new().default_state(state)).unwrap()
     }
 
     #[test]
     fn default_state_must_be_a_state() {
         for ok in ["FL", "fl", "Florida", "DC", "PR", " AL ", ""] {
             assert!(
-                Parser::with_options(ParseOptions {
-                    default_state: Some(ok.to_string())
-                })
-                .is_ok(),
+                Parser::with_options(ParseOptions::new().default_state(ok)).is_ok(),
                 "{ok:?}"
             );
         }
         for bad in ["ZZ", "AE", "Narnia"] {
             assert_eq!(
-                Parser::with_options(ParseOptions {
-                    default_state: Some(bad.to_string())
-                })
-                .map(|_| ()),
+                Parser::with_options(ParseOptions::new().default_state(bad)).map(|_| ()),
                 Err(OptionsError::UnknownDefaultState(bad.to_string()))
             );
         }
