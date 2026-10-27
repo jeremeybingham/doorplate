@@ -14,6 +14,19 @@
 //! happens to be a lexicon word is kept, and the city and the first three ZIP digits are
 //! kept. Look at the output before you share it.
 //!
+//! ```
+//! use doorplate::Anonymizer;
+//!
+//! let a = Anonymizer::with_seed(7); // `Anonymizer::new()` picks a random seed
+//! let r = a.anonymize("123 N Zephyrmill Ave Apt 4, Miami, FL 33101");
+//! assert!(r.text.contains(" N ") && r.text.contains(", FL 331"));
+//! assert!(!r.text.contains("Zephyrmill"));
+//! assert!(r.faithful); // the parser reads the copy the way it read the original
+//! ```
+//!
+//! The rules, the options of `doorplate anonymize`, the limits and the measured rates are in
+//! `docs/anonymizing.md`.
+//!
 //! This library formats and parses; it does not validate that an address exists or can
 //! receive mail.
 
@@ -32,7 +45,8 @@ pub struct Anonymized {
     pub faithful: bool,
 }
 
-/// Obfuscates address-like text. See the [module documentation](self).
+/// Obfuscates address-like text: digits and unknown words change, the shape stays. The rules and
+/// limits are in `docs/anonymizing.md`.
 #[derive(Debug, Clone)]
 pub struct Anonymizer {
     parser: Parser,

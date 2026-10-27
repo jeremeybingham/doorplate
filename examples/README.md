@@ -11,7 +11,7 @@ that an address exists or can receive mail.
 | [`polars_pipeline.py`](polars_pipeline.py) | Polars: `parse_column` on a CSV, picking columns, finding rows with warnings, duplicates by key, pre-split columns with `parse_fields_many`, a display column |
 | [`pandas_pipeline.py`](pandas_pipeline.py) | The same with pandas |
 | [`duckdb_pipeline.py`](duckdb_pipeline.py) | DuckDB: `doorplate_parse` and `doorplate_parse_fields` in SQL, and `parse_column` on a relation (needs `pip install "doorplate[duckdb]"`) |
-| [`anonymize_example.py`](anonymize_example.py) | `doorplate.Anonymizer`: obfuscate a messy file before sharing it, and how many lines still parse the same way (the CLI: `doorplate anonymize`) |
+| [`anonymize_example.py`](anonymize_example.py) | `doorplate.Anonymizer`: obfuscate a messy file before sharing it, and how many lines still parse the same way (the CLI: `doorplate anonymize`; [the page](../docs/anonymizing.md)). The notebook has a section on it too |
 | [`data/addresses_oneline.csv`](data/addresses_oneline.csv) | One address per row in a single column (street, PO box, rural route, general delivery, a unit, a blank row) |
 | [`data/addresses_split.csv`](data/addresses_split.csv) | Line 1, line 2, city, state and ZIP in separate columns, with gaps |
 | [`data/addresses_messy.txt`](data/addresses_messy.txt) | One line per address as people type them: lowercase, `c/o`, a country, an intersection, no state |

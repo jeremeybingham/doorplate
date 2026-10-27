@@ -87,7 +87,8 @@ The runnable tour is [`examples/quickstart.rs`](https://github.com/jeremeybingha
 
 `doorplate::Anonymizer` rewrites address-like text so it can be shared: digits and unknown words are replaced by
 others of the same length and case, and what decides how the parser reads a line stays. It is obfuscation that keeps
-the shape, not anonymity; read the output before you share it.
+the shape, not anonymity; read the output before you share it. The rules and limits are in
+[Anonymizing address data](https://github.com/jeremeybingham/doorplate/blob/main/docs/anonymizing.md).
 
 ```rust
 let a = doorplate::Anonymizer::with_seed(7).anonymize("123 N Zephyrmill Ave Apt 4, Miami, FL 33101");

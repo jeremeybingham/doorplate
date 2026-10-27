@@ -82,6 +82,9 @@ k3:S|123|N|MAIN|ST||FL|33101
   of into your database.
 - **Place data.** A national list of 50,375 places and 41,154 ZIPs finds the city on a line with no commas and
   completes a cut-off city; `default_state` is a hint for input with no state.
+- **Sharing messy data.** `doorplate anonymize` (and `Anonymizer` in Python and Rust) swaps the digits and names of
+  address-like text, even text that does not parse, and keeps the shape, so a bug report can start from a real
+  address. Obfuscation, not anonymity: read the output before you share it ([how it works](docs/anonymizing.md)).
 - **DataFrames, SQL and CSV files.** pandas, Polars and DuckDB helpers, a batch call that uses every core, and a
   command that parses a CSV file ([below](#works-with-your-data)).
 - **Offline and deterministic.** The same input gives the same output on every platform. Rust, Python and the
@@ -98,7 +101,7 @@ keys and warnings.
 | The same, in **DuckDB** (a table, or a CSV or Parquet file it reads; `parse_column` is lazy, so tables larger than memory work) | `doorplate_parse(address)` in SQL, or `doorplate.duckdb.parse_column` on a relation |
 | Separate columns (street line, unit line, city, state, ZIP), complete or with gaps | `parse_fields_many` (lists), `doorplate_parse_fields(...)` in DuckDB |
 | A **CSV file**, without writing any Python | `doorplate parse-file in.csv --column address -o out.csv`, or `--column line1 --line2 ... --city ... --state ... --zip ...` for split columns |
-| Messy real addresses you want to share in a bug report | `doorplate anonymize` (CLI) or `doorplate.Anonymizer` (Python): same shape, other digits and names. Obfuscation, not anonymity: [what it keeps](https://github.com/jeremeybingham/doorplate/blob/main/CONTRIBUTING.md#sharing-messy-data) |
+| Messy real addresses you want to share in a bug report | `doorplate anonymize` (CLI) or `doorplate.Anonymizer` (Python): same shape, other digits and names. Obfuscation, not anonymity: [what it keeps](docs/anonymizing.md) |
 | One address per line in a text file or a pipe | `doorplate parse - < addresses.txt` (JSON lines out) |
 | A mix of street addresses, PO boxes, rural routes, military, units in line 2, missing ZIPs | One call parses them all; the `address_type`, `warnings` and `key` columns say which is which |
 | Any list of strings, in code | `parse_many` (all cores, GIL released) |
@@ -377,8 +380,9 @@ The specification of the suite and the rules that keep it fair: [`docs/benchmark
 0.4.0 is out (an alpha: the `k3` key is new and a `k4` may follow). The next point release, 0.4.x, is about tooling,
 documentation and extensibility; the key-changing rules wait for the release after it. Roughly in this order:
 
-- **Tooling.** An anonymizing tool so messy data can be shared safely, quieter harness scorers, a review tool that
-  compares doorplate with usaddress, and per-state street-pattern counts.
+- **Tooling.** Done: `doorplate anonymize` ([docs](docs/anonymizing.md)), so messy data can be shared with its shape and
+  not its names, and per-state street-pattern counts. To come: quieter harness scorers and a review tool that
+  compares doorplate with usaddress.
 - **Documentation.** A searchable, versioned documentation site.
 - **Extensibility.** A custom layer: your own spellings, places, ZIPs and state-specific readings, loaded at run
   time without editing the shipped tables; a columnar result for DataFrames; a usaddress-shaped module.
@@ -419,6 +423,7 @@ and small invented sample files.
 | [`docs/reso-mapping.md`](docs/reso-mapping.md) | RESO field mapping |
 | [`docs/usps-pub28-notes.md`](docs/usps-pub28-notes.md) | The source of every table and parser rule |
 | [`docs/usaddress-compat.md`](docs/usaddress-compat.md) | usaddress-shaped output, labels, migration |
+| [`docs/anonymizing.md`](docs/anonymizing.md) | Sharing messy data: the anonymizer, what it keeps, its limits |
 | [`docs/benchmarks.md`](docs/benchmarks.md) | Accuracy, speed and size |
 | [`docs/roadmap.md`](docs/roadmap.md) | Planned work, what is not planned, and what data would help |
 | [`docs/places.md`](docs/places.md), [`docs/states/fl.md`](docs/states/fl.md) | The place list and the Florida state data: sources and licenses |

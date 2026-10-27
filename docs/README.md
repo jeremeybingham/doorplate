@@ -17,6 +17,7 @@ New to the project? Read the [project README](../README.md), then
 | [`crates/doorplate-cli/README.md`](../crates/doorplate-cli/README.md) | The `doorplate` command: parsing a line, a file or a pipe |
 | [`examples/README.md`](../examples/README.md) | Runnable examples: a notebook tour, pandas, Polars and DuckDB pipelines, sample data of several shapes |
 | [`usaddress-compat.md`](usaddress-compat.md) | Coming from usaddress: the output in its shape, the label mapping, what differs, how the two are compared |
+| [`anonymizing.md`](anonymizing.md) | Sharing messy data: `doorplate anonymize`, `Anonymizer` in Python and Rust, what it changes and keeps, seeds, the faithfulness check, what it can leak, how well it works |
 
 ## How it works, and what it outputs
 
@@ -88,7 +89,8 @@ the same pull request. The pull request template asks for it.
 | A parse rule or a table in `crates/doorplate/data/` | [`usps-pub28-notes.md`](usps-pub28-notes.md) (a row with its source); a golden-corpus case and `passing.txt`; [`how-it-works.md`](how-it-works.md) if the behavior it describes changed; [`CHANGELOG.md`](../CHANGELOG.md). If an input's key changes, the key row below |
 | What an input's key is | [`key-format.md`](key-format.md) (a new version, never an edit in place); `tests/corpus/keys.jsonl` and `tools/corpus/emit_expect.py`; the four READMEs; [`how-it-works.md`](how-it-works.md); [`CHANGELOG.md`](../CHANGELOG.md) |
 | A warning code | [`how-it-works.md`](how-it-works.md) (the list); [`warnings.md`](warnings.md) (the meaning and the measured rate; regenerate with `label_score.py --by-warning`); the four READMEs; the stubs in `crates/doorplate-py/python/doorplate/__init__.pyi` |
-| The API, a CLI flag or an output form (a function, a method, a field, a column) | The four READMEs (the anonymizer too: [`CONTRIBUTING.md`](../CONTRIBUTING.md), "Sharing messy data"); an example in `examples/` ([`examples/README.md`](../examples/README.md)); [`how-it-works.md`](how-it-works.md); [`usaddress-compat.md`](usaddress-compat.md) (its feature table); [`reso-mapping.md`](reso-mapping.md) if RESO output changed; [`CHANGELOG.md`](../CHANGELOG.md) |
+| The API, a CLI flag or an output form (a function, a method, a field, a column) | The four READMEs; an example in `examples/` ([`examples/README.md`](../examples/README.md)); [`how-it-works.md`](how-it-works.md); [`usaddress-compat.md`](usaddress-compat.md) (its feature table); [`reso-mapping.md`](reso-mapping.md) if RESO output changed; [`CHANGELOG.md`](../CHANGELOG.md) |
+| The anonymizer (what it changes or keeps, its options, the faithfulness check, the measured rates) | [`anonymizing.md`](anonymizing.md); [`CONTRIBUTING.md`](../CONTRIBUTING.md) ("Sharing messy data"); the issue template; the CLI and Python READMEs; `examples/anonymize_example.py` and the notebook section; [`api-surface.md`](api-surface.md); [`data-policy.md`](data-policy.md) if what may be shared changes |
 | Output labels in usaddress's shape (`tag`, `parse_tokens`) | [`usaddress-compat.md`](usaddress-compat.md) and the Python README's "Coming from usaddress" |
 | The RESO output | [`reso-mapping.md`](reso-mapping.md) (the table and the choices) and `tests/corpus/reso.jsonl` |
 | Accuracy or speed figures, or the benchmark scripts | [`benchmarks.md`](benchmarks.md); [`benchmarks/README.md`](../benchmarks/README.md); the figures in the four READMEs that quote them; [`CHANGELOG.md`](../CHANGELOG.md). The suite's `v1` files are never edited: a fix is a `v2` |

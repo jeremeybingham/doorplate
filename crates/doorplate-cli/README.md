@@ -90,7 +90,8 @@ same way after the change.
 
 **This is obfuscation that keeps the shape, not anonymity.** A word the lexicons know is kept (a street named `HARBOR`,
 `PARK` or `SUMMIT`), so is the city, and a name that is not a word the parser recognizes in some free-text field can
-still be one you meant to remove. Read the output before you share it. Errors name the problem, never a row.
+still be one you meant to remove. Read the output before you share it. Errors name the problem, never a row. The rules, the options, what it can leak and how well it works on real data are in
+[Anonymizing address data](https://github.com/jeremeybingham/doorplate/blob/main/docs/anonymizing.md).
 
 For a data frame, SQL or a notebook, the [Python package](https://pypi.org/project/doorplate/) has pandas, Polars
 and DuckDB helpers over the same parser. On the benchmark suite (19,586 labeled addresses neither library was made
