@@ -227,7 +227,14 @@ fn find_zip(zip5: &str) -> Option<(u32, &'static [u32])> {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ZipPlaces {
     main: Place,
-    shared: &'static [u32],
+    shared: SharedPlaces,
+}
+
+/// The places a ZIP shares: rows of the base table, or the places of a custom layer.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum SharedPlaces {
+    Rows(&'static [u32]),
+    Layer(&'static [Place]),
 }
 
 impl ZipPlaces {
@@ -238,7 +245,13 @@ impl ZipPlaces {
 
     /// Other places that use the ZIP.
     pub fn shared(&self) -> impl Iterator<Item = Place> + '_ {
-        self.shared.iter().filter_map(|&i| place_row(i))
+        let (rows, layer): (&[u32], &[Place]) = match self.shared {
+            SharedPlaces::Rows(r) => (r, &[]),
+            SharedPlaces::Layer(p) => (&[], p),
+        };
+        rows.iter()
+            .filter_map(|&i| place_row(i))
+            .chain(layer.iter().copied())
     }
 
     /// The main place, then the shared ones.
@@ -674,15 +687,28 @@ impl Lexicons {
     /// `"BOCA RATOM"` -> BOCA RATON ([`MatchKind::Variant`]). `None` when
     /// neither the national list nor state data has it.
     pub fn place(&self, state: &str, s: &str) -> Option<Lookup<Place>> {
-        let (i, kind) = self.with_place_key(Some(state), s, find_place)?;
-        let value = place_row(i)?;
-        Some(Lookup { value, kind })
+        self.with_place_key(Some(state), s, |key| {
+            if let Some((i, kind)) = find_place(key) {
+                return Some(Lookup {
+                    value: place_row(i)?,
+                    kind,
+                });
+            }
+            let layer = self.layer?;
+            let &(i, kind) = layer.place_index.get(key)?;
+            Some(Lookup {
+                value: *layer.places.get(i)?,
+                kind,
+            })
+        })
     }
 
     /// Whether `s` names a place (by name, not a listed misspelling) in any
     /// state.
     pub fn is_place(&self, s: &str) -> bool {
-        self.with_place_key(None, s, any_place)
+        self.with_place_key(None, s, |key| {
+            any_place(key) || self.layer.is_some_and(|l| l.place_any.contains(key))
+        })
     }
 
     /// Whether `s` is the name of a county of `state` (`HENNEPIN` in MN,
@@ -694,6 +720,7 @@ impl Lexicons {
                 .binary_search_by(|k| cmp_keys(k, key))
                 .is_ok()
         };
+        let has = |key: &str| has(key) || self.layer.is_some_and(|l| l.counties.contains(key));
         self.with_place_key(Some(state), s, |key| {
             has(key) || key.strip_suffix("COUNTY").is_some_and(has)
         })
@@ -701,16 +728,25 @@ impl Lexicons {
 
     /// The places a 5-digit ZIP belongs to.
     pub fn zip_places(&self, zip5: &str) -> Option<ZipPlaces> {
-        let (main, shared) = find_zip(zip5)?;
+        let Some((main, shared)) = find_zip(zip5) else {
+            let z = self.layer?.zips.get(zip5)?;
+            return Some(ZipPlaces {
+                main: z.main,
+                shared: SharedPlaces::Layer(z.shared),
+            });
+        };
         Some(ZipPlaces {
             main: place_row(main)?,
-            shared,
+            shared: SharedPlaces::Rows(shared),
         })
     }
 
-    /// All places, in table order.
+    /// All places, in table order, then a custom layer's.
     pub fn places(&self) -> impl Iterator<Item = Place> {
-        (0..tables::PLACE_ROWS.len() / ROW_LEN).filter_map(|i| place_row(u32::try_from(i).ok()?))
+        let layer: &'static [Place] = self.layer.map_or(&[], |l| l.places.as_slice());
+        (0..tables::PLACE_ROWS.len() / ROW_LEN)
+            .filter_map(|i| place_row(u32::try_from(i).ok()?))
+            .chain(layer.iter().copied())
     }
 
     /// All street suffixes, in table order.
@@ -793,6 +829,26 @@ impl Lexicons {
     /// Whether the shipped state data adds the highway spelling `STATE|KEY`.
     pub(crate) fn has_state_highway_override(&self, state_key: &str) -> bool {
         find(tables::STATE_HIGHWAY_INDEX, state_key).is_some()
+    }
+
+    /// The place-name comparison key with a caller's word expansion (the layer loader's, which
+    /// knows the layer's own spellings).
+    pub(crate) fn place_key_with(
+        &self,
+        s: &str,
+        expand: impl Fn(&str) -> Option<&'static str>,
+    ) -> String {
+        place_key::place_key(s, expand)
+    }
+
+    /// The shipped place at a `STATE|key`, if any (the national list or a state's data).
+    pub(crate) fn base_place_by_key(&self, state_key: &str) -> Option<Place> {
+        place_row(find_place(state_key)?.0)
+    }
+
+    /// Whether the shipped tables have a ZIP.
+    pub(crate) fn has_zip(&self, zip5: &str) -> bool {
+        find_zip(zip5).is_some()
     }
 
     /// Whether `key` is a place-prefix word (`VILLAGE` in `VILLAGE OF PINECREST`).
