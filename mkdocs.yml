@@ -6,6 +6,8 @@ repo_name: jeremeybingham/doorplate
 edit_uri: edit/main/docs/
 
 docs_dir: docs
+# Not the default `site/`: that folder is the blog and the live demo (Jekyll), and a build cleans its output folder.
+site_dir: build/docs
 exclude_docs: |
   requirements.txt
 theme:

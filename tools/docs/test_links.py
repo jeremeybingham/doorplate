@@ -37,3 +37,10 @@ def test_links_inside_docs_anchors_urls_and_missing_files_are_left_alone():
     for t in ("[x](places.md)", "[x](places.md#a)", "[x](#top)", "[x](https://example.com/a)", "[x](mailto:a@b.c)",
               "[x](../no/such/file.md)"):
         assert rw(t) == t
+
+
+def test_the_build_does_not_clean_the_blog_folder():
+    """MkDocs cleans its output folder; the default `site/` is the repository's blog and demo."""
+    text = (ROOT / "mkdocs.yml").read_text()
+    out = [l.split(":", 1)[1].strip() for l in text.splitlines() if l.startswith("site_dir:")]
+    assert out and out[0].strip("/") not in ("site", ""), out
