@@ -263,3 +263,43 @@ fn anonymize_errors_do_not_quote_the_data() {
     assert_eq!(code, 1, "--column is required for a file");
     std::fs::remove_dir_all(&dir).unwrap();
 }
+
+#[test]
+fn anonymize_usage_errors_and_empty_input() {
+    let (_, err, code) = cli(&["anonymize", "--column", "street"], "55 Bayview Dr\n");
+    assert_eq!(code, 1);
+    assert!(err.contains("--column needs an input CSV file"), "{err}");
+    let (_, err, code) = cli(&["anonymize", "a.csv", "b.csv"], "");
+    assert_eq!(code, 1);
+    assert!(err.contains("at most one input"), "{err}");
+    let (_, _, code) = cli(&["anonymize", "--seed", "x"], "");
+    assert_eq!(code, 1);
+    // No input at all is not an error; nothing is anonymized and the report says so.
+    let (out, err, code) = cli(&["anonymize", "-"], "");
+    assert_eq!((out.as_str(), code), ("", 0));
+    assert!(
+        err.contains("0 value(s) anonymized") && err.contains("(100.0%)"),
+        "{err}"
+    );
+}
+
+#[test]
+fn anonymize_csv_unknown_column_and_missing_file() {
+    let dir = std::env::temp_dir().join(format!("doorplate-anon-col-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    let input = dir.join("in.csv");
+    std::fs::write(&input, "street\n55 Bayview Dr\n").unwrap();
+    let (_, err, code) = cli(
+        &["anonymize", input.to_str().unwrap(), "--column", "nope"],
+        "",
+    );
+    assert_eq!(code, 2);
+    assert!(err.contains("no column named \"nope\""), "{err}");
+    let (_, err, code) = cli(
+        &["anonymize", "/no/such/file.csv", "--column", "street"],
+        "",
+    );
+    assert_eq!(code, 2);
+    assert!(err.contains("could not open"), "{err}");
+    std::fs::remove_dir_all(&dir).unwrap();
+}

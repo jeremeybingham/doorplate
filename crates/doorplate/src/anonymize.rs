@@ -430,14 +430,19 @@ impl Rng {
 }
 
 fn random_seed() -> u64 {
+    use std::collections::hash_map::RandomState;
+    use std::hash::{BuildHasher, Hasher};
+    use std::sync::atomic::{AtomicU64, Ordering};
     use std::time::{SystemTime, UNIX_EPOCH};
+    static COUNTER: AtomicU64 = AtomicU64::new(0);
+    // `RandomState` is seeded by the operating system, and its keys change with each new
+    // value; the clock and a counter keep two calls in one tick apart on a coarse clock.
+    let os = RandomState::new().build_hasher().finish();
     let t = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .map_or(0, |d| d.as_nanos() as u64);
-    // The address of a local varies per run with address-space randomization.
-    let local = 0u8;
-    let a = std::ptr::addr_of!(local) as u64;
-    Rng::new(t, "seed", a).next()
+    let n = COUNTER.fetch_add(1, Ordering::Relaxed);
+    Rng::new(os ^ t, "seed", n).next()
 }
 
 #[cfg(test)]
@@ -542,6 +547,45 @@ mod tests {
                 assert_eq!(t.chars().count(), w.chars().count());
             }
         }
+    }
+
+    #[test]
+    fn ordinal_suffixes_follow_the_number() {
+        for (n, want) in [
+            ("1", "ST"),
+            ("2", "ND"),
+            ("3", "RD"),
+            ("4", "TH"),
+            ("11", "TH"),
+            ("12", "TH"),
+            ("13", "TH"),
+            ("21", "ST"),
+            ("111", "TH"),
+            ("112", "TH"),
+            ("101", "ST"),
+        ] {
+            assert_eq!(ordinal_suffix(n, "TH"), want, "{n}");
+        }
+        assert_eq!(ordinal_suffix("3", "th"), "rd");
+    }
+
+    #[test]
+    fn a_whole_run_kept_as_a_zip_prefix_is_unchanged() {
+        assert_eq!(a().digits("123", Some(3)), "123");
+        assert_eq!(&a().digits("33101", Some(3))[..3], "331");
+        assert_ne!(&a().digits("33101", Some(3))[3..], "01");
+    }
+
+    #[test]
+    fn default_is_new() {
+        assert_ne!(Anonymizer::default().seed(), Anonymizer::default().seed());
+    }
+
+    #[test]
+    fn random_seeds_differ_even_when_created_back_to_back() {
+        let seeds: std::collections::HashSet<u64> =
+            (0..1000).map(|_| Anonymizer::new().seed()).collect();
+        assert_eq!(seeds.len(), 1000);
     }
 
     #[test]

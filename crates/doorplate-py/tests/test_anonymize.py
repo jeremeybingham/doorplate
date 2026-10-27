@@ -24,5 +24,5 @@ def test_anonymizer_reports_faithfulness_and_batches():
 
 
 def test_random_seed_differs_between_instances():
-    seeds = {doorplate.Anonymizer().seed for _ in range(5)}
-    assert len(seeds) == 5
+    seeds = {doorplate.Anonymizer().seed for _ in range(200)}
+    assert len(seeds) == 200
