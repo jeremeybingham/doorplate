@@ -78,3 +78,10 @@ def test_notebook_executes():
 @pytest.mark.parametrize("name", ["addresses_oneline.csv", "addresses_split.csv", "addresses_messy.txt"])
 def test_data_files_exist(name):
     assert (EXAMPLES / "data" / name).stat().st_size > 0
+
+
+def test_anonymize_example(capsys):
+    results = run_script("anonymize_example.py")
+    assert results and all(r.text for r in results)
+    out = capsys.readouterr().out
+    assert "lines parse the same way as before" in out

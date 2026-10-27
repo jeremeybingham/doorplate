@@ -5,11 +5,14 @@ diagnostics. This library formats and parses; it does not validate that an
 address exists or can receive mail.
 """
 from ._core import (
+    Anonymized,
+    Anonymizer,
     ParsedAddress,
     ParseError,
     Parser,
     __version__,
     address_type,
+    anonymize,
     parse,
     parse_fields,
     parse_fields_many,
@@ -19,11 +22,14 @@ from ._core import (
 )
 
 __all__ = [
+    "Anonymized",
+    "Anonymizer",
     "ParseError",
     "ParsedAddress",
     "Parser",
     "__version__",
     "address_type",
+    "anonymize",
     "parse",
     "parse_fields",
     "parse_fields_many",

@@ -85,6 +85,15 @@ The runnable tour is [`examples/quickstart.rs`](https://github.com/jeremeybingha
 [`doorplate-cli`](https://crates.io/crates/doorplate-cli); for pandas, Polars and DuckDB, use the
 [Python package](https://pypi.org/project/doorplate/), which wraps this crate.
 
+`doorplate::Anonymizer` rewrites address-like text so it can be shared: digits and unknown words are replaced by
+others of the same length and case, and what decides how the parser reads a line stays. It is obfuscation that keeps
+the shape, not anonymity; read the output before you share it.
+
+```rust
+let a = doorplate::Anonymizer::with_seed(7).anonymize("123 N Zephyrmill Ave Apt 4, Miami, FL 33101");
+assert!(a.text.contains(" N ") && a.text.contains(", FL 331") && !a.text.contains("Zephyrmill"));
+```
+
 ## Features
 
 | Feature | Default | Adds |

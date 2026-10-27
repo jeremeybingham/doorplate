@@ -18,6 +18,7 @@
 //! [`ParsedAddress::key`], [`ParsedAddress::slug`] and
 //! [`ParsedAddress::to_usaddress_tags`].
 
+mod anonymize;
 mod assemble;
 mod classify;
 mod clean;
@@ -34,6 +35,7 @@ mod tagger;
 mod tokenize;
 mod types;
 
+pub use anonymize::{Anonymized, Anonymizer};
 pub use emit::{
     AddressType, DisplayAddress, KeyOptions, ResoAddress, TaggedAddress, UsaddressTag, UspsAddress,
 };

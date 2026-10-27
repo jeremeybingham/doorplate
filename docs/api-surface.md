@@ -105,7 +105,7 @@ words. The mapping above goes into the documentation as the reference.
 
 ### Findings
 
-1. Subcommands: `parse` (one address, `--line1`.. fields, or stdin), `parse-file`, `corpus test`, `--version`,
+1. Subcommands: `parse` (one address, `--line1`.. fields, or stdin), `parse-file`, `anonymize` (0.4.x, #105: stdin lines or named CSV columns, `--seed`), `corpus test`, `--version`,
    `--help`. Exit codes: 0 success, 1 a usage error (unknown command or flag), 2 an empty address.
 2. The JSON record: `input`, `components`, `warnings`, `unparsed`, `key`, `key_unit`, `slug`, `usps`, `reso`,
    `place`, `provenance` (`library_version`, `state_data_version`). `components` carries only the parts present.
@@ -166,3 +166,20 @@ settled except for two things that are still moving: the custom layer (#3, whose
 the key itself (the `k3`, still to come in phase 2). The beta notice should
 wait for the `k3`: a beta that changes its key afterwards is not a beta. The alpha notice in the four READMEs
 stays until then.
+
+## Added in 0.4.x: the anonymizer (#105)
+
+New public API, additive (`version:O`; no key change): Rust `Anonymizer` (`new`, `with_seed`, `seed`, `anonymize`) and
+`Anonymized { text, faithful }`; Python `Anonymizer(seed=None)` (`seed`, `anonymize`, `anonymize_many`), `Anonymized`
+(`text`, `faithful`) and `anonymize(text, seed=None) -> str`; the command `doorplate anonymize`. Decisions (owner chose the
+public form on 2026-10-27; the rest are the implementer's, open to overruling):
+
+| Question | Decision |
+|---|---|
+| Where it lives | Public API in the core, the Python package and the CLI (owner) |
+| Replacement words | Invented pronounceable words of the same length and case (consonant, vowel, ...), never a lexicon word and never the original |
+| Consistency | The same value gives the same replacement for one seed (duplicates stay duplicates, so a dedupe still works); the default seed is random per run, so the mapping cannot be recomputed from a guess, and `--seed` repeats a run |
+| Names in free text | Strict: every word of two letters or more that is not in a lexicon is replaced (`ATTN`, `C/O` and `PO BOX` stay; names go) |
+| City and ZIP | The city and state the parser finds stay, and so do the first three ZIP digits; the rest of a ZIP is replaced. Swapping a city within its state needs place data for every state and would change the split the parser makes |
+| The check | Each value is parsed before and after; `faithful` is true when the address type, warnings, suffix, directionals, unit designators, state and city are equal and the number, name, unit number and leftover text have the same shape |
+| Errors | The CLI says what went wrong, never a row (`docs/data-policy.md`, principle 4) |

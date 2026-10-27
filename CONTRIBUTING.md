@@ -23,7 +23,13 @@ that come from county exports, mailing lists, forms and old databases. If a samp
 parses badly, or you are not sure it parses well, open an issue (the template asks for
 the right details) and attach what you can.
 
-If the data is private, anonymize it first; an anonymized sample is just as useful as
+If the data is private, anonymize it first. `doorplate anonymize` (or `doorplate.Anonymizer` in Python) does the
+mechanical part, even for lines that do not parse: it replaces digits, names and unknown words with others of the same
+length and case and keeps the suffixes, directionals, unit designators, state, city and the first three ZIP digits.
+**It is obfuscation that keeps the shape, not anonymity.** It keeps every word the lexicons know (a street named
+`HARBOR` or `PARK`), the city and the ZIP prefix, and it cannot tell a name in a free-text field from any other word
+it does not know, so read the output before you send it, and drop what still identifies someone. By hand, the same
+rules apply; an anonymized sample is just as useful as
 long as it keeps the *shape* of each address:
 
 - keep the abbreviations, punctuation, spacing, case, typos and the order of the parts;
