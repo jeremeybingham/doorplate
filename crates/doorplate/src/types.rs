@@ -665,6 +665,9 @@ pub struct Diagnostics {
     /// With `library_version` it ties a stored parse to the data that
     /// produced it.
     pub state_data_version: Option<&'static str>,
+    /// The custom layer the parse used (#3), if any: its name, version and content
+    /// fingerprint. A layer can change a key, so keep this with stored keys.
+    pub custom_layer: Option<crate::LayerInfo>,
     /// The uncertain rules that settled a boundary. Internal: tests and the
     /// corpus tools read them through `decision_codes`.
     pub(crate) decisions: Vec<Decision>,
@@ -699,6 +702,7 @@ impl Default for Diagnostics {
             unparsed: None,
             library_version: VERSION,
             state_data_version: None,
+            custom_layer: None,
             decisions: Vec::new(),
         }
     }

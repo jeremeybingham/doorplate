@@ -32,6 +32,7 @@ mod country;
 mod emit;
 mod input;
 mod intersection;
+mod layer;
 pub mod lexicon;
 mod parser;
 mod place;
@@ -44,6 +45,9 @@ pub use emit::{
     AddressType, DisplayAddress, KeyOptions, ResoAddress, TaggedAddress, UsaddressTag, UspsAddress,
 };
 pub use input::Fields;
+pub use layer::{CustomLayer, LayerInfo};
+#[cfg(feature = "custom-layer")]
+pub use layer::{LayerError, LayerSources};
 pub use lexicon::{HighwayPrefix, Lexicons, Lookup, MatchKind, ZipPlaces};
 pub use parser::{OptionsError, ParseError, ParseOptions, Parser};
 pub use types::{
