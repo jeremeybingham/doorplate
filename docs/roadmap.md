@@ -66,7 +66,7 @@ source and evidence. The order is in #138. `k2` started with 0.3.0; the route-nu
 Two trackers set the order ([`backlog.md`](backlog.md)). Shipped so far in 0.4.x: the anonymizer (#105, [`anonymizing.md`](anonymizing.md)) and the per-state street-pattern counts (#53, `tools/harness/state_patterns.py`); the rest is not started.
 
 - **0.4.x (#200): tooling, documentation and extensibility.** No key change.
-  - *Tooling:* an anonymizing tool for sharing messy data (#105, done), less noise in the harness's scorers (#112), the
+  - *Tooling:* an anonymizing tool for sharing messy data (#105, done), less noise in the harness's scorers (#112, done), the
     review tool's comparison mode against usaddress (#132) and per-state street-pattern counts (#53, done).
   - *Documentation:* a searchable, versioned documentation site (#107).
   - *Extensibility:* the custom layer (#3), a columnar result (#24, done: columns built in Rust) and a usaddress-shaped module (#36, `doorplate.compat`).

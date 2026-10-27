@@ -102,3 +102,35 @@ def test_provider_table_and_filter(tmp_path):
     sr.main([str(run), "--provider", "CA"])
     only = (run / "shapes-CA.md").read_text()
     assert "1 rows" in only and "### Providers" not in only and "provider `CA` only" in only
+
+
+def test_number_words_and_street_mismatch_shapes(tmp_path):
+    """The `missing_street_number` number-word count and the `street` mismatch shapes (#112), on
+    invented rows, through a real run."""
+    recs = tmp_path / "records.parquet"
+    rows = ["ONE QUINCEWOOD PLAZA", "TWO ZEPHYRMILL AVE", "ONE ZEPHYRMILL MILE RD", "BAYVIEW DR", "7 OAK AVE"]
+    con = duckdb.connect()
+    con.execute("create table t (record_id varchar, source varchar, role varchar, provider varchar, "
+                "line1 varchar, city varchar, state varchar, zip varchar)")
+    con.executemany("insert into t values (?,?,?,?,?,?,?,?)",
+                    [(str(i), "inv", "site", "p", r, "MIAMI", "FL", "33101") for i, r in enumerate(rows)])
+    con.execute(f"copy t to '{recs}' (format parquet)")
+    root = tmp_path / "runs"
+    res = subprocess.run(
+        [sys.executable, str(HERE / "run.py"), "--input", str(recs), "--out-root", str(root), "--run-id", "r",
+         "--workers", "1", "--min-free-gb", "0", "--confirm"], capture_output=True, text=True)
+    assert res.returncode == 0, res.stdout + res.stderr
+    run = root / "r"
+    c, has_text = sr.connect(run, __import__("json").loads((run / "manifest.json").read_text()))
+    assert has_text
+    nw = sr.number_word_rows(c, "inv", "site")
+    assert sum(nw.values()) <= 3 and set(nw) <= {"ONE", "TWO"}
+    sr.main([str(run)])
+    text = (run / "shapes.md").read_text()
+    assert "spelled-out number and a street suffix" in text
+    assert "QUINCEWOOD" not in text and "ZEPHYRMILL" not in text
+    # The mismatch shapes, on a hand-made flagged table.
+    c.execute("create or replace view flagged as select source, role, record_id, '' as warnings, "
+              "case when record_id in ('0', '1') then 'street' else '' end as mismatches from recs")
+    shapes = sr.mismatch_shapes(c, "inv", "site", "street")
+    assert shapes == {"a a a": 2}

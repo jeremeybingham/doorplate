@@ -26,6 +26,12 @@ change to what an input produces needs a new key version.
   as doorplate right, usaddress right, both right or both wrong; the page shows both parses side by side, and `export.py --table`
   counts who was right by label pair. The v1 queue skips repeated inputs and has `--group coarse`.
 
+- **Quieter harness scorers** (#112, tooling only): `label_score.py` treats a label's `EXT` post-modifier as the suffix, accepts a
+  suffix inside the label's name when the type is empty, and counts a labeled unit that is not in the parsed text apart (NC pair
+  score: suffix differences 3,000 to 1,292, name 2.33% to 2.05%, unit 0.58% to 0.39%); `--examples FILE` writes the
+  disagreements (ids and values) to a local file under `local-data/`; `shapes_report.py` lists the input shapes behind `street`
+  mismatches and counts `missing_street_number` rows that start with a number word (`ONE PENN PLAZA`).
+
 - **`doorplate.compat`, a usaddress-shaped module** (#36, Python only, additive, no key or parse change): `import doorplate.compat as usaddress` gives `parse(s)`, `tag(s, tag_mapping=None)` and `RepeatedLabelError`, so a script that calls only those runs with one import changed. A token the parser did not place has the label `None`; a label in two runs is joined, and `tag(s, strict=True)` raises `RepeatedLabelError` (usaddress's attributes) the way usaddress does; blank input gives `[]` and `({}, "Ambiguous")`. Label compatibility, not identical output: [`docs/usaddress-compat.md`](docs/usaddress-compat.md) lists the differences and the decisions. Example: `examples/usaddress_migration.py`.
 
 - **Faster `parse_column` and DuckDB columns** (#24, no key or parse change): `doorplate.pandas.parse_column`, `doorplate.polars.parse_column` and the one-line DuckDB functions build their columns in Rust (one list of strings per column, a thread per column, no Python object per row) instead of reading attributes off `parse_many`'s results. Values are identical (a test compares every column on the whole golden corpus). 100,000 addresses, 15 default columns: pandas 1.03 s to 0.83 s and Polars 0.86 s to 0.70 s on 4 CPUs (1.25x and 1.23x), DuckDB 0.79 s to 0.70 s; about 1.4x on 14 CPUs. No new dependency; a public Arrow result was not built ([`docs/benchmarks.md`](docs/benchmarks.md)). `parse_fields_many` is unchanged.
