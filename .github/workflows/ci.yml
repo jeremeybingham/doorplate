@@ -87,6 +87,19 @@ jobs:
           cargo +nightly fuzz run parse -- -max_total_time=30 -max_len=200
           cargo +nightly fuzz run parse_fields -- -max_total_time=30 -max_len=200
 
+  # The documentation site (mkdocs.yml, built on Read the Docs). Strict: a broken link, a missing anchor or a
+  # page that is in docs/ but not in the nav fails the pull request.
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: pip install -r docs/requirements.txt
+      - run: mkdocs build --strict
+      - run: python -m pytest tools/docs -q
+
   python:
     runs-on: ubuntu-latest
     strategy:

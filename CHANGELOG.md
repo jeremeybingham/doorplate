@@ -21,6 +21,8 @@ change to what an input produces needs a new key version.
   places, so the zip-city check and the state-from-ZIP rule use it). Parsing without a layer is unchanged on 100,000 sampled rows (same keys,
   USPS lines, last lines and warnings; the same speed). The command line (`--custom-layer DIR` on `parse`, `parse-file` and `corpus test`, `doorplate layer check DIR`, and `provenance.custom_layer` in the JSON) and Python (`load_layer`, `CustomLayer`, `custom_layer=` on `Parser` and every call and helper, `ParsedAddress.custom_layer`, `LayerError`) read a layer from a folder. Size: the `toml` parser and the loader add about 0.55 MB to the CLI binary (5.83 to 6.38 MB, unstripped) and about 0.24 MB to the Linux wheel (1.89 to 2.13 MB); the default Rust library build is unchanged (the feature is off by default).
 
+- **A documentation site** (#107, phase 1, docs only): `mkdocs.yml`, `.readthedocs.yaml` and pinned `docs/requirements.txt` build the pages of `docs/` with MkDocs and the Material theme for Read the Docs; links from a page to a repository file are rewritten to GitHub in the site only (`tools/docs/links.py`), and a CI job builds the site with `--strict`.
+
 - **Review tool v2: a comparison mode** (#132, tooling only): `tools/review/compare_sample.py` samples a real source, parses each row
   with doorplate and usaddress, and queues the disagreements (silent ones first, then give-ups, then a control) for a person to judge
   as doorplate right, usaddress right, both right or both wrong; the page shows both parses side by side, and `export.py --table`

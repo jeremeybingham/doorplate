@@ -106,7 +106,10 @@ check when you change something: a parse rule, a key, a warning code, the API or
 option, a figure, the layout, the build commands, a version number. Before you open a pull
 request, find your change in that table and update every page in its row in the same pull
 request; the pull request checklist asks for it. If you add, rename or remove a page,
-update the index (and the table in `AGENTS.md`) too.
+update the index (and the table in `AGENTS.md`) too, and the `nav` in `mkdocs.yml` for a page in `docs/`. To check the
+site locally: `pip install -r docs/requirements.txt && mkdocs build --strict` (it fails on a broken link, a missing
+anchor or a page missing from the nav; links from a page to a file outside `docs/` are rewritten to GitHub by
+`tools/docs/links.py`, so write them as ordinary relative links).
 
 ## Agent instructions
 

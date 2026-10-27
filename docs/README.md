@@ -5,7 +5,8 @@ to check when you change something. This library formats and parses; it does not
 validate that an address exists or can receive mail, and no page here says otherwise.
 
 New to the project? Read the [project README](../README.md), then
-[How doorplate works](how-it-works.md).
+[How doorplate works](how-it-works.md). These pages are also published as a searchable site on Read the Docs
+(`mkdocs.yml`; a page added here needs a `nav` entry there).
 
 ## Using the library
 
@@ -93,6 +94,7 @@ the same pull request. The pull request template asks for it.
 | The API, a CLI flag or an output form (a function, a method, a field, a column) | The four READMEs; an example in `examples/` ([`examples/README.md`](../examples/README.md)); [`how-it-works.md`](how-it-works.md); [`usaddress-compat.md`](usaddress-compat.md) (its feature table); [`reso-mapping.md`](reso-mapping.md) if RESO output changed; [`CHANGELOG.md`](../CHANGELOG.md) |
 | The custom layer (its files, rules, loader or provenance) | [`custom-layers.md`](custom-layers.md) (and its LLM prompt, kept in step with the loader by `test_custom_layer.py`); `examples/layers/` (the demo and the template: `doorplate layer check` both) and the notebook section; [`key-format.md`](key-format.md) ("Stability"); [`how-it-works.md`](how-it-works.md) ("Lexicon layers"); [`api-surface.md`](api-surface.md); the four READMEs once the CLI and Python take a layer; [`CHANGELOG.md`](../CHANGELOG.md) |
 | The anonymizer (what it changes or keeps, its options, the faithfulness check, the measured rates) | [`anonymizing.md`](anonymizing.md); [`CONTRIBUTING.md`](../CONTRIBUTING.md) ("Sharing messy data"); the issue template; the CLI and Python READMEs; `examples/anonymize_example.py` and the notebook section; [`api-surface.md`](api-surface.md); [`data-policy.md`](data-policy.md) if what may be shared changes |
+| A page added, renamed or removed in `docs/` | This index; the `nav` in [`mkdocs.yml`](../mkdocs.yml) (CI builds the site with `mkdocs build --strict`); the table in [`AGENTS.md`](../AGENTS.md) |
 | Output labels in usaddress's shape (`tag`, `parse_tokens`, `doorplate.compat`) | [`usaddress-compat.md`](usaddress-compat.md); the Python and root READMEs' "Coming from usaddress"; `examples/usaddress_migration.py` |
 | The RESO output | [`reso-mapping.md`](reso-mapping.md) (the table and the choices) and `tests/corpus/reso.jsonl` |
 | Accuracy or speed figures, or the benchmark scripts | [`benchmarks.md`](benchmarks.md); [`benchmarks/README.md`](../benchmarks/README.md); the figures in the four READMEs that quote them; [`CHANGELOG.md`](../CHANGELOG.md). The suite's `v1` files are never edited: a fix is a `v2` |
