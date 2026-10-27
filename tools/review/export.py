@@ -28,7 +28,7 @@ sys.path.insert(0, str(HERE))
 
 import json  # noqa: E402
 
-from server import DEFAULT_ANSWERS, load_answers, read_jsonl  # noqa: E402
+from server import COMPONENTS, DEFAULT_ANSWERS, load_answers, read_jsonl  # noqa: E402
 from shape import clip, shape  # noqa: E402
 
 DEFAULT_OUT = DEFAULT_ANSWERS.with_name("shapes.jsonl")
@@ -91,6 +91,16 @@ def compare_table(answers, top=15):
     return "\n".join(out) + "\n"
 
 
+def labels_safe(text, labels):
+    """A labeled answer as [component, shape of its words] in order: the parts and their shapes, never a word."""
+    out = []
+    for lab in labels:
+        s, e, c = lab.get("start"), lab.get("end"), lab.get("component")
+        if isinstance(s, int) and isinstance(e, int) and c in COMPONENTS and 0 <= s < e <= len(text):
+            out.append([c, clip(shape(text[s:e]), 40)])
+    return out
+
+
 def safe(a, with_source=False):
     """One answer, reduced to what may be shared."""
     p, c = a.get("parse") or {}, a.get("corrected_parse") or {}
@@ -107,6 +117,8 @@ def safe(a, with_source=False):
     out["key"] = key_shape(p.get("key"))
     if a["verdict"] == "right":
         out["warning"] = a.get("warning") if a.get("warning") in ("fair", "noise") else None
+    if a.get("labels"):
+        out["labels"] = labels_safe(a.get("labeled_text") or "", a["labels"])
     if a.get("compare"):
         out["compare"] = compare_safe(a["compare"])
     if a["verdict"] in ("corrected", "both_wrong"):

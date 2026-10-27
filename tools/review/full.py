@@ -27,6 +27,7 @@ import difflib
 import re
 from pathlib import Path
 
+from oneline import one_line
 from shape import shape
 
 TOKEN = re.compile(r"[A-Za-z0-9]+|[^\sA-Za-z0-9]")
@@ -87,14 +88,6 @@ def mask_value(v, words):
     return v
 
 
-def one_line(inp):
-    """The row as one line, as the review page starts the correction box."""
-    if inp.get("last_line"):
-        return ", ".join(x for x in (inp.get("line1"), inp.get("line2"), inp["last_line"]) if x)
-    last = " ".join(x for x in (inp.get("state"), inp.get("zip")) if x)
-    return ", ".join(x for x in (inp.get("line1"), inp.get("line2"), inp.get("city"), last) if x)
-
-
 def edit_summary(original, corrected):
     """Short phrases for what the reviewer changed, word by word: 'deleted leading "ACME LLC"'."""
     a, b = TOKEN.findall(original), TOKEN.findall(corrected)
@@ -144,6 +137,11 @@ def entry(n, a, mask):
     shown = [f"{k}={mk(inp[k])!r}" for k in FIELDS if inp.get(k)]
     lines.append("- input: " + "; ".join(shown))
     lines.append(f"- parse: {parse_line(mk(a.get('parse')))}")
+    if a.get("labels"):
+        text = a.get("labeled_text") or ""
+        lines.append("- labeled: " + "; ".join(
+            f"{l['component']}={mask_text(text[l['start']:l['end']], words)!r}" for l in a["labels"]
+            if isinstance(l.get("start"), int) and isinstance(l.get("end"), int)))
     if a.get("compare"):
         c = a["compare"]
         lines.append(f"- comparison ({c.get('class')}): differs {c.get('differs')}")

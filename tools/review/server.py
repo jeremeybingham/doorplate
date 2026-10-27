@@ -15,7 +15,12 @@ For each row the page shows the parse and the warnings, and you choose a verdict
 - `unclear`: wrong, and I can't tell what it should be;
 - `junk`: not an address (a name, a placeholder, a phone number);
 - `noise`: the source cut it off or mangled it;
-- `skip`: not now.
+- `skip`: not now;
+- `labeled`: the parts of the one-line string, marked by the person (`labels`: `[{start, end, component}]` over
+  `labeled_text`), a more exact answer than a rewrite when the parse is wrong in a few places.
+
+A correction whose string is the unchanged one-line original is refused (it almost always means "the
+parse is right"; send `unchanged_ok` to keep it). The page asks first.
 
 A comparison queue (`tools/review/compare_sample.py`, issue #132) shows doorplate's parse beside
 usaddress's, and the verdicts are `doorplate_right`, `usaddress_right`, `both_right` (a different
@@ -42,12 +47,19 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE))  # `python -I` leaves the script folder off the path
+
+from oneline import one_line  # noqa: E402
 ROOT = HERE.parents[1]
 DEFAULT_QUEUE = ROOT / "local-data" / "review" / "queue.jsonl"
 DEFAULT_ANSWERS = ROOT / "local-data" / "review" / "answers.jsonl"
 DEFAULT_WASM = ROOT / "target" / "wasm32-unknown-unknown" / "release" / "doorplate_wasm.wasm"
 BUILD_WASM = "cargo build -p doorplate-wasm --target wasm32-unknown-unknown --release"
-VERDICTS = ("right", "corrected", "unclear", "junk", "noise", "skip")
+VERDICTS = ("right", "corrected", "unclear", "junk", "noise", "skip", "labeled")
+COMPONENTS = ("StreetNumber", "StreetDirPrefix", "StreetName", "StreetSuffix", "StreetDirSuffix", "Highway", "UnitType",
+              "UnitNumber", "SecondUnitType", "SecondUnitNumber", "PoBox", "RuralRoute", "GeneralDelivery", "Military",
+              "MilitaryPostOffice", "Attention", "Building", "City", "State", "Zip5", "Zip4", "Unparsed")  # the page's names
+MAX_LABELS = 200
 COMPARE_VERDICTS = ("doorplate_right", "usaddress_right", "both_right", "both_wrong")  # for a comparison row
 WARNING_VERDICTS = ("fair", "noise")  # for a `right` parse: was the warning justified?
 MAX_BODY = 64 * 1024
@@ -119,6 +131,13 @@ class Review:
         corrected = (body.get("corrected") or "").strip()
         if verdict in ("corrected", "both_wrong") and not corrected:
             raise ValueError("a corrected answer needs the corrected string")
+        if verdict in ("corrected", "both_wrong") and not body.get("unchanged_ok") and \
+                " ".join(corrected.split()) == " ".join(one_line(item).split()):
+            raise ValueError("the correction is the unchanged original: if the parse is right, answer that; "
+                             "otherwise confirm with unchanged_ok")
+        labels = None
+        if verdict == "labeled":
+            labels = self._labels(body)
         rec = {"ts": datetime.now(timezone.utc).isoformat(timespec="seconds"), "id": item["id"],
                "seq": item["seq"], "source": item["source"], "role": item["role"],
                "input": {k: item[k] for k in INPUT_KEYS if k in item}, "cluster": item.get("cluster"),
@@ -129,12 +148,38 @@ class Review:
             rec["compare"] = item["compare"]
         if verdict in ("corrected", "both_wrong"):
             rec["corrected"] = corrected[:1000]
+        if labels is not None:
+            rec["labeled_text"], rec["labels"] = labels
         for k in ("parse", "corrected_parse"):  # summaries the page computed with the same parser
             v = body.get(k)
             if isinstance(v, dict) and len(json.dumps(v)) <= 20000:
                 rec[k] = v
         self._append(rec)
         return rec
+
+    @staticmethod
+    def _labels(body):
+        """(text, labels) from a `labeled` answer, checked: spans inside the text, in order, not overlapping."""
+        text = body.get("labeled_text")
+        labels = body.get("labels")
+        if not isinstance(text, str) or not text.strip() or len(text) > 1000:
+            raise ValueError("a labeled answer needs labeled_text")
+        if not isinstance(labels, list) or not labels or len(labels) > MAX_LABELS:
+            raise ValueError("a labeled answer needs labels")
+        out, end = [], 0
+        for lab in labels:
+            if not isinstance(lab, dict):
+                raise ValueError("a label is {start, end, component}")
+            s, e, c = lab.get("start"), lab.get("end"), lab.get("component")
+            if not (isinstance(s, int) and isinstance(e, int) and not isinstance(s, bool) and not isinstance(e, bool)):
+                raise ValueError("a label start and end are integers")
+            if c not in COMPONENTS:
+                raise ValueError(f"unknown component {c!r}")
+            if not (end <= s < e <= len(text)):
+                raise ValueError("labels must lie inside the text, in order, without overlapping")
+            out.append({"start": s, "end": e, "component": c})
+            end = e
+        return text, out
 
     def undo(self):
         """Take back the latest standing answer. Returns its id, or None."""
@@ -189,6 +234,8 @@ def make_handler(review, wasm_path):
             path = self.path.split("?")[0]
             if path == "/":
                 self._send(200, page, "text/html; charset=utf-8")
+            elif path == "/helpers.js":
+                self._send(200, (HERE / "helpers.js").read_bytes(), "text/javascript; charset=utf-8")
             elif path == "/doorplate.wasm":
                 if not Path(wasm_path).exists():
                     self._send(404, {"error": f"build the parser first: {BUILD_WASM}"})

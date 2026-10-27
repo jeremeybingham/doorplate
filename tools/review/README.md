@@ -97,12 +97,33 @@ type, and says whether the string parses cleanly and whether it keys the same as
 | `5` | `junk` | Not an address (a name, a placeholder, a number) |
 | `6` | `noise` | The source cut it off or mangled it |
 | `7` | `skip` | Not now |
+| `l` | `labeled` | Mark the parts yourself instead of rewriting the string (below) |
 
 A correct parse and a fair warning are separate judgments, so a right parse always says which: a
 true range of house numbers is `right` with a `fair` warning; a fine parse with a spurious warning
 is `right` with a `noise` warning (a candidate for a warning rule to change, #102).
+| `]` and `[` | move words | Move the next word of line 1 to the care-of line, or back one (below) |
 | `f` | edit | Jump to the correction box (it is not focused, so the number keys choose a verdict); Escape leaves it |
 | `u` | undo | Take back the last answer |
+
+**Move words to the care-of line (`]`, `[`, #222).** About 40 of the 92 corrections in the first review were a retype of the
+whole string to move welded leading words (`ZEPHYR HOLDINGS LLC 20 OAK ST` is a name and a street, #127). `]` moves the next word
+of line 1 to the care-of line and re-parses the box live; `[` takes one back. If line 2 is a care-of line (it starts with `%`,
+`C/O`, `ATTN`) the words are appended to it (`% PAT QUINCE ZEPHYR HOLDINGS LLC`), if there is no line 2 a new `% WORDS` line follows
+line 1, and if line 2 is something else (a unit) the care-of part goes between them. Line 1 always keeps at least one word. Edit the
+box afterwards as usual, then Enter.
+
+**An unchanged correction (#222).** Two rows in the first review were saved as `corrected` with the box unchanged, meaning "the parse
+is right". Saving a correction whose text is the unchanged original now asks first: parse right with the warning fair, parse right with
+the warning noise (or, on a comparison row, doorplate right or both right), or "save it as a correction anyway". The server refuses an
+unchanged correction unless the request says `unchanged_ok`.
+
+**Marking the parts (`l`, #222).** For a parse that is wrong in a few places, open "Mark the parts instead". The one-line string is
+shown as words, each in the part the parser gave it (anything it did not place is `Not placed`). Click a word (Shift-click to
+extend), choose a part, press Assign, and Save labels. The answer is `labeled` with `labeled_text` and `labels`: `[{start, end,
+component}]`, offsets into `labeled_text`, in order and not overlapping; the components are the page's names (`StreetNumber`,
+`StreetName`, `Attention`, ...). The shape-only export keeps the parts and the shape of each (`["StreetNumber", "9"]`), the
+full-text export the words. A labeled answer is a labeled string and can later feed `label_score.py` (deferred, see #222).
 
 Answers go to `local-data/review/answers.jsonl`, one object per line: the time, the id, the input, the
 shape group, the verdict, the correction and your note, and the parse of the original and of the
@@ -156,6 +177,5 @@ This library formats and parses; it does not validate that an address exists or 
 
 ## Later
 
-Marking the parts of the string and assigning components (a more precise label than a rewrite), a
-"move the first N words to the care-of line" action, using #105 so real-looking rows can be shared, and
-feeding the answers to `label_score.py` as a labeled source.
+Using #105 so real-looking rows can be shared, and feeding the answers to `label_score.py` as a labeled
+source (both #222).
