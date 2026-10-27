@@ -291,6 +291,22 @@ it. The full rules, the limits, what it can leak and how well it works on real d
 
 ## Coming from usaddress
 
+For a script that calls `usaddress.parse` and `usaddress.tag`, change one import:
+
+```python
+import doorplate.compat as usaddress    # was: import usaddress
+
+usaddress.parse("123 N Main St Apt 4, Miami FL 33101")   # [(token, label), ...]
+d, kind = usaddress.tag("123 N Main St Apt 4, Miami FL 33101")   # (OrderedDict, "Street Address")
+d, kind = usaddress.tag(text, strict=True)   # raises usaddress.RepeatedLabelError, as usaddress does
+```
+
+`doorplate.compat` has `parse`, `tag(s, tag_mapping=None)` and `RepeatedLabelError`. It is label compatibility, not identical
+output: a rules parser and a statistical model disagree at the edges. A token the parser did not place has the label `None` in
+`parse`; a label in two runs is joined unless `strict=True`; blank input gives `[]` and `({}, "Ambiguous")` instead of an
+error; `tokenize`, `TAGGER` and the training helpers do not exist. Extras: keyword-only `default_state` and `custom_layer`.
+The same calls under doorplate's own names:
+
 | usaddress | `doorplate` |
 |---|---|
 | `usaddress.parse(s)` | `parse_tokens(s)`: `[(token, label)]` |
