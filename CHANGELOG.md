@@ -16,7 +16,7 @@ change to what an input produces needs a new key version.
   Python has `Anonymizer(seed)`, `anonymize_many` and `anonymize`, and each value is checked by parsing before and after
   (`faithful`). **Obfuscation that keeps the shape, not anonymity**: lexicon words and the city stay, so read the output
   before you share it. On 100,000 sampled street lines from each of nine local sources the parser reads 96.7% to 99.9%
-  the same after the change, and no digit run stays as it was except the single-digit fractions (`1/2`), which stay by design.
+  the same after the change (on line 2 of the eight sources that have one, 94.2% to 100%), and no digit run stays as it was except the single-digit fractions (`1/2`), which stay by design.
 
 ## [0.4.0] - 2026-10-25
 
