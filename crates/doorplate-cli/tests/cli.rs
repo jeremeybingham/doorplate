@@ -13,12 +13,12 @@ fn cli(args: &[&str], stdin: &str) -> (String, String, i32) {
         .stderr(Stdio::piped())
         .spawn()
         .expect("spawn doorplate");
-    child
+    // A command that rejects its arguments may exit before it reads stdin: a broken pipe is fine.
+    let _ = child
         .stdin
         .take()
         .expect("stdin")
-        .write_all(stdin.as_bytes())
-        .expect("write stdin");
+        .write_all(stdin.as_bytes());
     let out = child.wait_with_output().expect("wait");
     (
         String::from_utf8_lossy(&out.stdout).into_owned(),
