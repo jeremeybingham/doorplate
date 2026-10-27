@@ -1,0 +1,40 @@
+# More spellings of rows the shipped tables already have. Every entry needs `evidence` (or `note`):
+# where you saw it. Keep the entries you need, replace the example spellings with yours, and delete
+# the rest. A spelling the shipped tables already have is an error, and so is a spelling used twice.
+# Check the file with:  doorplate layer check PATH
+
+[[suffix]]                   # a street suffix, by its Pub 28 abbreviation
+abbr = "TRL"
+spellings = ["TRAYL"]
+kind = "observed"            # "observed" (default) raises non_standard_abbreviation; "variant" does not
+evidence = "EXAMPLE: 41 lines like `120 OAK TRAYL` in the 2026 export"
+
+[[unit]]                     # a unit designator, by its abbreviation
+abbr = "STE"
+spellings = ["SUTE"]
+evidence = "EXAMPLE: 9 lines like `300 MILL ST SUTE 2`"
+
+[[directional]]              # N, S, E, W, NE, NW, SE or SW
+abbr = "N"
+spellings = ["NRTH"]
+evidence = "EXAMPLE: 14 lines like `88 NRTH LANTERN RD`"
+
+[[state]]                    # a state or territory, by its USPS code
+code = "FL"
+spellings = ["FLORIDDA"]
+evidence = "EXAMPLE: 6 lines with the state misspelled"
+
+[[special]]                  # po_box, box, rural_route, highway_contract, general_delivery or attention
+form = "po_box"
+spellings = ["POSTBX"]
+evidence = "EXAMPLE: 22 lines like `POSTBX 12`"
+
+[[highway]]                  # a highway prefix, by its standard name
+standard = "COUNTY ROAD"
+spellings = ["CNTRY RD"]
+evidence = "EXAMPLE: 8 lines like `CNTRY RD 12`"
+
+[[words]]                    # building, area, city_head, non_recipient, numbered_street, placeholder, country or place_prefix
+list = "country"
+words = ["FOOBARLAND"]
+evidence = "EXAMPLE: a country-like word the mail merge appends to some lines"

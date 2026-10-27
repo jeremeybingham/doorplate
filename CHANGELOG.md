@@ -19,7 +19,15 @@ change to what an input produces needs a new key version.
   ([`docs/key-format.md`](docs/key-format.md)). Parsing without a layer is unchanged: identical keys, USPS lines and warnings on
   100,000 sampled rows, and the same speed (about 108,000 parses per second on both). The layer also takes places (with their misspellings and county) and ZIPs (`places.tsv`, `zips.tsv`; a ZIP names its main and shared
   places, so the zip-city check and the state-from-ZIP rule use it). Parsing without a layer is unchanged on 100,000 sampled rows (same keys,
-  USPS lines, last lines and warnings; the same speed). The command line (`--custom-layer DIR` on `parse`, `parse-file` and `corpus test`, `doorplate layer check DIR`, and `provenance.custom_layer` in the JSON) and Python (`load_layer`, `CustomLayer`, `custom_layer=` on `Parser` and every call and helper, `ParsedAddress.custom_layer`, `LayerError`) read a layer from a folder. The demo layer and the guide follow in the last part of #3. Size: the `toml` parser and the loader add about 0.55 MB to the CLI binary (5.83 to 6.38 MB, unstripped) and about 0.24 MB to the Linux wheel (1.89 to 2.13 MB); the default Rust library build is unchanged (the feature is off by default).
+  USPS lines, last lines and warnings; the same speed). The command line (`--custom-layer DIR` on `parse`, `parse-file` and `corpus test`, `doorplate layer check DIR`, and `provenance.custom_layer` in the JSON) and Python (`load_layer`, `CustomLayer`, `custom_layer=` on `Parser` and every call and helper, `ParsedAddress.custom_layer`, `LayerError`) read a layer from a folder. Size: the `toml` parser and the loader add about 0.55 MB to the CLI binary (5.83 to 6.38 MB, unstripped) and about 0.24 MB to the Linux wheel (1.89 to 2.13 MB); the default Rust library build is unchanged (the feature is off by default).
+
+- **The custom layer, last part: the demo layer, the guide and the notebook section** (#3, documentation and examples only, no code change):
+  `examples/layers/riverbend-demo` is a working layer for an invented county (two suffix spellings, a unit word, a directional, a
+  trailing word, two places with misspellings and a shared ZIP), `examples/layers/template` is one to copy (one entry per table,
+  options explained in comments), and [`docs/custom-layers.md`](docs/custom-layers.md) is now the customization guide: how to
+  find the spellings worth adding, which file each symptom belongs in, and a ready prompt for an LLM that drafts a layer from a
+  list of misparsed lines. The quickstart notebook has a "Your own spellings and places" section. Tests load both layers and keep
+  the prompt in step with the loader.
 
 - **`doorplate anonymize`, `doorplate::Anonymizer` and `doorplate.Anonymizer`** (#105, additive, no key change): rewrites
   address-like text so it can be shared, even text that does not parse. Digit runs become other digits of the same length,

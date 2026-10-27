@@ -33,7 +33,7 @@ and those keys are frozen as the baseline for phase 2. What was done (#138):
 - **State data:** the Florida data folded into the core as built-in state data, dropping the `state-fl` Cargo
   feature and renaming `data/packs/` to `data/states/` (#101); the state data version in the output (#7).
 - **An extension-ready core** (#137): everything the tagger reads goes through `Lexicons`, and the layer interface
-  is decided (`docs/how-it-works.md`), so the custom layer (#3) is a loader later.
+  is decided (`docs/how-it-works.md`), so the custom layer (#3) is a loader later (built in 0.4.x).
 - **API cleanup:** the reserved `confidence` field removed (#136), `parse_tokens` cut like usaddress (#78: the
   emitter, not the parser, so no key changes), and an audit of every public name (#135, `docs/api-surface.md`).
 
@@ -81,11 +81,10 @@ Two trackers set the order ([`backlog.md`](backlog.md)). Shipped so far in 0.4.x
   Florida place gaps (#11), the [geocode benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark)'s place-name gap (#29), Puerto Rico and the uncited parts of Pub 28
   (#92), with the per-state counts that decide them (#53); `CMR` only if a real case shows up (#77, decided: left out).
 
-- **A custom layer** (#3, in the 0.4.x tracker): a way to add your own spellings, places, ZIPs and state-scoped readings
-  without editing the shipped tables, loaded at run time, validated on load, deterministic, and
-  reported in the output so stored keys can be tied to the layer in use. Today the tables are fixed
-  at compile time, and a misparse is fixed by reporting it. The design is settled; it waits for real
-  examples of what people need to add (a local community the place list lacks, a street spelling).
+- **A custom layer** (#3, in the 0.4.x tracker; parts 1 to 3 merged, part 4 is the guide): add your own spellings, places, ZIPs and
+  state-scoped readings without editing the shipped tables, loaded at run time, validated on load, deterministic, and reported in
+  the output so stored keys can be tied to the layer in use. The guide has a demo layer, a template and a prompt for an LLM
+  ([`custom-layers.md`](custom-layers.md)). Next: real layers from users show which tables need more words.
 - **State data beyond Florida:** a state's data starts from real data for that state (#7 adds the
   state data version to the output and a golden corpus per state in CI). Candidates: `RR` as Ranch
   Road in Texas, `PR 462`, county road names such as `LEE ROAD 2004`, and Puerto Rico urbanizations (#8).

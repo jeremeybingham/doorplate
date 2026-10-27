@@ -87,7 +87,8 @@ doorplate corpus test --dir my-corpus --custom-layer county-extras   # your own 
 ```
 
 Every JSON record reports the layer in `provenance.custom_layer` (name, version, fingerprint; `null` without one). **A layer
-can change a key**, so keep its fingerprint with the keys you store. The files, the rules and what a layer cannot change are in
+can change a key**, so keep its fingerprint with the keys you store. The files, the rules, what a layer cannot change, a demo layer,
+a template to copy and a prompt for an LLM that drafts a layer from your misparsed lines are in
 [Custom layers](https://github.com/jeremeybingham/doorplate/blob/main/docs/custom-layers.md).
 
 ## Sharing messy data
