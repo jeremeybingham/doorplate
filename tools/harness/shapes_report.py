@@ -11,6 +11,9 @@ For each source and role in the run it reports, as counts only:
   the leftover; for each of the top warning codes, the shapes of the inputs. A shape turns
   letters into `a` and digits into `9` and collapses runs (`123 N OAK ST APT 4` is
   `9 a a a a 9`), so a shape is a form of address, never an address;
+- the input shapes behind a `street` mismatch (#112), and for `missing_street_number` how many of
+  its rows start with a spelled-out number (`ONE PENN PLAZA`) and have a street suffix: a measure
+  of building numbers written as words, nothing more (`ONE MILE RD` is a street);
 - the style of the inputs that fail (case, unit forms, commas, spelled-out types), beside the
   style of all inputs (a sample of each), reusing `line_styles` of tools/benchsuite/shapes.py.
 
@@ -155,6 +158,29 @@ def code_shapes(con, source, role, code):
     return {clip(i): n for i, n in con.execute(sql, [source, role, code]).fetchall()}
 
 
+NUMBER_WORDS = ("ONE", "TWO", "THREE", "FOUR", "FIVE", "SIX", "SEVEN", "EIGHT", "NINE", "TEN", "ELEVEN", "TWELVE",
+                "THIRTEEN", "FOURTEEN", "FIFTEEN", "SIXTEEN", "SEVENTEEN", "EIGHTEEN", "NINETEEN", "TWENTY")
+
+
+def mismatch_shapes(con, source, role, code):
+    """input shape -> rows, for rows flagged with one mismatch code (needs the input text)."""
+    sql = (f"select {INPUT_SHAPE} as i, count(*) from flagged f "
+           "join recs r on r.source = f.source and r.role = f.role and r.record_id = f.record_id "
+           "where f.source = ? and f.role = ? and list_contains(string_split(f.mismatches, ','), ?) group by 1")
+    return {clip(i): n for i, n in con.execute(sql, [source, role, code]).fetchall()}
+
+
+def number_word_rows(con, source, role):
+    """Leading number word -> rows, for `missing_street_number` rows whose line 1 starts with one and
+    whose parse found a street suffix (needs the input text). Counts only."""
+    words = "|".join(NUMBER_WORDS)
+    sql = ("select regexp_extract(upper(trim(r.line1)), '^(" + words + ")( |$)', 1) as w, count(*) from flagged f "
+           "join recs r on r.source = f.source and r.role = f.role and r.record_id = f.record_id "
+           "where f.source = ? and f.role = ? and list_contains(string_split(f.warnings, ','), 'missing_street_number') "
+           "and f.street_suffix is not null and regexp_matches(upper(trim(r.line1)), '^(" + words + ")( |$)') group by 1")
+    return dict(con.execute(sql, [source, role]).fetchall())
+
+
 def styles(con, source, role, sample):
     """Style counts (tools/benchsuite/shapes.py: line_styles) of a sample of the inputs that have
     an unparsed remainder and of a sample of all inputs of the role."""
@@ -206,6 +232,22 @@ def section(con, source, role, has_text, top, sample):
             out += [f"### `{code}`: top input shapes ({k:,} rows)", ""]
             out += md_table(["input shape", "rows", "share of the code"],
                             [(f"`{i}`", c, 100 * c / k) for i, c in sorted(cs.items(), key=lambda kv: -kv[1])[:top]]) + [""]
+        if t.get("m_street"):
+            ms = mismatch_shapes(con, source, role, "street")
+            if ms:
+                out += [f"### `street` mismatch: top input shapes ({t['m_street']:,} rows, "
+                        f"{100 * t['m_street'] / n:.2f}% of the rows)", ""]
+                out += md_table(["input shape", "rows", "share of the mismatch"],
+                                [(f"`{i}`", c, 100 * c / t["m_street"])
+                                 for i, c in sorted(ms.items(), key=lambda kv: -kv[1])[:top]]) + [""]
+        if warns.get("missing_street_number"):
+            nw = number_word_rows(con, source, role)
+            total = warns["missing_street_number"]
+            out += [f"### `missing_street_number`: a spelled-out number and a street suffix", "",
+                    f"{sum(nw.values()):,} of {total:,} rows ({100 * sum(nw.values()) / total:.2f}%) start with a number "
+                    "word and have a street suffix (`ONE PENN PLAZA`; `ONE MILE RD` is one too, so this is an upper "
+                    "bound for building numbers)." + (" By word: " + ", ".join(
+                        f"{w} {k:,}" for w, k in sorted(nw.items(), key=lambda kv: -kv[1])[:top]) + "." if nw else ""), ""]
         if t["unparsed"]:
             bad, allr, err = styles(con, source, role, sample)
             if err:

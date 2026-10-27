@@ -92,6 +92,15 @@ runs, so `123 N OAK ST` is `9 a a a`. The input text comes from the records file
 manifest, joined to the flagged rows by `(source, role, record_id)`; a `--db` run has no text, so it
 gets the leftover shapes only. Counts only, so the report can be quoted (`docs/data-policy.md`).
 
+Two sections answer the two questions the shapes alone could not (#112). **`street` mismatch: top input shapes** lists the
+forms behind the `street` check (on the 2026-10-27 recheck of the schema 7 runs: FMCSA US carriers 2.5% of mailing and 2.9% of
+physical rows, down from the 3.7% to 4.2% of #96; NY corporations 1.0% to 2.6%; Netsyms 0.28%; the schema 8 ordinal rule is
+not in those runs). **`missing_street_number`: a spelled-out number and a street suffix** counts the rows of that code whose
+line 1 starts with a number word (`ONE` to `TWENTY`) and whose parse found a suffix, by word. It only measures: it is an upper
+bound for building numbers written as words (`ONE MILE RD` is a street too), and treating `ONE` as a number would change keys.
+On the NY registry it is 0 of 460,204 for `ceo`, 12,680 of 58,454 (21.7%) for `dos_process`, 825 of 5,096 for `location` and
+1,615 of 8,730 for `registered_agent`, mostly `ONE` (11,170 of 15,120); on Netsyms 0 of 6,615.
+
 To see what the failing rows actually are, and to say what the right answer is, `tools/review/` draws a few rows from each of the biggest shapes of a run and shows them to a person (`tools/review/README.md`, issue #122).
 
 For a source that groups its rows (FMCSA's country, Netsyms's original provider), a provider table
@@ -147,6 +156,29 @@ the rows that carry it and, for each field, the labeled rows among them and the 
 several warnings counts under each; the first line is every row, the baseline). Counts only. The page that reads
 these numbers is [`docs/warnings.md`](../../docs/warnings.md); regenerate them after a rule change with
 `label_score.py RECORDS --by-warning --confirm`.
+
+**Label conventions the scorer applies (#112).** A label's `EXT` post-modifier is the suffix (`MAIN ST EXT`: type `ST`,
+modifier `EXT`; Pub 28 appendix C1 lists `EXT` as a primary suffix, and we read `100 MAIN ST EXT` as the street `MAIN STREET`
+with the suffix `EXT`); the scorer compares our suffix with the modifier and accepts the name with its type spelled out. A
+suffix inside the label's name with no type (`OAK ST`) is the same name as our `OAK` + `ST`. A labeled unit whose value is
+nowhere in the text we parsed is the source's, not a miss, and is counted apart (`labeled units are nowhere in the text`). On
+the NC pair score (5,630,889 pairs, 2026-10-27) these took the suffix differences from about 3,000 to 1,292 (0.02%; about
+1,700 were `EXT`), the name from 2.33% to 2.05% and the unit from 0.58% to 0.39%. What is left is mostly the source: in the
+sampled suffix swaps (`CT` to `DR` 141 pairs, `DR` to `RD` 107, `RD` to `DR` 95) our suffix is a word of the as-entered line in
+over 90% of the sampled pairs and the county's label is not, and the 33 postdirectional `E` read as `SE` have `SE` in the
+text in 38 of 40 sampled: the as-entered file and the county snapshot disagree, and we follow the text. Not done: the NAD unit
+figure (3.6%, spelled-out designators) needs the NAD sample, which is not on this machine.
+
+**Looking at examples (`--examples FILE`).** Writes the disagreements to a tab-separated file instead of the terminal: source,
+role, field, record id, pair id, and the label and our value. FILE must be under `local-data/` (git-ignored; ids are
+private). It keeps at most `--examples-max` (default 5) per distinct label -> ours pair or shape pair, so rare pairs appear.
+Open the records by id by hand and report only the finding (`docs/data-policy.md`):
+
+```sh
+python tools/harness/label_score.py local-data/nc-voter-2026/records_current.parquet \
+    --labels local-data/nc-voter-2026/records_snapshot.parquet \
+    --examples local-data/harness-112/examples.tsv --confirm
+```
 
 **Same address in two forms.** With `--labels OTHER.parquet`, the labels come from another file and
 rows are paired by `(role, pair_id)` (ids unique in both files). Our parse of the first file's
