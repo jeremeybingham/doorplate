@@ -2,38 +2,46 @@
 //!
 //! ```text
 //! doorplate parse "<address>" [--pretty] [--usps | --display | --long | --usaddress | --tag]
-//!                 [--default-state ST]
+//!                 [--default-state ST] [--custom-layer DIR]
 //! doorplate parse --line1 X [--line2 X] [--city X] [--state X] [--zip X]
 //! doorplate parse            (no argument or "-": one address per stdin line, JSONL out)
 //! doorplate parse-file IN.csv --column NAME [-o OUT.csv] [--default-state ST]
 //! doorplate anonymize [-] [--seed N]
 //! doorplate anonymize IN.csv --column NAME [--column NAME ...] [-o OUT.csv] [--seed N]
-//! doorplate corpus test [--dir DIR] [--verbose] [--update-baseline]
+//! doorplate layer check DIR
+//! doorplate corpus test [--dir DIR] [--verbose] [--update-baseline] [--custom-layer DIR]
 //! ```
 //!
 //! This tool parses and formats; it does not validate deliverability.
 
 mod json;
 
-use doorplate::{corpus, Anonymizer, Fields, ParseError, ParseOptions, ParsedAddress, Parser};
+use doorplate::{
+    corpus, Anonymizer, CustomLayer, Fields, ParseError, ParseOptions, ParsedAddress, Parser,
+};
 use std::fs::File;
 use std::io::{self, BufRead, Write};
 use std::process::ExitCode;
 
 const USAGE: &str = "usage:
   doorplate parse \"<address>\" [--pretty] [--usps | --display | --long | --usaddress | --tag]
-                  [--default-state ST]
+                  [--default-state ST] [--custom-layer DIR]
   doorplate parse --line1 X [--line2 X] [--city X] [--state X] [--zip X] [--pretty]
-                  [--usps | --display | --long] [--default-state ST]
+                  [--usps | --display | --long] [--default-state ST] [--custom-layer DIR]
   doorplate parse [-]                 read one address per line from stdin
                                  (--display: mixed case, `123 N Main St`; --long: spelled out,
                                  `123 North Main Street`; neither is a Pub 28 form.
                                  --usaddress: tokens with usaddress labels;
                                  --tag: joined by label, like usaddress.tag())
   doorplate parse-file IN.csv --column NAME [--line2 NAME] [--city NAME] [--state NAME]
-                  [--zip NAME] [-o OUT.csv] [--default-state ST]
+                  [--zip NAME] [-o OUT.csv] [--default-state ST] [--custom-layer DIR]
                                  --default-state: look cities up in ST when the
                                  input names no state (a hint, never a fill)
+                                 --custom-layer DIR: your own spellings, words, places and ZIPs
+                                 on top of the shipped tables (docs/custom-layers.md); every
+                                 JSON record reports it in provenance.custom_layer. A layer can
+                                 change a key: keep its fingerprint with stored keys
+  doorplate layer check DIR      load a custom layer: list every problem, or what it holds
   doorplate anonymize [-] [--seed N]
                                  read one line per stdin line and write it back with the
                                  digits and unknown words replaced (same shape; obfuscation,
@@ -42,7 +50,7 @@ const USAGE: &str = "usage:
                                  the same for the named CSV columns; other columns are copied.
                                  --seed N repeats the output (a published seed lets anyone check
                                  a guess; leave it out for a random one)
-  doorplate corpus test [--dir DIR] [--verbose] [--update-baseline]
+  doorplate corpus test [--dir DIR] [--verbose] [--update-baseline] [--custom-layer DIR]
                                  run the golden corpus (default dir: tests/corpus)
   doorplate --version | -V       print the version (the library's, as recorded in the JSON)
   doorplate --help | -h          print this text";
@@ -53,6 +61,7 @@ fn main() -> ExitCode {
         Some("parse") => parse_cmd(&args[1..]),
         Some("parse-file") => parse_file_cmd(&args[1..]),
         Some("anonymize") => anonymize_cmd(&args[1..]),
+        Some("layer") => layer_cmd(&args[1..]),
         Some("corpus") => corpus_cmd(&args[1..]),
         Some("--version" | "-V") => {
             // The library's version, the same one `parse` records in its JSON.
@@ -152,7 +161,46 @@ fn parser_for(o: &Opts) -> Result<Parser, CliError> {
     if let Some(st) = o.value("--default-state") {
         options = options.default_state(st);
     }
+    if let Some(layer) = load_layer(o)? {
+        options = options.custom_layer(layer);
+    }
     Parser::with_options(options).map_err(|e| CliError::Usage(e.to_string()))
+}
+
+/// The custom layer named by `--custom-layer DIR`, loaded; a problem is exit 2 with every
+/// problem listed.
+fn load_layer(o: &Opts) -> Result<Option<CustomLayer>, CliError> {
+    o.value("--custom-layer")
+        .map(|dir| {
+            CustomLayer::from_dir(std::path::Path::new(dir))
+                .map_err(|e| CliError::Failed(e.to_string()))
+        })
+        .transpose()
+}
+
+/// `doorplate layer check DIR`: load a layer and say what it holds, or list every problem.
+fn layer_cmd(args: &[String]) -> Result<ExitCode, CliError> {
+    let [sub, rest @ ..] = args else {
+        return Err(CliError::Usage("layer needs a subcommand (check)".into()));
+    };
+    if sub != "check" {
+        return Err(CliError::Usage(format!("unknown layer subcommand {sub}")));
+    }
+    let [dir] = rest else {
+        return Err(CliError::Usage("give the layer folder to check".into()));
+    };
+    let layer = CustomLayer::from_dir(std::path::Path::new(dir))
+        .map_err(|e| CliError::Failed(e.to_string()))?;
+    let info = layer.info();
+    println!(
+        "ok: layer {} {} (fingerprint {})",
+        info.name, info.version, info.fingerprint
+    );
+    for (what, n) in layer.counts() {
+        println!("  {n} {what}");
+    }
+    println!("A layer can change a key: keep the fingerprint with keys stored under it.");
+    Ok(ExitCode::SUCCESS)
 }
 
 fn parse_cmd(args: &[String]) -> Result<ExitCode, CliError> {
@@ -165,6 +213,7 @@ fn parse_cmd(args: &[String]) -> Result<ExitCode, CliError> {
             "--state",
             "--zip",
             "--default-state",
+            "--custom-layer",
         ],
         &[
             "--pretty",
@@ -183,7 +232,10 @@ fn parse_cmd(args: &[String]) -> Result<ExitCode, CliError> {
         state: o.value("--state").map(str::to_string),
         zip: o.value("--zip").map(str::to_string),
     };
-    let have_fields = o.values.iter().any(|(k, _)| k != "--default-state");
+    let have_fields = o
+        .values
+        .iter()
+        .any(|(k, _)| k != "--default-state" && k != "--custom-layer");
     let out = io::stdout();
     let mut out = out.lock();
     if have_fields {
@@ -279,6 +331,7 @@ fn parse_file_cmd(args: &[String]) -> Result<ExitCode, CliError> {
             "--zip",
             "-o",
             "--default-state",
+            "--custom-layer",
         ],
         &[],
     )?;
@@ -472,7 +525,11 @@ fn corpus_cmd(args: &[String]) -> Result<ExitCode, CliError> {
     if sub != "test" {
         return Err(CliError::Usage(format!("unknown corpus subcommand {sub}")));
     }
-    let o = Opts::parse(rest, &["--dir"], &["--verbose", "--update-baseline"])?;
+    let o = Opts::parse(
+        rest,
+        &["--dir", "--custom-layer"],
+        &["--verbose", "--update-baseline"],
+    )?;
     if !o.positional.is_empty() {
         return Err(CliError::Usage("corpus test takes no arguments".into()));
     }
@@ -480,7 +537,12 @@ fn corpus_cmd(args: &[String]) -> Result<ExitCode, CliError> {
     let loaded = corpus::load(&dir).map_err(|errors| {
         CliError::Failed(format!("malformed corpus:\n  {}", errors.join("\n  ")))
     })?;
-    let report = loaded.run(&Parser::new());
+    let parser = match load_layer(&o)? {
+        Some(layer) => Parser::with_options(ParseOptions::new().custom_layer(layer))
+            .map_err(|e| CliError::Usage(e.to_string()))?,
+        None => Parser::new(),
+    };
+    let report = loaded.run(&parser);
     print!("{}", report.summary());
     if o.has("--verbose") && !report.failure_details().is_empty() {
         println!("failing cases:\n{}", report.failure_details());

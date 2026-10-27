@@ -85,3 +85,11 @@ def test_anonymize_example(capsys):
     assert results and all(r.text for r in results)
     out = capsys.readouterr().out
     assert "lines parse the same way as before" in out
+
+
+def test_custom_layer_example(capsys):
+    layer = run_script("custom_layer_example.py")
+    assert layer.name == "county-extras"
+    out = capsys.readouterr().out
+    assert "suffix=TRL" in out and "place=QUINCEWOOD HEIGHTS" in out
+    assert "reported in every parse" in out

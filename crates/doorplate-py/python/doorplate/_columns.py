@@ -5,9 +5,10 @@ Neither library is imported here. The helpers parse a batch with
 """
 from __future__ import annotations
 
+import os
 from collections.abc import Callable, Iterable, Sequence
 
-from ._core import ParsedAddress, parse_many
+from ._core import CustomLayer, ParsedAddress, parse_many
 
 DEFAULT_COLUMNS: tuple[str, ...] = (
     "street_number",
@@ -106,9 +107,12 @@ def extract(
     values: Iterable[object],
     columns: Sequence[str] | None,
     default_state: str | None,
+    custom_layer: "CustomLayer | str | os.PathLike[str] | None" = None,
 ) -> tuple[tuple[str, ...], dict[str, list[str | None]]]:
     """Parse `values` and return the column names and one list per column.
     A row with no address text is `None` in every column."""
     names = check_columns(columns)
-    parsed = parse_many(texts_of(values), default_state=default_state)
+    parsed = parse_many(
+        texts_of(values), default_state=default_state, custom_layer=custom_layer
+    )
     return names, columns_of(parsed, names)

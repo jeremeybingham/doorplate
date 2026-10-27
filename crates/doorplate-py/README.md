@@ -88,6 +88,7 @@ pytest tests
 | `Parser(default_state=None)` | an object with the same `parse`, `parse_fields` and `parse_many` |
 | `tag(text)` | `(dict, type)` with usaddress's labels and `"Street Address"` / `"PO Box"` / `"Ambiguous"` |
 | `parse_tokens(text)` | `[(token, label)]` with usaddress's labels |
+| `load_layer(path)`; `custom_layer=` on every call above | a `CustomLayer` (`name`, `version`, `fingerprint`, `counts()`); your own spellings, words, places and ZIPs on top of the shipped tables ([Custom layers](#custom-layers)) |
 | `Anonymizer(seed=None)`, `.anonymize(text)`, `.anonymize_many(texts)`; `anonymize(text, seed=None)` | an `Anonymized` (`text`, `faithful`) or a list of them; just the text for `anonymize()`. See [Sharing messy data](#sharing-messy-data) |
 | `address_type(text)` | `street`, `po_box`, `rural_route`, `military`, `general_delivery`, `dual` or `unknown` |
 
@@ -232,6 +233,27 @@ Calling `to_dict()` on every row costs about as much as parsing again (a loop wi
 `to_dict` ran at 26,000 per second), and reading attributes from 100,000 Python
 objects is now most of the time, so pick columns when you can. Pre-split columns
 (`line1`, `city`, ...): call `parse_fields_many(line1=df["line1"].tolist(), city=...)`.
+
+## Custom layers
+
+Your data spells `TRAIL` as `TRAYL`, or lives in a community the shipped place list lacks? A **custom layer** adds your own
+spellings, words, places and ZIPs on top of the shipped tables; it never replaces them. It is a folder of small files:
+
+```python
+import doorplate
+
+layer = doorplate.load_layer("county-extras")      # raises doorplate.LayerError listing every problem
+a = doorplate.parse("123 Oak Trayl, Miami, FL 33101", custom_layer=layer)
+a.street_suffix        # 'TRL'
+a.custom_layer         # {'name': 'county-extras', 'version': '2026.10.1', 'fingerprint': '2ca8edfe22b5e7fc'}
+
+parser = doorplate.Parser(default_state="FL", custom_layer=layer)   # also parse_many, parse_fields_many, tag, ...
+```
+
+`custom_layer=` takes a `CustomLayer` or a folder path, and works in `doorplate.pandas`/`polars.parse_column` and the DuckDB
+helpers too. **A layer can change a key**: every parse reports it (`custom_layer`, and `to_dict()["provenance"]`), so store the
+`fingerprint` with the keys. The command is `doorplate layer check DIR`. The files, rules and limits are in
+[Custom layers](https://github.com/jeremeybingham/doorplate/blob/main/docs/custom-layers.md).
 
 ## Sharing messy data
 

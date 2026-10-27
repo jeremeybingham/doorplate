@@ -38,6 +38,8 @@ doorplate parse "123 N Main St, Miami FL 33101" --display    # mixed case; --lon
 doorplate parse "123 N Main St, Miami FL 33101" --tag        # usaddress-style joined labels
 doorplate parse -  < addresses.txt                           # one address per line, JSON lines out
 doorplate anonymize in.csv --column address -o shareable.csv   # same shape, other digits and names
+doorplate parse "123 Oak Trayl, Miami FL 33101" --custom-layer DIR   # your own spellings and places (below)
+doorplate layer check DIR                                    # load a custom layer: every problem, or what it holds
 ```
 
 ```sh
@@ -71,6 +73,22 @@ text, is written with empty new columns and counted on standard error instead of
 the CSV goes to standard output, so it composes with other tools. On a Florida file with five address columns it
 ran at about 30,000 rows per second on one thread, including reading and writing about 30 columns
 ([benchmarks](https://github.com/jeremeybingham/doorplate/blob/main/docs/benchmarks.md)).
+
+## Custom layers
+
+Your data spells `TRAIL` as `TRAYL`, or lives in a community the shipped place list lacks? A **custom layer** is a folder of
+small files that adds your own spellings, words, places and ZIPs on top of the shipped tables (it never replaces them):
+
+```sh
+doorplate layer check county-extras                       # load it: every problem listed, or what it holds
+doorplate parse "123 Oak Trayl, Miami, FL 33101" --custom-layer county-extras
+doorplate parse-file in.csv --column address --custom-layer county-extras -o out.csv
+doorplate corpus test --dir my-corpus --custom-layer county-extras   # your own golden cases against your layer
+```
+
+Every JSON record reports the layer in `provenance.custom_layer` (name, version, fingerprint; `null` without one). **A layer
+can change a key**, so keep its fingerprint with the keys you store. The files, the rules and what a layer cannot change are in
+[Custom layers](https://github.com/jeremeybingham/doorplate/blob/main/docs/custom-layers.md).
 
 ## Sharing messy data
 

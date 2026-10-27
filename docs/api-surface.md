@@ -215,3 +215,20 @@ new dependency, `toml`): `CustomLayer` (`from_sources`, `info`), `LayerSources` 
 | ZIP places | A ZIP names its main place (from the national list, the shipped state data or the layer) and optional shared places; `ZipPlaces` now holds either shipped rows or a layer's places |
 | State data | Still not created by a layer: `zip_city_mismatch` is checked only for states with shipped state data |
 | Place length | A name longer than `MAX_PLACE_WORDS` is an error, because the tokenizer would never find it |
+
+### Part 3: the command line and Python (#3)
+
+New public API, additive. Rust: `CustomLayer::from_dir` and `counts`. Command line: `--custom-layer DIR` on `parse`, `parse-file` and
+`corpus test`; `doorplate layer check DIR`; `provenance.custom_layer` in the JSON (`null` without a layer). Python: `load_layer(path)`,
+`CustomLayer` (`name`, `version`, `fingerprint`, `counts()`), `LayerError` (a `ValueError`), `custom_layer=` on `Parser` and every
+module function, `ParsedAddress.custom_layer`, `to_dict()["provenance"]["custom_layer"]`, and the `custom_layer` argument of the
+pandas, Polars and DuckDB helpers. Decisions (the implementer's):
+
+| Question | Decision |
+|---|---|
+| Who reads the files | The core, in `from_dir`, so the command line and Python share one reader and one set of messages (the issue sketched the callers reading them; the core still takes text in `from_sources`) |
+| Folder rules | `layer.toml` required; a `.toml` or `.tsv` file with another name is an error (a misspelled `alias.toml` must not be silently unused); other files are ignored |
+| Errors | One `LayerError` message listing every problem, in Rust, Python (`ValueError`) and the command line (exit 2); a read error names the file and the error kind, never file contents |
+| Python argument | A `CustomLayer` or a folder path (loaded on the spot); the DuckDB helpers load a path once at registration |
+| Provenance in output | `provenance.custom_layer` is always present in the JSON and `to_dict()`, `null` without a layer, so the schema does not change shape |
+| `corpus test` | Takes `--custom-layer` so a layer's author can run their own cases; the project's corpus is for the shipped tables |

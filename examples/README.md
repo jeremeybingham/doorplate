@@ -12,6 +12,7 @@ that an address exists or can receive mail.
 | [`pandas_pipeline.py`](pandas_pipeline.py) | The same with pandas |
 | [`duckdb_pipeline.py`](duckdb_pipeline.py) | DuckDB: `doorplate_parse` and `doorplate_parse_fields` in SQL, and `parse_column` on a relation (needs `pip install "doorplate[duckdb]"`) |
 | [`anonymize_example.py`](anonymize_example.py) | `doorplate.Anonymizer`: obfuscate a messy file before sharing it, and how many lines still parse the same way (the CLI: `doorplate anonymize`; [the page](../docs/anonymizing.md)). The notebook has a section on it too |
+| [`custom_layer_example.py`](custom_layer_example.py) | A custom layer: writes a tiny one (a suffix spelling, a place and a ZIP), loads it with `doorplate.load_layer`, and shows the parse, the key and the `custom_layer` provenance with and without it (the CLI: `doorplate layer check` and `--custom-layer`; [the page](../docs/custom-layers.md)) |
 | [`data/addresses_oneline.csv`](data/addresses_oneline.csv) | One address per row in a single column (street, PO box, rural route, general delivery, a unit, a blank row) |
 | [`data/addresses_split.csv`](data/addresses_split.csv) | Line 1, line 2, city, state and ZIP in separate columns, with gaps |
 | [`data/addresses_messy.txt`](data/addresses_messy.txt) | One line per address as people type them: lowercase, `c/o`, a country, an intersection, no state |

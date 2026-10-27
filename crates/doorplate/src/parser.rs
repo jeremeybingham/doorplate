@@ -100,6 +100,25 @@ pub struct Parser {
     default_state: Option<&'static str>,
 }
 
+/// The USPS code of a `default_state` option, or `None` when it is empty.
+fn resolve_default_state(
+    lex: &Lexicons,
+    state: Option<&str>,
+) -> Result<Option<&'static str>, OptionsError> {
+    match state.map(str::trim) {
+        None | Some("") => Ok(None),
+        Some(s) => {
+            let code = lex
+                .state(s)
+                .filter(|l| l.value.kind() != StateKind::Military)
+                .map(|l| l.value.code());
+            Ok(Some(code.ok_or_else(|| {
+                OptionsError::UnknownDefaultState(s.to_string())
+            })?))
+        }
+    }
+}
+
 impl Parser {
     pub fn new() -> Self {
         Self::default()
@@ -111,17 +130,17 @@ impl Parser {
         let lex = options
             .custom_layer
             .map_or_else(Lexicons::builtin, Lexicons::with_layer);
-        let default_state = match options.default_state.as_deref().map(str::trim) {
-            None | Some("") => None,
-            Some(s) => {
-                let code = lex
-                    .state(s)
-                    .filter(|l| l.value.kind() != StateKind::Military)
-                    .map(|l| l.value.code());
-                Some(code.ok_or_else(|| OptionsError::UnknownDefaultState(s.to_string()))?)
-            }
-        };
+        let default_state = resolve_default_state(&lex, options.default_state.as_deref())?;
         Ok(Self { lex, default_state })
+    }
+
+    /// This parser (with its custom layer, if any) with a different `default_state` hint.
+    #[cfg(feature = "corpus")]
+    pub(crate) fn with_default_state(&self, state: &str) -> Result<Self, OptionsError> {
+        Ok(Self {
+            lex: self.lex,
+            default_state: resolve_default_state(&self.lex, Some(state))?,
+        })
     }
 
     /// Parse a single-line address. Commas (or semicolons) separate lines:

@@ -303,3 +303,192 @@ fn anonymize_csv_unknown_column_and_missing_file() {
     assert!(err.contains("could not open"), "{err}");
     std::fs::remove_dir_all(&dir).unwrap();
 }
+
+// ---- custom layers (#3) ----
+
+const LAYER_TOML: &str = "name = \"county\"\nversion = \"7\"\n";
+const ALIASES: &str =
+    "[[suffix]]\nabbr = \"TRL\"\nspellings = [\"TRAYL\"]\nevidence = \"invented for the test\"\n";
+
+/// A layer folder in a fresh temp dir; `files` are (name, text).
+fn layer_dir(tag: &str, files: &[(&str, &str)]) -> std::path::PathBuf {
+    let dir = std::env::temp_dir().join(format!("doorplate-layer-{tag}-{}", std::process::id()));
+    std::fs::remove_dir_all(&dir).ok();
+    std::fs::create_dir_all(&dir).unwrap();
+    for (name, text) in files {
+        std::fs::write(dir.join(name), text).unwrap();
+    }
+    dir
+}
+
+fn path(p: &std::path::Path) -> &str {
+    p.to_str().unwrap()
+}
+
+#[test]
+fn layer_check_lists_what_a_layer_holds() {
+    let dir = layer_dir(
+        "ok",
+        &[
+            ("layer.toml", LAYER_TOML),
+            ("aliases.toml", ALIASES),
+            (
+                "places.tsv",
+                "state\tname\tevidence\nFL\tQUINCEWOOD HEIGHTS\tinvented\n",
+            ),
+            ("NOTES.md", "free text is ignored"),
+        ],
+    );
+    let (out, err, code) = cli(&["layer", "check", path(&dir)], "");
+    assert_eq!(code, 0, "{err}");
+    assert!(out.starts_with("ok: layer county 7 (fingerprint "), "{out}");
+    assert!(
+        out.contains("1 suffix spellings") && out.contains("1 places"),
+        "{out}"
+    );
+    assert!(out.contains("A layer can change a key"), "{out}");
+    std::fs::remove_dir_all(&dir).ok();
+}
+
+#[test]
+fn layer_check_lists_every_problem_and_exits_2() {
+    let bad = "[[suffix]]\nabbr = \"TRL\"\nspellings = [\"ST\"]\nevidence = \"x\"\n[[unit]]\nabbr = \"NOPE\"\nspellings = [\"AA\"]\nevidence = \"x\"\n";
+    let dir = layer_dir(
+        "bad",
+        &[
+            ("layer.toml", LAYER_TOML),
+            ("aliases.toml", bad),
+            ("alias.toml", "a typo of aliases.toml"),
+        ],
+    );
+    let (out, err, code) = cli(&["layer", "check", path(&dir)], "");
+    assert_eq!(code, 2);
+    assert!(out.is_empty());
+    assert!(err.contains("the custom layer has 3 problems"), "{err}");
+    assert!(err.contains("alias.toml: not a layer file"), "{err}");
+    assert!(err.contains("already in the shipped tables"), "{err}");
+    assert!(
+        err.contains("no unit designator with the abbreviation \"NOPE\""),
+        "{err}"
+    );
+    std::fs::remove_dir_all(&dir).ok();
+    // A folder with no layer.toml, a missing folder, and the usage errors.
+    let empty = layer_dir("empty", &[]);
+    let (_, err, code) = cli(&["layer", "check", path(&empty)], "");
+    assert_eq!(code, 2);
+    assert!(err.contains("has no layer.toml"), "{err}");
+    std::fs::remove_dir_all(&empty).ok();
+    assert_eq!(cli(&["layer", "check", "/no/such/folder"], "").2, 2);
+    assert_eq!(cli(&["layer"], "").2, 1);
+    assert_eq!(cli(&["layer", "check"], "").2, 1);
+    assert_eq!(cli(&["layer", "fix", "x"], "").2, 1);
+}
+
+#[test]
+fn parse_with_a_layer_reads_the_spelling_and_reports_the_layer() {
+    let dir = layer_dir(
+        "parse",
+        &[("layer.toml", LAYER_TOML), ("aliases.toml", ALIASES)],
+    );
+    let text = "123 Oak Trayl, Miami, FL 33101";
+    let (out, err, code) = cli(&["parse", text, "--custom-layer", path(&dir)], "");
+    assert_eq!(code, 0, "{err}");
+    let v: serde_json::Value = serde_json::from_str(&out).unwrap();
+    assert_eq!(v["components"]["street_suffix"], "TRL");
+    assert_eq!(v["provenance"]["custom_layer"]["name"], "county");
+    assert_eq!(v["provenance"]["custom_layer"]["version"], "7");
+    assert_eq!(
+        v["provenance"]["custom_layer"]["fingerprint"]
+            .as_str()
+            .unwrap()
+            .len(),
+        16
+    );
+    let layered_key = v["key"].clone();
+    // Without the layer: no suffix, a different key, and no layer in the provenance.
+    let (out, _, _) = cli(&["parse", text], "");
+    let base: serde_json::Value = serde_json::from_str(&out).unwrap();
+    assert!(base["components"].get("street_suffix").is_none());
+    assert_ne!(base["key"], layered_key);
+    assert!(base["provenance"]["custom_layer"].is_null());
+    // The hint option and fields work together with a layer; a bad layer is exit 2.
+    let (out, _, code) = cli(
+        &[
+            "parse",
+            "--line1",
+            "123 Oak Trayl",
+            "--city",
+            "Miami",
+            "--state",
+            "FL",
+            "--custom-layer",
+            path(&dir),
+        ],
+        "",
+    );
+    assert_eq!(code, 0);
+    assert!(out.contains("\"street_suffix\":\"TRL\""), "{out}");
+    assert_eq!(
+        cli(&["parse", text, "--custom-layer", "/no/such/folder"], "").2,
+        2
+    );
+    std::fs::remove_dir_all(&dir).ok();
+}
+
+#[test]
+fn parse_file_and_stdin_take_a_layer() {
+    let dir = layer_dir(
+        "file",
+        &[("layer.toml", LAYER_TOML), ("aliases.toml", ALIASES)],
+    );
+    let csv = dir.join("in.csv");
+    std::fs::write(&csv, "id,address\n1,\"123 Oak Trayl, Miami, FL 33101\"\n").unwrap();
+    let (out, err, code) = cli(
+        &[
+            "parse-file",
+            path(&csv),
+            "--column",
+            "address",
+            "--custom-layer",
+            path(&dir),
+        ],
+        "",
+    );
+    assert_eq!(code, 0, "{err}");
+    assert!(out.contains("TRL"), "{out}");
+    let (out, _, code) = cli(
+        &["parse", "-", "--custom-layer", path(&dir)],
+        "123 Oak Trayl, Miami, FL 33101\n",
+    );
+    assert_eq!(code, 0);
+    assert!(out.contains("\"street_suffix\":\"TRL\""), "{out}");
+    std::fs::remove_dir_all(&dir).ok();
+}
+
+#[test]
+fn corpus_test_can_run_a_corpus_against_a_layer() {
+    let layer = layer_dir(
+        "corpus-layer",
+        &[("layer.toml", LAYER_TOML), ("aliases.toml", ALIASES)],
+    );
+    let corpus = layer_dir("corpus", &[]);
+    let case = r#"{"id": "x-1", "input": "123 OAK TRAYL, MIAMI, FL 33101", "expect": {"street_number": "123", "street_name": "OAK", "street_suffix": "TRL", "city": "MIAMI", "state": "FL", "zip5": "33101"}, "warnings": ["non_standard_abbreviation"]}"#;
+    std::fs::write(corpus.join("c.jsonl"), format!("{case}\n")).unwrap();
+    std::fs::write(corpus.join("passing.txt"), "x-1\n").unwrap();
+    // With the layer the case passes; without it, it regresses.
+    let (out, err, code) = cli(
+        &[
+            "corpus",
+            "test",
+            "--dir",
+            path(&corpus),
+            "--custom-layer",
+            path(&layer),
+        ],
+        "",
+    );
+    assert_eq!(code, 0, "{out}{err}");
+    assert_eq!(cli(&["corpus", "test", "--dir", path(&corpus)], "").2, 3);
+    std::fs::remove_dir_all(&layer).ok();
+    std::fs::remove_dir_all(&corpus).ok();
+}
