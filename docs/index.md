@@ -4,16 +4,6 @@ Parse US addresses into components, with USPS Publication 28 and RESO output, a 
 slug, and diagnostics. A Rust library with a Python package and a command-line tool; no runtime dependencies, no data
 to download, no machine-learned model, and parsing never panics.
 
-!!! warning "It parses and formats; it does not validate"
-    doorplate does not check that an address exists or can receive mail. Pub 28 formatting is not deliverability, and
-    a warning such as `zip_city_mismatch` is a hint about the input, not a verdict.
-
-!!! note "Alpha"
-    Expect rough edges. The match key is versioned (`k3:`) and may get new versions as the parser improves, so store
-    the version prefix with your keys. Accuracy and speed are measurements on a few data sets, not guarantees.
-    If it parses your addresses badly, please
-    [open an issue](https://github.com/jeremeybingham/doorplate/issues/new?template=misparse-or-messy-data.md).
-
 ```python
 import doorplate
 
@@ -41,3 +31,13 @@ The install steps and the longer tours are in the READMEs on GitHub for now:
 [Python](https://github.com/jeremeybingham/doorplate/blob/main/crates/doorplate-py/README.md),
 [Rust](https://github.com/jeremeybingham/doorplate/blob/main/crates/doorplate/README.md) and
 [the command line](https://github.com/jeremeybingham/doorplate/blob/main/crates/doorplate-cli/README.md).
+
+!!! warning "It parses and formats; it does not validate"
+    doorplate does not check that an address exists or can receive mail. Pub 28 formatting is not deliverability, and
+    a warning such as `zip_city_mismatch` is a hint about the input, not a verdict.
+
+!!! note "Alpha"
+    Expect rough edges. The match key is versioned (`k3:`) and may get new versions as the parser improves, so store
+    the version prefix with your keys. Accuracy and speed are measurements on a few data sets, not guarantees.
+    If it parses your addresses badly, please
+    [open an issue](https://github.com/jeremeybingham/doorplate/issues/new?template=misparse-or-messy-data.md).
