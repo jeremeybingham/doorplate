@@ -8,7 +8,9 @@ Run `dump` once per build, each in the environment that has that build installed
 
 `dump` parses the records file with `parse_fields_many` and writes `<out>/<source>.parquet` with one row per
 record (row number, source, role, record id, key, warning codes) and `<out>/<source>.json` with the doorplate
-version. Rows with a `last_line` are left out (the harness joins those into one string; none of the key sources
+version, the checkout's commit (marked `+dirty` when the tree has uncommitted changes) and whether the installed
+extension is older than the newest file under `crates/doorplate/src`, since the version string alone names a build
+only between releases (on `main`, after 0.4.1, it still says 0.4.1). Rows with a `last_line` are left out (the harness joins those into one string; none of the key sources
 use it). `diff` compares two such directories row by row and prints counts only, by source and role: the rows
 with a different key, with different warnings, and the shapes of the keys that changed. It never prints
 names or street text; the files stay in the git-ignored `local-data/`.
@@ -16,11 +18,30 @@ names or street text; the files stay in the git-ignored `local-data/`.
 
 import argparse
 import json
+import subprocess
 import sys
 from pathlib import Path
 
+ROOT = Path(__file__).resolve().parents[2]
+
 CHUNK = 250_000
 FIELDS = ("line1", "line2", "city", "state", "zip")
+
+
+def build_info():
+    """(commit, stale): the checkout's short commit, with +dirty for uncommitted changes (None outside git), and whether
+    the installed extension is older than the newest Rust source file (rebuild with `maturin develop --release`)."""
+    import doorplate
+
+    try:
+        git = lambda *a: subprocess.run(["git", "-C", str(ROOT), *a], capture_output=True, text=True, check=True).stdout.strip()  # noqa: E731
+        commit = git("rev-parse", "--short", "HEAD") + ("+dirty" if git("status", "--porcelain", "--untracked-files=no") else "")
+    except (OSError, subprocess.CalledProcessError):
+        commit = None
+    ext = [p for p in Path(doorplate.__file__).parent.glob("*.so")] + [p for p in Path(doorplate.__file__).parent.glob("*.pyd")]
+    src = [p.stat().st_mtime for p in (ROOT / "crates" / "doorplate" / "src").rglob("*.rs")]
+    stale = bool(ext and src and max(p.stat().st_mtime for p in ext) < max(src))
+    return commit, stale
 
 
 def dump(args):
@@ -30,6 +51,10 @@ def dump(args):
 
     import doorplate
 
+    commit, stale = build_info()
+    if stale:
+        print("warning: the installed extension is older than crates/doorplate/src: rebuild it (maturin develop --release) "
+              "or this dump is not of the checkout", file=sys.stderr)
     src = Path(args.records)
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
@@ -74,7 +99,7 @@ def dump(args):
         writer.close()
     (out / f"{name}.json").write_text(json.dumps(
         {"source": name, "records": str(src), "doorplate": doorplate.__version__,
-         "rows": done, "skipped_last_line": skipped}, indent=2) + "\n")
+         "commit": commit, "extension_older_than_source": stale, "rows": done, "skipped_last_line": skipped}, indent=2) + "\n")
     print(f"{name}: {done} rows parsed with doorplate {doorplate.__version__} ({skipped} with last_line left out)")
 
 
@@ -99,7 +124,8 @@ def diff(args):
         try:
             con.execute(f"create or replace view x as select * from '{a / (n + '.parquet')}'")
             con.execute(f"create or replace view y as select * from '{b / (n + '.parquet')}'")
-            print(f"\n== {n}: {va['doorplate']} -> {vb['doorplate']}, rows {va['rows']} / {vb['rows']}")
+            label = lambda v: f"{v['doorplate']} ({v.get('commit') or 'commit unknown'})"  # noqa: E731
+            print(f"\n== {n}: {label(va)} -> {label(vb)}, rows {va['rows']} / {vb['rows']}")
             res = con.execute("""
                 select x.role, count(*) n,
                   sum(case when body(x.key) is distinct from body(y.key) then 1 else 0 end) key_changed,
