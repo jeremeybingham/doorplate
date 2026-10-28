@@ -80,7 +80,7 @@ same inputs as `tools/harness/nad_score.py`) and `netsyms.toml` (the same as
 `local-data/<source>/`**, not in the repository, together with its `NOTICE.md` and
 `INVENTORY.md` (`local-data/README.md`).
 
-The specs in `tools/ingest/specs/` are for public sources: `nad.toml`, `netsyms.toml` and `sam-boston.toml` (Boston's address file, two roles of one address, one-line and split, with the city's labels; units there have no designator).
+The specs in `tools/ingest/specs/` are for public sources: `nad.toml`, `netsyms.toml` and `sam-boston.toml` (Boston's address file, two roles of one address, one-line and split, with the city's labels; units there have no designator), and `va-scc.toml` (the Virginia business registry: principal office, registered agent and a shifted-header LP sample, with the state as a full name).
 
 ## Privacy
 
