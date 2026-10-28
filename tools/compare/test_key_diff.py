@@ -38,3 +38,12 @@ def test_diff_of_equal_dumps_exits_zero(tmp_path):
     r = subprocess.run([sys.executable, str(SCRIPT), "diff", str(a), str(b)], capture_output=True, text=True)
     assert r.returncode == 0, r.stderr
     assert "total rows with a changed key: 0" in r.stdout
+
+
+def test_diff_header_names_each_build_by_version_and_commit(tmp_path):
+    a = dump(tmp_path, "a", "k3:S|1||MAIN|ST||FL|33101")
+    b = dump(tmp_path, "b", "k3:S|1||MAIN|ST||FL|33101")
+    meta = json.loads((b / "demo.json").read_text())
+    (b / "demo.json").write_text(json.dumps(dict(meta, commit="abc1234+dirty")))
+    r = subprocess.run([sys.executable, str(SCRIPT), "diff", str(a), str(b)], capture_output=True, text=True)
+    assert "a (commit unknown) -> b (abc1234+dirty)" in r.stdout  # a dump from before the commit was recorded still compares
