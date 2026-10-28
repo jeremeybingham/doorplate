@@ -55,7 +55,7 @@ scheduled; each rule needs a source, an invented corpus case, and a row-by-row m
   - **A repeated string** (#236, P2): a line written twice, or a tail that repeats the city, state and ZIP, about 287 distinct strings in the sample. The first step is a
     warning (`version:O`, no key change; it could be added before the `k4`), then a rule for the repeated tail (`version:K`).
   - **Box and route forms** that are not read, glued words, `PO` with no `BOX`, `RUR RTE` (#248); a BOX beside a street (#240);
-    unit forms left in the street name (#241); grid-style house numbers (#242, which may be a warning rather than a rule: a leading letter is ambiguous); two suffix words and then a unit (#243); a building name before the house number (#281).
+    unit forms left in the street name (#241: the glued floor `3FL` is done; the rest are one issue each, #288 to #296); grid-style house numbers (#242, which may be a warning rather than a rule: a leading letter is ambiguous); two suffix words and then a unit (#243); a building name before the house number (#281).
 - **From the third review** (#225, the FCC amateur licensees against usaddress; 150 of 150 rows answered): care-of text at the front with no separator takes the whole line,
   key `None` and no warning (#259; a warning could come before the `k4`); a `PO BOX` on line 2 whose number equals the ZIP loses its number and leaves a stray `PO BOX` (#260, `version:O`,
   no key change); a spaced hyphen after the suffix keeps the unit or place in the street name (#261). The round adds evidence to #8, #92, #236, #240, #242, #243 and #248
