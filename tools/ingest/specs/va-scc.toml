@@ -1,0 +1,55 @@
+# Virginia State Corporation Commission business registry (vabusinesses.org/data; public records
+# of the Commonwealth, no copyright, reusable freely: local-data/va-scc-2026/NOTICE.md).
+# corp.csv (517,906) and llc.csv (1,579,845) each hold two addresses per entity: the principal
+# office (Street1/Street2/City/State/Zip) and the registered agent (RA-*). The state is a full
+# name ("Virginia"), ZIP may carry +4, and unit text can be in either street line; all kept as
+# the source has them. provider is `corp` or `llc`. The agent's and the owners' names are in
+# other columns that are not carried over. The LP file is the gist sample for datamade
+# issue 16: its header is shifted (the first, unnamed column is the line that comes first in
+# the text, often a suite), so it is read without the header and the lines are kept in file order.
+source = "va-scc"
+output = "local-data/va-scc-2026/records.parquet"
+
+[inputs.s]
+files = ["local-data/va-scc-2026/corp.csv", "local-data/va-scc-2026/llc.csv"]
+sql = """
+SELECT 'corp' AS kind, "EntityID", "Street1", "Street2", "City", "State", "Zip",
+       "RA-Street1", "RA-Street2", "RA-City", "RA-State", "RA-Zip"
+FROM read_csv('local-data/va-scc-2026/corp.csv', all_varchar = true, sample_size = -1)
+UNION ALL
+SELECT 'llc', "EntityID", "Street1", "Street2", "City", "State", "Zip",
+       "RA-Street1", "RA-Street2", "RA-City", "RA-State", "RA-Zip"
+FROM read_csv('local-data/va-scc-2026/llc.csv', all_varchar = true, sample_size = -1)
+"""
+
+[inputs.lp]
+files = ["local-data/va-scc-2026/va_scc_lp_address.csv"]
+sql = """
+SELECT row_number() OVER () AS n, * FROM read_csv('local-data/va-scc-2026/va_scc_lp_address.csv',
+  header = false, skip = 1, all_varchar = true, quote = '"',
+  names = ['first', 'second', 'city', 'state', 'zip'])
+"""
+
+[[roles]]
+role = "principal_office"
+sql = """
+SELECT concat(kind, '-', "EntityID") AS record_id, kind AS provider,
+       "Street1" AS line1, "Street2" AS line2, "City" AS city, "State" AS state, "Zip" AS zip
+FROM s WHERE nullif(trim("Street1"), '') IS NOT NULL
+"""
+
+[[roles]]
+role = "registered_agent"
+sql = """
+SELECT concat(kind, '-', "EntityID") AS record_id, kind AS provider,
+       "RA-Street1" AS line1, "RA-Street2" AS line2, "RA-City" AS city, "RA-State" AS state, "RA-Zip" AS zip
+FROM s WHERE nullif(trim("RA-Street1"), '') IS NOT NULL
+"""
+
+[[roles]]
+role = "lp_sample"
+sql = """
+SELECT concat('lp-', n) AS record_id, 'lp' AS provider,
+       "first" AS line1, "second" AS line2, city, state, zip
+FROM lp WHERE nullif(trim("first"), '') IS NOT NULL OR nullif(trim("second"), '') IS NOT NULL
+"""
