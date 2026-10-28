@@ -894,41 +894,57 @@ impl Tagger<'_> {
     /// segment has no digit, is no designator, PO Box or placeholder, and
     /// the next one starts with a house number and a word; the first becomes
     /// the attention line. Returns the start of the address.
+    ///
+    /// A name with commas in it (`ACME HOLDINGS, INC.`, `DANA QUILL, PRES.`)
+    /// is several such segments in a row, up to three, and the street or a PO
+    /// Box follows the last (#268): all of them are the attention line.
     fn name_line(&mut self, lo: usize, hi: usize) -> usize {
         let lex = self.lex;
         if lo >= hi {
             return lo;
         }
-        let seg = self.toks[lo].seg;
-        let Some(e) = (lo..hi).find(|&k| self.toks[k].seg != seg) else {
-            return lo;
-        };
-        let first = &self.toks[lo..e];
-        let plain = first
-            .iter()
-            .all(|t| !has_digit(&t.text) && !t.is_hash() && !t.is_dash());
         let word =
             |k: usize| lex.special(self.text(k)).is_some() || lex.unit(self.text(k)).is_some();
-        if !plain
-            || word(lo)
-            || lex.is_placeholder(&join(first))
-            || house_number(self.text(e)).is_none()
-        {
+        let plain_segment = |a: usize, b: usize| {
+            self.toks[a..b]
+                .iter()
+                .all(|t| !has_digit(&t.text) && !t.is_hash() && !t.is_dash())
+                && !word(a)
+                && !lex.is_placeholder(&join(&self.toks[a..b]))
+        };
+        let mut e = self.seg_end(lo, hi);
+        if e >= hi || !plain_segment(lo, e) {
+            return lo;
+        }
+        let mut names = 1;
+        // More name segments before the street: `ACME HOLDINGS` | `INC.`.
+        while names < 3 {
+            let next = self.seg_end(e, hi);
+            if next >= hi || !plain_segment(e, next) || house_number(self.text(e)).is_some() {
+                break;
+            }
+            e = next;
+            names += 1;
+        }
+        let box_next = names > 1 && self.box_line(e, hi, false).is_some();
+        if !box_next && house_number(self.text(e)).is_none() {
             return lo;
         }
         // The street needs a word of its own after the number (not a unit:
         // `4 APT B`).
-        let seg2 = self.toks[e].seg;
-        let named = self.toks[e + 1..hi]
-            .iter()
-            .take_while(|t| t.seg == seg2)
-            .any(|t| {
-                t.text.len() >= 3
-                    && t.text.bytes().all(|c| c.is_ascii_alphabetic())
-                    && lex.unit(&t.text).is_none()
-            });
-        if !named {
-            return lo;
+        if !box_next {
+            let seg2 = self.toks[e].seg;
+            let named = self.toks[e + 1..hi]
+                .iter()
+                .take_while(|t| t.seg == seg2)
+                .any(|t| {
+                    t.text.len() >= 3
+                        && t.text.bytes().all(|c| c.is_ascii_alphabetic())
+                        && lex.unit(&t.text).is_none()
+                });
+            if !named {
+                return lo;
+            }
         }
         self.set(lo..e, Tag::Attention);
         e
@@ -1526,10 +1542,13 @@ impl Tagger<'_> {
     fn street(&mut self, lo: usize, hi: usize) {
         // "APT 1B 626 E KILBOURN AVE": a unit before the street. A unit
         // found after the street becomes the second one.
-        let Some(start) = self.leading_unit(lo, hi) else {
+        let Some((start, second)) = self.leading_unit(lo, hi) else {
             return self.street_from(lo, hi);
         };
         self.street_from(start, hi);
+        let trailing = self.tags[start..hi]
+            .iter()
+            .any(|t| matches!(t, Tag::UnitType(_) | Tag::UnitNumber(_)));
         for t in &mut self.tags[start..hi] {
             match *t {
                 Tag::UnitType(0) => *t = Tag::UnitType(1),
@@ -1537,19 +1556,49 @@ impl Tagger<'_> {
                 _ => {}
             }
         }
+        // Two units ahead of the street and one after it: the model holds two,
+        // so the second one ahead is left over rather than lost.
+        if let (Some(r), true) = (second, trailing) {
+            self.set(r, Tag::Unparsed);
+        }
     }
 
     /// A unit (`APT 1B`, `# 5`) at `lo` followed by a house number: tags it
-    /// and returns where the street starts.
-    fn leading_unit(&mut self, lo: usize, hi: usize) -> Option<usize> {
-        let (ty, k) = if self.toks[lo].is_hash() {
-            (lo..lo, lo)
-        } else {
-            let (_, w) = longest_at(self.toks, lo, hi, |s| self.lex.unit(s))?;
-            (lo..lo + w, lo + w)
+    /// and returns where the street starts. Two units in a row (`STE 410 RM 7`,
+    /// `STE 330 AND STE 350`, `STE 95 #22`) are both read (#276); the range of
+    /// the second one is returned too, so the caller can free it when the
+    /// street line has a unit of its own.
+    fn leading_unit(&mut self, lo: usize, hi: usize) -> Option<(usize, Option<Range<usize>>)> {
+        let unit_at = |s: &Self, k: usize| -> Option<(Range<usize>, usize, bool)> {
+            if s.toks[k].is_hash() {
+                let (v, hash) = s.value_at(k, hi)?;
+                Some((k..k, v, hash))
+            } else {
+                let (_, w) = longest_at(s.toks, k, hi, |x| s.lex.unit(x))?;
+                let (v, hash) = s.value_at(k + w, hi)?;
+                Some((k..k + w, v, hash))
+            }
         };
-        let (v, hash) = self.value_at(k, hi)?;
-        let start = v + 1;
+        let (ty, v, hash) = unit_at(self, lo)?;
+        let mut start = v + 1;
+        let mut second = None;
+        // "STE 330 AND STE 350", "STE 410 RM 7", "STE 95 #22".
+        if start + 1 < hi && house_number(self.text(start)).is_none() {
+            let k = if matches!(self.text(start), "AND" | "&") {
+                start + 1
+            } else {
+                start
+            };
+            if k < hi {
+                if let Some((ty2, v2, hash2)) = unit_at(self, k) {
+                    let after = v2 + 1;
+                    if after + 1 < hi && house_number(self.text(after)).is_some() {
+                        second = Some((start..after, ty2, v2, hash2));
+                        start = after;
+                    }
+                }
+            }
+        }
         if start + 1 >= hi || house_number(self.text(start)).is_none() {
             return None;
         }
@@ -1558,7 +1607,19 @@ impl Tagger<'_> {
             self.set(v - 1..v, Tag::Skip);
         }
         self.set(v..v + 1, Tag::UnitNumber(0));
-        Some(start)
+        let mut freed = None;
+        if let Some((all, ty2, v2, hash2)) = second {
+            if all.start < ty2.start {
+                self.set(all.start..ty2.start, Tag::Skip);
+            }
+            self.set(ty2, Tag::UnitType(1));
+            if hash2 {
+                self.set(v2 - 1..v2, Tag::Skip);
+            }
+            self.set(v2..v2 + 1, Tag::UnitNumber(1));
+            freed = Some(all);
+        }
+        Some((start, freed))
     }
 
     /// Whether the number word at `lo` (`ONE` to `TWENTY`) is the house number:

@@ -7,6 +7,13 @@ change to what an input produces needs a new key version.
 
 ## [Unreleased]
 
+### Changed (key-affecting, held for the `k4`)
+
+- **A name with commas ahead of the street is the attention line** (#268): `ACME HOLDINGS, INC.` / `318 EAST 41ST ST.` and `DANA QUILL, PRES.` / `318 EAST 41ST ST.` read the street from line 2 (the key was the organization name, with `missing_street_number`), and a name over a PO Box (`ACME, INC.` / `P.O. BOX 12`) reads the box. Up to three plain comma segments before the street or box.
+- **Two units ahead of the street on line 1 are both units** (#276): `STE 410 RM 7`, `STE 330 AND STE 350`, `STE 95 #22` over `40 ELM ST`.
+  `main` reports `0.5.0-dev` from here (the first held `k4` rule), so key dumps made between releases name their build (`key_diff.py` records the commit as well).
+  Measured against the build before the change, row by row, on 36,920,000 rows of seven sources: 12,515 keys change, all of them rows that had `missing_street_number`; Netsyms and NAD 0. Stored `k3:` keys stay valid until the `k4` is cut.
+
 ## [0.4.1] - 2026-10-28
 
 Tooling, documentation and extensibility, with **no key change** (the key format stays `k3`) and no parse-rule change: a custom
