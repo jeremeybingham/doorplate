@@ -7,6 +7,10 @@ change to what an input produces needs a new key version.
 
 ## [Unreleased]
 
+### Added
+
+- **`repeated_text` warning** (#236, `version:O`, **no key change**): raised when text that appears twice in the input is read once and the copy dropped: a line written twice (`812 ASHGROVE ST 812 ASHGROVE ST`, `PO BOX 7 PO BOX 7`), a cut-off copy of the address ahead of it, or the city, state or ZIP written again at the end of line 1. Not raised with `second_line_skipped`. Added to 38,422 of 36,920,703 rows of seven large sources (0.10%), no key changes. A repeat that is not dropped (the street name keeps the city, ZIP+4 in the ZIP field) has no warning yet and is the held `k4` rule.
+
 ### Changed (key-affecting, held for the `k4`)
 
 - **A name with commas ahead of the street is the attention line** (#268): `ACME HOLDINGS, INC.` / `318 EAST 41ST ST.` and `DANA QUILL, PRES.` / `318 EAST 41ST ST.` read the street from line 2 (the key was the organization name, with `missing_street_number`), and a name over a PO Box (`ACME, INC.` / `P.O. BOX 12`) reads the box. Up to three plain comma segments before the street or box.
