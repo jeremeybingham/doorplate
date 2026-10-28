@@ -1,0 +1,37 @@
+# Boston's Street Address Management (SAM) addresses, Analyze Boston (open city data, no names;
+# local-data/sam-boston/NOTICE.md). 399,196 rows: 25,824 ranges ("6-10 A St"), 267,162 with a unit.
+# FULL_ADDRESS is exactly STREET_NUMBER + FULL_STREET_NAME + UNIT, so the two roles hold the same
+# address in two forms and share pair_id. The unit has no designator ("3B", "1706-2", "A-9").
+# The city is MAILING_NEIGHBORHOOD (the postal city for the ZIP: Dorchester, Brighton, ...); the
+# state is always MA. Labels are the city's parts; a range is the number as the source labels it.
+source = "sam-boston"
+output = "local-data/sam-boston/records.parquet"
+
+[inputs.s]
+files = ["local-data/sam-boston/live_street_address_management_sam_addresses.csv"]
+sql = "SELECT * FROM read_csv('local-data/sam-boston/live_street_address_management_sam_addresses.csv', all_varchar = true)"
+
+# The address as one line, the unit at the end: the form a person types.
+[[roles]]
+role = "oneline"
+sql = """
+SELECT SAM_ADDRESS_ID AS record_id, SAM_ADDRESS_ID AS pair_id,
+       FULL_ADDRESS AS line1,
+       MAILING_NEIGHBORHOOD AS city, 'MA' AS state, ZIP_CODE AS zip,
+       STREET_NUMBER AS label_number, STREET_PREFIX AS label_predir, STREET_BODY AS label_name,
+       STREET_SUFFIX_ABBR AS label_type, STREET_SUFFIX_DIR AS label_postdir, UNIT AS label_unit
+FROM s
+"""
+
+# The street line and the unit apart, as a form with a unit field holds them.
+[[roles]]
+role = "split"
+sql = """
+SELECT SAM_ADDRESS_ID AS record_id, SAM_ADDRESS_ID AS pair_id,
+       concat_ws(' ', nullif(trim(STREET_NUMBER), ''), nullif(trim(FULL_STREET_NAME), '')) AS line1,
+       UNIT AS line2,
+       MAILING_NEIGHBORHOOD AS city, 'MA' AS state, ZIP_CODE AS zip,
+       STREET_NUMBER AS label_number, STREET_PREFIX AS label_predir, STREET_BODY AS label_name,
+       STREET_SUFFIX_ABBR AS label_type, STREET_SUFFIX_DIR AS label_postdir, UNIT AS label_unit
+FROM s
+"""
