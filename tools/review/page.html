@@ -279,10 +279,16 @@
     any.addEventListener("click", function () { $("hint").hidden = true; send(verdict, undefined, true); }); box.appendChild(any);
     $("hint").hidden = false;
   }
+  // Text left in the correction box under a verdict that is not a correction is kept as a draft, not lost.
+  function addDraft(body) {
+    var d = $("fix").value;
+    if (d.trim() && !H.unchanged(item, d)) { body.draft = d; body.draft_parse = summary(call("parse", d)); }
+  }
   function send(verdict, warning, unchangedOk) {
     if (!item) return;
     if ((verdict === "corrected" || verdict === "both_wrong") && !unchangedOk && H.unchanged(item, $("fix").value)) { askUnchanged(verdict); return; }
     var body = { id: item.id, verdict: verdict, note: $("note").value, parse: summary(origParse) };
+    if (verdict !== "corrected" && verdict !== "both_wrong") addDraft(body);
     if (unchangedOk) body.unchanged_ok = true;
     if (verdict === "right") body.warning = warning;
     if (verdict === "corrected" || verdict === "both_wrong") {
@@ -329,6 +335,7 @@
     if (!item) return;
     var body = { id: item.id, verdict: "labeled", note: $("note").value, parse: summary(origParse),
                  labeled_text: oneLine(item), labels: H.runs(labels) };
+    addDraft(body);
     api("/api/answer", body).then(function () { return api("/api/next"); }).then(function (j) { show(j.item, j.stats); })
       .catch(function (e) { alert("not saved: " + e.message); });
   });

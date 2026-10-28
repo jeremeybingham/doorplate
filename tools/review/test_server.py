@@ -64,6 +64,33 @@ def test_a_right_parse_says_whether_the_warning_was_fair(review):
     assert "warning" not in review.answer({"id": "inv|site|2", "verdict": "junk", "warning": "noise"})
 
 
+def test_text_left_in_the_correction_box_is_kept_as_a_draft_under_any_other_verdict(review):
+    # "I can't tell" with an attempt in the box: the note and the attempt are both recorded, and it is not a correction
+    rec = review.answer({"id": "inv|site|1", "verdict": "unclear", "note": " still bad ", "draft": " 123 QUINCEWOOD ST ",
+                         "parse": {"key": "k3:old"}, "draft_parse": {"key": "k3:draft"}})
+    assert rec["verdict"] == "unclear" and rec["note"] == "still bad"
+    assert rec["draft"] == "123 QUINCEWOOD ST" and rec["draft_parse"] == {"key": "k3:draft"} and "corrected" not in rec
+    # a draft equal to the original is not an attempt; nor is blank text; and a draft_parse never arrives alone
+    rec = review.answer({"id": "inv|site|2", "verdict": "junk", "draft": "5  OAK AVE, BLDG", "draft_parse": {"key": "k3:x"}})
+    assert "draft" not in rec and "draft_parse" not in rec
+    assert "draft" not in review.answer({"id": "inv|site|2", "verdict": "skip", "draft": "   "})
+
+
+def test_a_comparison_verdict_keeps_the_note_and_the_draft(tmp_path):
+    q = tmp_path / "q.jsonl"
+    row = dict(QUEUE[0], compare={"class": "silent", "differs": [["StreetName", "OccupancyIdentifier", 1]], "usaddress": []})
+    q.write_text(json.dumps(row) + "\n")
+    r = server.Review(q, tmp_path / "a.jsonl")
+    rec = r.answer({"id": "inv|site|1", "verdict": "usaddress_right", "note": "they read the unit", "draft": "123 QUINCEWOOD ST APT 456"})
+    assert rec["verdict"] == "usaddress_right" and rec["note"] == "they read the unit"
+    assert rec["draft"] == "123 QUINCEWOOD ST APT 456" and "corrected" not in rec
+
+
+def test_a_correction_verdict_ignores_a_draft_field(review):
+    rec = review.answer({"id": "inv|site|1", "verdict": "corrected", "corrected": "123 QUINCEWOOD ST", "draft": "something else"})
+    assert rec["corrected"] == "123 QUINCEWOOD ST" and "draft" not in rec
+
+
 def test_bad_requests_are_refused(review):
     for body in ({"id": "nope", "verdict": "right"}, {"id": "inv|site|1", "verdict": "maybe"}, {}):
         with pytest.raises(ValueError):

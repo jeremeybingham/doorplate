@@ -129,6 +129,13 @@ of line 1 to the care-of line and re-parses the box live; `[` takes one back. If
 line 1, and if line 2 is something else (a unit) the care-of part goes between them. Line 1 always keeps at least one word. Edit the
 box afterwards as usual, then Enter.
 
+**Nothing you type is dropped.** The note is saved with every verdict. Text left in the correction box under a verdict that is not a correction
+(for example "I can't tell" on a row you could not fix, or "usaddress right" after you had typed a better string) is saved as `draft`, with
+`draft_parse` (the page's parse of it), when it differs from the original. A draft is never scored as a correction: `corrected` is only set by
+`corrected` and `both_wrong`. The shape-only export shows a draft as a shape with whether it parses cleanly and keys the same
+(`draft`, `draft_warnings`, `draft_clean`, `draft_same_key`), and the full-text export prints it on its own line,
+"draft (an attempt, not saved as a correction)". Answers made before this change have no `draft`.
+
 **An unchanged correction (#222).** Two rows in the first review were saved as `corrected` with the box unchanged, meaning "the parse
 is right". Saving a correction whose text is the unchanged original now asks first: parse right with the warning fair, parse right with
 the warning noise (or, on a comparison row, doorplate right or both right), or "save it as a correction anyway". The server refuses an

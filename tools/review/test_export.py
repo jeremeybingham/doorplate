@@ -70,6 +70,18 @@ def test_a_right_parse_keeps_its_warning_verdict():
     assert "warning" not in export.safe(ANSWER)
 
 
+def test_a_draft_is_shared_as_a_shape_with_its_checks():
+    a = dict(ANSWER, verdict="unclear", draft="123 QUINCEWOOD ST, MIAMI FL 33101",
+             draft_parse={"key": "k3:S|123||QUINCEWOOD|ST||FL|33101", "warnings": [], "unparsed": None,
+                          "components": {"street_number": "123", "street_name": "QUINCEWOOD"}})
+    a.pop("corrected"); a.pop("corrected_parse")
+    out = export.safe(a)
+    assert out["verdict"] == "unclear" and "corrected" not in out
+    assert out["draft"] == "9 a a, a a 9" and out["draft_clean"] is True and out["draft_same_key"] is True
+    assert "QUINCEWOOD" not in json.dumps(out) and "33101" not in json.dumps(out)
+    assert "draft" not in export.safe(ANSWER)
+
+
 def test_free_text_cannot_pass_as_a_warning_code():
     a = dict(ANSWER, parse=dict(ANSWER["parse"], warnings=["JOHN SMITH", "missing_zip"]))
     assert export.safe(a)["warnings"] == ["missing_zip"]

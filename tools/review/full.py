@@ -154,6 +154,10 @@ def entry(n, a, mask):
         clean = bool(c) and not c.get("warnings") and not c.get("unparsed") and "error" not in c
         lines.append(f"- clean: {'yes' if clean else 'no'}; same key as the original parse: {'yes' if p.get('key') and p.get('key') == c.get('key') else 'no'}")
         lines.append("- edit: " + "; ".join(mask_text(s, words) for s in edit_summary(original, a.get("corrected") or "")))
+    if a.get("draft"):  # an attempted fix under a verdict that is not a correction
+        d = a.get("draft_parse") or {}
+        lines.append(f"- draft (an attempt, not saved as a correction): {mk(a['draft'])!r}")
+        lines.append(f"- draft parse: {parse_line(mk(d))}")
     if a.get("note"):
         lines.append(f"- note: {mk(a['note'])}")
     return "\n".join(lines)

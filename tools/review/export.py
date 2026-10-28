@@ -127,6 +127,12 @@ def safe(a, with_source=False):
         out["corrected_components"] = component_shapes(c.get("components"))
         out["corrected_clean"] = bool(c) and not c.get("warnings") and not c.get("unparsed") and "error" not in c
         out["same_key"] = bool(p.get("key")) and p.get("key") == c.get("key")
+    if a.get("draft"):  # an attempted fix under a verdict that is not a correction
+        d = a.get("draft_parse") or {}
+        out["draft"] = clip(shape(a["draft"]), 120)
+        out["draft_warnings"] = codes(d.get("warnings"))
+        out["draft_clean"] = bool(d) and not d.get("warnings") and not d.get("unparsed") and "error" not in d
+        out["draft_same_key"] = bool(p.get("key")) and p.get("key") == d.get("key")
     if a.get("note"):
         out["note"] = clip(shape(a["note"]), 120)
     out["library_version"] = p.get("library_version") or c.get("library_version")
