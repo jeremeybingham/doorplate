@@ -5,7 +5,7 @@ What is planned, what depends on what, and what is deliberately not planned.
 messy addresses it sees, the sooner the items below that need them can happen. To send
 some, see [Sharing messy data](../CONTRIBUTING.md#sharing-messy-data).
 
-**Last reviewed 2026-10-28, against the issues up to #261.** The rules for the labels, the milestones and the order are in
+**Last reviewed 2026-10-28, against the issues up to #277.** The rules for the labels, the milestones and the order are in
 [`backlog.md`](backlog.md); the two trackers are #200 (0.4.x) and #201 (0.5.0, the `k4`).
 
 ## Stability while it is an alpha
@@ -49,7 +49,7 @@ The key-changing rules, cut together once the 0.4.x tooling has produced evidenc
 scheduled; each rule needs a source, an invented corpus case, and a row-by-row measurement against the frozen `k3` keys.
 
 - **Research first** (it may produce more issues, or none): campus boxes, box and route typos and recipient text after the suffix (#131); spelled-out
-  building numbers (#221); more state data, and whether it is needed (#213); the data waiting in `local-data/` (#205).
+  building numbers (#221); more state data, and whether it is needed (#213); the Virginia SCC and Boston SAM data now in `local-data/` (its triage, #205, is closed; the ingest and review queues are in #225).
 - **From the first review of real rows** (#125, IRS extract): done in 0.4.0, except what #131 holds.
 - **From the second review** (#245, the FMCSA carriers against usaddress; 150 of 150 rows answered):
   - **A repeated string** (#236, P2): a line written twice, or a tail that repeats the city, state and ZIP, about 287 distinct strings in the sample. The first step is a
@@ -59,7 +59,7 @@ scheduled; each rule needs a source, an invented corpus case, and a row-by-row m
 - **From the third review** (#225, the FCC amateur licensees against usaddress; 150 of 150 rows answered): care-of text at the front with no separator takes the whole line,
   key `None` and no warning (#259; a warning could come before the `k4`); a `PO BOX` on line 2 whose number equals the ZIP loses its number and leaves a stray `PO BOX` (#260, `version:O`,
   no key change); a spaced hyphen after the suffix keeps the unit or place in the street name (#261). The round adds evidence to #8, #92, #236, #240, #242, #243 and #248
-  (a letter direction before a single number, route and box forms, Puerto Rico street-first forms, repeated text).
+  (a letter direction before a single number, route and box forms, Puerto Rico street-first forms, repeated text). The NY corporations queue (reviewed, 150 rows) adds the largest single group of the three rounds: a comma on line 1 that hides the street on line 2, 11.8% of its rows (#268, P1); also `SO` for `SOUTH` (#269), a decision on `46 A LINDEN AVE` (#270), a unit value that is also a suffix code such as `SUITE LA` (#272), placeholder text as the street (#273) and two house numbers joined by `&` (#274), with evidence on #221, #236, #240, #241, #242, #243, #244 and #261. The TX licensing queue (reviewed, 150 rows) adds a ZIP with its leading zero or its ZIP+4 cut short that makes the whole last line unplaced, 8.9% of its rows (#275, P1), and a unit with a second part on line 1 that hides the street on line 2 (#276), with evidence on #8, #236, #241, #242, #244, #248, #270 and #274.
 - **From harness counts:** NAD unit text left in `unparsed_remainder` (#238); two bare numbers on line 2 glued into one unit (#196); a bare `BAY` with no number
   (#193, a warning, rides along).
 - **State-dependent rules and the reading that feeds them:** Texas `RR`, `PR 462` and county road names (#8), Florida place gaps (#11), the
@@ -69,7 +69,7 @@ scheduled; each rule needs a source, an invented corpus case, and a row-by-row m
 ## Waiting, on data or demand
 
 - **Later** (the milestone): the examples notebook as a page on the site (#253); the usaddress comparison post (#88); the address-structure labels usaddress has (#35); research on Canadian addresses (#203);
-  a unit or a box in the city field (#244, a warning); a half written without its slash (#247).
+  a unit or a box in the city field (#244, a warning); a half written without its slash (#247); the 0.4.1 size figures in the docs and the announcement (#277).
 - **Tooling** (never shipped, never closed): the review tool's deferred sharing helpers (#222, item 4); the tracker of what has been hand-reviewed and the
   queues to come (#225; the FCC queue is reviewed, its findings are #259 to #261); comparing with libpostal (#215).
 - **More shapes and rules** not tied to a state, known and not yet an issue: named buildings without a building word (`THE GARRETT`, `UPTOWN SQUARE`);
