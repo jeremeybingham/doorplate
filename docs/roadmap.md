@@ -5,7 +5,7 @@ What is planned, what depends on what, and what is deliberately not planned.
 messy addresses it sees, the sooner the items below that need them can happen. To send
 some, see [Sharing messy data](../CONTRIBUTING.md#sharing-messy-data).
 
-**Last reviewed 2026-10-28, against the issues up to #250.** The rules for the labels, the milestones and the order are in
+**Last reviewed 2026-10-28, against the issues up to #255.** The rules for the labels, the milestones and the order are in
 [`backlog.md`](backlog.md); the two trackers are #200 (0.4.x) and #201 (0.5.0, the `k4`).
 
 ## Stability while it is an alpha
@@ -20,17 +20,7 @@ some, see [Sharing messy data](../CONTRIBUTING.md#sharing-messy-data).
 
 ## Released
 
-**0.4.0 (2026-10-25)**, one release in two phases (decided 2026-10-23, issue #138): the foundation, then the `k3`. The state data
-is folded into the core, the lexicon is extension-ready (#137), the API was cleaned up and audited (#135, [`api-surface.md`](api-surface.md)),
-the allocation work made parsing faster (#147, #148, #156), and the `k3` key and the parser rules behind it were cut together
-(warnings that say how far to trust a parse, #102; line-2 diagnostics, #45; a county written as the city, #113; and the misparses of
-the first review of real rows, #125 and its issues #126 to #130, #114, #143 to #145, #165, #166). What changed, and when keys
-changed, is in [`CHANGELOG.md`](../CHANGELOG.md) and [`key-format.md`](key-format.md). It stays an alpha: the `k3` is new and has only
-been checked on the project's own data, so a `k4` is likely.
-
-## Next: 0.4.1 (decided 2026-10-27)
-
-Everything done in 0.4.x so far, with **no key change and no parse-rule change** (a custom layer changes parsing only when one is loaded): tooling, documentation and extensibility (tracker #200).
+**0.4.1 (2026-10-28)**, decided 2026-10-27: everything done in 0.4.x, with **no key change and no parse-rule change** (a custom layer changes parsing only when one is loaded): tooling, documentation and extensibility (tracker #200).
 
 - **Extensibility:** the custom layer (#3: your own spellings, words, places, ZIPs and state-scoped readings, from the command line, Python and
   Rust; [`custom-layers.md`](custom-layers.md)), `doorplate.compat`, a usaddress-shaped module (#36), and faster `parse_column` and DuckDB
@@ -42,11 +32,18 @@ Everything done in 0.4.x so far, with **no key change and no parse-rule change**
   short and link to the guides; the Python reference describes `main` until this release is out.
 - **Coverage:** tests of the reachable branches, and a written account of what stays uncovered (#211, [`repository.md`](repository.md)).
 
-**What is left before the release:** only the release checklist in [`CONTRIBUTING.md`](../CONTRIBUTING.md) ("Releasing"). The site is done (#107 and #229 closed
-2026-10-28; the owner revises the text as they go). After the tag: versions on Read the Docs and the Python reference's note (#252). #233 (the MkDocs and
-Material end of life on 2027-05-05) does not gate it.
+Checked against the frozen 0.4.0 keys row by row (36,920,000 rows, seven sources): no key and no warning differs (#255). What follows the tag:
+versions on Read the Docs and the Python reference's note (#252). #233 (the MkDocs and Material end of life on 2027-05-05) does not gate anything.
 
-## After that: 0.5.0, the `k4` (tracker #201)
+**0.4.0 (2026-10-25)**, one release in two phases (decided 2026-10-23, issue #138): the foundation, then the `k3`. The state data
+is folded into the core, the lexicon is extension-ready (#137), the API was cleaned up and audited (#135, [`api-surface.md`](api-surface.md)),
+the allocation work made parsing faster (#147, #148, #156), and the `k3` key and the parser rules behind it were cut together
+(warnings that say how far to trust a parse, #102; line-2 diagnostics, #45; a county written as the city, #113; and the misparses of
+the first review of real rows, #125 and its issues #126 to #130, #114, #143 to #145, #165, #166). What changed, and when keys
+changed, is in [`CHANGELOG.md`](../CHANGELOG.md) and [`key-format.md`](key-format.md). It stays an alpha: the `k3` is new and has only
+been checked on the project's own data, so a `k4` is likely.
+
+## Next: 0.5.0, the `k4` (tracker #201)
 
 The key-changing rules, cut together once the 0.4.x tooling has produced evidence (it has: two reviews of real rows, #125, closed, and #245). Nothing is
 scheduled; each rule needs a source, an invented corpus case, and a row-by-row measurement against the frozen `k3` keys.
