@@ -567,6 +567,25 @@ mod tests {
     }
 
     #[test]
+    fn a_nearly_right_zip_is_repaired_only_where_it_is_safe() {
+        let p = Parser::new();
+        let zip = |t: &str| p.parse(t).unwrap().zip5;
+        // The leading zero comes back in a state whose ZIPs start with 0.
+        assert_eq!(zip("18 Elm St, Newark NJ 7102").as_deref(), Some("07102"));
+        // Not in Texas, and a number before the state is no ZIP (#275).
+        assert_eq!(zip("18 Elm St, Dallas TX 7500"), None);
+        assert_eq!(zip("18 Elm St, Suite 4100 NJ"), None);
+        // A short extension is dropped, the five digits stay.
+        assert_eq!(
+            zip("18 Elm St, Dallas TX 75001-5").as_deref(),
+            Some("75001")
+        );
+        let a = p.parse("18 Elm St, Dallas TX 75001-5").unwrap();
+        assert!(a.diagnostics.warnings.contains(&Warning::ZipRepaired));
+        assert!(a.zip4.is_none());
+    }
+
+    #[test]
     fn fields_are_parsed_separately() {
         let f = Fields {
             line1: Some("1 Main St".into()),
