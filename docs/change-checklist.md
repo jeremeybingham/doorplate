@@ -24,6 +24,7 @@ the same pull request. The pull request template asks for it.
 | The golden corpus format or the way it runs | [`docs/tests/corpus.md`](tests/corpus.md); [`repository.md`](repository.md) ("Testing") |
 | Build commands, the repository layout, the CI jobs or the release steps | [`AGENTS.md`](../AGENTS.md); [`CLAUDE.md`](../CLAUDE.md); [`CONTRIBUTING.md`](../CONTRIBUTING.md); [`repository.md`](repository.md) ("Repository layout" and "Testing") |
 | A version number, the alpha notice or the disclaimer | The four READMEs; `Cargo.toml`; [`CHANGELOG.md`](../CHANGELOG.md); the references pull request in [`CONTRIBUTING.md`](../CONTRIBUTING.md) ("Releasing") |
+| A batch of issues closes, an issue is filed, or a release is cut | [`roadmap.md`](roadmap.md) ("Released", "Next", the lists, "Last reviewed"); [`backlog.md`](backlog.md) (the milestone table, the labels, "Last reviewed"); the boxes of the trackers #200 and #201; the label descriptions on GitHub; every open issue has a milestone and its labels |
 | Adding, renaming or removing a documentation page | The index ([`README.md`](https://github.com/jeremeybingham/doorplate/blob/main/docs/README.md)); the `nav` in [`mkdocs.yml`](../mkdocs.yml); the "Using the library" table in [`AGENTS.md`](../AGENTS.md) |
 
 The four READMEs are the project README and the three package pages (PyPI, crates.io

@@ -5,6 +5,9 @@ What is planned, what depends on what, and what is deliberately not planned.
 messy addresses it sees, the sooner the items below that need them can happen. To send
 some, see [Sharing messy data](../CONTRIBUTING.md#sharing-messy-data).
 
+**Last reviewed 2026-10-28, against the issues up to #250.** The rules for the labels, the milestones and the order are in
+[`backlog.md`](backlog.md); the two trackers are #200 (0.4.x) and #201 (0.5.0, the `k4`).
+
 ## Stability while it is an alpha
 
 - **Keys.** The match key is versioned (`k3:`) and each version is a contract
@@ -15,97 +18,75 @@ some, see [Sharing messy data](../CONTRIBUTING.md#sharing-messy-data).
 - **Accuracy and speed** are measured on a few datasets ([`benchmarks.md`](benchmarks.md))
   and are not guaranteed for yours.
 
-## Planned
+## Released
 
-One release, 0.4.0, in two phases (decided 2026-10-23, issue #138; the `k3`, first planned as 0.5.0, is folded in
-because the project has no users and the foundation went quickly). The rules for the labels, the milestones and the
-order are in [`backlog.md`](backlog.md). There is no 0.3.2: with no users, a release is not made for a minor fix (a
-0.3.x patch needs a very good reason, see [`backlog.md`](backlog.md)).
+**0.4.0 (2026-10-25)**, one release in two phases (decided 2026-10-23, issue #138): the foundation, then the `k3`. The state data
+is folded into the core, the lexicon is extension-ready (#137), the API was cleaned up and audited (#135, [`api-surface.md`](api-surface.md)),
+the allocation work made parsing faster (#147, #148, #156), and the `k3` key and the parser rules behind it were cut together
+(warnings that say how far to trust a parse, #102; line-2 diagnostics, #45; a county written as the city, #113; and the misparses of
+the first review of real rows, #125 and its issues #126 to #130, #114, #143 to #145, #165, #166). What changed, and when keys
+changed, is in [`CHANGELOG.md`](../CHANGELOG.md) and [`key-format.md`](key-format.md). It stays an alpha: the `k3` is new and has only
+been checked on the project's own data, so a `k4` is likely.
 
-### 0.4.0, phase 1: the foundation (done; the key stays `k2`)
+## Next: 0.4.1 (decided 2026-10-27)
 
-The architecture and the breaking cleanup, done once, so the core is close to final, with no parsing changes.
-It ends at the **checkpoint**: a row-by-row key comparison with 0.3.1 over the large sources shows zero differences,
-and those keys are frozen as the baseline for phase 2. What was done (#138):
+Everything done in 0.4.x so far, with **no key change and no parse-rule change** (a custom layer changes parsing only when one is loaded): tooling, documentation and extensibility (tracker #200).
 
-- **Profiling** first (#90), then the speed work it found: about 38,400 to 50,300 addresses per second on the
-  benchmark mix and 197 to 103 allocations per parse (#147, #148, #156; `docs/benchmarks.md`, "Profile").
-- **State data:** the Florida data folded into the core as built-in state data, dropping the `state-fl` Cargo
-  feature and renaming `data/packs/` to `data/states/` (#101); the state data version in the output (#7).
-- **An extension-ready core** (#137): everything the tagger reads goes through `Lexicons`, and the layer interface
-  is decided (`docs/how-it-works.md`), so the custom layer (#3) is a loader later (built in 0.4.x).
-- **API cleanup:** the reserved `confidence` field removed (#136), `parse_tokens` cut like usaddress (#78: the
-  emitter, not the parser, so no key changes), and an audit of every public name (#135, `docs/api-surface.md`).
+- **Extensibility:** the custom layer (#3: your own spellings, words, places, ZIPs and state-scoped readings, from the command line, Python and
+  Rust; [`custom-layers.md`](custom-layers.md)), `doorplate.compat`, a usaddress-shaped module (#36), and faster `parse_column` and DuckDB
+  columns (#24, built in Rust).
+- **Sharing messy data:** `doorplate anonymize`, `Anonymizer` in Python and Rust (#105, [`anonymizing.md`](anonymizing.md)).
+- **Tooling:** the quieter harness scorers (#112, with the figures regenerated in #220), per-state street-pattern counts (#53), review tool v2: the
+  comparison mode against usaddress (#132) and its helpers (#222, items 1 to 3), and a flag when the review page's parser is stale (#246).
+- **Documentation:** the site at <https://doorplate.readthedocs.io/> with a Python and a command-line reference (#107, #229); the READMEs are
+  short and link to the guides; the Python reference describes `main` until this release is out.
+- **Coverage:** tests of the reachable branches, and a written account of what stays uncovered (#211, [`repository.md`](repository.md)).
 
-### 0.4.0, phase 2: the `k3`
+**What is left before the release:** the owner's review of the documentation text (#107, on hold until then; #229 holds the findings), and
+the release checklist in [`CONTRIBUTING.md`](../CONTRIBUTING.md) ("Releasing"). #233 (the MkDocs and Material end of life on 2027-05-05) does not
+gate it.
 
-The checkpoint passed on 2026-10-23. Phase 2 is the rules below, cut together; the list is closed (no new rules are
-sought: [`backlog.md`](backlog.md), "Scope of phase 2"). The process and what a `k3` needs are in [`key-format.md`](key-format.md) ("Changing the key"). Each change needs a
-source and evidence. The order is in #138. `k2` started with 0.3.0; the route-number and box rules are in
-[`key-format.md`](key-format.md).
+## After that: 0.5.0, the `k4` (tracker #201)
 
-- **Warnings that say how far to trust a parse** (#102): a table of how reliable each warning is, measured
-  on labeled data, and named warnings where the parser knows it is guessing, starting with a lone letter after
-  the house number (`123 A MAIN ST`).
-- **Line-2 diagnostics** (#45): say when a second line is skipped as a copy, merged into the street or kept as a
-  building name; and the `%` care-of line leaving a copy or a number-led name unparsed (#126).
-- **A county written as the city** (#113), and a `VILLAGE OF` prefix (#68).
-- **From the first review of real rows (#125):** care-of text welded to the street (#127); units left in the street
-  name (#128); spelled-out numbers (#129); lines with no street (#130); floor forms (#114).
-- **From the survey of #131:** misspelled `PO BOX` words (#165) and a department name read as a unit (#166). The rest
-  of #131 (campus boxes, text after the suffix) is in Later.
-- **Misparses found since:** a word split before a trailing `CT`/`WY`/`KY`/`MT` suffix (#143), `BAY` read as a unit
-  (#144), `LOOP` plus a number read as a route (#145).
-- **Number forms:** a letter after a hyphenated house number (#100); a spaced letter after a rural route box (#95);
-  Queens-style numbers and their unhyphenated twins keyed the same (#109).
-- **`CR` and `CTY`** read as CIRCLE and COUNTY nationally, not only in Florida (#108), and the state data's
-  readings applied on pre-split input (#110).
+The key-changing rules, cut together once the 0.4.x tooling has produced evidence (it has: two reviews of real rows, #125 and #245). Nothing is
+scheduled; each rule needs a source, an invented corpus case, and a row-by-row measurement against the frozen `k3` keys.
 
-### After 0.4.0 (released 2026-10-25)
+- **Research first** (it may produce more issues, or none): campus boxes, box and route typos and recipient text after the suffix (#131); spelled-out
+  building numbers (#221); more state data, and whether it is needed (#213); the data waiting in `local-data/` (#205).
+- **From the first review of real rows** (#125, IRS extract): done in 0.4.0, except what #131 holds.
+- **From the second review** (#245, the FMCSA carriers against usaddress; 150 of 150 rows answered):
+  - **A repeated string** (#236, P2): a line written twice, or a tail that repeats the city, state and ZIP, about 287 distinct strings in the sample. The first step is a
+    warning (`version:O`, no key change; it could be added before the `k4`), then a rule for the repeated tail (`version:K`).
+  - **Box and route forms** that are not read, glued words, `PO` with no `BOX`, `RUR RTE` (#248); a BOX beside a street (#240);
+    unit forms left in the street name (#241); grid-style house numbers (#242, which may be a warning rather than a rule: a leading letter is ambiguous); two suffix words and then a unit (#243).
+- **From harness counts:** NAD unit text left in `unparsed_remainder` (#238); two bare numbers on line 2 glued into one unit (#196); a bare `BAY` with no number
+  (#193, a warning, rides along).
+- **State-dependent rules and the reading that feeds them:** Texas `RR`, `PR 462` and county road names (#8), Florida place gaps (#11), the
+  [geocode benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark)'s place-name gap (#29), Puerto Rico and the uncited parts of Pub 28 (#92; the round-2
+  review adds the `URB` shape).
 
-Two trackers set the order ([`backlog.md`](backlog.md)). Shipped so far in 0.4.x: the anonymizer (#105, [`anonymizing.md`](anonymizing.md)) and the per-state street-pattern counts (#53, `tools/harness/state_patterns.py`); the rest is not started.
+## Waiting, on data or demand
 
-- **0.4.x (#200): tooling, documentation and extensibility.** No key change.
-  - *Tooling:* an anonymizing tool for sharing messy data (#105, done), less noise in the harness's scorers (#112, done), the
-    review tool's comparison mode against usaddress (#132) and per-state street-pattern counts (#53, done).
-  - *Documentation:* a searchable documentation site (#107): phase 1 is live at https://doorplate.readthedocs.io/; the Python and CLI reference and versions from tags are next.
-  - *Extensibility:* the custom layer (#3), a columnar result (#24, done: columns built in Rust) and a usaddress-shaped module (#36, `doorplate.compat`).
-- **0.5.0 (#201): the `k4`.** The key-changing rules, cut together once the 0.4.x tooling has produced evidence: the
-  remaining research from the first review (#131), two bare numbers glued into a unit (#196), the state-dependent
-  rules and their reading (#8, #11, #29, #92), with the bare `BAY` warning (#193) riding along.
+- **Later** (the milestone): the usaddress comparison post (#88); the address-structure labels usaddress has (#35); research on Canadian addresses (#203);
+  a unit or a box in the city field (#244, a warning); a half written without its slash (#247).
+- **Tooling** (never shipped, never closed): the review tool's deferred sharing helpers (#222, item 4); the tracker of what has been hand-reviewed and the
+  queues to come (#225; the FCC queue is built and unreviewed); comparing with libpostal (#215).
+- **More shapes and rules** not tied to a state, known and not yet an issue: named buildings without a building word (`THE GARRETT`, `UPTOWN SQUARE`);
+  a building name before the house number (`HARBOR STATION 2100 HWY 9`); highway modifiers before a city on one line
+  (`NORTH HIGHWAY 71 BUSINESS LOWELL`); a comma after a directional (`3324 N, ANDREWS AVE`); a PO box on line 2 beside a street with no number; a unit
+  followed by business words (`STE 903 BLU SPA`); and `possibly_truncated` firing on some complete units.
+- **A public Arrow result and a Polars expression namespace** only if there is demand (#24 is closed: the helpers build their columns in Rust).
+- **usaddress compatibility** (#9, decided): the drop-in module is done (#36); the labels in #35 proceed when someone needs them. Recipient and name
+  lines, landmarks and street corners stay out of scope; that text goes to `unparsed`.
+- **Data and benchmarks:** a benchmark built from a national address source rendered in several styles and compared per state and per shape; a
+  hand-labeled sample of real messy data in the shapes people actually have; and more of the `parse` slowdown (about 8% of an earlier build's
+  speed is still spread across allocation in the place keys and `Vec` growth).
 
-### Later, waiting on data or demand
+## Researched, but not supported
 
-- **State-dependent rules and the reading that feeds them** (moved out of the 0.4.0 cut on 2026-10-23; now in the
-  0.5.0 tracker, #201): state road conventions such as Texas `RR`, `PR 462` and county road names (#8),
-  Florida place gaps (#11), the [geocode benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark)'s place-name gap (#29), Puerto Rico and the uncited parts of Pub 28
-  (#92), with the per-state counts that decide them (#53); `CMR` only if a real case shows up (#77, decided: left out).
-
-- **A custom layer** (#3, in the 0.4.x tracker; parts 1 to 3 merged, part 4 is the guide): add your own spellings, places, ZIPs and
-  state-scoped readings without editing the shipped tables, loaded at run time, validated on load, deterministic, and reported in
-  the output so stored keys can be tied to the layer in use. The guide has a demo layer, a template and a prompt for an LLM
-  ([`custom-layers.md`](custom-layers.md)). Next: real layers from users show which tables need more words.
-- **State data beyond Florida:** a state's data starts from real data for that state (#7 adds the
-  state data version to the output and a golden corpus per state in CI). Candidates: `RR` as Ranch
-  Road in Texas, `PR 462`, county road names such as `LEE ROAD 2004`, and Puerto Rico urbanizations (#8).
-- **More shapes and rules.** Known gaps that are not tied to a state: named buildings without a
-  building word (`THE GARRETT`, `UPTOWN SQUARE`); highway modifiers before a city on one line
-  (`NORTH HIGHWAY 71 BUSINESS LOWELL`); a comma after a directional (`3324 N, ANDREWS AVE`); a PO box
-  on line 2 beside a street with no number; a unit followed by business words (`STE 903 BLU SPA`);
-  and `possibly_truncated` firing on some complete units.
-- **A columnar or Arrow result for DataFrames** (#24, closed): the helpers now build their columns in Rust; a public
-  Arrow result and a Polars expression namespace only if there is demand.
-  Done so far: `to_display()`, `to_long()`, `parse_fields_many` and the Rust-built columns.
-- **A second post comparing with usaddress** (#88), once the figures are final. The documentation site (#107) is in 0.4.x.
-- **usaddress compatibility** (#9, decided): the address-structure labels (#35) and a drop-in module
-  (#36, done as `doorplate.compat`) proceed when someone needs them. Recipient and name lines, landmarks and street corners stay
-  out of scope; that text goes to `unparsed`.
-- **Tooling:** the 0.4.x items are above; later tooling goes in the `Tooling` milestone (never in a release).
-- **Data and benchmarks:** a benchmark built from a national address source rendered in several styles
-  and compared per state and per shape; a cleaner blind test, a hand-labeled sample of real messy data
-  in the shapes people actually have; per-state street-pattern counts to decide the state rules (#53, in 0.4.x);
-  and more of the `parse` slowdown (about 8% of an earlier build's speed is still spread across
-  allocation in the place keys and `Vec` growth).
+International addresses are **not supported** (see below). Two questions about them are being **researched**, not planned: Canadian addresses, as country
+support, a layer or a separate crate (#203), and a comparison with libpostal, which is international, with the question of whether a libpostal-shaped
+output is worth adding (#215). A result would become its own issue; neither changes the list above.
 
 ## Not planned
 
