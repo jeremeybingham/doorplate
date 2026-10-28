@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<title>doorplate 0.4.1 vs usaddress (LinkedIn graphic, 1080 x 1350)</title>
+<style>
+  /* Source of graphic.png: 1080 x 1350 (4:5), white background, phone-first type sizes (nothing under 24px).
+     Figures: docs/benchmarks.md and docs/speed-and-size.md (measured on 0.4.0), docs/anonymizing.md.
+     Render: node render.js */
+  :root{ --surface:#ffffff; --ink:#0b0b0b; --ink2:#52514e; --rule:#e3e2de;
+         --doorplate:#2a78d6; --usaddress:#eb6834; }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--surface)}
+  body{width:1080px;height:1350px;font-family:"DejaVu Sans","Helvetica Neue",Arial,sans-serif;color:var(--ink);
+       padding:48px 60px 44px;display:flex;flex-direction:column;gap:16px;overflow:hidden}
+  .top{display:flex;align-items:center;gap:16px}
+  .brand{font-size:40px;font-weight:700;letter-spacing:-.5px}
+  .pill{font-size:28px;font-weight:700;color:var(--doorplate);border:3px solid var(--doorplate);border-radius:999px;padding:2px 16px}
+  h1{font-size:68px;line-height:1.05;font-weight:800;letter-spacing:-2px}
+  h1 em{font-style:normal;color:var(--doorplate)}
+  .sub{font-size:36px;font-weight:700;color:var(--ink2);margin-top:-8px}
+  .chart h2{font-size:32px;font-weight:700}
+  .legend{display:flex;gap:30px;margin:6px 0 10px;font-size:28px;font-weight:700}
+  .legend span::before{content:"";display:inline-block;width:26px;height:26px;border-radius:4px;margin-right:10px;vertical-align:-3px}
+  .legend .d::before{background:var(--doorplate)} .legend .u::before{background:var(--usaddress)}
+  .row{margin-bottom:8px}
+  .row .name{font-size:26px;color:var(--ink2);margin-bottom:2px}
+  .bar{display:flex;align-items:center;gap:12px;height:26px;margin-bottom:3px}
+  .bar i{display:block;height:22px;border-radius:0 4px 4px 0}
+  .bar.d i{background:var(--doorplate)} .bar.u i{background:var(--usaddress)}
+  .bar b{font-size:26px;font-weight:700;min-width:80px}
+  .tiles{display:flex;gap:18px}
+  .tile{flex:1;border-top:4px solid var(--ink);padding-top:10px}
+  .tile .n{font-size:64px;font-weight:800;letter-spacing:-2px;line-height:1}
+  .tile .l{font-size:26px;font-weight:700;margin-top:6px}
+  .tile .s{font-size:24px;color:var(--ink2);margin-top:4px;line-height:1.25}
+  .new{border:3px solid var(--ink);border-radius:14px;padding:14px 22px}
+  .new .k{font-size:26px;font-weight:700;color:var(--doorplate);letter-spacing:1px}
+  .new .h{font-size:38px;font-weight:800;margin:2px 0 6px;letter-spacing:-1px}
+  .new .t{font-size:28px;line-height:1.3}
+  .new .t code{font-family:"DejaVu Sans Mono",monospace;font-size:26px;background:#f1f0ec;border-radius:6px;padding:0 6px}
+  .foot{font-size:24px;line-height:1.3;color:var(--ink2);margin-top:auto}
+</style></head>
+<body>
+  <div class="top"><div class="brand">doorplate</div><div class="pill">0.4.1</div></div>
+
+  <h1><em>4.3&times; faster</em> than usaddress</h1>
+  <div class="sub">and more accurate on 3 of 4 benchmarks</div>
+
+  <section class="chart">
+    <h2>Whole address parsed correctly</h2>
+    <div class="legend"><span class="d">doorplate</span><span class="u">usaddress</span></div>
+
+    <div class="row"><div class="name">Everyday addresses (16,001)</div>
+      <div class="bar d"><i style="width:707px"></i><b>98.3%</b></div>
+      <div class="bar u"><i style="width:691px"></i><b>96.1%</b></div></div>
+    <div class="row"><div class="name">Whole benchmark suite (19,586)</div>
+      <div class="bar d"><i style="width:665px"></i><b>92.3%</b></div>
+      <div class="bar u"><i style="width:616px"></i><b>85.5%</b></div></div>
+    <div class="row"><div class="name">Geocode benchmark, dev split</div>
+      <div class="bar d"><i style="width:680px"></i><b>94.5%</b></div>
+      <div class="bar u"><i style="width:634px"></i><b>88.1%</b></div></div>
+    <div class="row"><div class="name">usaddress&rsquo;s own test files</div>
+      <div class="bar d"><i style="width:714px"></i><b>99.2%</b></div>
+      <div class="bar u"><i style="width:720px"></i><b>100%</b></div></div>
+  </section>
+
+  <section class="tiles">
+    <div class="tile"><div class="n">4.3&times;</div><div class="l">faster per thread</div><div class="s">38,305 vs 8,937 per second</div></div>
+    <div class="tile"><div class="n">17&times;</div><div class="l">4 threads, batch</div><div class="s">152,376 per second</div></div>
+    <div class="tile"><div class="n">1.8 MB</div><div class="l">installed</div><div class="s">vs 4.8 MB for usaddress</div></div>
+  </section>
+
+  <section class="new">
+    <div class="k">NEW IN 0.4.1</div>
+    <div class="h">Share messy data safely</div>
+    <div class="t"><code>doorplate anonymize</code> changes the digits and names and keeps the shape. 97&ndash;99.9% still parse the same. Send us a sample: <b>github.com/jeremeybingham/doorplate</b></div>
+  </section>
+
+  <div class="foot">Measured on 0.4.0 vs usaddress 0.5.16, 4 CPUs, 8 GB. The suite is labeled addresses neither library was built from. doorplate parses and formats; it does not validate that an address exists.</div>
+</body></html>
