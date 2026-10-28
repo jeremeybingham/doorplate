@@ -6,6 +6,14 @@ messy real row; a person can. This tool shows one hard row at a time and records
 says, so the answers can be read later for new shapes and rules. Read `docs/data-policy.md` first:
 the queue and the answers hold real addresses and stay in `local-data/`.
 
+**Which queue to build: the comparison queue by default.** A flagged queue (`sample.py`) holds only rows doorplate already
+flagged, so it cannot show a row doorplate got wrong and passed without a warning. The comparison queue (`compare_sample.py`) samples rows at
+random and queues the ones where usaddress reads the string differently, silent ones first, so it finds those, and its give-up class
+covers most of what a flagged queue would show. In the FCC round (#225), 43 of the 105 silent rows were real misses with no warning. Use a
+flagged queue only for a stated reason (for example, a source where usaddress does poorly), and say so on #225. Before building a queue for a
+source, read the "quirks" in its `INVENTORY.md` and choose roles to match (the NY corporations' CEO line 1 is a person's name, so that role is
+left out). Take the roles one at a time with `--role` and merge the pieces if one queue should mix them.
+
 ```sh
 python tools/harness/run.py --input local-data/<source>/records.parquet --confirm     # a run, as usual
 python tools/review/sample.py RUN_ID --confirm                  # the queue (without --confirm: the plan)
