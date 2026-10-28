@@ -5,7 +5,7 @@ What is planned, what depends on what, and what is deliberately not planned.
 messy addresses it sees, the sooner the items below that need them can happen. To send
 some, see [Sharing messy data](../CONTRIBUTING.md#sharing-messy-data).
 
-**Last reviewed 2026-10-28, against the issues up to #255.** The rules for the labels, the milestones and the order are in
+**Last reviewed 2026-10-28, against the issues up to #261.** The rules for the labels, the milestones and the order are in
 [`backlog.md`](backlog.md); the two trackers are #200 (0.4.x) and #201 (0.5.0, the `k4`).
 
 ## Stability while it is an alpha
@@ -45,7 +45,7 @@ been checked on the project's own data, so a `k4` is likely.
 
 ## Next: 0.5.0, the `k4` (tracker #201)
 
-The key-changing rules, cut together once the 0.4.x tooling has produced evidence (it has: two reviews of real rows, #125, closed, and #245). Nothing is
+The key-changing rules, cut together once the 0.4.x tooling has produced evidence (it has: three reviews of real rows: #125, closed, #245 and #225). Nothing is
 scheduled; each rule needs a source, an invented corpus case, and a row-by-row measurement against the frozen `k3` keys.
 
 - **Research first** (it may produce more issues, or none): campus boxes, box and route typos and recipient text after the suffix (#131); spelled-out
@@ -56,6 +56,10 @@ scheduled; each rule needs a source, an invented corpus case, and a row-by-row m
     warning (`version:O`, no key change; it could be added before the `k4`), then a rule for the repeated tail (`version:K`).
   - **Box and route forms** that are not read, glued words, `PO` with no `BOX`, `RUR RTE` (#248); a BOX beside a street (#240);
     unit forms left in the street name (#241); grid-style house numbers (#242, which may be a warning rather than a rule: a leading letter is ambiguous); two suffix words and then a unit (#243).
+- **From the third review** (#225, the FCC amateur licensees against usaddress; 150 of 150 rows answered): care-of text at the front with no separator takes the whole line,
+  key `None` and no warning (#259; a warning could come before the `k4`); a `PO BOX` on line 2 whose number equals the ZIP loses its number and leaves a stray `PO BOX` (#260, `version:O`,
+  no key change); a spaced hyphen after the suffix keeps the unit or place in the street name (#261). The round adds evidence to #8, #92, #236, #240, #242, #243 and #248
+  (a letter direction before a single number, route and box forms, Puerto Rico street-first forms, repeated text).
 - **From harness counts:** NAD unit text left in `unparsed_remainder` (#238); two bare numbers on line 2 glued into one unit (#196); a bare `BAY` with no number
   (#193, a warning, rides along).
 - **State-dependent rules and the reading that feeds them:** Texas `RR`, `PR 462` and county road names (#8), Florida place gaps (#11), the
@@ -67,7 +71,7 @@ scheduled; each rule needs a source, an invented corpus case, and a row-by-row m
 - **Later** (the milestone): the examples notebook as a page on the site (#253); the usaddress comparison post (#88); the address-structure labels usaddress has (#35); research on Canadian addresses (#203);
   a unit or a box in the city field (#244, a warning); a half written without its slash (#247).
 - **Tooling** (never shipped, never closed): the review tool's deferred sharing helpers (#222, item 4); the tracker of what has been hand-reviewed and the
-  queues to come (#225; the FCC queue is built and unreviewed); comparing with libpostal (#215).
+  queues to come (#225; the FCC queue is reviewed, its findings are #259 to #261); comparing with libpostal (#215).
 - **More shapes and rules** not tied to a state, known and not yet an issue: named buildings without a building word (`THE GARRETT`, `UPTOWN SQUARE`);
   a building name before the house number (`HARBOR STATION 2100 HWY 9`); highway modifiers before a city on one line
   (`NORTH HIGHWAY 71 BUSINESS LOWELL`); a comma after a directional (`3324 N, ANDREWS AVE`); a PO box on line 2 beside a street with no number; a unit
