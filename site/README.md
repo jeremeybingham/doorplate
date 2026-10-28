@@ -10,6 +10,7 @@ GitHub Actions, which the repository already uses) on every push to `main` that 
   To try the page locally, build it, copy it to `site/demo/doorplate.wasm` and serve the folder (a
   `file:` URL cannot load it). The page sends nothing anywhere; keep it so.
 - `_posts/YYYY-MM-DD-title.md` is a published post.
+- `_social/` (not built: the underscore) holds the source and text of social-media graphics and posts, one folder per release (`_social/0.4.1/`: `graphic.html`, `render.py` to export the PNG, `linkedin-post.md`). Post images that the site shows live in `assets/`.
 - `_drafts/` is **not built**. To publish a draft, move it to `_posts/` and
   give it a date prefix in the file name.
 - `_drafts/2026-10-18-doorplate-vs-usaddress.md` is the deferred second post (#88). It is out of
