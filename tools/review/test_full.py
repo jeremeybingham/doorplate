@@ -77,6 +77,16 @@ def test_a_right_parse_shows_its_warning_verdict_and_old_answers_say_not_recorde
     assert "(warning not recorded)" in full.entry(1, dict(right, warning=None), set())
 
 
+def test_a_draft_is_shown_and_labelled_as_not_a_correction():
+    a = dict(ANSWER, verdict="unclear", draft="123 SMITH ST, MIAMI FL 33101",
+             draft_parse={"key": "k3:S|123||SMITH|ST||FL|33101", "warnings": [], "unparsed": None, "components": {"street_number": "123"}})
+    a.pop("corrected"); a.pop("corrected_parse")
+    text = full.entry(1, a, {"line2"})
+    assert "## 1. unclear" in text and "- draft (an attempt, not saved as a correction): '123 SMITH ST, MIAMI FL 33101'" in text
+    assert "- draft parse:" in text and "- corrected:" not in text and "delete ACME" in text
+    assert "draft" not in full.entry(1, ANSWER, {"line2"})
+
+
 def test_only_allowlisted_sources_are_written():
     other = dict(ANSWER, source="privatesource", id="privatesource|r|2")
     text, counts, skipped = full.build([ANSWER, other], {"irs-eo-bmf": {"line2"}})

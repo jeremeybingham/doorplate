@@ -19,6 +19,11 @@ For each row the page shows the parse and the warnings, and you choose a verdict
 - `labeled`: the parts of the one-line string, marked by the person (`labels`: `[{start, end, component}]` over
   `labeled_text`), a more exact answer than a rewrite when the parse is wrong in a few places.
 
+Whatever the verdict, text left in the correction box that differs from the original is kept as `draft` (with
+`draft_parse`): an attempt at a fix on a row you could not fix ("I can't tell"), or on a row where you judged
+usaddress right but had typed a better string. It is not a correction and is never scored as one; the note is
+always kept.
+
 A correction whose string is the unchanged one-line original is refused (it almost always means "the
 parse is right"; send `unchanged_ok` to keep it). The page asks first.
 
@@ -173,9 +178,14 @@ class Review:
             rec["corrected"] = corrected[:1000]
         if labels is not None:
             rec["labeled_text"], rec["labels"] = labels
-        for k in ("parse", "corrected_parse"):  # summaries the page computed with the same parser
+        draft = body.get("draft")
+        draft = draft.strip() if isinstance(draft, str) else ""
+        if verdict not in ("corrected", "both_wrong") and draft and \
+                " ".join(draft.split()) != " ".join(one_line(item).split()):
+            rec["draft"] = draft[:1000]  # an attempted fix under a verdict that is not a correction
+        for k in ("parse", "corrected_parse", "draft_parse"):  # summaries the page computed with the same parser
             v = body.get(k)
-            if isinstance(v, dict) and len(json.dumps(v)) <= 20000:
+            if isinstance(v, dict) and len(json.dumps(v)) <= 20000 and (k != "draft_parse" or "draft" in rec):
                 rec[k] = v
         self._append(rec)
         return rec
