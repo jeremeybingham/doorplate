@@ -129,6 +129,22 @@ mod tests {
     }
 
     #[test]
+    fn folds_letters_and_number_signs_the_table_lists() {
+        // invented street names with a Turkish g, an oe ligature, a fullwidth and a numero sign
+        assert_eq!(clean("Ğöl Œuvre").text, "GOL OEUVRE");
+        assert_eq!(clean("12 Oak St ＃4").text, "12 OAK ST #4");
+        assert_eq!(clean("12 Oak St № 4").text, "12 OAK ST # 4");
+    }
+
+    #[test]
+    fn a_range_that_is_empty_or_outside_the_text_has_no_original() {
+        let c = clean("12 OAK ST");
+        assert_eq!(c.original_range(3, 3), None);
+        assert_eq!(c.original_range(5, 2), None);
+        assert_eq!(c.original_range(0, 99), None);
+    }
+
+    #[test]
     fn dashes_and_quotes() {
         assert_eq!(clean("N/A – Main’s").text, "N/A - MAIN'S");
     }

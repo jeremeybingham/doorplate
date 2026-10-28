@@ -521,3 +521,219 @@ fn from_dir_reports_misspelled_files_with_the_other_problems() {
         "{missing}"
     );
 }
+
+/// One wrong entry per case, in each file of a layer: the loader names the file, the entry and
+/// what is wrong, and lists every problem (#211). Every layer here is invented.
+#[test]
+fn each_kind_of_wrong_entry_is_named() {
+    let ev = "evidence = \"invented\"\n";
+    // (file, text, a part of the message)
+    let cases: &[(&str, String, &str)] = &[
+        (
+            "layer.toml",
+            "name = \"bad name!\"\nversion = \"1\"\n".into(),
+            "`name` must be 1 to 64 characters",
+        ),
+        (
+            "layer.toml",
+            "version = 1\nname = \"x\"\n".into(),
+            "`version` must be a non-empty string",
+        ),
+        ("layer.toml", "name = \"x\"\n".into(), "`version` is required"),
+        (
+            "aliases.toml",
+            format!("[[suffix]]\nabbr = \"TRL\"\nspellings = []\n{ev}"),
+            "`spellings` must be a non-empty list of strings",
+        ),
+        (
+            "aliases.toml",
+            format!("[[suffix]]\nabbr = \"TRL\"\nspellings = [\"\"]\n{ev}"),
+            "`spellings` must hold non-empty strings",
+        ),
+        (
+            "aliases.toml",
+            format!("[[suffix]]\nabbr = \"TRL\"\n{ev}"),
+            "`spellings` is required",
+        ),
+        (
+            "aliases.toml",
+            format!("[[suffix]]\nabbr = \"TRL\"\nspellings = [\"TRAYL\"]\nkind = \"sometimes\"\n{ev}"),
+            "`kind` is `variant` or `observed`",
+        ),
+        ("aliases.toml", "suffix = 3\n".into(), "`suffix` must be an array of tables"),
+        ("aliases.toml", "suffix = [3]\n".into(), "`suffix` #1 is not a table"),
+        (
+            "aliases.toml",
+            format!("[[directional]]\nabbr = \"Q\"\nspellings = [\"QORTH\"]\n{ev}"),
+            "is not a directional",
+        ),
+        (
+            "aliases.toml",
+            format!("[[state]]\ncode = \"ZZ\"\nspellings = [\"ZEDLAND\"]\n{ev}"),
+            "no state or territory with the code",
+        ),
+        (
+            "aliases.toml",
+            format!("[[special]]\nform = \"parcel_locker\"\nspellings = [\"LOCKR\"]\n{ev}"),
+            "is not one of po_box, box",
+        ),
+        (
+            "aliases.toml",
+            format!("[[highway]]\nstandard = \"NOT A HIGHWAY\"\nspellings = [\"NAH\"]\n{ev}"),
+            "no highway prefix with the standard name",
+        ),
+        (
+            "aliases.toml",
+            format!("[[words]]\nlist = \"nonsense\"\nwords = [\"ZORP\"]\n{ev}"),
+            "`list` \"nonsense\" is not one of building, area",
+        ),
+        (
+            "aliases.toml",
+            format!("[[words]]\nlist = \"area\"\nwords = [\"BLORPTOWN\", \"BLORPTOWN\"]\n{ev}"),
+            "is listed twice",
+        ),
+        (
+            "aliases.toml",
+            format!("[[words]]\nlist = \"placeholder\"\nwords = [\"NO SITUS\"]\n{ev}"),
+            "is already in the shipped `placeholder` list",
+        ),
+        (
+            "aliases.toml",
+            format!("[[words]]\nlist = \"place_prefix\"\nwords = [\"VILLAGE\"]\n{ev}"),
+            "is already in the shipped `place_prefix` list",
+        ),
+        (
+            "aliases.toml",
+            format!("[[words]]\nlist = \"city_head\"\nwords = [\"MOUNT\"]\n{ev}"),
+            "already in the shipped",
+        ),
+        (
+            "aliases.toml",
+            format!("[[words]]\nlist = \"numbered_street\"\nwords = [\"HUNDRED\"]\n{ev}"),
+            "already in the shipped",
+        ),
+        (
+            "aliases.toml",
+            format!("[[words]]\nlist = \"non_recipient\"\nwords = [\"BILLBOARD\"]\n{ev}"),
+            "already in the shipped",
+        ),
+        (
+            "overrides.toml",
+            format!("[[suffix]]\nstate = \"ZZ\"\nspelling = \"TRL\"\nabbr = \"TRL\"\n{ev}"),
+            "no state or territory with the code",
+        ),
+        (
+            "overrides.toml",
+            format!("[[suffix]]\nstate = \"FL\"\nspelling = \"TRL\"\nabbr = \"NOPE\"\n{ev}"),
+            "no street suffix with the abbreviation",
+        ),
+        (
+            "overrides.toml",
+            format!("[[suffix]]\nstate = \"FL\"\nspelling = \"QQQQQ\"\nabbr = \"ST\"\n{ev}"),
+            "is not a spelling the shipped tables have",
+        ),
+        (
+            "overrides.toml",
+            format!("[[highway]]\nstate = \"ZZ\"\nspelling = \"RTE\"\nhighway = \"STATE ROAD\"\n{ev}"),
+            "no state or territory with the code",
+        ),
+        (
+            "overrides.toml",
+            format!("[[highway]]\nstate = \"FL\"\nspelling = \"RTE\"\nhighway = \"NOT A HIGHWAY\"\n{ev}"),
+            "no highway prefix with the standard name",
+        ),
+        (
+            "places.tsv",
+            "state\tname\tevidence\nFL\t1234\tinvented\n".into(),
+            "has no letters",
+        ),
+        (
+            "places.tsv",
+            "state\tname\tkind\tevidence\nFL\tBlorptown\tcampground\tinvented\n".into(),
+            "`kind` is municipality, place or subdivision",
+        ),
+        (
+            "places.tsv",
+            "state\tname\tcounty\tevidence\nFL\tBlorptown\t99\tinvented\n".into(),
+            "the county",
+        ),
+        (
+            "zips.tsv",
+            "zip\tstate\tplace\tevidence\n9999\tFL\tMiami\tinvented\n".into(),
+            "is not five digits",
+        ),
+        (
+            "zips.tsv",
+            "zip\tstate\tplace\tevidence\n33101\tFL\tMiami\tinvented\n".into(),
+            "is already in the shipped ZIP list",
+        ),
+        (
+            "zips.tsv",
+            "zip\tstate\tplace\tevidence\n99998\tFL\tBlorptown\tinvented\n".into(),
+            "is not in the national list",
+        ),
+    ];
+    for (file, text, expect) in cases {
+        let sources = match *file {
+            "layer.toml" => LayerSources::new(text),
+            "aliases.toml" => LayerSources::new(LAYER).aliases(text),
+            "overrides.toml" => LayerSources::new(LAYER).overrides(text),
+            "places.tsv" => LayerSources::new(LAYER).places(text),
+            _ => LayerSources::new(LAYER).zips(text),
+        };
+        let p = problems(&sources);
+        assert!(
+            p.iter().any(|m| m.contains(expect)),
+            "{file}: expected {expect:?} in {p:?}"
+        );
+    }
+}
+
+/// A ZIP listed twice, a shared place that repeats the main one, an unknown shared place, and a place
+/// name with a variant that is already known.
+#[test]
+fn zip_and_place_rows_that_clash_are_named() {
+    let places = "state\tname\tevidence\nFL\tBlorptown\tinvented\n";
+    let zips = |rows: &str| format!("zip\tstate\tplace\tshared\tevidence\n{rows}");
+    let run = |z: String| {
+        CustomLayer::from_sources(&LayerSources::new(LAYER).places(places).zips(&z))
+            .expect_err("rejected")
+            .problems()
+            .to_vec()
+    };
+    let p = run(zips(
+        "99997\tFL\tBlorptown\t\tinvented\n99997\tFL\tBlorptown\t\tinvented\n",
+    ));
+    assert!(p.iter().any(|m| m.contains("is listed twice")), "{p:?}");
+    let p = run(zips("99996\tFL\tBlorptown\tBlorptown\tinvented\n"));
+    assert!(
+        p.iter().any(|m| m.contains("repeats the main place")),
+        "{p:?}"
+    );
+    let p = run(zips("99995\tFL\tBlorptown\tNowhereville\tinvented\n"));
+    assert!(
+        p.iter().any(|m| m.contains("is not a known place of")),
+        "{p:?}"
+    );
+}
+
+/// A place-prefix word and an area word from a layer change how the city line is read (#211).
+#[test]
+fn a_place_prefix_and_an_area_word_from_a_layer_change_the_parse() {
+    let words = |list: &str, w: &str| {
+        layer(&format!(
+            "[[words]]\nlist = \"{list}\"\nwords = [\"{w}\"]\nevidence = \"x\"\n"
+        ))
+    };
+    // "HAMLET OF TAMPA": a municipality-type prefix before a real city
+    let text = "12 Oak St, Hamlet of Tampa, FL 33601";
+    let base = Parser::new().parse(text).unwrap();
+    let with = parser(words("place_prefix", "HAMLET")).parse(text).unwrap();
+    assert!(base.place.is_none() && with.place.is_some());
+    // an invented neighborhood word ahead of the city, on one line
+    let text = "12 Oak St Zzdowntown Tampa FL 33601";
+    let base = Parser::new().parse(text).unwrap();
+    let with = parser(words("area", "ZZDOWNTOWN")).parse(text).unwrap();
+    assert_eq!(base.street_name.as_deref(), Some("OAK ST ZZDOWNTOWN"));
+    assert_eq!(with.street_name.as_deref(), Some("OAK"));
+}
