@@ -13,6 +13,8 @@ change to what an input produces needs a new key version.
 
 ### Changed (key-affecting, held for the `k4`)
 
+- **A floor written as a number and the floor word is a unit** (#241, one part of it): `15 CEDAR STREET 3FL`, `18 ELM ST, 2FL`, `34 ELM ST 2FLOOR`, `61 OAK AVE 1FLR`, `18 ELM ST 2 FL` read the unit `FL` with its number; before, the number stayed in the street name or the floor had none (`missing_unit_number`). 8,717 keys change in seven large sources and 3 in the Texas file, almost all of them rows that had `missing_unit_number`. The other unit forms in #241 are not part of this change.
+
 - **A nearly right ZIP is repaired** (#275, new warning `zip_repaired`): `NEWARK NJ 7102 -1234`, `NJ 7102` (the leading zero is restored in CT, MA, ME, NH, NJ, PR, RI, VT and VI) and `DALLAS TX 75001-5` (an extension under four digits is dropped) now place the city, state and ZIP; before, the whole last line stayed unplaced and the key had no state or ZIP. 633 of 211,009 Texas licensing rows and 308 of 36,920,703 rows of seven large sources change key, all from the `k3n:` form to a full key.
 
 - **A name with commas ahead of the street is the attention line** (#268): `ACME HOLDINGS, INC.` / `318 EAST 41ST ST.` and `DANA QUILL, PRES.` / `318 EAST 41ST ST.` read the street from line 2 (the key was the organization name, with `missing_street_number`), and a name over a PO Box (`ACME, INC.` / `P.O. BOX 12`) reads the box. Up to three plain comma segments before the street or box.

@@ -2424,7 +2424,13 @@ impl Tagger<'_> {
                 let v = j - w - 1;
                 // "THIRD FLOOR": a spelled ordinal counts before a floor word.
                 let spelled = u.value.abbr() == "FL" && spelled_ordinal(self.text(v)).is_some();
-                if v > name_lo && (is_ordinal(self.text(v)) || spelled) {
+                // `2FL`, `3 FLOOR`, `1FLR` (#241): a plain floor number before the floor
+                // word, after the street's suffix or opening its own comma segment.
+                let plain = u.value.abbr() == "FL"
+                    && all_digits(self.text(v))
+                    && self.text(v).len() <= 3
+                    && (self.suffix_before(name_lo, v) || self.toks[v].seg != self.toks[v - 1].seg);
+                if v > name_lo && (is_ordinal(self.text(v)) || spelled || plain) {
                     found.push((j - w..j, v..v + 1));
                     j = v;
                     continue;
