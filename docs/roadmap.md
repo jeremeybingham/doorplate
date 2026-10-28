@@ -5,7 +5,7 @@ What is planned, what depends on what, and what is deliberately not planned.
 messy addresses it sees, the sooner the items below that need them can happen. To send
 some, see [Sharing messy data](../CONTRIBUTING.md#sharing-messy-data).
 
-**Last reviewed 2026-10-28, against the issues up to #261.** The rules for the labels, the milestones and the order are in
+**Last reviewed 2026-10-28, against the issues up to #270.** The rules for the labels, the milestones and the order are in
 [`backlog.md`](backlog.md); the two trackers are #200 (0.4.x) and #201 (0.5.0, the `k4`).
 
 ## Stability while it is an alpha
@@ -59,7 +59,8 @@ scheduled; each rule needs a source, an invented corpus case, and a row-by-row m
 - **From the third review** (#225, the FCC amateur licensees against usaddress; 150 of 150 rows answered): care-of text at the front with no separator takes the whole line,
   key `None` and no warning (#259; a warning could come before the `k4`); a `PO BOX` on line 2 whose number equals the ZIP loses its number and leaves a stray `PO BOX` (#260, `version:O`,
   no key change); a spaced hyphen after the suffix keeps the unit or place in the street name (#261). The round adds evidence to #8, #92, #236, #240, #242, #243 and #248
-  (a letter direction before a single number, route and box forms, Puerto Rico street-first forms, repeated text).
+  (a letter direction before a single number, route and box forms, Puerto Rico street-first forms, repeated text). The NY corporations queue (in progress) adds a comma inside an
+  organization name that hides the street on line 2 (#268), `SO` for `SOUTH` (#269) and a decision on `46 A LINDEN AVE` (#270), and evidence on #236, #241, #242, #243 and #261.
 - **From harness counts:** NAD unit text left in `unparsed_remainder` (#238); two bare numbers on line 2 glued into one unit (#196); a bare `BAY` with no number
   (#193, a warning, rides along).
 - **State-dependent rules and the reading that feeds them:** Texas `RR`, `PR 462` and county road names (#8), Florida place gaps (#11), the
