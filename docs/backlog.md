@@ -19,7 +19,7 @@ project has no users and the foundation went quickly; it saves a version and a r
 | **Later** | Wanted, not planned for a release: new API surface, anything waiting on demand or a decision (#35, #88, #203, #244, #247) | |
 | **Tooling** | Tooling that is not planned for a release (the harness, review tool, benchmarks and CI items waiting for a rule or a decision): never shipped, never closed. Now holds #215 (libpostal), #222 (the review helpers still deferred), #225 (the review tracker) | |
 
-`main` is the 0.4 line. It carries the last released version (`0.4.0` now) until the release pull request sets the next one (`0.4.1`); there is no
+`main` is the 0.4 line. It carries the last released version (`0.4.1` now) until the release pull request sets the next one; there is no
 `-dev` suffix between releases (decided 2026-10-28), so a build from `main` reports the last released version. There is no 0.3.2. The project has no users, so a release is not made for a minor
 fix. **A 0.3.x patch needs a very good reason:** a correctness bug in shipped output that matters (a wrong key, a panic
 on valid input: the never-panic rule), a security or supply-chain problem, or a broken published artifact (a wheel that
