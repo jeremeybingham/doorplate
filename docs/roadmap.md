@@ -69,7 +69,7 @@ scheduled; each rule needs a source, an invented corpus case, and a row-by-row m
 ## Waiting, on data or demand
 
 - **Later** (the milestone): the examples notebook as a page on the site (#253); the usaddress comparison post (#88); the address-structure labels usaddress has (#35); research on Canadian addresses (#203);
-  a unit or a box in the city field (#244, a warning); a half written without its slash (#247).
+  a unit or a box in the city field (#244, a warning); a half written without its slash (#247). A site post, graphic and LinkedIn text announcing 0.4.1 and asking for anonymized messy data (#264).
 - **Tooling** (never shipped, never closed): the review tool's deferred sharing helpers (#222, item 4); the tracker of what has been hand-reviewed and the
   queues to come (#225; the FCC queue is reviewed, its findings are #259 to #261); comparing with libpostal (#215).
 - **More shapes and rules** not tied to a state, known and not yet an issue: named buildings without a building word (`THE GARRETT`, `UPTOWN SQUARE`);
