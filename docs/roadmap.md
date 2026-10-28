@@ -48,7 +48,7 @@ gate it.
 
 ## After that: 0.5.0, the `k4` (tracker #201)
 
-The key-changing rules, cut together once the 0.4.x tooling has produced evidence (it has: two reviews of real rows, #125 and #245). Nothing is
+The key-changing rules, cut together once the 0.4.x tooling has produced evidence (it has: two reviews of real rows, #125, closed, and #245). Nothing is
 scheduled; each rule needs a source, an invented corpus case, and a row-by-row measurement against the frozen `k3` keys.
 
 - **Research first** (it may produce more issues, or none): campus boxes, box and route typos and recipient text after the suffix (#131); spelled-out
