@@ -42,9 +42,9 @@ Everything done in 0.4.x so far, with **no key change and no parse-rule change**
   short and link to the guides; the Python reference describes `main` until this release is out.
 - **Coverage:** tests of the reachable branches, and a written account of what stays uncovered (#211, [`repository.md`](repository.md)).
 
-**What is left before the release:** the owner's review of the documentation text (#107, on hold until then; #229 holds the findings), and
-the release checklist in [`CONTRIBUTING.md`](../CONTRIBUTING.md) ("Releasing"). #233 (the MkDocs and Material end of life on 2027-05-05) does not
-gate it.
+**What is left before the release:** only the release checklist in [`CONTRIBUTING.md`](../CONTRIBUTING.md) ("Releasing"). The site is done (#107 and #229 closed
+2026-10-28; the owner revises the text as they go). After the tag: versions on Read the Docs and the Python reference's note (#252). #233 (the MkDocs and
+Material end of life on 2027-05-05) does not gate it.
 
 ## After that: 0.5.0, the `k4` (tracker #201)
 
@@ -67,7 +67,7 @@ scheduled; each rule needs a source, an invented corpus case, and a row-by-row m
 
 ## Waiting, on data or demand
 
-- **Later** (the milestone): the usaddress comparison post (#88); the address-structure labels usaddress has (#35); research on Canadian addresses (#203);
+- **Later** (the milestone): the examples notebook as a page on the site (#253); the usaddress comparison post (#88); the address-structure labels usaddress has (#35); research on Canadian addresses (#203);
   a unit or a box in the city field (#244, a warning); a half written without its slash (#247).
 - **Tooling** (never shipped, never closed): the review tool's deferred sharing helpers (#222, item 4); the tracker of what has been hand-reviewed and the
   queues to come (#225; the FCC queue is built and unreviewed); comparing with libpostal (#215).
