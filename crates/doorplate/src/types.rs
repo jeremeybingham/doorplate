@@ -811,6 +811,7 @@ impl ParsedAddress {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used)]
 mod tests {
     use super::*;
 
@@ -819,6 +820,47 @@ mod tests {
         assert_eq!(Directional::NE.abbr(), "NE");
         assert_eq!(Directional::SW.name(), "SOUTHWEST");
         assert_eq!(Directional::W.to_string(), "W");
+    }
+
+    #[test]
+    fn display_prints_the_short_form() {
+        let lex = crate::Lexicons::builtin();
+        let a = crate::Parser::new()
+            .parse("12 Oak St Apt 4, Miami, FL 33101")
+            .unwrap();
+        assert_eq!(
+            a.street_suffix.map(|s| s.to_string()).as_deref(),
+            Some("ST")
+        );
+        assert_eq!(a.unit_type.map(|u| u.to_string()).as_deref(), Some("APT"));
+        assert_eq!(Warning::MissingZip.to_string(), "missing_zip");
+        let p = lex.place("FL", "MIAMI").map(|p| p.value.to_string());
+        assert_eq!(p.as_deref(), Some("MIAMI"));
+    }
+
+    #[test]
+    fn a_span_of_a_fields_input_reads_its_field() {
+        let a = crate::Parser::new()
+            .parse_fields(&crate::Fields {
+                line1: Some("12 OAK ST".into()),
+                city: Some("TAMPA".into()),
+                state: Some("FL".into()),
+                ..crate::Fields::default()
+            })
+            .unwrap();
+        let city = a
+            .source
+            .spans
+            .iter()
+            .find(|s| s.component == Component::City)
+            .unwrap();
+        assert_eq!(a.source.text(&city.span), Some("TAMPA"));
+        let bad = Span {
+            field: Some(FieldName::Line1),
+            start: 50,
+            end: 60,
+        };
+        assert_eq!(a.source.text(&bad), None);
     }
 
     #[test]

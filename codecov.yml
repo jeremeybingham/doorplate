@@ -9,7 +9,8 @@ coverage:
       default:
         informational: true
 
-# Code the Rust tests are not meant to reach.
+# Code the Rust tests are not meant to reach. What the tests leave uncovered inside the measured files, and why, is in
+# docs/repository.md ("Coverage", #211).
 ignore:
   - "crates/doorplate/build.rs"        # the table generator, run at build time
   - "crates/doorplate/benches/**"

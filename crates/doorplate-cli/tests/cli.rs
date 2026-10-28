@@ -509,3 +509,268 @@ fn the_shipped_demo_and_template_layers_check_ok() {
         );
     }
 }
+
+// Usage and error branches a user can reach (#211). Every address is invented.
+
+#[test]
+fn help_has_two_more_spellings() {
+    for arg in ["-h", "help"] {
+        let (out, _, code) = cli(&[arg], "");
+        assert_eq!(code, 0, "{arg}");
+        assert!(out.contains("usage:"), "{arg}: {out}");
+    }
+}
+
+#[test]
+fn an_option_without_its_value_and_mixed_arguments_are_usage_errors() {
+    let (_, err, code) = cli(&["parse", "1 MAIN ST", "--default-state"], "");
+    assert_eq!(
+        (code, err.contains("--default-state needs a value")),
+        (1, true),
+        "{err}"
+    );
+    let (_, err, code) = cli(&["parse", "1 MAIN ST", "--line1", "2 ELM ST"], "");
+    assert_eq!((code, err.contains("not both")), (1, true), "{err}");
+    let (_, err, code) = cli(&["parse", "1 MAIN ST", "2 ELM ST"], "");
+    assert_eq!((code, err.contains("give one address")), (1, true), "{err}");
+}
+
+#[test]
+fn usaddress_and_tag_output_work_on_a_line_and_on_stdin() {
+    for flag in ["--usaddress", "--tag"] {
+        let (one, _, code) = cli(&["parse", "412 Oakmont Dr, Miami, FL 33101", flag], "");
+        assert_eq!(code, 0, "{flag}");
+        let v: serde_json::Value = serde_json::from_str(&one).expect("json");
+        assert!(v.is_object(), "{flag}: {one}");
+        let (many, _, code) = cli(
+            &["parse", "-", flag],
+            "412 Oakmont Dr, Miami, FL 33101\n9 Pine Ct, Tampa, FL 33602\n",
+        );
+        assert_eq!(code, 0, "{flag}");
+        assert_eq!(many.lines().count(), 2, "{flag}: {many}");
+    }
+    let (out, _, _) = cli(
+        &["parse", "PO Box 12, Tampa FL 33601", "--tag", "--pretty"],
+        "",
+    );
+    assert!(out.lines().count() > 1, "--pretty indents: {out}");
+}
+
+#[test]
+fn parse_file_usage_and_missing_column_errors() {
+    let dir = std::env::temp_dir().join(format!("doorplate-cli-pf-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).expect("mkdir");
+    let input = dir.join("in.csv");
+    std::fs::write(
+        &input,
+        "id,street,unit,town,st,zip\n1,12 OAK ST,APT 4,TAMPA,FL,33602\n2,,,,,\n3,7 ELM CT,,MIAMI,FL,33101\n",
+    )
+    .expect("write");
+    let input = input.to_str().expect("utf-8 path");
+    let (_, err, code) = cli(&["parse-file", input], "");
+    assert_eq!(
+        (code, err.contains("--column NAME is required")),
+        (1, true),
+        "{err}"
+    );
+    let (_, err, code) = cli(&["parse-file"], "");
+    assert_eq!(
+        (code, err.contains("give one input CSV file")),
+        (1, true),
+        "{err}"
+    );
+    let (_, err, code) = cli(&["parse-file", input, "--column", "nope"], "");
+    assert_eq!((code, err.contains("no column named")), (2, true), "{err}");
+    let (_, err, code) = cli(
+        &["parse-file", "/no/such/file.csv", "--column", "street"],
+        "",
+    );
+    assert_eq!(code, 2, "{err}");
+    // Split columns, an output file, and a blank row counted and kept.
+    let out_path = dir.join("out.csv");
+    let (_, err, code) = cli(
+        &[
+            "parse-file",
+            input,
+            "--column",
+            "street",
+            "--line2",
+            "unit",
+            "--city",
+            "town",
+            "--state",
+            "st",
+            "--zip",
+            "zip",
+            "-o",
+            out_path.to_str().expect("utf-8 path"),
+        ],
+        "",
+    );
+    assert_eq!(code, 0, "{err}");
+    assert!(
+        err.contains('1'),
+        "the blank row is counted on stderr: {err}"
+    );
+    let written = std::fs::read_to_string(&out_path).expect("output file");
+    assert_eq!(written.lines().count(), 4, "{written}");
+    assert!(
+        written.contains("12,OAK") || written.contains(",12,"),
+        "{written}"
+    );
+    std::fs::remove_dir_all(&dir).ok();
+}
+
+#[test]
+fn anonymize_reads_a_dash_and_a_file_output() {
+    let dir = std::env::temp_dir().join(format!("doorplate-cli-an-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).expect("mkdir");
+    let out_path = dir.join("out.txt");
+    let (_, err, code) = cli(
+        &[
+            "anonymize",
+            "-",
+            "--seed",
+            "3",
+            "-o",
+            out_path.to_str().expect("utf-8 path"),
+        ],
+        "412 Oakmont Dr, Miami, FL 33101\n",
+    );
+    assert_eq!(code, 0, "{err}");
+    let text = std::fs::read_to_string(&out_path).expect("output file");
+    assert_eq!(text.lines().count(), 1);
+    assert!(!text.contains("Oakmont"), "{text}");
+    std::fs::remove_dir_all(&dir).ok();
+}
+
+#[test]
+fn corpus_usage_verbose_and_baseline_updates() {
+    let (_, err, code) = cli(&["corpus"], "");
+    assert_eq!(
+        (code, err.contains("needs a subcommand")),
+        (1, true),
+        "{err}"
+    );
+    let (_, err, code) = cli(&["corpus", "frobnicate"], "");
+    assert_eq!(
+        (code, err.contains("unknown corpus subcommand")),
+        (1, true),
+        "{err}"
+    );
+    let tmp = std::env::temp_dir().join(format!("doorplate-cli-cv-{}", std::process::id()));
+    std::fs::create_dir_all(&tmp).expect("mkdir");
+    let good = r#"{"id": "inv-1", "input": "1 MAIN ST", "expect": {"street_number": "1", "street_name": "MAIN", "street_suffix": "ST"}, "warnings": ["missing_city", "missing_state", "missing_zip"]}"#;
+    let bad = r#"{"id": "inv-2", "input": "2 MAIN ST", "expect": {"street_number": "2", "street_name": "ELM", "street_suffix": "ST"}, "warnings": ["missing_city", "missing_state", "missing_zip"]}"#;
+    std::fs::write(tmp.join("c.jsonl"), format!("{good}\n{bad}\n")).expect("write");
+    let dir = tmp.to_str().expect("utf-8 path");
+    // --verbose prints the failing cases.
+    let (out, _, code) = cli(&["corpus", "test", "--dir", dir, "--verbose"], "");
+    assert_eq!(code, 0, "{out}");
+    assert!(out.contains("failing cases:"), "{out}");
+    // A case that passes but is not in passing.txt is reported, and a stale id is named.
+    std::fs::write(tmp.join("passing.txt"), "gone-1\n").expect("write");
+    let (out, err, code) = cli(&["corpus", "test", "--dir", dir], "");
+    assert_eq!(code, 3, "{out}{err}");
+    assert!(out.contains("now pass but are not in passing.txt"), "{out}");
+    assert!(
+        err.contains("passing.txt lists ids that are not in the corpus"),
+        "{err}"
+    );
+    // --update-baseline writes passing.txt and exits 0.
+    let (out, _, code) = cli(&["corpus", "test", "--dir", dir, "--update-baseline"], "");
+    assert_eq!(code, 0, "{out}");
+    assert!(out.contains("wrote "), "{out}");
+    let baseline = std::fs::read_to_string(tmp.join("passing.txt")).expect("baseline");
+    let ids: Vec<&str> = baseline.lines().filter(|l| !l.starts_with('#')).collect();
+    assert_eq!(ids, ["inv-1"], "{baseline}");
+    std::fs::remove_dir_all(&tmp).ok();
+}
+
+#[test]
+fn a_layer_place_of_each_kind_prints_its_kind() {
+    let dir = layer_dir(
+        "kinds",
+        &[
+            ("layer.toml", "name = \"kinds\"\nversion = \"1\"\n"),
+            (
+                "places.tsv",
+                "state\tname\tkind\tevidence\nFL\tBlorptown\tsubdivision\tinvented\nFL\tZarbville\tmunicipality\tinvented\n",
+            ),
+        ],
+    );
+    for (city, kind) in [("Blorptown", "subdivision"), ("Zarbville", "municipality")] {
+        let line = format!("12 Oak St, {city}, FL 33101");
+        let (out, err, code) = cli(&["parse", &line, "--custom-layer", path(&dir)], "");
+        assert_eq!(code, 0, "{err}");
+        let v: serde_json::Value = serde_json::from_str(&out).expect("json");
+        assert_eq!(v["place"]["kind"], kind, "{out}");
+    }
+    std::fs::remove_dir_all(&dir).ok();
+}
+
+#[test]
+fn an_unwritable_output_and_a_ragged_csv_fail_with_exit_code_2() {
+    let dir = std::env::temp_dir().join(format!("doorplate-cli-io-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).expect("mkdir");
+    let good = dir.join("good.csv");
+    std::fs::write(&good, "id,street\n1,12 OAK ST\n").expect("write");
+    let good = good.to_str().expect("utf-8 path");
+    let nowhere = dir.join("no-such-dir").join("out.csv");
+    let nowhere = nowhere.to_str().expect("utf-8 path");
+    let (_, err, code) = cli(
+        &["parse-file", good, "--column", "street", "-o", nowhere],
+        "",
+    );
+    assert_eq!(code, 2, "{err}");
+    let (_, err, code) = cli(
+        &["anonymize", good, "--column", "street", "-o", nowhere],
+        "",
+    );
+    assert_eq!(code, 2, "{err}");
+    // A row with more fields than the header is an error that names no data.
+    let ragged = dir.join("ragged.csv");
+    std::fs::write(&ragged, "id,street\n1,12 OAK ST,extra\n").expect("write");
+    let (_, err, code) = cli(
+        &[
+            "parse-file",
+            ragged.to_str().expect("utf-8 path"),
+            "--column",
+            "street",
+        ],
+        "",
+    );
+    assert_eq!(code, 2, "{err}");
+    // --usaddress on a blank stdin line writes an empty record, parses the next line, and exits 2.
+    let (out, _, code) = cli(
+        &["parse", "-", "--usaddress"],
+        "\n12 Oak St, Tampa, FL 33602\n",
+    );
+    assert_eq!(code, 2);
+    assert_eq!(out.lines().count(), 2, "{out}");
+    std::fs::remove_dir_all(&dir).ok();
+}
+
+#[test]
+fn corpus_test_with_a_bad_layer_exits_2() {
+    let tmp = std::env::temp_dir().join(format!("doorplate-cli-cb-{}", std::process::id()));
+    std::fs::create_dir_all(&tmp).expect("mkdir");
+    let case = r#"{"id": "inv-1", "input": "1 MAIN ST", "expect": {"street_number": "1", "street_name": "MAIN", "street_suffix": "ST"}, "warnings": ["missing_city", "missing_state", "missing_zip"]}"#;
+    std::fs::write(tmp.join("c.jsonl"), format!("{case}\n")).expect("write");
+    let layer = layer_dir("badcorpus", &[("layer.toml", "name = \"x\"\n")]);
+    let (_, err, code) = cli(
+        &[
+            "corpus",
+            "test",
+            "--dir",
+            path(&tmp),
+            "--custom-layer",
+            path(&layer),
+        ],
+        "",
+    );
+    assert_eq!(code, 2, "{err}");
+    assert!(err.contains("`version` is required"), "{err}");
+    std::fs::remove_dir_all(&tmp).ok();
+    std::fs::remove_dir_all(&layer).ok();
+}
