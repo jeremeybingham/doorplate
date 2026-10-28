@@ -28,8 +28,11 @@ fn address_state(runs: &[(Tag, &[Token])], lex: &Lexicons) -> Option<&'static st
         return Some(l.value.code());
     }
     let text = text_of(Tag::Zip)?;
-    let (z5, _) = zip_parts(&text)?;
-    Some(lex.zip_places(z5)?.main().state())
+    let z5 = match zip_parts(&text) {
+        Some((z5, _)) => z5.to_string(),
+        None => crate::classify::zip_repair(&text, true)?.0,
+    };
+    Some(lex.zip_places(&z5)?.main().state())
 }
 
 /// Original text for a span (single-line input or one field).
@@ -294,11 +297,16 @@ pub(crate) fn assemble(
                 }
             }
             Tag::Zip => {
-                if let Some((z5, z4)) = zip_parts(&text) {
-                    addr.zip5.get_or_insert_with(|| z5.to_string());
+                let parts = match zip_parts(&text) {
+                    Some((z5, z4)) => Some((z5.to_string(), z4.map(str::to_string))),
+                    // A repaired ZIP (#275): the tagger tagged it only where it is allowed.
+                    None => crate::classify::zip_repair(&text, true).map(|(z5, z4, _)| (z5, z4)),
+                };
+                if let Some((z5, z4)) = parts {
+                    addr.zip5.get_or_insert(z5);
                     record(addr, Component::Zip5);
                     if let Some(z4) = z4 {
-                        addr.zip4.get_or_insert_with(|| z4.to_string());
+                        addr.zip4.get_or_insert(z4);
                         record(addr, Component::Zip4);
                     }
                 }

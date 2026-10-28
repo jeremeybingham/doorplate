@@ -8,7 +8,8 @@ use crate::classify::{
     all_digits, has_digit, house_number, is_bare_unit, is_cut_designator, is_fraction,
     is_glued_ordinal, is_grid_number, is_letter, is_lettered_route, is_ordinal, is_route_value,
     is_slash_pair, is_unit_pair, is_unit_value, is_unit_word, join, longest_at, longest_ending,
-    spelled_number, spelled_ordinal, zip_parts, NumberShape, ORDINAL_SUFFIXES,
+    spelled_number, spelled_ordinal, zero_zip_state, zip_parts, zip_repair, NumberShape,
+    ORDINAL_SUFFIXES,
 };
 use crate::lexicon::{MatchKind, Special, MAX_PLACE_WORDS};
 use crate::tokenize::Token;
@@ -57,6 +58,17 @@ impl Tagger<'_> {
         if zip_parts(&last.text).is_some() && !after_hash && !last.paren {
             self.set(hi - 1..hi, Tag::Zip);
             end -= 1;
+            zip = true;
+        } else if let Some((start, repaired)) = (!after_hash && !last.paren)
+            .then(|| self.loose_zip(lo, hi))
+            .flatten()
+        {
+            // A ZIP that is nearly right (#275): `NJ 7102`, `NJ 7102 -1234`, `TX 75001-5`.
+            self.set(start..hi, Tag::Zip);
+            if repaired {
+                self.warn(Warning::ZipRepaired);
+            }
+            end = start;
             zip = true;
         } else if all_digits(&last.text) && !after_hash && hi - 1 > lo {
             // A cut-off ZIP right after a state: `FL 3`, `FL 320`.
@@ -647,16 +659,67 @@ impl Tagger<'_> {
         }
     }
 
+    /// A ZIP that is nearly right at the end of `lo..hi`, after a state (#275): a four-digit ZIP with
+    /// the leading zero cut off where the state's ZIPs start with `0`, a space before the `-NNNN`
+    /// (the hyphen is trimmed from that token, so its span is longer than its text), and an extension
+    /// shorter than four digits. Returns where the ZIP's tokens start and whether it was repaired
+    /// (a zero restored or an extension dropped).
+    fn loose_zip(&self, lo: usize, hi: usize) -> Option<(usize, bool)> {
+        let toks = self.toks;
+        let last = &toks[hi - 1];
+        let two = hi >= lo + 2
+            && all_digits(&last.text)
+            && last.text.len() <= 4
+            && last.span.end - last.span.start > last.text.len()
+            && all_digits(&toks[hi - 2].text)
+            && toks[hi - 2].seg == last.seg;
+        let start = if two { hi - 2 } else { hi - 1 };
+        if start <= lo {
+            return None;
+        }
+        let seg_start = self.seg_start(start - 1).max(lo);
+        let (_, w) = longest_ending(toks, seg_start, start, |s| self.state_ok(s, true))?;
+        let code = self.lex.state(&join(&toks[start - w..start]))?.value.code();
+        let (_, _, repaired) = zip_repair(&join(&toks[start..hi]), zero_zip_state(code))?;
+        Some((start, repaired))
+    }
+
     pub(super) fn zip_field(&mut self, r: Range<usize>) {
         if r.is_empty() {
             return;
         }
         if r.len() == 1 && zip_parts(self.text(r.start)).is_some() {
             self.set(r, Tag::Zip);
+        } else if let Some(repaired) = self.repair_zip_field(&r) {
+            self.set(r, Tag::Zip);
+            if repaired {
+                self.warn(Warning::ZipRepaired);
+            }
         } else {
             self.set(r, Tag::Unparsed);
             self.warn(Warning::InvalidZip);
         }
+    }
+
+    /// The ZIP field holds a nearly right ZIP (#275, see [`Self::loose_zip`]) and the state field
+    /// names the state: whether it was repaired, or `None` when it is not a ZIP.
+    fn repair_zip_field(&self, r: &Range<usize>) -> Option<bool> {
+        let state: Vec<&Token> = (0..self.toks.len())
+            .filter(|&i| self.tags[i] == Tag::State)
+            .map(|i| &self.toks[i])
+            .collect();
+        let code = self
+            .lex
+            .state(
+                &state
+                    .iter()
+                    .map(|t| t.text.as_str())
+                    .collect::<Vec<_>>()
+                    .join(" "),
+            )
+            .map(|l| l.value.code())?;
+        let (_, _, repaired) = zip_repair(&join(&self.toks[r.clone()]), zero_zip_state(code))?;
+        Some(repaired)
     }
 
     /// A ZIP at the end of the address line when the ZIP field is empty

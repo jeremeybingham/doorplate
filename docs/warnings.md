@@ -192,6 +192,13 @@ Text that appears twice in the input was read once and the copy dropped: a line 
 - **Rows in NAD (of 1M):** 106 (the copy is the city or the state at the end of line 1)
 - **Measured:** too few rows. On the seven large local sources the warning is added to 38,422 of 36,920,703 rows (0.10%): amateur radio 0.50%, carrier census 0.20%, IRS 0.17%, NY corporations 0.09%, Netsyms 0.06%, NC voter 0.02%, NAD 0.01%; no key changes.
 
+### zip_repaired
+
+A ZIP that was nearly right was repaired so the last line could be placed: the leading zero of a four-digit ZIP restored in a state whose ZIPs start with `0` (`NJ 7102` is `07102`), or a ZIP+4 extension shorter than four digits dropped (`TX 75001-5` is `75001`). Without it the city, state and ZIP all stayed unplaced and the key had neither state nor ZIP (#275). The key now carries them; the warning says the input was changed to get there, so a pipeline can look at those rows.
+
+- **Rows in NAD (of 1M):** 3
+- **Measured:** too few rows. On the Texas licensing file the warning is on 633 of 211,009 rows (0.30%); on the seven large local sources on 308 of 36,920,703 rows.
+
 ### second_line_building
 
 Line 2 is the building name, which no emitter prints.

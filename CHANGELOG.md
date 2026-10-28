@@ -13,6 +13,8 @@ change to what an input produces needs a new key version.
 
 ### Changed (key-affecting, held for the `k4`)
 
+- **A nearly right ZIP is repaired** (#275, new warning `zip_repaired`): `NEWARK NJ 7102 -1234`, `NJ 7102` (the leading zero is restored in CT, MA, ME, NH, NJ, PR, RI, VT and VI) and `DALLAS TX 75001-5` (an extension under four digits is dropped) now place the city, state and ZIP; before, the whole last line stayed unplaced and the key had no state or ZIP. 633 of 211,009 Texas licensing rows and 308 of 36,920,703 rows of seven large sources change key, all from the `k3n:` form to a full key.
+
 - **A name with commas ahead of the street is the attention line** (#268): `ACME HOLDINGS, INC.` / `318 EAST 41ST ST.` and `DANA QUILL, PRES.` / `318 EAST 41ST ST.` read the street from line 2 (the key was the organization name, with `missing_street_number`), and a name over a PO Box (`ACME, INC.` / `P.O. BOX 12`) reads the box. Up to three plain comma segments before the street or box.
 - **Two units ahead of the street on line 1 are both units** (#276): `STE 410 RM 7`, `STE 330 AND STE 350`, `STE 95 #22` over `40 ELM ST`.
   `main` reports `0.5.0-dev` from here (the first held `k4` rule), so key dumps made between releases name their build (`key_diff.py` records the commit as well).

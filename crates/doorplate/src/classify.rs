@@ -101,6 +101,37 @@ pub(crate) fn zip_parts(t: &str) -> Option<(&str, Option<&str>)> {
     (a.len() == 5 && all_digits(a) && z4.len() == 4 && all_digits(z4)).then_some((a, Some(z4)))
 }
 
+/// A ZIP that is nearly right (#275): the leading zero cut off (`7102` for `07102`, only in a state
+/// whose ZIPs start with `0`), a space where the hyphen was (`7102 1234`), or a ZIP+4 extension cut
+/// short (`75001-5`). Returns (zip5, zip4, repaired), where `repaired` is true when a zero was
+/// restored or a short extension dropped. Text that already is a ZIP comes back with `repaired`
+/// false.
+pub(crate) fn zip_repair(text: &str, zero_state: bool) -> Option<(String, Option<String>, bool)> {
+    let parts: Vec<&str> = text.split([' ', '-']).filter(|p| !p.is_empty()).collect();
+    if parts.is_empty() || parts.len() > 2 || !parts.iter().all(|p| all_digits(p)) {
+        return None;
+    }
+    let (z5, restored) = match parts[0].len() {
+        5 => (parts[0].to_string(), false),
+        4 if zero_state => (format!("0{}", parts[0]), true),
+        _ => return None,
+    };
+    match parts.get(1) {
+        None => Some((z5, None, restored)),
+        Some(e) if e.len() == 4 => Some((z5, Some((*e).to_string()), restored)),
+        Some(e) if e.len() <= 3 => Some((z5, None, true)),
+        Some(_) => None,
+    }
+}
+
+/// States and territories whose ZIPs start with `0`.
+pub(crate) fn zero_zip_state(code: &str) -> bool {
+    matches!(
+        code,
+        "CT" | "MA" | "ME" | "NH" | "NJ" | "PR" | "RI" | "VT" | "VI"
+    )
+}
+
 /// Shapes a house number takes: `123`, `12A`, `12-A`, `1204-1206`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum NumberShape {
