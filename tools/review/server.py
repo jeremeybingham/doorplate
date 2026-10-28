@@ -55,6 +55,9 @@ DEFAULT_QUEUE = ROOT / "local-data" / "review" / "queue.jsonl"
 DEFAULT_ANSWERS = ROOT / "local-data" / "review" / "answers.jsonl"
 DEFAULT_WASM = ROOT / "target" / "wasm32-unknown-unknown" / "release" / "doorplate_wasm.wasm"
 BUILD_WASM = "cargo build -p doorplate-wasm --target wasm32-unknown-unknown --release"
+# What the WebAssembly build is made from: a file here newer than the build means the page parses with an older parser (#246).
+SOURCES = (ROOT / "crates" / "doorplate" / "src", ROOT / "crates" / "doorplate" / "data", ROOT / "crates" / "doorplate-wasm" / "src",
+           ROOT / "crates" / "doorplate" / "Cargo.toml", ROOT / "crates" / "doorplate-wasm" / "Cargo.toml")
 VERDICTS = ("right", "corrected", "unclear", "junk", "noise", "skip", "labeled")
 COMPONENTS = ("StreetNumber", "StreetDirPrefix", "StreetName", "StreetSuffix", "StreetDirSuffix", "Highway", "UnitType",
               "UnitNumber", "SecondUnitType", "SecondUnitNumber", "PoBox", "RuralRoute", "GeneralDelivery", "Military",
@@ -87,6 +90,26 @@ def load_answers(path):
             answers.pop(a["id"], None)
             answers[a["id"]] = a
     return answers
+
+
+def _iso(t):
+    return datetime.fromtimestamp(t, timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+
+
+def wasm_status(wasm_path, sources=SOURCES):
+    """Is the parser build older than the source it is built from? (#246: the page once ran a build five days and many
+    rules behind, and nothing said so.) By modification time: the newest file under `sources` against the build."""
+    built = Path(wasm_path).stat().st_mtime
+    newest, newest_file = 0.0, None
+    for src in sources:
+        for f in ([src] if src.is_file() else src.rglob("*") if src.is_dir() else []):
+            if f.is_file() and f.stat().st_mtime > newest:
+                newest, newest_file = f.stat().st_mtime, f
+    stale = newest > built
+    return {"stale": stale, "wasm_built": _iso(built), "source_newest": _iso(newest) if newest_file else None,
+            "build": BUILD_WASM,
+            "message": (f"The parser on this page was built {_iso(built)}, before the source changed ({_iso(newest)}). "
+                        f"Rebuild it: {BUILD_WASM}") if stale else ""}
 
 
 class Review:
@@ -245,6 +268,8 @@ def make_handler(review, wasm_path):
                 self._send(200, {"item": review.next_item(), "stats": review.stats()})
             elif path == "/api/stats":
                 self._send(200, review.stats())
+            elif path == "/api/status":
+                self._send(200, wasm_status(wasm_path) if Path(wasm_path).exists() else {"stale": True, "message": f"Build the parser: {BUILD_WASM}"})
             else:
                 self._send(404, {"error": "not found"})
 
@@ -281,11 +306,17 @@ def main(argv=None):
     ap.add_argument("--wasm", type=Path, default=DEFAULT_WASM)
     ap.add_argument("--port", type=int, default=8765)
     ap.add_argument("--open", action="store_true", help="open the page in the default browser")
+    ap.add_argument("--strict", action="store_true", help="refuse to start when the parser build is older than the source")
     args = ap.parse_args(argv)
     if not args.queue.exists():
         sys.exit(f"no queue at {args.queue}; build one with tools/review/sample.py RUN --confirm")
     if not args.wasm.exists():
         sys.exit(f"{args.wasm} is missing; build the parser first:\n  {BUILD_WASM}")
+    status = wasm_status(args.wasm)
+    if status["stale"]:
+        print(f"WARNING: {status['message']}", file=sys.stderr)
+        if args.strict:
+            sys.exit("refusing to start with --strict")
     review = Review(args.queue, args.answers)
     s = review.stats()
     httpd = serve(review, args.wasm, args.port)

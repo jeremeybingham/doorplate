@@ -3,6 +3,7 @@
     pytest tools/review
 """
 import json
+import os
 import sys
 import threading
 import urllib.error
@@ -121,3 +122,41 @@ def test_a_request_for_another_host_is_refused(http):
     with pytest.raises(urllib.error.HTTPError) as e:
         get(http + "/api/next", {"Host": "evil.example"})
     assert e.value.code == 403
+
+
+def test_a_parser_build_older_than_the_source_is_stale(tmp_path):
+    src = tmp_path / "src"
+    src.mkdir()
+    (src / "lib.rs").write_text("// invented")
+    wasm = tmp_path / "doorplate.wasm"
+    wasm.write_bytes(b"\0asm")
+    os.utime(src / "lib.rs", (1_000_000, 1_000_000))
+    os.utime(wasm, (2_000_000, 2_000_000))
+    ok = server.wasm_status(wasm, sources=(src,))
+    assert not ok["stale"] and ok["message"] == ""
+    os.utime(src / "lib.rs", (3_000_000, 3_000_000))  # the source changed after the build
+    old = server.wasm_status(wasm, sources=(src,))
+    assert old["stale"] and "Rebuild it" in old["message"] and server.BUILD_WASM in old["message"]
+    assert not server.wasm_status(wasm, sources=(tmp_path / "missing",))["stale"]  # no source to compare with
+
+
+def test_strict_refuses_to_start_with_a_stale_build(tmp_path, monkeypatch, capsys):
+    q = tmp_path / "queue.jsonl"
+    q.write_text(json.dumps(QUEUE[0]) + "\n")
+    src = tmp_path / "src"
+    src.mkdir()
+    (src / "a.rs").write_text("// invented")
+    wasm = tmp_path / "doorplate.wasm"
+    wasm.write_bytes(b"\0asm")
+    os.utime(wasm, (1_000_000, 1_000_000))
+    monkeypatch.setattr(server, "SOURCES", (src,))
+    monkeypatch.setattr(server.wasm_status, "__defaults__", ((src,),))
+    with pytest.raises(SystemExit) as e:
+        server.main([str(q), "--answers", str(tmp_path / "a.jsonl"), "--wasm", str(wasm), "--strict"])
+    assert "strict" in str(e.value)
+    assert "WARNING" in capsys.readouterr().err
+
+
+def test_the_status_endpoint_reports_a_fresh_build(http):
+    j = json.load(get(http + "/api/status"))
+    assert "stale" in j and "message" in j

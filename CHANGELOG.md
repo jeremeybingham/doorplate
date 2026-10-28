@@ -9,6 +9,8 @@ change to what an input produces needs a new key version.
 
 ### Added
 
+- **Review tool: a stale parser is flagged** (#246, tooling only): `tools/review/server.py` warns at start-up and shows a banner when the WebAssembly parser build is older than the source it is built from (`--strict` refuses to start), and the page header shows the parser's library version and key prefix. The second review had used a build five days behind without a sign.
+
 - **The custom layer, first part** (#3, additive, **no key change without a layer**): `CustomLayer::from_sources` (cargo feature
   `custom-layer`; the core takes the text of the files) loads your own spellings and word lists on top of the shipped tables:
   extra spellings of suffixes, unit designators, directionals, states, special words and highway prefixes; additions to the

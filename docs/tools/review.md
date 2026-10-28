@@ -88,6 +88,14 @@ shows the row as the harness parsed it (colored by component, field by field), t
 and a box that starts as the original joined into one line. Edit the box: it is re-parsed as you
 type, and says whether the string parses cleanly and whether it keys the same as the original parse.
 
+**Is the parser current? (#246).** The page parses with the WebAssembly build, which `maturin develop` does not rebuild, so it can fall
+behind the source without anyone noticing (the second review ran a build five days old, library `0.3.0`, and 20 of 150 cards showed a
+parse that `main` no longer gives). `server.py` compares the build's time with the newest file under `crates/doorplate/src`,
+`crates/doorplate/data` and `crates/doorplate-wasm/src` and, when the source is newer, prints a warning at start-up and shows a red
+banner on the page with the build command; `--strict` refuses to start instead. The header always shows the parser the page runs
+(`parser 0.4.0, key k3`): check it before a queue, and rebuild with `cargo build -p doorplate-wasm --target wasm32-unknown-unknown --release`
+(a few seconds when little changed). The check goes by file times, so touching a source file also trips it; rebuilding clears it.
+
 | Key | Verdict | Meaning |
 |---|---|---|
 | `1` | `right`, warning `fair` | The components are right, and the warning rightly flags something doubtful (a true range, a cut-off line) |
