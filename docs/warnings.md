@@ -185,6 +185,13 @@ Line 2 was a copy or a no-data line and was dropped.
 - **Rows in NAD (of 1M):** 34
 - **Measured:** too few rows (unit 87.5%, 7 / 8)
 
+### repeated_text
+
+Text that appears twice in the input was read once and the copy dropped: a line written twice (`812 ASHGROVE ST 812 ASHGROVE ST`, `PO BOX 7 PO BOX 7`), a cut-off copy ahead of the address, or the city, state or ZIP written again at the end of line 1. The parse is the one with the copy removed and the key does not change; the warning says the input repeated itself, so a pipeline can look at those rows (#236). A repeated line 2 is `second_line_skipped`, and the warning is not raised with it. A repeat that is not dropped (the city again at the end of line 1 with a ZIP+4 in the ZIP field, so the street name keeps it) has no warning yet.
+
+- **Rows in NAD (of 1M):** 106 (the copy is the city or the state at the end of line 1)
+- **Measured:** too few rows. On the seven large local sources the warning is added to 38,422 of 36,920,703 rows (0.10%): amateur radio 0.50%, carrier census 0.20%, IRS 0.17%, NY corporations 0.09%, Netsyms 0.06%, NC voter 0.02%, NAD 0.01%; no key changes.
+
 ### second_line_building
 
 Line 2 is the building name, which no emitter prints.

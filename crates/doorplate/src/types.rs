@@ -568,6 +568,11 @@ pub enum Warning {
     /// A second address line was kept as the building name (`YORKTOWNE
     /// PLAZA`), a component no emitter prints (#45).
     SecondLineBuilding,
+    /// Text that appears twice in the input was read once and the copy dropped:
+    /// a line written twice (`812 ASHGROVE ST 812 ASHGROVE ST`, `PO BOX 7 PO BOX 7`), a cut-off copy of
+    /// the address ahead of it, or a copy of the city, state or ZIP at the end of line 1. The parse is the
+    /// one with the copy removed, the key is unchanged, and the warning only says the input repeated itself.
+    RepeatedText,
     /// One letter after the house number was read into the street name
     /// (`123 A MAIN ST` is street `A MAIN`). The text alone cannot say
     /// whether the letter is the number's suffix (`123A`) or the start of the
@@ -583,7 +588,7 @@ pub enum Warning {
 impl Warning {
     /// Every variant, in declaration order. Add new variants here too; the
     /// golden-corpus runner checks expected warning codes against this list.
-    pub const ALL: [Warning; 27] = [
+    pub const ALL: [Warning; 28] = [
         Warning::UnparsedRemainder,
         Warning::AmbiguousToken,
         Warning::Placeholder,
@@ -609,6 +614,7 @@ impl Warning {
         Warning::SecondLineSkipped,
         Warning::SecondLineInStreet,
         Warning::SecondLineBuilding,
+        Warning::RepeatedText,
         Warning::AmbiguousNumberLetter,
         Warning::CityIsCounty,
     ];
@@ -642,6 +648,7 @@ impl Warning {
             Warning::SecondLineSkipped => "second_line_skipped",
             Warning::SecondLineInStreet => "second_line_in_street",
             Warning::SecondLineBuilding => "second_line_building",
+            Warning::RepeatedText => "repeated_text",
             Warning::AmbiguousNumberLetter => "ambiguous_number_letter",
             Warning::CityIsCounty => "city_is_county",
         }

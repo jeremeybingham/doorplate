@@ -53,6 +53,8 @@ Every parsing bug fixed gets a case here (`CONTRIBUTING.md`).
   `un-` (units left in the street name, `units.jsonl`),
   `sp-` (spelled-out numbers, `spelled.jsonl`),
   `is-` (intersections, `intersections.jsonl`),
+  `nl-` (name lines with commas and two leading units, `name-lines.jsonl`),
+  `rt-` (repeated text and its warning, `repeated.jsonl`),
   `nat-` (shapes found in a national address database, `national-data.jsonl`);
   `us-roundtrip-001` in `regressions.jsonl` came from the USPS round trip.
 - Exactly one input form:

@@ -173,6 +173,11 @@ impl<'a> Tagger<'a> {
         }
     }
 
+    /// A copy of text that appears twice was dropped: the parse is the one with the copy removed (`repeated_text`).
+    pub(super) fn repeated(&mut self) {
+        self.warn(Warning::RepeatedText);
+    }
+
     pub(super) fn warn(&mut self, w: Warning) {
         if !self.warnings.contains(&w) {
             self.warnings.push(w);
@@ -247,6 +252,10 @@ impl<'a> Tagger<'a> {
     }
 
     fn finish(mut self) -> Tagged {
+        // A repeated line 2 already says so (`second_line_skipped`).
+        if self.warnings.contains(&Warning::SecondLineSkipped) {
+            self.warnings.retain(|w| *w != Warning::RepeatedText);
+        }
         for t in &mut self.tags {
             if *t == Tag::Untagged {
                 *t = Tag::Unparsed;
@@ -317,8 +326,19 @@ pub(crate) fn tag_line(
     let mut t = Tagger::new(toks, lex, lens, hint);
     let (street_end, city) = t.last_line();
     let lo = t.drop_truncated_copy(0, street_end);
-    let street_end = t.drop_repeated_zip(lo, street_end);
-    let street_end = t.drop_city_copy(lo, street_end, city);
+    if lo > 0 {
+        t.repeated();
+    }
+    let z = t.drop_repeated_zip(lo, street_end);
+    if z < street_end {
+        t.repeated();
+    }
+    let street_end = z;
+    let c = t.drop_city_copy(lo, street_end, city);
+    if c < street_end {
+        t.repeated();
+    }
+    let street_end = c;
     t.delivery(lo, street_end);
     t.finish()
 }
@@ -399,7 +419,11 @@ pub(crate) fn tag_fields(
     if lone_direction {
         line = l1.clone();
     }
+    let before = line.start;
     line.start = t.drop_truncated_copy(line.start, line.end);
+    if line.start > before {
+        t.repeated();
+    }
     let after_fraction = line1_number
         && !lone_fraction
         && l2.start == l1.end
@@ -408,8 +432,14 @@ pub(crate) fn tag_fields(
     if city.is_empty() && state.is_empty() && zip.is_empty() {
         // Everything is on the address lines: read them like one line.
         let (street_end, c) = t.last_line_in(line.start, line.end);
-        let street_end = t.drop_repeated_zip(line.start, street_end);
-        let street_end = t.drop_city_copy(line.start, street_end, c);
+        let z = t.drop_repeated_zip(line.start, street_end);
+        if z < street_end {
+            t.repeated();
+        }
+        let street_end = t.drop_city_copy(line.start, z, c);
+        if street_end < z {
+            t.repeated();
+        }
         t.delivery(line.start, street_end);
         if after_fraction {
             t.claim_fraction(l2.start);
@@ -429,14 +459,24 @@ pub(crate) fn tag_fields(
         end = t.trailing_zip(line.start, end);
         zip_at = (end < line.end).then_some(end);
     } else {
-        end = t.drop_repeated_zip(line.start, end);
+        let z = t.drop_repeated_zip(line.start, end);
+        if z < end {
+            t.repeated();
+        }
+        end = z;
     }
     // The state data applies to the address lines as it does to one-line input
     // (`SR 60` is `STATE ROAD 60` in Florida), #110.
     let state_at = (t.tags.get(state.start) == Some(&Tag::State)).then_some(state);
     t.places = t.place_ctx(state_at, zip_at);
-    let end = t.drop_repeated_state(line.start, end);
-    let end = t.drop_city_copy(line.start, end, city_range);
+    let s2 = t.drop_repeated_state(line.start, end);
+    if s2 < end {
+        t.repeated();
+    }
+    let end = t.drop_city_copy(line.start, s2, city_range);
+    if end < s2 {
+        t.repeated();
+    }
     t.country_street = true;
     t.delivery(line.start, end);
     if after_fraction {

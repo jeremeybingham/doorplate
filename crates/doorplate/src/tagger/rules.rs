@@ -879,6 +879,7 @@ impl Tagger<'_> {
             let twice = (0..half).all(|k| self.text(lo + k) == self.text(lo + half + k));
             if twice {
                 self.set(lo + half..hi, Tag::Skip);
+                self.repeated();
                 return self.delivery(lo, lo + half);
             }
         }
