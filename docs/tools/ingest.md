@@ -80,6 +80,8 @@ same inputs as `tools/harness/nad_score.py`) and `netsyms.toml` (the same as
 `local-data/<source>/`**, not in the repository, together with its `NOTICE.md` and
 `INVENTORY.md` (`local-data/README.md`).
 
+The specs in `tools/ingest/specs/` are for public sources: `nad.toml`, `netsyms.toml` and `sam-boston.toml` (Boston's address file, two roles of one address, one-line and split, with the city's labels; units there have no designator).
+
 ## Privacy
 
 Only counts are printed and stored. An error from the SQL itself (a misspelled column) is
