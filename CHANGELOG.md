@@ -7,6 +7,12 @@ change to what an input produces needs a new key version.
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-10-28
+
+Tooling, documentation and extensibility, with **no key change** (the key format stays `k3`) and no parse-rule change: a custom
+layer changes parsing only when one is loaded. Checked row by row against the frozen 0.4.0 keys on 36,920,000 rows of seven
+sources: 0 keys and 0 warnings differ. Stored `k3:` keys stay valid.
+
 ### Added
 
 - **Review tool: a stale parser is flagged** (#246, tooling only): `tools/review/server.py` warns at start-up and shows a banner when the WebAssembly parser build is older than the source it is built from (`--strict` refuses to start), and the page header shows the parser's library version and key prefix. The second review had used a build five days behind without a sign.
