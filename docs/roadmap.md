@@ -5,7 +5,7 @@ What is planned, what depends on what, and what is deliberately not planned.
 messy addresses it sees, the sooner the items below that need them can happen. To send
 some, see [Sharing messy data](../CONTRIBUTING.md#sharing-messy-data).
 
-**Last reviewed 2026-10-28, against the issues up to #274.** The rules for the labels, the milestones and the order are in
+**Last reviewed 2026-10-28, against the issues up to #276.** The rules for the labels, the milestones and the order are in
 [`backlog.md`](backlog.md); the two trackers are #200 (0.4.x) and #201 (0.5.0, the `k4`).
 
 ## Stability while it is an alpha
@@ -59,7 +59,7 @@ scheduled; each rule needs a source, an invented corpus case, and a row-by-row m
 - **From the third review** (#225, the FCC amateur licensees against usaddress; 150 of 150 rows answered): care-of text at the front with no separator takes the whole line,
   key `None` and no warning (#259; a warning could come before the `k4`); a `PO BOX` on line 2 whose number equals the ZIP loses its number and leaves a stray `PO BOX` (#260, `version:O`,
   no key change); a spaced hyphen after the suffix keeps the unit or place in the street name (#261). The round adds evidence to #8, #92, #236, #240, #242, #243 and #248
-  (a letter direction before a single number, route and box forms, Puerto Rico street-first forms, repeated text). The NY corporations queue (reviewed, 150 rows) adds the largest single group of the three rounds: a comma on line 1 that hides the street on line 2, 11.8% of its rows (#268, P1); also `SO` for `SOUTH` (#269), a decision on `46 A LINDEN AVE` (#270), a unit value that is also a suffix code such as `SUITE LA` (#272), placeholder text as the street (#273) and two house numbers joined by `&` (#274), with evidence on #221, #236, #240, #241, #242, #243, #244 and #261.
+  (a letter direction before a single number, route and box forms, Puerto Rico street-first forms, repeated text). The NY corporations queue (reviewed, 150 rows) adds the largest single group of the three rounds: a comma on line 1 that hides the street on line 2, 11.8% of its rows (#268, P1); also `SO` for `SOUTH` (#269), a decision on `46 A LINDEN AVE` (#270), a unit value that is also a suffix code such as `SUITE LA` (#272), placeholder text as the street (#273) and two house numbers joined by `&` (#274), with evidence on #221, #236, #240, #241, #242, #243, #244 and #261. The TX licensing queue (reviewed, 150 rows) adds a ZIP with its leading zero or its ZIP+4 cut short that makes the whole last line unplaced, 8.9% of its rows (#275, P1), and a unit with a second part on line 1 that hides the street on line 2 (#276), with evidence on #8, #236, #241, #242, #244, #248, #270 and #274.
 - **From harness counts:** NAD unit text left in `unparsed_remainder` (#238); two bare numbers on line 2 glued into one unit (#196); a bare `BAY` with no number
   (#193, a warning, rides along).
 - **State-dependent rules and the reading that feeds them:** Texas `RR`, `PR 462` and county road names (#8), Florida place gaps (#11), the

@@ -3,7 +3,7 @@
 How the open issues are sorted, what the labels and milestones mean, and how work moves from an issue to a
 release. The current plan is in [`roadmap.md`](roadmap.md); this page is the rules. It replaces the
 definitions that lived in the body of issue #103 (the backlog review), which now only holds its history.
-**Last reviewed 2026-10-28 (#237, #255, #225), against the issues up to #274.**
+**Last reviewed 2026-10-28 (#237, #255, #225), against the issues up to #276.**
 
 ## The release plan
 
@@ -15,7 +15,7 @@ project has no users and the foundation went quickly; it saves a version and a r
 |---|---|---|
 | **0.4.0** | **Phase 1, the foundation:** the architecture (state data folded into the core, an extension-ready lexicon) and the breaking API cleanup, with the key unchanged (`k2`) and no parsing changes. **Phase 2, the `k3`:** the parser rules already listed in #138, key-affecting or not (warnings and diagnostics included), cut together; the list is closed (see "Scope" below) | Phase 1 ends at the **checkpoint**: zero key differences with 0.3.1 over the large sources, and those keys frozen as the baseline. The release: the measured before and after against that baseline, in [`key-format.md`](key-format.md) ("Changing the key"). The checkpoint passed on 2026-10-23 (commit `1819acd`: zero differences over 36.9M rows) |
 | **0.4.x** | **Tooling, documentation and extensibility**, no key change, released as **0.4.1** (decided 2026-10-27): the custom layer (#3), the anonymizer (#105), `doorplate.compat` (#36), faster columns (#24), harness scorers (#112), review tool v2 (#132), per-state counts (#53), the documentation site (#107, #229) and coverage (#211): all done and released as 0.4.1 on 2026-10-28 (the site, #107 and #229, was closed 2026-10-28; what follows the release is #252). Milestone closed after #252 |  Tracker #200; the release checklist in `CONTRIBUTING.md` |
-| **0.5.0** | The next key-changing release, the `k4`: the parser rules that change keys (#131 first, then the evidence from the three reviews of real rows: #236, #238, #240 to #243, #248, #259 to #261, #268 to #270, #272 to #274; and #196, #29, #11, #8, #92, #221; #193 rides along). Held until the 0.4.x work has produced evidence, which it has | Tracker #201; the measured before and after against the `k3` keys, as for the `k3` |
+| **0.5.0** | The next key-changing release, the `k4`: the parser rules that change keys (#131 first, then the evidence from the three reviews of real rows: #236, #238, #240 to #243, #248, #259 to #261, #268 to #270, #272 to #276; and #196, #29, #11, #8, #92, #221; #193 rides along). Held until the 0.4.x work has produced evidence, which it has | Tracker #201; the measured before and after against the `k3` keys, as for the `k3` |
 | **Later** | Wanted, not planned for a release: new API surface, anything waiting on demand or a decision (#35, #88, #203, #244, #247) | |
 | **Tooling** | Tooling that is not planned for a release (the harness, review tool, benchmarks and CI items waiting for a rule or a decision): never shipped, never closed. Now holds #215 (libpostal), #222 (the review helpers still deferred), #225 (the review tracker) | |
 
