@@ -110,3 +110,46 @@ def test_the_command_refuses_without_an_allowlist_and_outside_local_data(tmp_pat
     assert "outside local-data" in str(e.value)
     assert export.main([str(answers), "--full", "--out", str(out), "--allow", str(answers.parent / "full-ok.txt")]) == 0
     assert "JOHN" not in out.read_text() and "ACME HOLDINGS LLC 123 SMITH ST" in out.read_text()
+
+
+NC = {
+    "ts": "2026-10-29T10:11:12+00:00", "id": "nc-voter-current|mailing|1", "seq": 1, "source": "nc-voter-current", "role": "mailing",
+    "input": {"line1": "C/O PAT QUINN", "line2": "CPO 4821 HOLLIS CT", "city": "CHAPEL HILL", "state": "NC", "zip": "27514"},
+    "cluster": {"shape": "a/a a a | a 9 a a", "warnings": "", "size": 3},
+    "verdict": "both_wrong", "corrected": "CPO 4821 HOLLIS CT, CHAPEL HILL NC 27514", "note": "Pat Quinn is a name, delete it",
+    "parse": {"key": "k3:S|4821||HOLLIS|CT||NC|27514", "warnings": [], "unparsed": None,
+              "components": {"attention": "C/O PAT QUINN", "street_name": "CPO 4821 HOLLIS", "zip": "27514"}},
+}
+
+
+def test_allowlist_anon_and_keep(tmp_path):
+    f = tmp_path / "full-ok.txt"
+    f.write_text("nc anon keep=cpo,CPU\nx\n")
+    rule = full.load_allowlist(f)["nc"]
+    assert rule == set() and rule.anon and rule.keep == {"CPO", "CPU"}
+    assert not full.load_allowlist(f)["x"].anon
+    f.write_text("nc keep=CPO\n")
+    with pytest.raises(ValueError):
+        full.load_allowlist(f)
+
+
+def test_anon_replaces_names_numbers_and_zip_but_keeps_vocabulary(tmp_path):
+    doorplate = pytest.importorskip("doorplate")
+    f = tmp_path / "full-ok.txt"
+    f.write_text("nc-voter-current anon keep=CPO\n")
+    rule = full.load_allowlist(f)["nc-voter-current"]
+    text = full.entry(1, NC, rule, doorplate.Anonymizer(seed=5))
+    for real in ("PAT", "QUINN", "Pat", "Quinn", "HOLLIS", "4821", "27514"):
+        assert real not in text
+    for kept in ("C/O", "CPO", "HOLLIS CT"[-2:], "CHAPEL HILL", "NC"):
+        assert kept in text
+    # a replaced word is replaced alike in the line, the parse, the correction and the note
+    new = full.anon_words(NC["input"], doorplate.Anonymizer(seed=5), rule.keep)
+    assert new["QUINN"].title() in full.entry(1, NC, rule, doorplate.Anonymizer(seed=5)).split("- note:")[1]
+
+
+def test_anon_without_the_package_is_an_error():
+    rule = full.Rule()
+    rule.anon = True
+    with pytest.raises(ValueError):
+        full.entry(1, NC, rule)

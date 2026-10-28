@@ -24,7 +24,7 @@ and none of the data below is used to claim otherwise.
    shapes, codes and component names, no values) may leave, and the review tool reads harness runs of
    real sources, never the benchmark suite or the geocode splits. **One exception, by the owner's
    choice:** for the sources the owner lists in `local-data/review/full-ok.txt` (a public federal file,
-   with its name-bearing fields masked), `export.py --full` writes the answers in full text for the
+   with its name-bearing fields masked, or a voter file with every word replaced by the anonymizer's: `anon`), `export.py --full` writes the answers in full text for the
    maintainer's own Claude Code session to read. Reading a file in a session sends its text to the
    model provider, so each source is cleared by hand and the file stays in `local-data/`; do not share
    the transcript unedited. What that session writes to issues, pull requests and docs stays counts,

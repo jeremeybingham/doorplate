@@ -164,7 +164,7 @@ named). A pair such as `% a a` corrected to `a a` shows a rule without saying wh
 The test (`test_export.py`) checks that nothing but shapes, codes and names comes out.
 
 It is not anonymized text, so it does not replace the anonymizing tool of #105 for sharing a
-real-looking row (a later version can use it).
+real-looking row; the `anon` option of the full-text export (below) uses it for a source of private people.
 
 ## The full-text export (`export.py --full`): for the maintainer's own session
 
@@ -177,6 +177,7 @@ line:
 ```
 irs-eo-bmf    mask=line2     # the care-of name field is reduced to its shape
 fmcsa-census                 # nothing masked
+nc-voter-current anon keep=CPO,CPU,UNX   # private people's addresses: every word replaced, these kept
 ```
 
 - **Only listed sources are written;** with none listed, nothing is. The default stays shape-only.
@@ -185,6 +186,15 @@ fmcsa-census                 # nothing masked
   description. Words that also appear in an unmasked field (`SMITH` in a street name), and address
   vocabulary (`C/O`, `ATTN`, `PO BOX`, `APT`), are kept, so a street line and a care-of marker stay
   readable while a name does not.
+- **`anon`** (with an optional `keep=WORD,WORD`) is for a source whose lines hold private people's addresses and
+  names in places we cannot predict, such as the NC voter file's mailing lines (#225). Each row is parsed as
+  it is, then shown after `doorplate anonymize` (`docs/anonymizing.md`): street, unit and name words become invented
+  words of the same shape, house numbers change, a ZIP keeps its first three digits, and the city and state stay. The
+  replacement is the same in the lines, the parse, the correction, the note and the edit description, and
+  comes from a random seed for each export. Address vocabulary and the `keep` words stay as written, so the
+  words a review is about (`CPO`, `UNX`) stay readable; the parse is the real one, so a rule is seen as it
+  behaved. Limits are the anonymizer's (`docs/anonymizing.md`, "Limits"): a name that is also a lexicon word
+  (`Lane`, `Hill`) stays, and the city and state remain. It needs the `doorplate` Python package.
 - **It stays in `local-data/`:** the command refuses an output path outside it. Reading the file in a
   Claude Code session sends its text to the model provider, which is why it is an exception to
   `docs/data-policy.md` and why each source is cleared by hand.

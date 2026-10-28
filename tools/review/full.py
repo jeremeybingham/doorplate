@@ -9,6 +9,14 @@ note verbatim, and a one-line description of the edit. It is written only for so
 
     irs-eo-bmf  mask=line2        # the care-of name field is reduced to its shape
     fmcsa-census                  # nothing masked
+    nc-voter-current  anon keep=CPO,CPU   # every word is replaced by the anonymizer's, except these
+
+`anon` goes further, for a source whose fields hold addresses of private people and names in places
+we cannot predict (the NC voter file's mailing lines): every word the anonymizer would replace
+(`doorplate anonymize`, docs/anonymizing.md) is replaced by its invented word, house numbers and the end of
+a ZIP included, in the lines, the parse, the correction and the note, and `keep=WORD,WORD` leaves named words
+alone (the campus-box words `CPO`, `CPU` the review is about). The parse was made on the real text, so the rules
+are seen as they behaved; only the display changes. The city and state stay, as the anonymizer keeps them.
 
 A source that is not listed is skipped, and with no listed source nothing is written. `mask=` names
 input fields (`line1`, `line2`, `city`, `state`, `zip`, `last_line`) whose words are replaced by their
@@ -40,8 +48,15 @@ N S E W NE NW SE SW NORTH SOUTH EAST WEST ST AVE RD DR LN CT BLVD HWY PKWY CIR P
 """.split()}
 
 
+class Rule(set):
+    """The masked field names of one source (a set), plus `anon` (replace every word) and `keep` (words `anon` leaves alone)."""
+
+    anon = False
+    keep = frozenset()
+
+
 def load_allowlist(path):
-    """{source: set of masked field names} from the allowlist file; {} when there is none."""
+    """{source: Rule} from the allowlist file; {} when there is none. A Rule is the set of masked field names."""
     allowed = {}
     path = Path(path)
     if not path.exists():
@@ -51,14 +66,21 @@ def load_allowlist(path):
         if not line:
             continue
         source, *opts = line.split()
-        mask = set()
+        mask = Rule()
         for o in opts:
-            if not o.startswith("mask="):
-                raise ValueError(f"{path}: unknown option {o!r} (expected mask=FIELD,FIELD)")
-            for f in o[5:].split(","):
-                if f not in FIELDS:
-                    raise ValueError(f"{path}: {f!r} is not a field ({', '.join(FIELDS)})")
-                mask.add(f)
+            if o == "anon":
+                mask.anon = True
+            elif o.startswith("keep="):
+                mask.keep = frozenset(w.upper() for w in o[5:].split(",") if w)
+            elif o.startswith("mask="):
+                for f in o[5:].split(","):
+                    if f not in FIELDS:
+                        raise ValueError(f"{path}: {f!r} is not a field ({', '.join(FIELDS)})")
+                    mask.add(f)
+            else:
+                raise ValueError(f"{path}: unknown option {o!r} (expected mask=FIELD,FIELD, anon or keep=WORD,WORD)")
+        if mask.keep and not mask.anon:
+            raise ValueError(f"{path}: keep= goes with anon")
         allowed[source] = mask
     return allowed
 
@@ -71,10 +93,45 @@ def masked_words(inp, mask):
 
 
 def mask_text(text, words):
-    """Replace each hidden word in `text` by its shape; everything else is untouched."""
+    """Replace each hidden word in `text` by its shape, or by its entry when `words` is a dict (anon mode)."""
     if not words or not isinstance(text, str):
         return text
-    return WORD.sub(lambda m: shape(m.group(0)) if m.group(0).upper() in words else m.group(0), text)
+
+    def sub(m):
+        w = m.group(0)
+        if isinstance(words, dict):
+            new = words.get(w.upper())
+            return w if new is None else _case_like(new, w)
+        return shape(w) if w.upper() in words else w
+
+    return WORD.sub(sub, text)
+
+
+def _case_like(new, old):
+    """`new` written in the case style of `old` (upper, title or lower)."""
+    return new.upper() if old.isupper() else new.capitalize() if old[:1].isupper() else new.lower()
+
+
+def anon_words(inp, anonymizer, keep=()):
+    """{UPPER word: replacement} for the words of one row, from the doorplate anonymizer (docs/anonymizing.md).
+
+    The row is anonymized as the one line the harness parses (`one_line`), so the city and state stay and the
+    street, unit and numbers change; the words are paired by position. If the word count changes (rare) every
+    word is reduced to its shape instead. Address vocabulary (STRUCTURE) and the `keep` words stay as written;
+    a word the anonymizer replaces anywhere in the row is replaced everywhere in it.
+    """
+    value = one_line(inp)
+    old = WORD.findall(value)
+    new = WORD.findall(anonymizer.anonymize(value).text)
+    pairs = zip(old, new) if len(old) == len(new) else ((w, shape(w)) for w in old)
+    out = {}
+    for o, n in pairs:
+        key = o.upper()
+        if key in STRUCTURE or key in keep or (key in out and out[key].upper() != key):
+            continue
+        if n.upper() != key:
+            out[key] = n
+    return out
 
 
 def mask_value(v, words):
@@ -124,10 +181,14 @@ def parse_line(p):
     return "; ".join(bits)
 
 
-def entry(n, a, mask):
-    """One answer as a markdown block, with the masked fields' words hidden."""
+def entry(n, a, mask, anonymizer=None):
+    """One answer as a markdown block, with the masked fields' words hidden (or, with an anonymizer, every word replaced)."""
     inp = a.get("input") or {}
     words = masked_words(inp, mask)
+    if getattr(mask, "anon", False):
+        if anonymizer is None:
+            raise ValueError("anon needs the doorplate Python package (pip install doorplate, or maturin develop)")
+        words = {w: shape(w) for w in words} | anon_words(inp, anonymizer, mask.keep)
     mk = lambda v: mask_value(v, words)  # noqa: E731
     cl = a.get("cluster") or {}
     head = f"## {n}. {a['verdict']}"
@@ -166,14 +227,19 @@ def entry(n, a, mask):
 def build(answers, allowed):
     """(markdown text, {source: count written}, set of sources skipped)."""
     blocks, counts, skipped = [], {}, set()
+    anonymizer = None
+    if any(getattr(m, "anon", False) for m in allowed.values()):
+        import doorplate  # a random seed per export: nobody can recompute the replacements from a guess
+
+        anonymizer = doorplate.Anonymizer()
     for a in answers:
         src = a.get("source")
         if src not in allowed:
             skipped.add(src)
             continue
         counts[src] = counts.get(src, 0) + 1
-        blocks.append(entry(len(blocks) + 1, a, allowed[src]))
+        blocks.append(entry(len(blocks) + 1, a, allowed[src], anonymizer))
     header = ("# Review answers, full text\n\nPrivate: stays in `local-data/review/`. Masked fields (full-ok.txt) show shapes for "
-              "their words. Quote nothing from this file in an issue, pull request or doc; write counts, shapes and "
+              "their words; `anon` sources show invented words, numbers and ZIP endings instead. Quote nothing from this file in an issue, pull request or doc; write counts, shapes and "
               "invented examples.\n")
     return header + "\n" + "\n\n".join(blocks) + ("\n" if blocks else ""), counts, skipped
