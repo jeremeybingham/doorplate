@@ -167,8 +167,7 @@ the NC pair score (5,630,889 pairs, 2026-10-27) these took the suffix difference
 1,700 were `EXT`), the name from 2.33% to 2.05% and the unit from 0.58% to 0.39%. What is left is mostly the source: in the
 sampled suffix swaps (`CT` to `DR` 141 pairs, `DR` to `RD` 107, `RD` to `DR` 95) our suffix is a word of the as-entered line in
 over 90% of the sampled pairs and the county's label is not, and the 33 postdirectional `E` read as `SE` have `SE` in the
-text in 38 of 40 sampled: the as-entered file and the county snapshot disagree, and we follow the text. Not done: the NAD unit
-figure (3.6%, spelled-out designators) needs the NAD sample, which is not on this machine.
+text in 38 of 40 sampled: the as-entered file and the county snapshot disagree, and we follow the text. The NAD unit figure is in the NAD paragraph below.
 
 **Looking at examples (`--examples FILE`).** Writes the disagreements to a tab-separated file instead of the terminal: source,
 role, field, record id, pair id, and the label and our value. FILE must be under `local-data/` (git-ignored; ids are
@@ -208,10 +207,13 @@ python tools/harness/nad_score.py
 
 Read the figures with care: many providers put the suffix inside the name and leave the type empty
 (those rows are skipped, since there is no label to compare), and `Unit` is spelled out
-(`Apartment 4`). On the 2026-10-19 sample (NAD r24, seed 7) we differ from a labeled value in 0.11% of
-suffixes, 0.69% of predirectionals, 0.14% of postdirectionals (0.50% before the city-copy fix, #29)
-and 3.6% of units (mostly a spelled-out designator, a lone letter, or a bare number after a
-one-word street). `label_score.py` reproduces the previous `nad_score.py` exactly on this sample
+(`Apartment 4`). On the 2026-10-19 sample (NAD r24, seed 7) scored on 2026-10-27 with the quieter scorer (#112) we differ from a labeled value
+in 0.08% of suffixes, 0.69% of predirectionals, 0.14% of postdirectionals (0.50% before the city-copy fix, #29)
+and 3.17% of units (it was 3.6% with the old scorer). The scorer does not compare spelled-out designators, so they are not the
+cause: 4,206 of the 132,763 labeled units are rows where we found no unit, and 3,494 of those (83%) carry `unparsed_remainder`,
+the unit text left over (digit-led text 35%, a word or a single letter we do not read as a designator 38%, condo words
+`CND`, `COND`, `CONDO` 13%, `SITE` and `CAMPSITE` 6%; the rest `UNIT`, `APARTMENT`, `FLOOR`, `BUILDING` and `LEFT` followed by text we
+do not read). The lead is in its own issue. `label_score.py` reproduces the previous `nad_score.py` exactly on this sample
 (212,150 / 72,054 / 915,429 / 132,763 labeled; 1,473 / 100 / 976 / 4,805 differing) in 15 seconds
-instead of 2 minutes. A source's labels are its providers' choices, not ground truth: a
+instead of 2 minutes (with the scorer's later conventions: 1,473 / 100 / 753 / 4,206 differing). A source's labels are its providers' choices, not ground truth: a
 disagreement is a question, not a bug count.
