@@ -119,3 +119,18 @@ def test_summary_corrects_rows_by_the_excess_disagreement_and_suggests_a_priorit
     assert by["sut-stu"]["rows"] == 50 and round(by["sut-stu"]["precision"], 2) == 0.77
     assert by["placeholder"]["precision"] == 0 and by["placeholder"]["priority"] == "P3"
     assert table[0]["probe"] == "sut-stu"
+
+
+@pytest.mark.parametrize(
+    "row, expect",
+    [
+        ({"line1": "27 CALLE LUNA", "state": "PR", "zip": "00901"}, True),
+        ({"line1": "12 OAK ST", "state": "", "zip": "00612"}, True),
+        ({"line1": "12 OAK ST URB LAS PALMAS", "state": "", "zip": ""}, True),
+        ({"line1": "EDIF 4 APT 2", "state": "", "zip": ""}, True),
+        ({"line1": "6449 PR 462", "state": "TX", "zip": "78701"}, False),
+        ({"line1": "640 PINEWOOD BOX 18", "state": "IL", "zip": "62701"}, False),
+    ],
+)
+def test_is_puerto_rico(row, expect):
+    assert probes.is_puerto_rico(row) is expect

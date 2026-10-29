@@ -346,6 +346,17 @@ def hits(line1, line2, zip_code=None):
     return out
 
 
+PR_WORDS = re.compile(r"\b(?:URB|URBANIZACION|CALLE|EDIF|EDIFICIO|CARR|CARRETERA|BARRIO|RESIDENCIAL|PUERTO RICO)\b")
+
+
+def is_puerto_rico(row):
+    """Whether a record looks like a Puerto Rico address: state PR, a ZIP of 006, 007 or 009, or a Spanish street word.
+    A superset on purpose: the review queue leaves these out until the Puerto Rico epic has its own queue."""
+    z = str(row.get("zip") or "")[:3]
+    st = str(row.get("state") or "").upper().strip()
+    return st in ("PR", "PUERTO RICO") or z in ("006", "007", "009") or bool(PR_WORDS.search(text_of(row.get("line1"), row.get("line2"))))
+
+
 def is_flagged(warnings, key):
     """A warning from the list, or a key without state and ZIP."""
     return bool(set(warnings) & set(FLAGGED)) or str(key).startswith("k3n:")
@@ -474,11 +485,14 @@ def queue(args, report, pool):
     for src in report["sources"].values():
         for k, v in src["probes"].items():
             flagged[k] = flagged.get(k, 0) + v["flagged"]
-    top = [k for k, _ in sorted(flagged.items(), key=lambda kv: -kv[1])[: args.queue_top]]
+    skip = {k for k in args.exclude_probes.split(",") if k}
+    top = [k for k, _ in sorted(flagged.items(), key=lambda kv: -kv[1]) if k not in skip][: args.queue_top]
     rng = random.Random(args.seed)
     entries = []
     for k in top:
         rows_ = pool.get(k, [])
+        if args.exclude_pr:
+            rows_ = [r for r in rows_ if not is_puerto_rico(r)]
         rng.shuffle(rows_)
         n = 0
         for r in rows_:
@@ -532,6 +546,8 @@ def main(argv=None):
         help="probes with the most flagged rows to put in the queue",
     )
     ap.add_argument("--queue-n", type=int, default=50, help="matches per probe")
+    ap.add_argument("--exclude-probes", default="", help="comma-separated probe keys to leave out of the queue (already reviewed, or held back)")
+    ap.add_argument("--exclude-pr", action="store_true", help="leave Puerto Rico rows out of the queue (is_puerto_rico)")
     ap.add_argument("--confirm", action="store_true", help="run (without it: the plan only)")
     args = ap.parse_args(argv)
     if args.summary:
