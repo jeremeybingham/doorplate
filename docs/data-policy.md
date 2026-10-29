@@ -20,17 +20,24 @@ and none of the data below is used to claim otherwise.
    anonymizer (`docs/anonymizing.md`) is for people sharing *their* data with us; its output keeps the shape
    but is not anonymity, so the project's own docs and issues still use invented examples, not anonymized rows.
 4. **A person's answers are private data too.** `tools/review/` records real addresses the reviewer
-   saw; they stay in `local-data/review/`. Only its shape-only export (`tools/review/export.py`:
-   shapes, codes and component names, no values) may leave, and the review tool reads harness runs of
-   real sources, never the benchmark suite or the geocode splits. **One exception, by the owner's
-   choice:** for the sources the owner lists in `local-data/review/full-ok.txt` (a public federal file,
-   with its name-bearing fields masked, or a voter file with every word replaced by the anonymizer's: `anon`), `export.py --full` writes the answers in full text for the
-   maintainer's own Claude Code session to read. Reading a file in a session sends its text to the
-   model provider, so each source is cleared by hand and the file stays in `local-data/`; do not share
-   the transcript unedited. What that session writes to issues, pull requests and docs stays counts,
-   shapes and invented examples.
-5. **Never print personal names** from private data, in a terminal log that is pasted
-   anywhere or in an agent transcript that is shared. Reader errors count: DuckDB's
+   saw; they stay in `local-data/review/`. The review tool reads harness runs of real sources, never
+   the benchmark suite or the geocode splits. **Full-text review, by the owner's decision of 2026-10-29:**
+   every source ingested into `local-data/` is a public record (or an open, published address list), so
+   the maintainer's own Claude Code session may read the real rows, the review queues, the answers and
+   the reviewer's notes in full text (`export.py --full`, the probe queues and `records.parquet`, read in
+   place). Reading a file in a session sends its text to the model provider, so the transcript is not shared
+   unedited. **The boundary does not move:** nothing from those rows (no address, street name, house number,
+   personal name, note quoting a row) is written to a commit, an issue, a pull request, a doc, a comment, a
+   corpus case, a test or any file in the repository, ever. What the session writes there stays counts,
+   shapes and invented examples (principles 2 and 3). The shape-only export (`export.py`) remains the
+   default and the only form that may leave `local-data/`; `local-data/review/full-ok.txt` lists the
+   sources `--full` writes, and an owner can still add `mask=` or `anon` to a source (`docs/tools/review.md`).
+   Having a source readable is about privacy; it does not settle its terms of use: a source whose
+   terms are not yet read (CA unclaimed property) is still not used beyond reading until they are
+   recorded (`local-data/<source>/NOTICE.md`).
+5. **Do not repeat personal names** from private data in a terminal log that is pasted
+   anywhere or in an agent transcript that is shared; in a session, summarize with counts, shapes and
+   invented stand-ins. Reader errors count: DuckDB's
    messages quote the rows they failed on, so scripts that read private files print only
    the error's type (as `tools/ingest/ingest.py` does).
 6. **Every addition to the shipped data cites a source** (`docs/usps-pub28-notes.md`,
