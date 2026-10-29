@@ -873,6 +873,47 @@ impl Tagger<'_> {
         self.decide(Decision::BareUnit);
     }
 
+    /// Words only on line 2 under a PO Box line that has no street (`PO BOX 12` /
+    /// `JANE ROE`) are the care-of or name line (#303), not a street left unplaced:
+    /// one to four tokens with no digit, no street suffix, unit designator,
+    /// placeholder or directional word, all unclaimed. A suffix word keeps the
+    /// text unparsed (`ELDER RD` may be a hint of where the box is).
+    pub(super) fn claim_name_after_box(&mut self, l1: &Range<usize>, l2: &Range<usize>) {
+        let lex = self.lex;
+        let first = &self.tags[l1.clone()];
+        let box_only = first.contains(&Tag::PoBox)
+            && !first.iter().any(|t| {
+                matches!(
+                    t,
+                    Tag::StreetNumber | Tag::Name | Tag::Suffix | Tag::HighwayRoute
+                )
+            });
+        let free = l2
+            .clone()
+            .all(|k| matches!(self.tags[k], Tag::Untagged | Tag::Unparsed) && !self.toks[k].paren);
+        let one_seg = l2
+            .clone()
+            .all(|k| self.toks[k].seg == self.toks[l2.start].seg);
+        if !box_only || l2.is_empty() || l2.len() > 4 || !free || !one_seg {
+            return;
+        }
+        let plain = l2.clone().all(|k| {
+            let t = self.text(k);
+            t.chars()
+                .all(|c| c.is_alphabetic() || matches!(c, '.' | '&' | '\'' | '-'))
+                && t.chars().any(char::is_alphabetic)
+                && lex.suffix(t).is_none()
+                && lex.unit(t).is_none()
+                && lex.directional(t).is_none()
+                && lex.highway(t).is_none()
+                && lex.special(t).is_none()
+                && !lex.is_placeholder(t)
+        });
+        if plain && !lex.is_placeholder(&join(&self.toks[l2.clone()])) {
+            self.set(l2.clone(), Tag::Attention);
+        }
+    }
+
     /// A lone directional on line 2 that `tag_fields` kept out of the street
     /// (#170) is the unit, with no designator, as a bare letter is.
     pub(super) fn claim_lone_direction(&mut self, r: &Range<usize>, lone: bool) {
