@@ -1880,6 +1880,21 @@ impl Tagger<'_> {
             return;
         }
 
+        // Box words with no number at the end of the street (`90 NE 5 AVE PO BOX`) are not
+        // a box and not street words: left unparsed, as a line of `PO BOX` alone is (#301).
+        let mut hi = hi;
+        if let Some((_, w)) = longest_ending(self.toks, i, hi, |s| {
+            self.lex.special(s).filter(|l| l.value == Special::PoBox)
+        }) {
+            if hi - w > i
+                && self.toks[hi - w..hi]
+                    .iter()
+                    .all(|t| t.seg == self.toks[hi - 1].seg)
+            {
+                self.set(hi - w..hi, Tag::Unparsed);
+                hi -= w;
+            }
+        }
         let j = self.units(i, i, hi, true);
         // The name and suffix come from the first line; whatever is left of
         // a later line ("..., BLDG 5 ROOM") is not part of the name.
