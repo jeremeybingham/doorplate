@@ -13,6 +13,8 @@ change to what an input produces needs a new key version.
 
 ### Changed (key-affecting, held for the `k4`)
 
+- **A bare `BOX` after a unit is the PO Box** (#300): `4920 W RIDGE ROAD STE 105 BOX 121` is street, unit `STE 105` and PO Box `121` with `dual_address`; before, the street name was `RIDGE ROAD STE 105 BOX 121` (`possibly_truncated`), or the box was lost. 356 keys change in 36,920,000 rows of seven sources (carrier census 250, IRS 46, amateur radio 33, NY corporations 22, NC voter 5; NAD and Netsyms 0).
+
 - **`BOX` and a number after a street name with no suffix is a unit** (#299): `640 PINEWOOD BOX 18` and `6 ELMGROVE BOX 12` are the street and unit `18`/`12`; before, the street was `PINEWOOD BOX 18` with no warning (with a suffix it already worked, #128). Only with a house number and a digit value; `DUKE BOX 90123`, `RR1 BOX 5` and `100 BOX CANYON RD` are unchanged. 2,755 keys change in 36,920,000 rows of seven sources (carrier census 1,429, IRS 521, amateur radio 478, NY corporations 215, NC voter 112; NAD and Netsyms 0).
 
 - **A PO Box or unit number equal to the ZIP is kept** (#260): `12 QUINCEWOOD AVE` / `PO BOX 12345` with ZIP `12345` is street plus box `12345` with `dual_address`; before, the number was dropped as a copy of the ZIP and `PO BOX` was left unplaced (`unparsed_remainder`), or in the street name. `APT 12345` likewise. Filed as warnings only; the measurement found keys change: 491 in 36,920,000 rows of seven sources (amateur radio 367, carrier census 100, NY corporations 16, NC voter 8; Netsyms, NAD, IRS 0), 106 of them rows that had no key.
