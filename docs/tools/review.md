@@ -113,6 +113,7 @@ banner on the page with the build command; `--strict` refuses to start instead. 
 | `5` | `junk` | Not an address (a name, a placeholder, a number) |
 | `6` | `noise` | The source cut it off or mangled it |
 | `7` | `skip` | Not now |
+| `8` (`9` in a comparison queue) | `dual` | The row holds a dual or multiple address (a street and a PO Box, or several): a different signal from `junk` |
 | `l` | `labeled` | Mark the parts yourself instead of rewriting the string (below) |
 
 A correct parse and a fair warning are separate judgments, so a right parse always says which: a

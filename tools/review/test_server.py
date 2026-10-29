@@ -64,6 +64,10 @@ def test_a_right_parse_says_whether_the_warning_was_fair(review):
     assert "warning" not in review.answer({"id": "inv|site|2", "verdict": "junk", "warning": "noise"})
 
 
+def test_a_dual_address_is_its_own_verdict(review):
+    assert review.answer({"id": "inv|site|1", "verdict": "dual", "note": "street and PO Box"})["verdict"] == "dual"
+
+
 def test_text_left_in_the_correction_box_is_kept_as_a_draft_under_any_other_verdict(review):
     # "I can't tell" with an attempt in the box: the note and the attempt are both recorded, and it is not a correction
     rec = review.answer({"id": "inv|site|1", "verdict": "unclear", "note": " still bad ", "draft": " 123 QUINCEWOOD ST ",
