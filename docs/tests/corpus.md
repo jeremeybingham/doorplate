@@ -60,6 +60,7 @@ Every parsing bug fixed gets a case here (`CONTRIBUTING.md`).
   `nlt-` (a letter after the house number, `number-letter.jsonl`),
   `cn-` (a compass word naming the street, `compass-street.jsonl`),
   `pz-` (a PO Box or unit number equal to the ZIP, `pobox-zip.jsonl`),
+  `bx-` (BOX and a number after a name with no suffix, `box-bare-name.jsonl`),
   `nat-` (shapes found in a national address database, `national-data.jsonl`);
   `us-roundtrip-001` in `regressions.jsonl` came from the USPS round trip.
 - Exactly one input form:
@@ -351,6 +352,10 @@ Ids `cn-001` to `cn-010` (#325). A spelled-out compass word and a street suffix 
 ### `pobox-zip.jsonl`
 
 Ids `pz-001` to `pz-005` (#260). A number after `PO BOX` (or `P.O. BOX`, or a unit designator such as `APT`) is the box or unit number even when it equals the ZIP5, and not a copy of the ZIP; and the near misses (a different number, a box alone on line 1).
+
+### `box-bare-name.jsonl`
+
+Ids `bx-001` to `bx-006` (#299). `BOX` and a number after a street name with no suffix is a unit (`640 PINEWOOD BOX 18`), as after a suffix; and the near misses (a suffix, a street named `BOX`, no name before `BOX`, a letter value).
 
 ### `lonedir.jsonl`
 
