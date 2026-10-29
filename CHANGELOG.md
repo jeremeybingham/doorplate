@@ -11,6 +11,10 @@ change to what an input produces needs a new key version.
 
 - **`repeated_text` warning** (#236, `version:O`, **no key change**): raised when text that appears twice in the input is read once and the copy dropped: a line written twice (`812 ASHGROVE ST 812 ASHGROVE ST`, `PO BOX 7 PO BOX 7`), a cut-off copy of the address ahead of it, or the city, state or ZIP written again at the end of line 1. Not raised with `second_line_skipped`. Added to 38,422 of 36,920,703 rows of seven large sources (0.10%), no key changes. A repeat that is not dropped (the street name keeps the city, ZIP+4 in the ZIP field) has no warning yet and is the held `k4` rule.
 
+### Changed
+
+- **Words only on line 2 under a PO Box are the attention line** (#303, **no key change**): `PO BOX 1234` / `JANE ROE` and `PO BOX 12` / `ACME CORP` give `attention`; before they were `unparsed_remainder`. A street suffix word (`ELDER RD`) or a digit keeps the old result. 343 rows lose `unparsed_remainder` in 36,920,000 rows of seven sources (NC voter 168, NY corporations 120, IRS 55); no key changes.
+
 ### Changed (key-affecting, held for the `k4`)
 
 - **`PO BOX` with no number at the end of a street line is left unparsed** (#301): `90 NE 5 AVE PO BOX` is the street `5 AVE` with `PO BOX` unparsed (`unparsed_remainder`); before, the street name was `5 AVE PO BOX` with no warning. 266 keys change in 36,920,000 rows of seven sources (carrier census 204, IRS 36, NY corporations 12, amateur radio 9, NC voter 5; NAD and Netsyms 0).
