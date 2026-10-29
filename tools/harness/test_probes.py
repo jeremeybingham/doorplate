@@ -43,6 +43,17 @@ def test_keys_are_unique_and_every_pattern_compiles():
         ("3 & 5 E 41ST ST", None, None, "ampersand-numbers"),
         ("40 ELM ST SUT 300", None, None, "sut-stu"),
         ("12 ELM ST SIUTE 4", None, None, "sut-stu"),
+        ("60 LARKMOOR W 1A", None, None, "no-suffix-then-bare-unit"),
+        ("330 HARBORGATE 7", None, None, "no-suffix-then-bare-unit"),
+        ("53A-53 HOLLIS AVE", None, None, "letter-before-hyphen"),
+        ("40 HARBOR FISH PIER", None, None, "pier-last-word"),
+        ("PIER 4 EIGHTH ST", None, None, "pier-last-word"),
+        ("ONE MARLOW PLAZA - 99 ELM AVE.", "SUITE 8", None, "spaced-hyphen-building"),
+        ("1921 NW", "4 REAR", None, "bare-unit-line2"),
+        ("77 OAK ST", "B12", None, "bare-unit-line2"),
+        ("77 OAK ST COND 12", None, None, "unlisted-unit-words"),
+        ("77 OAK ST", "UNIT NORTH", None, "unlisted-unit-words"),
+        ("1234 LEE ROAD 2004", None, None, "name-road-number"),
         ("410 ELM ST # APT-4", None, None, "hash-before-designator"),
         ("410 ELM ST", "#APT-18", None, "hash-before-designator"),
         ("410 ELM ST # APT 4", None, None, "hash-before-designator"),
@@ -144,3 +155,10 @@ def test_a_hash_before_a_plain_unit_value_is_not_the_340_shape():
     assert "hash-before-designator" not in probes.hits("410 ELM ST #4", None, None)
     assert "hash-before-designator" not in probes.hits("410 ELM ST APT #4", None, None)
     assert "hash-before-designator" not in probes.hits("PO BOX #12", None, None)
+
+
+def test_the_no_suffix_unit_probe_leaves_streets_with_a_suffix_and_a_unit_on_line_2():
+    assert "no-suffix-then-bare-unit" not in probes.hits("60 LARKMOOR W", "1A", None)
+    assert "no-suffix-then-bare-unit" not in probes.hits("60 LARKMOOR ST 1A", None, None)
+    assert "no-suffix-then-bare-unit" not in probes.hits("12 STATE ROUTE 9", None, None)
+    assert "pier-last-word" not in probes.hits("40 PIER ST", None, None)
