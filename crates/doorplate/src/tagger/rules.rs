@@ -740,6 +740,15 @@ impl Tagger<'_> {
         if hi < lo + 2 || zip_parts(self.text(hi - 1)).is_none() || self.toks[hi - 2].is_hash() {
             return hi;
         }
+        // After a PO Box word it is the box number, not a copy of the ZIP
+        // (`PO BOX 12345` with ZIP 12345, #260).
+        if longest_ending(self.toks, lo, hi - 1, |s| {
+            self.lex.special(s).filter(|l| l.value == Special::PoBox)
+        })
+        .is_some()
+        {
+            return hi;
+        }
         let copy = self.text(hi - 1);
         let repeated = (0..self.toks.len())
             .any(|i| i != hi - 1 && self.tags[i] == Tag::Zip && self.text(i) == copy);
