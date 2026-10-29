@@ -2131,6 +2131,18 @@ impl Tagger<'_> {
             })
     }
 
+    /// Whether `BOX` at `k` follows a street name with no suffix, as in `640 PINEWOOD
+    /// BOX 18` (#299): a unit written with the word, as after a suffix (#128). Needs a
+    /// name word before it that is not a directional, and no highway word in the name
+    /// (`COUNTY ROAD 5 BOX 3`).
+    fn box_after_bare_name(&self, name_lo: usize, k: usize) -> bool {
+        let lex = self.lex;
+        k > name_lo
+            && self.text(k) == "BOX"
+            && lex.directional(self.text(k - 1)).is_none()
+            && (name_lo..k).all(|i| lex.highway(self.text(i)).is_none())
+    }
+
     /// Whether `BAY` at `k` ends the street's name rather than naming a unit
     /// (`HERON BAY # 2B`, `OYSTER BAY 4`): a name word (no digit) comes before it
     /// in the street's own segment and no street suffix does. `BAY` is a unit (an
@@ -2458,7 +2470,8 @@ impl Tagger<'_> {
                 && is_unit_value(t)
                 && lex.is_unit_marker(self.text(last - 1))
                 && self.toks[last - 1].seg == self.toks[last].seg
-                && self.suffix_before(name_lo, last - 1)
+                && (self.suffix_before(name_lo, last - 1)
+                    || self.box_after_bare_name(name_lo, last - 1))
             {
                 self.set(last - 1..last, Tag::Skip);
                 found.push((last..last, last..j));
