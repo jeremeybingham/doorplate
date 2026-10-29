@@ -31,7 +31,9 @@ parse is right"; send `unchanged_ok` to keep it). The page asks first.
 A comparison queue (`tools/review/compare_sample.py`, issue #132) shows doorplate's parse beside
 usaddress's, and the verdicts are `doorplate_right`, `usaddress_right`, `both_right` (a different
 convention, both fine), `both_wrong` (with a corrected string, as for `corrected`), and the
-`unclear`, `junk`, `dual`, `noise` and `skip` above.
+`unclear`, `junk`, `dual`, `noise` and `skip` above. `usaddress_right` can also carry a corrected string (the button
+"usaddress right + save correction", key `0`): usaddress's reading was right and there is a better string for doorplate; it is kept as
+`corrected` and the verdict is still scored as `usaddress_right`.
 
 Every answer is appended to the answers file, one JSON object per line; an undo appends a
 marker, so the file is never rewritten. Answers already given are not shown again, so a session
@@ -158,9 +160,12 @@ class Review:
         if verdict == "right" and warning not in WARNING_VERDICTS:
             raise ValueError("a right parse needs a warning verdict: fair or noise")
         corrected = (body.get("corrected") or "").strip()
+        # usaddress was right and there is also a better string for doorplate: the verdict stays `usaddress_right`
+        # (so it is scored as before) and the correction is kept as for the verdicts that are corrections.
+        with_corr = verdict == "usaddress_right" and bool(corrected)
         if verdict in ("corrected", "both_wrong") and not corrected:
             raise ValueError("a corrected answer needs the corrected string")
-        if verdict in ("corrected", "both_wrong") and not body.get("unchanged_ok") and \
+        if (verdict in ("corrected", "both_wrong") or with_corr) and not body.get("unchanged_ok") and \
                 " ".join(corrected.split()) == " ".join(one_line(item).split()):
             raise ValueError("the correction is the unchanged original: if the parse is right, answer that; "
                              "otherwise confirm with unchanged_ok")
@@ -175,13 +180,13 @@ class Review:
             rec["warning"] = warning
         if "compare" in item:
             rec["compare"] = item["compare"]
-        if verdict in ("corrected", "both_wrong"):
+        if verdict in ("corrected", "both_wrong") or with_corr:
             rec["corrected"] = corrected[:1000]
         if labels is not None:
             rec["labeled_text"], rec["labels"] = labels
         draft = body.get("draft")
         draft = draft.strip() if isinstance(draft, str) else ""
-        if verdict not in ("corrected", "both_wrong") and draft and \
+        if verdict not in ("corrected", "both_wrong") and not with_corr and draft and \
                 " ".join(draft.split()) != " ".join(one_line(item).split()):
             rec["draft"] = draft[:1000]  # an attempted fix under a verdict that is not a correction
         for k in ("parse", "corrected_parse", "draft_parse"):  # summaries the page computed with the same parser

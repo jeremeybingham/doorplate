@@ -112,6 +112,7 @@
   <div class="row" id="cmpbuttons" hidden>
     <button data-v="doorplate_right">doorplate right<kbd>1</kbd></button>
     <button data-v="usaddress_right">usaddress right<kbd>2</kbd></button>
+    <button data-v="usaddress_right" data-c="1">usaddress right + save correction<kbd>0</kbd></button>
     <button data-v="both_right">Both right (another convention)<kbd>3</kbd></button>
     <button data-v="both_wrong" id="bboth">Both wrong: save correction<kbd>4 / Enter</kbd></button>
     <button data-v="unclear">I can't tell<kbd>5</kbd></button>
@@ -274,7 +275,7 @@
     return r;
   }
 
-  function askUnchanged(verdict) {
+  function askUnchanged(verdict, withCorr) {
     var cmp = !!item.compare, box = $("hintbtns");
     $("hinttext").textContent = cmp ? "That is not a correction. Did you mean one of these?" :
       "That usually means the parse is right and the warning is fair. Did you mean one of these?";
@@ -284,7 +285,7 @@
       var b = el("button", null, o[0]); b.type = "button"; b.addEventListener("click", function () { $("hint").hidden = true; send(o[1], o[2]); }); box.appendChild(b);
     });
     var any = el("button", null, "Save it as a correction anyway"); any.type = "button";
-    any.addEventListener("click", function () { $("hint").hidden = true; send(verdict, undefined, true); }); box.appendChild(any);
+    any.addEventListener("click", function () { $("hint").hidden = true; send(verdict, undefined, true, withCorr); }); box.appendChild(any);
     $("hint").hidden = false;
   }
   // Text left in the correction box under a verdict that is not a correction is kept as a draft, not lost.
@@ -292,14 +293,15 @@
     var d = $("fix").value;
     if (d.trim() && !H.unchanged(item, d)) { body.draft = d; body.draft_parse = summary(call("parse", d)); }
   }
-  function send(verdict, warning, unchangedOk) {
+  function send(verdict, warning, unchangedOk, withCorr) {
     if (!item) return;
-    if ((verdict === "corrected" || verdict === "both_wrong") && !unchangedOk && H.unchanged(item, $("fix").value)) { askUnchanged(verdict); return; }
+    var corr = verdict === "corrected" || verdict === "both_wrong" || !!withCorr;
+    if (corr && !unchangedOk && H.unchanged(item, $("fix").value)) { askUnchanged(verdict, withCorr); return; }
     var body = { id: item.id, verdict: verdict, note: $("note").value, parse: summary(origParse) };
-    if (verdict !== "corrected" && verdict !== "both_wrong") addDraft(body);
+    if (!corr) addDraft(body);
     if (unchangedOk) body.unchanged_ok = true;
     if (verdict === "right") body.warning = warning;
-    if (verdict === "corrected" || verdict === "both_wrong") {
+    if (corr) {
       body.corrected = $("fix").value;
       body.corrected_parse = summary(call("parse", body.corrected));
     }
@@ -366,7 +368,7 @@
       .catch(function (e) { alert("not saved: " + e.message); });
   });
 
-  document.querySelectorAll("button[data-v]").forEach(function (b) { b.addEventListener("click", function () { send(b.dataset.v, b.dataset.w); }); });
+  document.querySelectorAll("button[data-v]").forEach(function (b) { b.addEventListener("click", function () { send(b.dataset.v, b.dataset.w, false, !!b.dataset.c); }); });
   $("undo").addEventListener("click", undo);
   function undo() { api("/api/undo", {}).then(function () { return api("/api/next"); }).then(function (j) { show(j.item, j.stats); }); }
   $("fix").addEventListener("input", renderFix);
@@ -376,10 +378,10 @@
     if (/^(INPUT|TEXTAREA)$/.test(document.activeElement.tagName) || e.ctrlKey || e.metaKey || e.altKey) return;
     var v = (item && item.compare
       ? { "1": ["doorplate_right"], "2": ["usaddress_right"], "3": ["both_right"], "4": ["both_wrong"], "5": ["unclear"],
-          "6": ["junk"], "7": ["noise"], "8": ["skip"], "9": ["dual"] }
+          "6": ["junk"], "7": ["noise"], "8": ["skip"], "9": ["dual"], "0": ["usaddress_right", undefined, false, true] }
       : { "1": ["right", "fair"], "2": ["right", "noise"], "3": ["corrected"], "4": ["unclear"], "5": ["junk"],
           "6": ["noise"], "7": ["skip"], "8": ["dual"] })[e.key];
-    if (v) { e.preventDefault(); send(v[0], v[1]); }
+    if (v) { e.preventDefault(); send(v[0], v[1], v[2], v[3]); }
     else if (e.key === "u") undo();
     else if (e.key === "]") { e.preventDefault(); move(1); }
     else if (e.key === "[") { e.preventDefault(); move(-1); }

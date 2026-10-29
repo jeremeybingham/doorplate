@@ -121,7 +121,7 @@ def safe(a, with_source=False):
         out["labels"] = labels_safe(a.get("labeled_text") or "", a["labels"])
     if a.get("compare"):
         out["compare"] = compare_safe(a["compare"])
-    if a["verdict"] in ("corrected", "both_wrong"):
+    if a["verdict"] in ("corrected", "both_wrong") or (a["verdict"] == "usaddress_right" and a.get("corrected")):
         out["corrected"] = clip(shape(a.get("corrected") or ""), 120)
         out["corrected_warnings"] = codes(c.get("warnings"))
         out["corrected_components"] = component_shapes(c.get("components"))
