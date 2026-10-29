@@ -13,6 +13,8 @@ change to what an input produces needs a new key version.
 
 ### Changed (key-affecting, held for the `k4`)
 
+- **`PO BOX` with no number at the end of a street line is left unparsed** (#301): `90 NE 5 AVE PO BOX` is the street `5 AVE` with `PO BOX` unparsed (`unparsed_remainder`); before, the street name was `5 AVE PO BOX` with no warning. 266 keys change in 36,920,000 rows of seven sources (carrier census 204, IRS 36, NY corporations 12, amateur radio 9, NC voter 5; NAD and Netsyms 0).
+
 - **A bare `BOX` after a unit is the PO Box** (#300): `4920 W RIDGE ROAD STE 105 BOX 121` is street, unit `STE 105` and PO Box `121` with `dual_address`; before, the street name was `RIDGE ROAD STE 105 BOX 121` (`possibly_truncated`), or the box was lost. 356 keys change in 36,920,000 rows of seven sources (carrier census 250, IRS 46, amateur radio 33, NY corporations 22, NC voter 5; NAD and Netsyms 0).
 
 - **`BOX` and a number after a street name with no suffix is a unit** (#299): `640 PINEWOOD BOX 18` and `6 ELMGROVE BOX 12` are the street and unit `18`/`12`; before, the street was `PINEWOOD BOX 18` with no warning (with a suffix it already worked, #128). Only with a house number and a digit value; `DUKE BOX 90123`, `RR1 BOX 5` and `100 BOX CANYON RD` are unchanged. 2,755 keys change in 36,920,000 rows of seven sources (carrier census 1,429, IRS 521, amateur radio 478, NY corporations 215, NC voter 112; NAD and Netsyms 0).
