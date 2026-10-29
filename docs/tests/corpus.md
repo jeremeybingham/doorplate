@@ -63,6 +63,7 @@ Every parsing bug fixed gets a case here (`CONTRIBUTING.md`).
   `bx-` (BOX and a number after a name with no suffix, `box-bare-name.jsonl`),
   `ub-` (a bare BOX after a unit, `unit-then-box.jsonl`),
   `nb-` (PO BOX with no number at the end of a street, `bare-po-box.jsonl`),
+  `nm-` (words only on line 2 under a PO Box, `name-after-box.jsonl`),
   `nat-` (shapes found in a national address database, `national-data.jsonl`);
   `us-roundtrip-001` in `regressions.jsonl` came from the USPS round trip.
 - Exactly one input form:
@@ -366,6 +367,10 @@ Ids `ub-001` to `ub-006` (#300). A bare `BOX` and its number after a unit (`STE 
 ### `bare-po-box.jsonl`
 
 Ids `nb-001` to `nb-005` (#301). `PO BOX` with no number at the end of a street line is left unparsed, not part of the street name (`90 NE 5 AVE PO BOX`), a unit before it is still read; and the cases that stay (a box with a number, line 2).
+
+### `name-after-box.jsonl`
+
+Ids `nm-001` to `nm-006` (#303). Words only on line 2 under a PO Box line with no street are the attention line (`PO BOX 1234` / `JANE ROE`); and the cases that stay unparsed (a street suffix word, a digit) or already worked (the `%` marker, a street on line 1).
 
 ### `lonedir.jsonl`
 
