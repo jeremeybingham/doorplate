@@ -171,7 +171,7 @@ real-looking row; the `anon` option of the full-text export (below) uses it for 
 ## The full-text export (`export.py --full`): for the maintainer's own session
 
 A shape is often not enough to see a rule: which words were deleted, and what the note says. For the
-sources the owner has cleared, `--full` writes `local-data/review/answers-full.md`: the original
+sources listed in `full-ok.txt` (since 2026-10-29 every ingested source: all are public records, `docs/data-policy.md`), `--full` writes `local-data/review/answers-full.md`: the original
 lines, the parse, the corrected string and its parse, the note verbatim, and a word-level description
 of the edit (`deleted leading "ACME LLC"`). It reads `local-data/review/full-ok.txt`, one source per
 line:
@@ -182,7 +182,8 @@ fmcsa-census                 # nothing masked
 nc-voter-current anon keep=CPO,CPU,UNX   # private people's addresses: every word replaced, these kept
 ```
 
-- **Only listed sources are written;** with none listed, nothing is. The default stays shape-only.
+- **Only listed sources are written;** with none listed, nothing is. The default stays shape-only. The owner has listed every
+  ingested source (2026-10-29); `mask=` and `anon` below remain available, and are no longer needed for the sources already listed.
 - **`mask=`** names input fields (`line1`, `line2`, `city`, `state`, `zip`, `last_line`) whose words become
   their shape everywhere in that row's entry: the lines, the parse, the correction, the note and the edit
   description. Words that also appear in an unmasked field (`SMITH` in a street name), and address
@@ -198,10 +199,11 @@ nc-voter-current anon keep=CPO,CPU,UNX   # private people's addresses: every wor
   behaved. Limits are the anonymizer's (`docs/anonymizing.md`, "Limits"): a name that is also a lexicon word
   (`Lane`, `Hill`) stays, and the city and state remain. It needs the `doorplate` Python package.
 - **It stays in `local-data/`:** the command refuses an output path outside it. Reading the file in a
-  Claude Code session sends its text to the model provider, which is why it is an exception to
-  `docs/data-policy.md` and why each source is cleared by hand.
-- **Write-back stays shapes:** what is learned goes into issues, pull requests and docs as counts,
-  shapes and invented examples.
+  Claude Code session sends its text to the model provider, which is why the transcript is not shared unedited
+  (`docs/data-policy.md`, principle 4).
+- **Write-back stays shapes, always:** what is learned goes into issues, pull requests and docs as counts,
+  shapes and invented examples. Nothing from a real row or a note that quotes one reaches the repository,
+  an issue or a comment.
 
 ## What it is not
 
