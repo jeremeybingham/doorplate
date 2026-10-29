@@ -90,6 +90,20 @@ def test_a_comparison_verdict_keeps_the_note_and_the_draft(tmp_path):
     assert rec["draft"] == "123 QUINCEWOOD ST APT 456" and "corrected" not in rec
 
 
+def test_usaddress_right_can_carry_a_correction(tmp_path):
+    q = tmp_path / "q.jsonl"
+    row = dict(QUEUE[0], compare={"class": "silent", "differs": [["StreetName", "OccupancyIdentifier", 1]], "usaddress": []})
+    q.write_text(json.dumps(row) + "\n")
+    r = server.Review(q, tmp_path / "a.jsonl")
+    # the unchanged original is not a correction
+    with pytest.raises(ValueError):
+        r.answer({"id": "inv|site|1", "verdict": "usaddress_right", "corrected": "123 456 QUINCEWOOD ST, MIAMI, FL 33101"})
+    rec = r.answer({"id": "inv|site|1", "verdict": "usaddress_right", "corrected": "123 QUINCEWOOD ST APT 456", "draft": "ignored",
+                    "corrected_parse": {"key": "k3:x"}})
+    assert rec["verdict"] == "usaddress_right" and rec["corrected"] == "123 QUINCEWOOD ST APT 456"
+    assert "draft" not in rec and rec["corrected_parse"] == {"key": "k3:x"}
+
+
 def test_a_correction_verdict_ignores_a_draft_field(review):
     rec = review.answer({"id": "inv|site|1", "verdict": "corrected", "corrected": "123 QUINCEWOOD ST", "draft": "something else"})
     assert rec["corrected"] == "123 QUINCEWOOD ST" and "draft" not in rec

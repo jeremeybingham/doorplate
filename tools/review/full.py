@@ -207,7 +207,7 @@ def entry(n, a, mask, anonymizer=None):
         c = a["compare"]
         lines.append(f"- comparison ({c.get('class')}): differs {c.get('differs')}")
         lines.append("- usaddress read: " + " ".join(f"{mk(t)}/{l}" for t, l in c.get("usaddress") or []))
-    if a["verdict"] in ("corrected", "both_wrong"):
+    if a["verdict"] in ("corrected", "both_wrong") or (a["verdict"] == "usaddress_right" and a.get("corrected")):
         original = one_line(inp)
         lines.append(f"- corrected: {mk(a.get('corrected'))!r}")
         lines.append(f"- corrected parse: {parse_line(mk(a.get('corrected_parse')))}")
