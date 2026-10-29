@@ -2097,6 +2097,22 @@ impl Tagger<'_> {
         lex.suffix(word).is_some() && !highway && sfx > name_start
     }
 
+    /// Whether the street before token `k` is a spelled-out compass word and a
+    /// suffix and nothing else (`WEST AVE`, `SOUTH ST`, #325): the compass word is
+    /// the street's name, so a value with a digit after it is a unit
+    /// (`44 WEST AVE 2B`). `suffix_before` says no here, as the leading
+    /// directional would be the predirectional (`147 SE AVENUE A`).
+    fn compass_street_before(&self, name_lo: usize, k: usize) -> bool {
+        let lex = self.lex;
+        k == name_lo + 2
+            && matches!(self.text(name_lo), "NORTH" | "SOUTH" | "EAST" | "WEST")
+            && lex.directional(self.text(name_lo)).is_some()
+            && lex.suffix(self.text(name_lo + 1)).is_some_and(|_| {
+                lex.highway(self.text(name_lo + 1))
+                    .is_none_or(|h| matches!(h.value.standard(), "ROAD" | "LOOP"))
+            })
+    }
+
     /// Whether `BAY` at `k` ends the street's name rather than naming a unit
     /// (`HERON BAY # 2B`, `OYSTER BAY 4`): a name word (no digit) comes before it
     /// in the street's own segment and no street suffix does. `BAY` is a unit (an
@@ -2552,7 +2568,9 @@ impl Tagger<'_> {
                 let dir = lex.directional(t).is_some();
                 if is_unit_value(t)
                     && !dir
-                    && (self.suffix_before(name_lo, last) || self.bay_before_value(name_lo, last))
+                    && (self.suffix_before(name_lo, last)
+                        || self.bay_before_value(name_lo, last)
+                        || (has_digit(t) && self.compass_street_before(name_lo, last)))
                 {
                     found.push((last..last, last..j));
                     self.decide(Decision::BareUnit);
