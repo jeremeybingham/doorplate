@@ -2109,7 +2109,7 @@ impl Tagger<'_> {
             && lex.directional(self.text(name_lo)).is_some()
             && lex.suffix(self.text(name_lo + 1)).is_some_and(|_| {
                 lex.highway(self.text(name_lo + 1))
-                    .is_none_or(|h| matches!(h.value.standard(), "ROAD" | "LOOP"))
+                    .map_or(true, |h| matches!(h.value.standard(), "ROAD" | "LOOP"))
             })
     }
 

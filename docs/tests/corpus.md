@@ -58,6 +58,7 @@ Every parsing bug fixed gets a case here (`CONTRIBUTING.md`).
   `zr-` (a nearly right ZIP repaired, `zip-repair.jsonl`),
   `gf-` (a floor written as a plain number and the floor word, `glued-floor.jsonl`),
   `nlt-` (a letter after the house number, `number-letter.jsonl`),
+  `cn-` (a compass word naming the street, `compass-street.jsonl`),
   `nat-` (shapes found in a national address database, `national-data.jsonl`);
   `us-roundtrip-001` in `regressions.jsonl` came from the USPS round trip.
 - Exactly one input form:
@@ -341,6 +342,10 @@ before a route number, `CO RD`, `CTY` as `CITY`, a street named `CTY`).
 Ids `qk-001` to `qk-009` (#109). In Queens, NY the key drops the hyphen of `37-12` and `37-12A`, so a building written both
 ways keys the same (`qk-001`/`qk-002`, `qk-003`/`qk-004`); and the near misses that keep the hyphen (Manhattan, the Bronx,
 New Jersey, one digit after the hyphen).
+
+### `compass-street.jsonl`
+
+Ids `cn-001` to `cn-010` (#325). A spelled-out compass word and a street suffix (`44 WEST AVE 2B`) are the street's name and suffix, and the digit value after them is a unit, on one line and on line 2; and the near misses that must not change (an abbreviated direction before a name, a postdirectional, a letter after the suffix, no unit).
 
 ### `lonedir.jsonl`
 
