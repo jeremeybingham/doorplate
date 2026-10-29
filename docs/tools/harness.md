@@ -150,6 +150,8 @@ python tools/harness/probes.py local-data/*/records.parquet --sample 10 --compar
 python tools/harness/probes.py ... --queue local-data/review/queue-probes.jsonl --queue-top 10 --queue-n 50 --confirm   # a review queue of matches
 ```
 
+`--exclude-probes a,b` leaves probes out of the queue (already reviewed, or held back) and `--exclude-pr` leaves out Puerto Rico rows (state `PR`, ZIP 006, 007 or 009, or a Spanish street word; `is_puerto_rico`), so the queue is free of the forms that wait for the Puerto Rico epic and its own queue. `--compare 0` skips the usaddress comparison for the report when only the queue is wanted (the queue still compares each card).
+
 A pattern is an upper bound: it also matches correct rows. Two things turn "has the shape" into "is wrong": the usaddress disagreement rate
 (a shape both parsers read alike is probably fine) and the review queue, where a person marks 50 matches per probe (`tools/review/server.py`
 on the queue, then the verdicts give a precision). The score that orders the issues is in `docs/backlog.md`, "Ordering by how common". The same
