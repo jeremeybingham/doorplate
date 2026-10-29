@@ -57,6 +57,7 @@ Every parsing bug fixed gets a case here (`CONTRIBUTING.md`).
   `rt-` (repeated text and its warning, `repeated.jsonl`),
   `zr-` (a nearly right ZIP repaired, `zip-repair.jsonl`),
   `gf-` (a floor written as a plain number and the floor word, `glued-floor.jsonl`),
+  `nlt-` (a letter after the house number, `number-letter.jsonl`),
   `nat-` (shapes found in a national address database, `national-data.jsonl`);
   `us-roundtrip-001` in `regressions.jsonl` came from the USPS round trip.
 - Exactly one input form:

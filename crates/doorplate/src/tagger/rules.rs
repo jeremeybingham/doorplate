@@ -1796,8 +1796,11 @@ impl Tagger<'_> {
                 // "N165 W2123": a grid number written in two parts.
                 self.set(i..i + 1, Tag::StreetNumber);
                 i += 1;
-            } else if i + 1 < hi && self.number_letter(i) {
+            } else if i + 1 < hi && (self.number_letter(i) || self.guessed_number_letter(i, hi)) {
                 // "428 B SOUTH MAIN ST": the letter belongs to the number.
+                if !self.number_letter(i) {
+                    self.number_letter_guess = true;
+                }
                 self.set(i..i + 1, Tag::StreetNumber);
                 self.decide(Decision::NumberLetter);
                 i += 1;
@@ -1900,6 +1903,29 @@ impl Tagger<'_> {
             && self.lex.directional(self.text(k + 1)).is_some()
             // "U S ROUTE 40" is the US highway, not number 20192U.
             && !(t == "U" && self.text(k + 1) == "S")
+    }
+
+    /// `46 A LINDEN AVE` (#270): the letter `A` to `D` right after the house number is the number's
+    /// suffix (`46A`) unless the next word is itself a single letter (an initial: `100 J K DAVIS RD`),
+    /// a street suffix (`123 A ST` is the street `A`), a unit or box word, or not a word at all. In the
+    /// labeled data (NAD and the NC voter snapshot) `A` and `B` are the number's suffix in 89% to 96%
+    /// of rows and `C` and `D` in 73% to 82%; the other letters split or disagree and stay in the name.
+    /// The text cannot decide it, so the warning stays.
+    fn guessed_number_letter(&self, k: usize, hi: usize) -> bool {
+        let t = self.text(k);
+        let next = self.text(k + 1);
+        k + 1 < hi
+            && k > 0
+            // A plain house number, as measured (not a grid number such as `N165`).
+            && self.text(k - 1).bytes().all(|c| c.is_ascii_digit() || c == b'-')
+            && matches!(t, "A" | "B" | "C" | "D" | "a" | "b" | "c" | "d")
+            && self.toks[k].seg == self.toks[k + 1].seg
+            && next.bytes().any(|c| c.is_ascii_alphanumeric())
+            && !is_letter(next)
+            && self.lex.suffix(next).is_none()
+            && self.lex.unit(next).is_none()
+            && self.lex.special(next).is_none()
+            && self.lex.directional(next).is_none()
     }
 
     /// Whether the tokens in `r` are the penthouse designator.
