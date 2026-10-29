@@ -2133,11 +2133,17 @@ impl Tagger<'_> {
 
     /// Whether `BOX` at `k` follows a street name with no suffix, as in `640 PINEWOOD
     /// BOX 18` (#299): a unit written with the word, as after a suffix (#128). Needs a
-    /// name word before it that is not a directional, and no highway word in the name
-    /// (`COUNTY ROAD 5 BOX 3`).
+    /// name word before it that is not a directional, no highway word in the name
+    /// (`COUNTY ROAD 5 BOX 3`) and a house number ahead of the name: with none, a box
+    /// is a campus box (`DUKE BOX 90123`, #131) or a rural route (`RR1 BOX 5`), not a
+    /// unit.
     fn box_after_bare_name(&self, name_lo: usize, k: usize) -> bool {
         let lex = self.lex;
         k > name_lo
+            && name_lo > 0
+            && self
+                .text(name_lo - 1)
+                .starts_with(|c: char| c.is_ascii_digit())
             && self.text(k) == "BOX"
             && lex.directional(self.text(k - 1)).is_none()
             && (name_lo..k).all(|i| lex.highway(self.text(i)).is_none())
