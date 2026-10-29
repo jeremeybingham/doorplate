@@ -83,6 +83,20 @@ project**. An issue that is `version:K` is in the 0.5.0 milestone (it was 0.4.0,
   `research`), so that none sits outside the plan. The second review of real rows (#245) filed each finding that way and added the key-changing ones to the
   0.5.0 tracker.
 
+## Ordering by how common
+
+The issues of a release are ordered by a score, not by feel (#298): `rows affected x harm / effort`.
+
+- **Rows affected**: the probe's matches over the large sources (`tools/harness/probes.py`, [`docs/tools/harness.md`](tools/harness.md)), multiplied by the
+  precision when a review has measured it (the share of matches that are really the pattern and really wrong; 1 until then). A full Netsyms run adds
+  `agg_probes` over all 146.6M rows.
+- **Harm**: 3 for a wrong key with no warning, 2 for a wrong key with a warning, 1 for a warning or a component only.
+- **Effort**: the size label, S 1, M 2, L 4, D (a decision) 2.
+- **Priority from the score**, with the rows share as the floor: P1 above 0.1% of the rows or 5% of a review queue; P2 above 0.01%; P3 below. A review queue's share
+  is larger than the rows share (a comparison queue holds only the rows the two parsers disagree on), so both are looked at.
+
+Refresh the numbers after each batch of rules (the same probes are the before and after of a rule PR, next to `key_diff.py`) and when a source is added.
+
 ## Keeping it current
 
 - At each release, refresh the milestones: move what slipped, close the finished milestone, and update

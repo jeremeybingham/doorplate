@@ -138,6 +138,24 @@ house number (`COUNTY ROAD 12`, `MAIN STREET`), and `multiple_addresses` on two 
 one line (`123 456 MAIN ST`, see the rule row in `docs/usps-pub28-notes.md`). Look at shapes and
 counts, never at rows (`docs/data-policy.md`).
 
+## How common is each open problem? (`probes.py`, #298)
+
+One probe per open issue: a pattern over line 1 and line 2 (`tools/harness/probes.py`, the registry `PROBES`). Over the ingested records files
+it counts, per probe and source, the rows whose text has the shape, how many of those the parser flags today (a warning in
+`unparsed_remainder`, `missing_street_number`, `possibly_truncated`, `missing_unit_number`, `invalid_zip`, or a key without state and ZIP) and, with
+`--compare`, how many of a sample of them usaddress reads differently. Counts only.
+
+```sh
+python tools/harness/probes.py local-data/*/records.parquet --sample 10 --compare 300 --out local-data/backlog-probes/report.json --confirm
+python tools/harness/probes.py ... --queue local-data/review/queue-probes.jsonl --queue-top 10 --queue-n 50 --confirm   # a review queue of matches
+```
+
+A pattern is an upper bound: it also matches correct rows. Two things turn "has the shape" into "is wrong": the usaddress disagreement rate
+(a shape both parsers read alike is probably fine) and the review queue, where a person marks 50 matches per probe (`tools/review/server.py`
+on the queue, then the verdicts give a precision). The score that orders the issues is in `docs/backlog.md`, "Ordering by how common". The same
+registry is counted by `run.py` into `agg_probes/` (schema version 9), so a full Netsyms run counts every probe over all its rows without keeping text.
+Add a probe when an issue is opened, with its pattern, size and harm; remove it when the issue closes.
+
 ## Label scoring (`label_score.py`, and `nad_score.py` for NAD)
 
 Some sources label the parts of each address (NAD, the NC voter snapshot), which the Netsyms
