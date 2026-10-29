@@ -59,6 +59,7 @@ Every parsing bug fixed gets a case here (`CONTRIBUTING.md`).
   `gf-` (a floor written as a plain number and the floor word, `glued-floor.jsonl`),
   `nlt-` (a letter after the house number, `number-letter.jsonl`),
   `cn-` (a compass word naming the street, `compass-street.jsonl`),
+  `pz-` (a PO Box or unit number equal to the ZIP, `pobox-zip.jsonl`),
   `nat-` (shapes found in a national address database, `national-data.jsonl`);
   `us-roundtrip-001` in `regressions.jsonl` came from the USPS round trip.
 - Exactly one input form:
@@ -346,6 +347,10 @@ New Jersey, one digit after the hyphen).
 ### `compass-street.jsonl`
 
 Ids `cn-001` to `cn-010` (#325). A spelled-out compass word and a street suffix (`44 WEST AVE 2B`) are the street's name and suffix, and the digit value after them is a unit, on one line and on line 2; and the near misses that must not change (an abbreviated direction before a name, a postdirectional, a letter after the suffix, no unit).
+
+### `pobox-zip.jsonl`
+
+Ids `pz-001` to `pz-005` (#260). A number after `PO BOX` (or `P.O. BOX`, or a unit designator such as `APT`) is the box or unit number even when it equals the ZIP5, and not a copy of the ZIP; and the near misses (a different number, a box alone on line 1).
 
 ### `lonedir.jsonl`
 
