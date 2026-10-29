@@ -1390,7 +1390,8 @@ impl Tagger<'_> {
         }
         for k in lo + 2..hi {
             let starts_segment = self.toks[k].seg != self.toks[k - 1].seg;
-            let Some(m) = self.box_line(k, hi, starts_segment) else {
+            let bare = starts_segment || self.unit_value_before(lo, k);
+            let Some(m) = self.box_line(k, hi, bare) else {
                 continue;
             };
             for (r, tag) in m.tags {
@@ -1402,6 +1403,22 @@ impl Tagger<'_> {
             return true;
         }
         false
+    }
+
+    /// Whether a designator and its value end right before token `k`
+    /// (`STE 105 BOX 121`, `APT 4 BOX 7`, #300): a bare `BOX` after a unit is a
+    /// PO Box, as it is after a comma, not a second unit.
+    fn unit_value_before(&self, lo: usize, k: usize) -> bool {
+        k >= lo + 2
+            && is_unit_value(self.text(k - 1))
+            && self.toks[k - 1].seg == self.toks[k].seg
+            && (self.toks[k - 2].is_hash()
+                || longest_ending(self.toks, lo, k - 1, |u| {
+                    self.lex
+                        .unit(u)
+                        .filter(|l| l.kind != MatchKind::Observed && l.value.range_required())
+                })
+                .is_some())
     }
 
     /// `P O BOX 8491 N W 17TH STREET`: box words typed in front of a street
