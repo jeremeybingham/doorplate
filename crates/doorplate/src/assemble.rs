@@ -109,7 +109,19 @@ pub(crate) fn assemble(
                         n.push(' ');
                         n.push_str(&text);
                     }
-                    _ => set_once(&mut addr.street_number, text),
+                    // The number and its letter are one token: `46 A` is `46A` (#270).
+                    _ => {
+                        let text = match run {
+                            [n, l]
+                                if l.text.len() == 1
+                                    && l.text.bytes().all(|c| c.is_ascii_alphabetic()) =>
+                            {
+                                format!("{}{}", n.text, l.text)
+                            }
+                            _ => text,
+                        };
+                        set_once(&mut addr.street_number, text);
+                    }
                 }
                 record(addr, Component::StreetNumber);
             }

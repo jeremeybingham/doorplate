@@ -89,10 +89,10 @@ A designator that needs a number has none (`APT`, `#`).
 
 ### ambiguous_number_letter
 
-One letter after the house number was read into the street name (`123 A MAIN ST`): it may be the number's suffix.
+One letter after the house number may be the number's suffix or the first word of the street (`123 A MAIN ST`). The parser reads the letters `A` to `D` as the number's suffix (`123A MAIN ST`, #270) unless the next word is a single letter (an initial: `100 J K DAVIS RD`), a street suffix (`123 A ST` is the street `A`), a direction, or a unit or box word; every other letter stays in the street name (`12 F OAK ST`). The warning is raised for both readings, because the text cannot decide it. A letter before a direction (`428 B SOUTH MAIN ST`) is the number's and carries no warning.
 
 - **Rows in NAD (of 1M):** 4,694
-- **Measured:** NAD labels it the number's suffix: number 80.5%, name 80.8%. NC voter (9,195 rows): number 0.9%, name 0.4%
+- **Measured:** NAD labels the letter the number's suffix in 80% of the flagged rows. Against the labels, on non-direction letters with no direction or bare suffix after them: NAD 5,469 rows, NC voter snapshot 65,147 rows (county-entered parts). `A` and `B` are the number's suffix in 89% to 96% of rows in both sources, `C` and `D` in 73% to 82%, `J` to `T` mostly the street, and a single letter after the letter (an initial) is the street in 99%. The rule above matches the labels in 84.9% (NAD) and 88.4% (NC) of those rows; always "street name" (the reading before #270) 33.6% and 48.2%, always "number suffix" 66.4% and 51.8%.
 
 ### second_line_in_street
 
@@ -126,9 +126,10 @@ where the number differs on 92.1%. The first review of real rows (the IRS extrac
 and not a measurement; issue #125) found the code right about a wrong parse in 12 of 16 `unparsed_remainder` rows, 56
 of 90 `missing_street_number` rows and 26 of 41 `possibly_truncated` rows, with 4 noise rows of 144 judged.
 
-`ambiguous_number_letter` is the one where **the providers disagree**: NAD calls the letter the number's suffix in about
-80% of the flagged rows, the NC county-entered parts call it part of the name in 99%. The text alone cannot say, which is
-what the warning reports. (Changing which reading is the default would change keys; it is not decided here.)
+`ambiguous_number_letter` is the one where **the providers disagree**: by state the NAD labels range from 98% number suffix
+(MA, NY, MD) to 40% (TX, KY), and the NC county-entered parts are 46% number suffix and 54% street name. The text alone
+cannot say, which is what the warning reports; the default for the letters `A` to `D` was decided in #270 from the
+labels (see the section above).
 
 ## Informational
 

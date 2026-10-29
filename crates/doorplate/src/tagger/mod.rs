@@ -128,6 +128,9 @@ pub(crate) struct Tagger<'a> {
     /// A token where the input looks cut off, if any.
     incomplete: Option<usize>,
     zero_number: bool,
+    /// A lone letter after the house number was read as its suffix on the strength of the letter
+    /// alone (`46 A LINDEN AVE`, #270): the text cannot say, so `ambiguous_number_letter` stays.
+    number_letter_guess: bool,
     /// Pre-split input with a city, state or ZIP field: a street field that is
     /// only a country is dropped (#130).
     country_street: bool,
@@ -165,6 +168,7 @@ impl<'a> Tagger<'a> {
             lex,
             incomplete: None,
             zero_number: false,
+            number_letter_guess: false,
             country_street: false,
             lens,
             places: None,
@@ -289,7 +293,7 @@ impl<'a> Tagger<'a> {
                 && !(letter.text == "U" && self.toks.get(k + 2).is_some_and(|n| n.text == "S"))
                 && letter.text.bytes().all(|b| b.is_ascii_alphabetic())
         });
-        if letter_in_name {
+        if letter_in_name || self.number_letter_guess {
             self.warn(Warning::AmbiguousNumberLetter);
         }
         if has(&self.tags, Tag::Unparsed) {

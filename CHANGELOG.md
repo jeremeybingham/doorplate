@@ -13,6 +13,8 @@ change to what an input produces needs a new key version.
 
 ### Changed (key-affecting, held for the `k4`)
 
+- **A letter `A` to `D` after the house number is the number's suffix** (#270, decided 2026-10-29 from the NAD and NC voter labels): `46 A LINDEN AVE` is `46A LINDEN AVE` (the warning `ambiguous_number_letter` stays). Not before a single letter (an initial), a street suffix, a direction or a unit word; `E` to `Z` keep the street name. The number and its letter are one token, so `428 B SOUTH MAIN ST` is now `428B` in the output and the key too. 38,775 keys change in seven large sources (30,778 the new reading, 7,997 the glued spelling only) and 595 in the Texas file. Known cost: a street named for a person with an initial (`820 A PHILIP RANDOLPH BLVD`) reads `820A`.
+
 - **A floor written as a number and the floor word is a unit** (#241, one part of it): `15 CEDAR STREET 3FL`, `18 ELM ST, 2FL`, `34 ELM ST 2FLOOR`, `61 OAK AVE 1FLR`, `18 ELM ST 2 FL` read the unit `FL` with its number; before, the number stayed in the street name or the floor had none (`missing_unit_number`). 8,717 keys change in seven large sources and 3 in the Texas file, almost all of them rows that had `missing_unit_number`. The other unit forms in #241 are not part of this change.
 
 - **A nearly right ZIP is repaired** (#275, new warning `zip_repaired`): `NEWARK NJ 7102 -1234`, `NJ 7102` (the leading zero is restored in CT, MA, ME, NH, NJ, PR, RI, VT and VI) and `DALLAS TX 75001-5` (an extension under four digits is dropped) now place the city, state and ZIP; before, the whole last line stayed unplaced and the key had no state or ZIP. 633 of 211,009 Texas licensing rows and 308 of 36,920,703 rows of seven large sources change key, all from the `k3n:` form to a full key.
