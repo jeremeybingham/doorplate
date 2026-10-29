@@ -450,6 +450,7 @@ pub(crate) fn tag_fields(
         }
         t.claim_bare_unit(l2.clone());
         t.claim_lone_direction(&l2, lone_direction);
+        t.claim_name_after_box(&l1, &l2);
         t.second_line_notes(&l1, &l2);
         return t.finish();
     }
@@ -488,6 +489,7 @@ pub(crate) fn tag_fields(
     }
     t.claim_bare_unit(l2.clone());
     t.claim_lone_direction(&l2, lone_direction);
+    t.claim_name_after_box(&l1, &l2);
     t.second_line_notes(&l1, &l2);
     t.finish()
 }
