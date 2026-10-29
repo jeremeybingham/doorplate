@@ -26,8 +26,8 @@ address vocabulary (`C/O`, `ATTN`, `PO BOX`, `APT`, ...), are kept, so a street 
 marker stay readable while a name does not.
 
 The file stays in `local-data/review/` (git-ignored). Reading it in a session sends its text to the
-model provider, which is why it is an exception and why each source is cleared by hand
-(docs/data-policy.md). Findings written to issues, pull requests and docs stay counts, shapes and
+model provider, so the transcript is not shared unedited (docs/data-policy.md, principle 4: every
+ingested source is listed since 2026-10-29). Nothing from a row reaches the repository. Findings written to issues, pull requests and docs stay counts, shapes and
 invented examples. This library formats and parses; it does not validate that an address exists or can
 receive mail.
 """
