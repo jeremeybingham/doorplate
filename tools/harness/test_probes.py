@@ -42,6 +42,10 @@ def test_keys_are_unique_and_every_pattern_compiles():
         ("66 ELM ST", "SUITE LA", None, "unit-is-suffix-code"),
         ("3 & 5 E 41ST ST", None, None, "ampersand-numbers"),
         ("40 ELM ST SUT 300", None, None, "sut-stu"),
+        ("12 ELM ST SIUTE 4", None, None, "sut-stu"),
+        ("410 ELM ST # APT-4", None, None, "hash-before-designator"),
+        ("410 ELM ST", "#APT-18", None, "hash-before-designator"),
+        ("410 ELM ST # APT 4", None, None, "hash-before-designator"),
         ("120 NW 14 ST SUITE 2&3", None, None, "units-ampersand"),
         ("12 ELM ST (3RD FL)", None, None, "floor-in-parentheses"),
         ("100 OAK ST", "5 123", None, "unit-two-parts"),
@@ -134,3 +138,9 @@ def test_summary_corrects_rows_by_the_excess_disagreement_and_suggests_a_priorit
 )
 def test_is_puerto_rico(row, expect):
     assert probes.is_puerto_rico(row) is expect
+
+
+def test_a_hash_before_a_plain_unit_value_is_not_the_340_shape():
+    assert "hash-before-designator" not in probes.hits("410 ELM ST #4", None, None)
+    assert "hash-before-designator" not in probes.hits("410 ELM ST APT #4", None, None)
+    assert "hash-before-designator" not in probes.hits("PO BOX #12", None, None)

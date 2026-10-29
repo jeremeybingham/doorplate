@@ -122,7 +122,7 @@ PROBES = [
     ),
     (
         "hyphen-after-suffix",
-        "308",
+        "308,341",
         "a spaced hyphen or slash after a suffix",
         rf"\b{SUF} [-/] [A-Z0-9]",
         "M",
@@ -229,10 +229,18 @@ PROBES = [
     (
         "sut-stu",
         "289",
-        "SUT / STU misspelled designators",
-        r"\b(?:SUT|STU) ?[A-Z]?[0-9]",
+        "SUT / STU / SIUTE misspelled designators",
+        r"\b(?:SUT|STU|SIUTE) ?[A-Z]?[0-9]",
         "S",
         3,
+    ),
+    (
+        "hash-before-designator",
+        "340",
+        "a # before a unit designator (# APT-4, #APT-18, # APT 4)",
+        r"#\s*(?:APT|UNIT|STE|SUITE|RM|ROOM|LOT|TRLR|BLDG|FL)[ .]*-?\s*[0-9A-Z]",
+        "S",
+        1,
     ),
     (
         "units-ampersand",
