@@ -72,6 +72,10 @@ a warning or a mismatch. `state` is the source state, or for a `last_line` row t
 the parse found for the city, empty when it found none), `n`. Sum `n` across chunks. Rows with
 `place` empty are the place-list gaps for the analysis.
 
+### `agg_probes/`
+
+`source`, `role`, `probe` (a key of `tools/harness/probes.py`, one per open issue), `kind` (`rows`: the address text has the probe's shape; `flagged`: of those, the parse has an `unparsed_remainder`, `missing_street_number`, `possibly_truncated`, `missing_unit_number` or `invalid_zip` warning, or a key without state and ZIP), `n`. Sum `n` across chunks. Counts only, no text (#298). Schema version 9; older runs have no `agg_probes/`.
+
 ### `flagged/` (rows with a warning or a mismatch)
 
 `record_id` (string: the source's own id, or the rowid for `--db`), `state`, `source`, `role`, `provider`, `warnings` (comma-joined codes),

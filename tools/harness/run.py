@@ -33,7 +33,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 HERE = Path(__file__).resolve().parent
-SCHEMA_VERSION = 8
+sys.path.insert(0, str(HERE))
+import probes  # noqa: E402  (the backlog probes, counted per chunk in agg_probes)
+
+SCHEMA_VERSION = 9
 REQUIRED = ["zipcode", "number", "street", "street2", "city", "state", "plus4", "country", "source"]
 GB = 1 << 30
 # The columns of a row as the checks see it (docs/tools/ingest.md has their meaning).
@@ -349,8 +352,14 @@ def process_chunk(rows, present, fields_many, parse_many):
     warns = Counter()
     triples = Counter()
     flagged = []
+    probe_counts = Counter()
     for r, a in zip(rows, parsed):
         rid, source, role, provider, line1, line2, rcity, rstate, rzip, last_line, label_number = r
+        for pk in probes.hits(line1, line2, rzip):
+            bad = a is None or probes.is_flagged(a.warnings, a.key())
+            probe_counts[(source or "", role or "", pk, "rows")] += 1
+            if bad:
+                probe_counts[(source or "", role or "", pk, "flagged")] += 1
         have = set(present.get(role or "", ()))
         st = norm(rstate) if rstate else (a.state or "" if a is not None and last_line else "")
         ss = by_key.setdefault((st, source or "", role or "", provider or ""), Counter())
@@ -402,7 +411,7 @@ def process_chunk(rows, present, fields_many, parse_many):
             ss["flagged"] += 1
             flagged.append((rid, st, source or "", role or "", provider or "", ",".join(codes),
                             ",".join(mism), a))
-    return by_key, warns, triples, flagged
+    return by_key, warns, triples, flagged, probe_counts
 
 
 def write_parquet(path, table):
@@ -413,7 +422,7 @@ def write_parquet(path, table):
     os.replace(tmp, path)
 
 
-def write_chunk(run, cid, by_key, warns, triples, flagged):
+def write_chunk(run, cid, by_key, warns, triples, flagged, probe_counts=None):
     import pyarrow as pa
 
     s = pa.string()
@@ -435,6 +444,11 @@ def write_chunk(run, cid, by_key, warns, triples, flagged):
          "city": pa.array([k[2] for k in tk], s), "source": pa.array([k[3] for k in tk], s),
          "role": pa.array([k[4] for k in tk], s), "provider": pa.array([k[5] for k in tk], s),
          "place": pa.array([k[6] for k in tk], s), "n": pa.array([triples[k] for k in tk], pa.int64())}))
+    pk = sorted(probe_counts or ())
+    write_parquet(run / "agg_probes" / f"{cid:06d}.parquet", pa.table(
+        {"source": pa.array([k[0] for k in pk], s), "role": pa.array([k[1] for k in pk], s),
+         "probe": pa.array([k[2] for k in pk], s), "kind": pa.array([k[3] for k in pk], s),
+         "n": pa.array([probe_counts[k] for k in pk], pa.int64())}))
     cols = {k: [] for k in ["record_id", "state", "source", "role", "provider", "warnings",
                             "mismatches", "address_type", "key", "street_number",
                             "street_dir_prefix", "street_name", "street_suffix",
@@ -465,9 +479,9 @@ def run_chunk(run, args, lo, cid, ctx):
     t0 = time.time()
     try:
         rows = ctx["fetch"](ctx["con"], args, clo, chi)
-        by_key, warns, triples, flagged = process_chunk(
+        by_key, warns, triples, flagged, probe_counts = process_chunk(
             rows, ctx["present"], ctx["fields_many"], ctx["parse_many"])
-        write_chunk(run, cid, by_key, warns, triples, flagged)
+        write_chunk(run, cid, by_key, warns, triples, flagged, probe_counts)
     except Exception as e:  # DuckDB and SQLite messages can quote rows (docs/data-policy.md)
         raise RuntimeError(f"chunk {cid} failed: {type(e).__name__}") from None
     info = {"chunk": cid, "rowid_lo": clo, "rowid_hi": chi, "rows": len(rows),
@@ -536,7 +550,7 @@ def main(argv=None):
 
     from doorplate import __version__
 
-    for d in ("agg_state_source", "agg_warnings", "agg_triples", "flagged", "chunk_status"):
+    for d in ("agg_state_source", "agg_warnings", "agg_triples", "agg_probes", "flagged", "chunk_status"):
         (run / d).mkdir(parents=True, exist_ok=True)
     manifest_path = run / "manifest.json"
     if not manifest_path.exists():
@@ -635,7 +649,7 @@ A doorplate parse of an address source (tools/harness/run.py). **Private: do not
 - `SCHEMA.md`: every artifact's columns and the comparison rules.
 - `chunk_status/NNNNNN.json`: one per finished chunk. `DONE` exists only when every chunk of the
   whole database finished (`LIMITED` marks a test slice).
-- `agg_state_source/`, `agg_warnings/`, `agg_triples/`, `flagged/`: Parquet, one file per chunk.
+- `agg_state_source/`, `agg_warnings/`, `agg_triples/`, `agg_probes/`, `flagged/`: Parquet, one file per chunk.
 - `progress.log`: one line per chunk.
 
 Open with DuckDB (offline):
