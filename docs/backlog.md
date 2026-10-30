@@ -44,7 +44,7 @@ and role, for the sources its issue names. The release does the full before and 
 
 **The comparison.** Install the released version in a throwaway environment, parse whole records files with both
 builds (`parse_fields_many`) and compare `a.key()` row by row, by source. `tools/compare/key_diff.py` does it: `dump`
-in each environment, then `diff` (counts only, never street text); the dumps record the commit as well as the version, because between releases `main` still reports the last release's version. "Key-neutral" is a claim about this
+in each environment (`dump-all` does every source in `local-data/keycompare/sources.txt` in one call), then `diff` (counts only, never street text); the dumps record the commit as well as the version, because between releases `main` still reports the last release's version. "Key-neutral" is a claim about this
 comparison, not about warnings or flagged rows: #97 was called key-neutral from warning counts and then changed
 8.7% of the IRS file's keys (the 0.3.1 record in `key-format.md`). A rule pull request that says its keys do
 not change includes the count.

@@ -88,3 +88,16 @@ def test_a_dump_without_unit_columns_still_diffs(tmp_path):
     b = unit_dump(tmp_path, "b", "k3:S|1||MAIN|ST||FL|33101||", None, None)
     r = subprocess.run([sys.executable, str(SCRIPT), "diff", str(a), str(b)], capture_output=True, text=True)
     assert "unit level" not in r.stdout  # one side has no unit columns
+
+
+def test_dump_all_runs_dump_for_each_listed_file(tmp_path, monkeypatch):
+    sys.path.insert(0, str(SCRIPT.parent))
+    import key_diff
+
+    sources = tmp_path / "sources.txt"
+    sources.write_text("# comment\na/records.parquet\n\nb/records.parquet\n")
+    seen = []
+    monkeypatch.setattr(key_diff, "dump", lambda args: seen.append((args.records, args.out, args.unit)))
+    monkeypatch.setattr(sys, "argv", ["key_diff.py", "dump-all", "--out", "o", "--sources", str(sources), "--unit"])
+    key_diff.main()
+    assert seen == [("a/records.parquet", "o", True), ("b/records.parquet", "o", True)]
