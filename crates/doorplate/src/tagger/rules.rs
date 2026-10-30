@@ -2506,6 +2506,38 @@ impl Tagger<'_> {
                     continue;
                 }
             }
+            // `GROUND`, `MEZZANINE`, `GARAGE`, `LL`: a level word alone on a later line
+            // or comma segment, or right after the street's suffix, is a unit; Pub 28
+            // has no designator for most, so it is a value with no type (#292).
+            if found.is_empty() && j == hi {
+                let level = (1..=2).rev().find_map(|w| {
+                    let k = j.checked_sub(w)?;
+                    let own_segment = (k..j).all(|i| self.toks[i].seg == self.toks[k].seg);
+                    let placed = k > name_lo + 1
+                        && own_segment
+                        && (self.toks[k].seg != self.toks[k - 1].seg
+                            || self.suffix_before(name_lo, k));
+                    (k >= floor && placed).then_some(k)
+                });
+                if let Some(k) = level {
+                    let phrase = join(&self.toks[k..j]);
+                    if lex.is_level_word(&phrase) {
+                        // Two words: the first is the value, the level word is dropped.
+                        if j - k == 2 {
+                            self.set(k + 1..j, Tag::Skip);
+                        }
+                        found.push((k..k, k..k + 1));
+                        self.decide(Decision::BareUnit);
+                        j = k;
+                        continue;
+                    }
+                    if phrase == "LL" {
+                        found.push((k..j, j..j));
+                        j = k;
+                        continue;
+                    }
+                }
+            }
             // A designator cut off at the line limit: "... DR UNI".
             if found.is_empty()
                 && j == hi
