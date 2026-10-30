@@ -205,3 +205,8 @@ def test_strict_refuses_to_start_with_a_stale_build(tmp_path, monkeypatch, capsy
 def test_the_status_endpoint_reports_a_fresh_build(http):
     j = json.load(get(http + "/api/status"))
     assert "stale" in j and "message" in j
+
+
+def test_not_enough_for_a_door_is_its_own_verdict(review):
+    rec = review.answer({"id": "inv|site|1", "verdict": "insufficient", "note": "map shows a different street"})
+    assert rec["verdict"] == "insufficient" and rec["note"] == "map shows a different street"

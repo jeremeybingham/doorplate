@@ -9,6 +9,8 @@ change to what an input produces needs a new key version.
 
 ### Added
 
+- **Review tool: an `insufficient` verdict, "Not enough for a door"** (tooling only; key `i`): some valid address parts, but too much wrong or extra text to put together one coherent door, for example when a map lookup shows an address you could not reach from the row. Different from `junk` (no address), `noise` (cut off or mangled) and `unclear` (wrong, fix unknown).
+
 - **`repeated_text` warning** (#236, `version:O`, **no key change**): raised when text that appears twice in the input is read once and the copy dropped: a line written twice (`812 ASHGROVE ST 812 ASHGROVE ST`, `PO BOX 7 PO BOX 7`), a cut-off copy of the address ahead of it, or the city, state or ZIP written again at the end of line 1. Not raised with `second_line_skipped`. Added to 38,422 of 36,920,703 rows of seven large sources (0.10%), no key changes. A repeat that is not dropped (the street name keeps the city, ZIP+4 in the ZIP field) has no warning yet and is the held `k4` rule.
 
 ### Changed

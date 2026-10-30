@@ -115,6 +115,7 @@ banner on the page with the build command; `--strict` refuses to start instead. 
 | `7` | `skip` | Not now |
 | `0` (comparison queue) | `usaddress_right` with a correction | usaddress's reading was right, and there is also a better string for doorplate: both are kept, and it is scored as `usaddress_right` |
 | `8` (`9` in a comparison queue) | `dual` | The row holds a dual or multiple address (a street and a PO Box, or several): a different signal from `junk` |
+| `i` | `insufficient` | Some valid address parts, but wrong, extra or odd text around them, and not enough to put together one door (checked, for example, on a map: the real address could not be reached from what the row says). Not `junk` (no address at all), not `noise` (cut off by the source), not `unclear` (the reviewer can't tell the fix) |
 | `l` | `labeled` | Mark the parts yourself instead of rewriting the string (below) |
 
 A correct parse and a fair warning are separate judgments, so a right parse always says which: a
