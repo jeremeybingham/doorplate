@@ -1,6 +1,12 @@
 # Golden-corpus cases that pass. Regenerate with
 # UPDATE_CORPUS_BASELINE=1 cargo test -p doorplate --test corpus
 # or `doorplate corpus test --update-baseline`
+bf-001
+bf-002
+bf-003
+bf-004
+bf-005
+bf-006
 bx-001
 bx-002
 bx-003
