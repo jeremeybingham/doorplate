@@ -2416,6 +2416,53 @@ impl Tagger<'_> {
             })
     }
 
+    /// Whether the value at `last` is a digit-letter (`1A`, `412B`) ending a
+    /// street name that has no suffix (`60 LARKMOOR 1A`, `60 LARKMOOR W 1A`, #324):
+    /// a street seldom ends in a digit-letter, so it is a unit. Needs a house number
+    /// ahead of the name, one segment, a name of words with no digit and no highway,
+    /// route, box or interstate word (`COUNTY ROAD 5A`, `RR 2 BOX 4B`, `I 95 7A`), no
+    /// state code or route code (`NY 30A`, `SCR 13C`) and no grid number (`ECR 900N`),
+    /// and at least one word that is not a directional. A plain number, a single
+    /// letter and `9-9` are left alone: they are often the end of a real name.
+    fn digit_letter_after_bare_name(&self, name_lo: usize, last: usize) -> bool {
+        let lex = self.lex;
+        let t = self.text(last);
+        let digits = t.bytes().take_while(u8::is_ascii_digit).count();
+        let letters = t.len() - digits;
+        if !(1..=4).contains(&digits)
+            || !(1..=2).contains(&letters)
+            || !t[digits..].bytes().all(|c| c.is_ascii_alphabetic())
+            || is_ordinal(t)
+            // `ECR 900N`: a grid number, the letter is a direction.
+            || (digits >= 3 && letters == 1 && matches!(t.as_bytes()[digits], b'N' | b'S' | b'E' | b'W'))
+            || name_lo == 0
+            || last <= name_lo
+            || !self
+                .text(name_lo - 1)
+                .starts_with(|c: char| c.is_ascii_digit())
+        {
+            return false;
+        }
+        let name = name_lo..last;
+        name.clone().all(|k| {
+            let w = self.text(k);
+            self.toks[k].seg == self.toks[last].seg
+                && !has_digit(w)
+                && !self.toks[k].is_hash()
+                && !self.toks[k].is_dash()
+                && w != "I"
+                && !matches!(w, "BUSINESS" | "BYPASS" | "ALTERNATE" | "ALT")
+                // `NY 30A`, `SCR 13C`: a state code or a route code with no vowel.
+                && !(w.len() == 2 && self.highway_state(w).is_some())
+                && (w.len() > 3 || w.bytes().any(|c| b"AEIOU".contains(&c)))
+                && lex.highway(w).is_none()
+                && lex.special(w).is_none()
+                && lex.unit(w).is_none()
+        }) && name
+            .clone()
+            .any(|k| lex.directional(self.text(k)).is_none())
+    }
+
     /// Whether `BOX` at `k` follows a street name with no suffix, as in `640 PINEWOOD
     /// BOX 18` (#299): a unit written with the word, as after a suffix (#128). Needs a
     /// name word before it that is not a directional, no highway word in the name
@@ -2935,7 +2982,8 @@ impl Tagger<'_> {
                     && !dir
                     && (self.suffix_before(name_lo, last)
                         || self.bay_before_value(name_lo, last)
-                        || (has_digit(t) && self.compass_street_before(name_lo, last)))
+                        || (has_digit(t) && self.compass_street_before(name_lo, last))
+                        || self.digit_letter_after_bare_name(name_lo, last))
                 {
                     found.push((last..last, last..j));
                     self.decide(Decision::BareUnit);
