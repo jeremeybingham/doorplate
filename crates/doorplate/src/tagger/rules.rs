@@ -2506,8 +2506,8 @@ impl Tagger<'_> {
             return None;
         }
         // Words that go on a street's name: `SO` and `NO` for south and north, a
-        // direction of travel, an alternate or extended route, a cut-off.
-        const CONTINUES: [&str; 22] = [
+        // direction of travel, a business or alternate route (`ST BUS`), an extension, a cut-off.
+        const CONTINUES: [&str; 24] = [
             "SO",
             "NO",
             "ES",
@@ -2522,7 +2522,9 @@ impl Tagger<'_> {
             "ALT",
             "ALTERNATE",
             "BUSINESS",
+            "BUS",
             "BYPASS",
+            "BYP",
             "EXTENDED",
             "EXTENTION",
             "EXT",
