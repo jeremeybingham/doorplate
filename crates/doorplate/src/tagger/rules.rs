@@ -1662,7 +1662,84 @@ impl Tagger<'_> {
 
     /// A PO Box (`PO BOX 12`, `DRAWER 9`, or with `bare` a plain `BOX 88`)
     /// and its value at `k`, without tagging.
+    /// A campus mailbox phrase at the start of a line or comma segment with no
+    /// house number (#373): `CAMPUS BOX 4521 EASTMERE`, `NORTHFIELD BOX 3310`,
+    /// `NORTHFIELD CPO #1234`, `HARTWELL STATION CB #2200`. It is a box, like
+    /// `NORTHFIELD PO BOX 3310`: the box words and the number are the box, the
+    /// school or station words before them and one code after the number are the
+    /// attention line. `BOX` needs exactly one plain word before it (or `CAMPUS`),
+    /// so `MAIN BOX 12` and `RR 2 BOX 15` are not read this way; the codes `CPO`,
+    /// `UPO`, `CPU`, `UNX`, `UNY`, `CMB` and `CB` take up to three plain words.
+    fn campus_box(&self, k: usize, hi: usize) -> Option<SpecialMatch> {
+        let lex = self.lex;
+        if k >= hi || (k > 0 && self.toks[k].seg == self.toks[k - 1].seg) {
+            return None;
+        }
+        let e = self.seg_end(k, hi);
+        let b = (k..e).find(|&b| {
+            matches!(
+                self.text(b),
+                "BOX" | "BX" | "CPO" | "UPO" | "CPU" | "UNX" | "UNY" | "CMB" | "CB"
+            )
+        })?;
+        let word = |i: usize| {
+            let t = self.text(i);
+            (2..=12).contains(&t.len()) && t.bytes().all(|c| c.is_ascii_alphabetic())
+        };
+        let plain = |i: usize| {
+            word(i)
+                && lex.special(self.text(i)).is_none()
+                && lex.unit(self.text(i)).is_none()
+                && lex.highway(self.text(i)).is_none()
+                && lex.directional(self.text(i)).is_none()
+        };
+        // `PO BOX`, `LOCK BOX`, `FIRM CALLER`: the usual box words are not school codes.
+        if longest_at(self.toks, k, e, |s| lex.special(s)).is_some_and(|(_, w)| k + w > b) {
+            return None;
+        }
+        let lead = b - k;
+        let box_word = matches!(self.text(b), "BOX" | "BX");
+        let campus = lead == 1 && self.text(k) == "CAMPUS" && box_word;
+        let ok = if box_word {
+            campus || (lead == 1 && plain(k) && lex.suffix(self.text(k)).is_none())
+        } else {
+            lead <= 3 && (k..b).all(plain)
+        };
+        if !ok {
+            return None;
+        }
+        let (v, hash) = self.value_at(b + 1, e)?;
+        if !has_digit(self.text(v)) {
+            return None;
+        }
+        let code = match e - v - 1 {
+            0 => None,
+            1 if plain(v + 1) && lex.suffix(self.text(v + 1)).is_none() => Some(v + 1),
+            _ => return None,
+        };
+        let mut tags = Vec::new();
+        if lead > 0 && !campus {
+            tags.push((k..b, Tag::Attention));
+        }
+        tags.push((if campus { k..b + 1 } else { b..b + 1 }, Tag::PoBox));
+        if hash {
+            tags.push((v - 1..v, Tag::Skip));
+        }
+        tags.push((v..v + 1, Tag::PoBoxNumber));
+        if let Some(c) = code {
+            tags.push((c..c + 1, Tag::Attention));
+        }
+        Some(SpecialMatch {
+            tags,
+            end: code.map_or(v + 1, |c| c + 1),
+            units: false,
+        })
+    }
+
     fn box_line(&self, k: usize, hi: usize, bare: bool) -> Option<SpecialMatch> {
+        if let Some(m) = self.campus_box(k, hi) {
+            return Some(m);
+        }
         let (l, w) = longest_at(self.toks, k, hi, |s| self.lex.special(s))?;
         if !(l.value == Special::PoBox || bare && l.value == Special::Box) {
             return None;
@@ -1713,6 +1790,9 @@ impl Tagger<'_> {
 
     /// Match a special delivery line starting at `lo`, without tagging.
     fn match_special(&self, lo: usize, hi: usize) -> Option<SpecialMatch> {
+        if let Some(m) = self.campus_box(lo, hi) {
+            return Some(m);
+        }
         let lex = self.lex;
         let special = longest_at(self.toks, lo, hi, |s| lex.special(s));
         let mut tags = Vec::new();
