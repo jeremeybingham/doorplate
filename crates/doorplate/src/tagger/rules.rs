@@ -914,6 +914,73 @@ impl Tagger<'_> {
         }
     }
 
+    /// Words only on line 2 under a street (`120 OAK BLVD` / `SPOTTS FAIN PC`, `JANE ROE`)
+    /// are the care-of or name line, not text left unplaced (#350): two to four plain words,
+    /// or up to seven with an `&` or a business word. Not a name: a digit, a street suffix
+    /// word (unless the line is marked as a firm and does not end in one), a unit designator, highway, box or placeholder word, a unit or government word
+    /// (`STORE`, `TOWNSHIP OF`), a place name, words that only repeat line 1.
+    pub(super) fn claim_name_after_street(&mut self, l1: &Range<usize>, l2: &Range<usize>) {
+        let lex = self.lex;
+        let first = &self.tags[l1.clone()];
+        let street = first.contains(&Tag::StreetNumber)
+            && first.contains(&Tag::Name)
+            && !first.contains(&Tag::PoBox);
+        let free = l2
+            .clone()
+            .all(|k| matches!(self.tags[k], Tag::Untagged | Tag::Unparsed) && !self.toks[k].paren);
+        let one_seg = l2
+            .clone()
+            .all(|k| self.toks[k].seg == self.toks[l2.start].seg);
+        if !street || l2.is_empty() || l2.len() > 8 || !free || !one_seg {
+            return;
+        }
+        let mut words = 0;
+        let mut marked = false;
+        let mut suffix_word = false;
+        for k in l2.clone() {
+            let t = self.text(k);
+            if t == "&" || t == "AND" {
+                marked = true;
+                continue;
+            }
+            let plain = t
+                .chars()
+                .all(|c| c.is_alphabetic() || matches!(c, '.' | '\'' | '-'))
+                && t.chars().filter(|c| c.is_alphabetic()).count() >= 2;
+            if !plain
+                || lex.unit(t).is_some()
+                || lex.highway(t).is_some()
+                || lex.special(t).is_some()
+                || lex.is_placeholder(t)
+                || lex.is_line2_non_name(t)
+            {
+                return;
+            }
+            marked |= lex.is_business_word(t);
+            words += 1;
+            suffix_word |= lex.suffix(t).is_some();
+        }
+        // A street suffix word keeps the text unparsed (`MAPLE PARK TRAIL` may say where the
+        // street is), unless the line is marked as a firm (`HARBOR & PINE`) and does not end in one.
+        if suffix_word && (!marked || lex.suffix(self.text(l2.end - 1)).is_some()) {
+            return;
+        }
+        let text = join(&self.toks[l2.clone()]);
+        let repeat = l2.clone().all(|k| {
+            (l1.clone()).any(|j| self.toks[j].text == self.toks[k].text)
+                || matches!(self.text(k), "&" | "AND")
+        });
+        if words < 2
+            || (words > 4 && !marked)
+            || repeat
+            || lex.is_placeholder(&text)
+            || lex.is_place(&text)
+        {
+            return;
+        }
+        self.set(l2.clone(), Tag::Attention);
+    }
+
     /// A lone directional on line 2 that `tag_fields` kept out of the street
     /// (#170) is the unit, with no designator, as a bare letter is.
     pub(super) fn claim_lone_direction(&mut self, r: &Range<usize>, lone: bool) {
