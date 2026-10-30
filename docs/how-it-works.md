@@ -107,7 +107,7 @@ Warnings have a stable snake_case `code()` meant for a database column:
 `multiple_addresses`, `dual_address`, `possibly_truncated`, `missing_unit_number`,
 `non_standard_abbreviation`, `missing_city`, `missing_state`, `unknown_state`,
 `missing_zip`, `invalid_zip`, `zip_city_mismatch`, `default_state_applied`,
-`repeated_label`, `country_ignored`, `intersection_detected`, `second_line_skipped`,
+`repeated_label`, `country_ignored`, `non_us_address`, `intersection_detected`, `second_line_skipped`,
 `second_line_in_street`, `second_line_building`, `repeated_text`, `zip_repaired`, `ambiguous_number_letter` and `city_is_county`. A warning is a
 finding about the parse, not a statement that the address is wrong. What each one tells you, and how
 often rows that carry it disagree with labeled data: [`warnings.md`](warnings.md).
