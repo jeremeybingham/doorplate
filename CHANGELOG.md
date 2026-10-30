@@ -17,6 +17,8 @@ change to what an input produces needs a new key version.
 
 ### Changed (key-affecting, held for the `k4`)
 
+- **A `#` right before a unit designator marks that unit** (#340): `410 ELM ST # APT-4`, `#APT-18` and `# APT 4` give the unit `APT` and its value; before, the `#` was read as a first unit with no number (`missing_unit_number`) and the real unit became the second unit. Only a `#` directly before a designator that has its value; `#4`, `APT #4`, `#APT4`, `PO BOX #12` and `APT 4 # B` are unchanged. 7,192 rows change in 36,920,703 rows of seven sources (NC voter 6,984, carrier census 123, NY corporations 82, amateur radio 3; IRS, Netsyms and NAD 0): 7,185 unit-level keys, and **52 property-level keys** (a street that had swallowed its suffix and unit into the name: NC voter 44, NY corporations 4, carrier census 3, amateur radio 1); 7,189 rows lose `missing_unit_number`.
+
 - **`PO BOX` with no number at the end of a street line is left unparsed** (#301): `90 NE 5 AVE PO BOX` is the street `5 AVE` with `PO BOX` unparsed (`unparsed_remainder`); before, the street name was `5 AVE PO BOX` with no warning. 266 keys change in 36,920,000 rows of seven sources (carrier census 204, IRS 36, NY corporations 12, amateur radio 9, NC voter 5; NAD and Netsyms 0).
 
 - **A bare `BOX` after a unit is the PO Box** (#300): `4920 W RIDGE ROAD STE 105 BOX 121` is street, unit `STE 105` and PO Box `121` with `dual_address`; before, the street name was `RIDGE ROAD STE 105 BOX 121` (`possibly_truncated`), or the box was lost. 356 keys change in 36,920,000 rows of seven sources (carrier census 250, IRS 46, amateur radio 33, NY corporations 22, NC voter 5; NAD and Netsyms 0).
