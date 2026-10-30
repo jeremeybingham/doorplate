@@ -64,6 +64,7 @@ Every parsing bug fixed gets a case here (`CONTRIBUTING.md`).
   `ub-` (a bare BOX after a unit, `unit-then-box.jsonl`),
   `nb-` (PO BOX with no number at the end of a street, `bare-po-box.jsonl`),
   `nm-` (words only on line 2 under a PO Box, `name-after-box.jsonl`),
+  `hu-` (a `#` before a unit designator, `hash-before-designator.jsonl`),
   `nat-` (shapes found in a national address database, `national-data.jsonl`);
   `us-roundtrip-001` in `regressions.jsonl` came from the USPS round trip.
 - Exactly one input form:
@@ -409,3 +410,7 @@ are one street (`LAND AND SEA RD`, `BEACH AT SEA DR`, `STATE AND MAIN ST`,
 Ids `tg-001` to `tg-008`. Cases with `address_type`, `tag` and `tag_repeated`:
 one per address shape (street, PO Box, rural route, military, general delivery,
 dual, unknown) and a repeated label (two units).
+
+### `hash-before-designator.jsonl`
+
+Ids `hu-001` to `hu-009` (#340). A `#` right before a unit designator and its value marks that unit (`# APT-4`, `#APT-18`, `# APT 4`, on line 1, line 2 and in one-line input; two units with the second written `# APT 4`); and the cases that keep their reading (`#4`, `APT #4`, `APT 4 # B`).
