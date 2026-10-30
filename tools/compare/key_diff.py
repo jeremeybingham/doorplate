@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """The row-by-row key comparison between two doorplate builds (docs/backlog.md, "The comparison").
 
-Run `dump` once per build, each in the environment that has that build installed, then `diff`:
+Run `dump` once per build (or `dump-all --out DIR [--unit]` for every file in `local-data/keycompare/sources.txt`), each in the environment that has that build installed, then `diff`:
 
     python tools/compare/key_diff.py dump local-data/irs-eo-bmf-2026/records.parquet --out local-data/keycompare/v031
     python tools/compare/key_diff.py diff local-data/keycompare/v031 local-data/keycompare/dev
@@ -27,6 +27,7 @@ import argparse
 import json
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -183,6 +184,15 @@ def diff(args):
     return 1 if total_changed else 0
 
 
+def dump_all(args):
+    """`dump` for every records file listed in the sources file, one after the other (about 7 minutes for the seven)."""
+    paths = [l.strip() for l in Path(args.sources).read_text().splitlines() if l.strip() and not l.startswith("#")]
+    for path in paths:
+        print(f"start {path} {time.strftime('%H:%M:%S')}", flush=True)
+        dump(argparse.Namespace(records=path, out=args.out, name=None, unit=args.unit))
+    print(f"all done {time.strftime('%H:%M:%S')}", flush=True)
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -192,12 +202,18 @@ def main():
     d.add_argument("--name", help="file name for the source (default: the records' source column)")
     d.add_argument("--unit", action="store_true",
                    help="also write the unit-level key and the unit fields (for a rule that moves or reads a unit)")
+    a = sub.add_parser("dump-all", help="dump every records file in the sources file")
+    a.add_argument("--out", required=True)
+    a.add_argument("--sources", default=str(ROOT / "local-data/keycompare/sources.txt"))
+    a.add_argument("--unit", action="store_true", help="as for dump")
     f = sub.add_parser("diff", help="compare two dump directories")
     f.add_argument("a")
     f.add_argument("b")
     args = ap.parse_args()
     if args.cmd == "dump":
         dump(args)
+    elif args.cmd == "dump-all":
+        dump_all(args)
     else:
         sys.exit(diff(args))
 
