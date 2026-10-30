@@ -65,6 +65,7 @@ Every parsing bug fixed gets a case here (`CONTRIBUTING.md`).
   `nb-` (PO BOX with no number at the end of a street, `bare-po-box.jsonl`),
   `nm-` (words only on line 2 under a PO Box, `name-after-box.jsonl`),
   `hu-` (a `#` before a unit designator, `hash-before-designator.jsonl`),
+  `pn-` (`PO 5530`, a PO word with no `BOX`, `po-no-box.jsonl`),
   `nu-` (the number word `NO`/`NUM` before a unit or box value, `number-word.jsonl`),
   `nat-` (shapes found in a national address database, `national-data.jsonl`);
   `us-roundtrip-001` in `regressions.jsonl` came from the USPS round trip.
@@ -419,3 +420,7 @@ Ids `hu-001` to `hu-009` (#340). A `#` right before a unit designator and its va
 ### `number-word.jsonl`
 
 Ids `nu-001` to `nu-011` (#293). `NO.9` and `NUM.12` (a period, no space) read as the value, as `APT.9` does; the marker still counts with a second unit after it; the number word after `PO BOX` is dropped; and the guards that keep their reading (`NO 9` with no street suffix, `NO` as north).
+
+### `po-no-box.jsonl`
+
+Ids `pn-001` to `pn-006` (#305). `PO`, `P O` and `P.O.` with a number (or `#` and a number) that ends the line are a PO Box; and the cases that keep their reading (`PO RD 5`, `PO 12 MAIN ST`).

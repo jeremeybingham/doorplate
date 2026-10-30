@@ -1662,6 +1662,29 @@ impl Tagger<'_> {
             }
         }
 
+        // `PO 5530`, `P O 214`: a bare PO word and a number that ends the line
+        // is a PO Box (#305). `PO RD 5` and `PO 12 MAIN ST` have more after.
+        for w in [1, 2] {
+            if lo + w < hi
+                && self.lex.is_bare_box_word(&join(&self.toks[lo..lo + w]))
+                && self.toks[lo..lo + w]
+                    .iter()
+                    .all(|t| t.seg == self.toks[lo].seg)
+            {
+                if let Some((v, hash)) = self.value_at(lo + w, hi) {
+                    if v + 1 == hi && all_digits(self.text(v)) {
+                        tags.push((lo..lo + w, Tag::PoBox));
+                        value(&mut tags, v, hash, Tag::PoBoxNumber);
+                        return Some(SpecialMatch {
+                            tags,
+                            end: hi,
+                            units: false,
+                        });
+                    }
+                }
+            }
+        }
+
         // Pub 28 sections 238.1 and 239: TYPE ## BOX ##.
         let (_, w) = longest_at(self.toks, lo, hi, |s| lex.military(s))?;
         let (num, hash) = self.value_at(lo + w, hi)?;
