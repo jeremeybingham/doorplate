@@ -142,7 +142,74 @@ pub(crate) fn tokenize(
     }
     join_split_grid_number(&mut out, lex);
     join_directional_comma(&mut out, lex);
+    drop_unit_separators(&mut out, lex);
     out
+}
+
+/// The hyphen's index in `STREET-SUITE`: a street suffix, one hyphen, a unit designator, both
+/// Pub 28 spellings (#308).
+fn suffix_hyphen_designator(t: &str, lex: &Lexicons) -> Option<usize> {
+    let (left, right) = t.split_once('-')?;
+    let word = |w: &str| w.len() >= 2 && w.bytes().all(|c| c.is_ascii_alphabetic());
+    let suffix = lex
+        .suffix(left)
+        .is_some_and(|l| l.kind != MatchKind::Observed);
+    let designator = lex
+        .unit(right)
+        .is_some_and(|l| l.kind != MatchKind::Observed);
+    (word(left) && word(right) && suffix && designator).then_some(left.len())
+}
+
+/// The slash's index in `ST/`, `ROAD/APT`, `ST/36`: a street suffix, then a slash (#308).
+fn suffix_slash(t: &str, after: &[&str], lex: &Lexicons) -> Option<usize> {
+    let (left, right) = t.split_once('/')?;
+    // What follows the slash: the rest of this token, else the next word.
+    let next = if right.is_empty() {
+        after.first().copied()?
+    } else {
+        right
+    };
+    if !unit_like(next.trim_matches(|c: char| !c.is_alphanumeric()), lex) {
+        return None;
+    }
+    let word = left.len() >= 2 && left.bytes().all(|c| c.is_ascii_alphabetic());
+    let suffix = lex
+        .suffix(left)
+        .is_some_and(|l| l.kind != MatchKind::Observed);
+    (word && suffix && !right.contains('/')).then_some(left.len())
+}
+
+/// A word that can start a unit after a separator: a unit designator, a box word, or a value
+/// with a digit that is not an ordinal (`36`, `3A`, `2624`; not `1ST`) (#308).
+fn unit_like(w: &str, lex: &Lexicons) -> bool {
+    lex.unit(w).is_some_and(|l| l.kind != MatchKind::Observed)
+        || lex.is_bare_box_word(w)
+        || lex
+            .special(w)
+            .is_some_and(|l| matches!(l.value, Special::Box | Special::PoBox))
+        || (w.bytes().any(|c| c.is_ascii_digit()) && !is_ordinal(w))
+}
+
+/// A dash or slash between a street suffix and a unit is a separator (`ST - 2210`, `ST / APT 4C`,
+/// `ROAD / PO BOX 5`): the token is dropped, and what follows reads as a unit or a box. Only
+/// when what follows is a unit designator, a box word, or a value with a digit that is not an
+/// ordinal (`ST/1ST AVE` is two streets, `- 6TH FLOOR` already works) (#308).
+fn drop_unit_separators(out: &mut Vec<Token>, lex: &Lexicons) {
+    let mut k = 1;
+    while k + 1 < out.len() {
+        let (prev, sep, next) = (&out[k - 1], &out[k], &out[k + 1]);
+        let separator = sep.text == "-" || sep.text == "/";
+        let after_suffix = prev.seg == sep.seg
+            && lex
+                .suffix(&prev.text)
+                .is_some_and(|l| l.kind != MatchKind::Observed);
+        let unit_next = unit_like(&next.text, lex);
+        if separator && after_suffix && next.seg == sep.seg && unit_next {
+            out.remove(k);
+        } else {
+            k += 1;
+        }
+    }
 }
 
 /// The hyphen of `1174-1/2`: digits, a hyphen, then a fraction.
@@ -343,6 +410,21 @@ impl Piece<'_> {
         if let Some(cut) = route_hyphen(t, lex) {
             self.emit(t[..cut].to_string(), s2, s2 + cut, paren);
             self.emit(t[cut + 1..].to_string(), s2 + cut + 1, e2, paren);
+            return;
+        }
+        // `STREET-SUITE 303`, `CT-UNIT 4`: a street suffix, a hyphen glued to a unit
+        // designator (#308). The pieces are words of their own.
+        if let Some(cut) = suffix_hyphen_designator(t, lex) {
+            self.emit(t[..cut].to_string(), s2, s2 + cut, paren);
+            self.sub(s2 + cut + 1, e2, pa, pb, paren, next_numeric, lex);
+            return;
+        }
+        // `ST/ 36`, `ROAD/APT 7L`: a street suffix glued to a slash. The slash is a token of
+        // its own, dropped later when a unit follows (`drop_unit_separators`).
+        if let Some(cut) = suffix_slash(t, self.after, lex) {
+            self.emit(t[..cut].to_string(), s2, s2 + cut, paren);
+            self.emit("/".to_string(), s2 + cut, s2 + cut + 1, paren);
+            self.sub(s2 + cut + 1, e2, pa, pb, paren, next_numeric, lex);
             return;
         }
         // A unit designator joined to its value by punctuation: `APT.1285`,
