@@ -118,6 +118,7 @@
     <button data-v="unclear">I can't tell<kbd>5</kbd></button>
     <button data-v="junk">Not an address<kbd>6</kbd></button>
     <button data-v="dual">Dual or multiple address<kbd>9</kbd></button>
+    <button data-v="insufficient" title="Some valid parts, but too much wrong or extra text to put together one door">Not enough for a door<kbd>i</kbd></button>
     <button data-v="noise">Source noise<kbd>7</kbd></button>
     <button data-v="skip">Skip<kbd>8</kbd></button>
   </div>
@@ -128,6 +129,7 @@
     <button data-v="unclear">I can't tell<kbd>4</kbd></button>
     <button data-v="junk">Not an address<kbd>5</kbd></button>
     <button data-v="dual">Dual or multiple address<kbd>8</kbd></button>
+    <button data-v="insufficient" title="Some valid parts, but too much wrong or extra text to put together one door">Not enough for a door<kbd>i</kbd></button>
     <button data-v="noise">Source noise<kbd>6</kbd></button>
     <button data-v="skip">Skip<kbd>7</kbd></button>
   </div>
@@ -138,7 +140,7 @@
   <p class="muted"><b>Parse right, warning fair</b>: the components are correct and the warning rightly flags something doubtful (a true range of numbers, a cut-off line).
   <b>Parse right, warning is noise</b>: the components are correct and there is nothing to flag. <b>Save correction</b>: it is wrong, and the string above is a better one.
   <b>I can't tell</b>: wrong, and I don't know what it should be. <b>Not an address</b>: a name, a placeholder, a number.
-  <b>Source noise</b>: the source cut it off or mangled it. <b>Dual or multiple address</b>: the row holds two addresses (a street and a PO Box, or several), which is not the same as not being an address.</p>
+  <b>Source noise</b>: the source cut it off or mangled it. <b>Dual or multiple address</b>: the row holds two addresses (a street and a PO Box, or several), which is not the same as not being an address. <b>Not enough for a door</b>: some valid address parts, but too much wrong or extra text to put together one coherent door (for example, a map lookup shows an address you could not reach from what the row says).</p>
 </div>
 
 <script src="/helpers.js"></script>
@@ -382,6 +384,7 @@
       : { "1": ["right", "fair"], "2": ["right", "noise"], "3": ["corrected"], "4": ["unclear"], "5": ["junk"],
           "6": ["noise"], "7": ["skip"], "8": ["dual"] })[e.key];
     if (v) { e.preventDefault(); send(v[0], v[1], v[2], v[3]); }
+    else if (e.key === "i") send("insufficient");
     else if (e.key === "u") undo();
     else if (e.key === "]") { e.preventDefault(); move(1); }
     else if (e.key === "[") { e.preventDefault(); move(-1); }

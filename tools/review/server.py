@@ -15,6 +15,9 @@ For each row the page shows the parse and the warnings, and you choose a verdict
 - `unclear`: wrong, and I can't tell what it should be;
 - `junk`: not an address (a name, a placeholder, a phone number);
 - `dual`: the row holds a dual or multiple address (a street and a PO Box, or several), which is not the same signal as `junk`;
+- `insufficient`: some valid address parts, but wrong, extra or odd text around them, and not enough to put together one coherent door
+  (checked, for example, by looking the row up on a map: the real address is not one you could reach from what the row says). Different from
+  `junk` (no address at all), `noise` (cut off or mangled by the source) and `unclear` (wrong, and the reviewer can't tell the fix);
 - `noise`: the source cut it off or mangled it;
 - `skip`: not now;
 - `labeled`: the parts of the one-line string, marked by the person (`labels`: `[{start, end, component}]` over
@@ -31,7 +34,7 @@ parse is right"; send `unchanged_ok` to keep it). The page asks first.
 A comparison queue (`tools/review/compare_sample.py`, issue #132) shows doorplate's parse beside
 usaddress's, and the verdicts are `doorplate_right`, `usaddress_right`, `both_right` (a different
 convention, both fine), `both_wrong` (with a corrected string, as for `corrected`), and the
-`unclear`, `junk`, `dual`, `noise` and `skip` above. `usaddress_right` can also carry a corrected string (the button
+`unclear`, `junk`, `dual`, `insufficient`, `noise` and `skip` above. `usaddress_right` can also carry a corrected string (the button
 "usaddress right + save correction", key `0`): usaddress's reading was right and there is a better string for doorplate; it is kept as
 `corrected` and the verdict is still scored as `usaddress_right`.
 
@@ -66,7 +69,7 @@ BUILD_WASM = "cargo build -p doorplate-wasm --target wasm32-unknown-unknown --re
 # What the WebAssembly build is made from: a file here newer than the build means the page parses with an older parser (#246).
 SOURCES = (ROOT / "crates" / "doorplate" / "src", ROOT / "crates" / "doorplate" / "data", ROOT / "crates" / "doorplate-wasm" / "src",
            ROOT / "crates" / "doorplate" / "Cargo.toml", ROOT / "crates" / "doorplate-wasm" / "Cargo.toml")
-VERDICTS = ("right", "corrected", "unclear", "junk", "dual", "noise", "skip", "labeled")
+VERDICTS = ("right", "corrected", "unclear", "junk", "dual", "insufficient", "noise", "skip", "labeled")
 COMPONENTS = ("StreetNumber", "StreetDirPrefix", "StreetName", "StreetSuffix", "StreetDirSuffix", "Highway", "UnitType",
               "UnitNumber", "SecondUnitType", "SecondUnitNumber", "PoBox", "RuralRoute", "GeneralDelivery", "Military",
               "MilitaryPostOffice", "Attention", "Building", "City", "State", "Zip5", "Zip4", "Unparsed")  # the page's names
