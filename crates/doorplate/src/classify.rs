@@ -155,6 +155,25 @@ pub(crate) fn house_number(t: &str) -> Option<NumberShape> {
     if rest.len() == 1 && rest.bytes().all(|c| c.is_ascii_alphabetic()) {
         return Some(NumberShape::Plain);
     }
+    // `53A-53`, `166A-166`, `53A-53A`: the Massachusetts form with a letter before
+    // the hyphen (#326), read like the numbers it ranges over.
+    if let Some(tail) = rest
+        .strip_prefix(|c: char| c.is_ascii_alphabetic())
+        .and_then(|r| r.strip_prefix('-'))
+    {
+        let e = tail.bytes().take_while(u8::is_ascii_digit).count();
+        let last = &tail[e..];
+        if e > 0
+            && (last.is_empty() || last.len() == 1 && last.bytes().all(|c| c.is_ascii_alphabetic()))
+        {
+            let range = e == d && tail[..e] > t[..d];
+            return Some(if range {
+                NumberShape::Range
+            } else {
+                NumberShape::Plain
+            });
+        }
+    }
     let after = rest.strip_prefix('-')?;
     if all_digits(after) {
         // `1204-1206` is a range; `112-10` and `289-01` are one hyphenated
@@ -404,7 +423,12 @@ mod tests {
         assert_eq!(house_number("12-34A"), Some(NumberShape::Plain));
         assert_eq!(house_number("1204-1206A"), Some(NumberShape::Plain));
         assert_eq!(house_number("12-34AB"), None);
-        assert_eq!(house_number("12A-34"), None);
+        // A letter before the hyphen (#326): the same shapes, the range test on the digits.
+        assert_eq!(house_number("53A-53"), Some(NumberShape::Plain));
+        assert_eq!(house_number("166A-166"), Some(NumberShape::Plain));
+        assert_eq!(house_number("53A-53A"), Some(NumberShape::Plain));
+        assert_eq!(house_number("12A-34"), Some(NumberShape::Range));
+        assert_eq!(house_number("12AB-34"), None);
         assert_eq!(house_number("12-34-5A"), None);
         assert_eq!(house_number("1204-1206"), Some(NumberShape::Range));
         let lex = Lexicons::builtin();
