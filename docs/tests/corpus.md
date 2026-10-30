@@ -65,6 +65,7 @@ Every parsing bug fixed gets a case here (`CONTRIBUTING.md`).
   `nb-` (PO BOX with no number at the end of a street, `bare-po-box.jsonl`),
   `nm-` (words only on line 2 under a PO Box, `name-after-box.jsonl`),
   `hu-` (a `#` before a unit designator, `hash-before-designator.jsonl`),
+  `sep-` (a dash or slash between a suffix and a unit, `unit-separator.jsonl`),
   `rp-` (a phrase written twice, the copy dropped, `repeated-tail.jsonl`),
   `fa-` (a non-US country ends the unplaced text, `non-us-address.jsonl`),
   `an-` (words on line 2 under a street are the attention line, `line2-attention.jsonl`),
@@ -449,3 +450,7 @@ Ids `fa-001` to `fa-008` (#361). A foreign address (Ireland, Canada, Germany, th
 ### `repeated-tail.jsonl`
 
 Ids `rp-001` to `rp-007` (#236). A street, a unit or both written twice, the copy ending line 1 (`260 KEARSING PKWY KEARSING PKWY`), is read once with `repeated_text`; and the cases that keep their reading (a one-word repeat, a street that shares its name with the city).
+
+### `unit-separator.jsonl`
+
+Ids `sep-001` to `sep-010` (#308). A tight hyphen glued to a designator, a slash, and a spaced hyphen then a bare number or digit-letter between a street suffix and a unit are separators; a slash before a PO Box gives the street and the box; and the cases that keep their reading (an ordinal floor after a hyphen, a slash between two streets, a word after the hyphen).
