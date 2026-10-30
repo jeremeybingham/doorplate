@@ -308,8 +308,8 @@ words = [
 [placeholder]
 # Whole-line stand-ins meaning "no usable street address". Matched against the
 # normalized street line, optionally after a leading run of zeros ("0 UNKNOWN",
-# "00 UNASSIGNED LOCATION RE"). Seen in Florida county data; the phrases are
-# generic assessor wording.
+# "00 UNASSIGNED LOCATION RE"). Seen in Florida county data (the phrases are
+# generic assessor wording) and in registry data (`NO STREET ADDRESS`, #273).
 phrases = [
   "UNKNOWN",
   "PROPERTY ADDRESS UNKNOWN",
@@ -331,6 +331,30 @@ phrases = [
   # Database no-data markers (a national address database: issue #51).
   "NULL",
   "NONE",
+  # Registry entries with no street (carrier census, state corporation registries):
+  # the spellings seen at 15 or more rows (issue #273).
+  "NO STREET ADDRESS",
+  "NO STREET ADDRESS GIVEN",
+  "NO STREET ADDRESS STATED",
+  "NO STREET ADD",
+  "NO STREET ADD GIVEN",
+  "NO STREET ADD STATED",
+  "NO ST ADD",
+  "NO ST ADD GIVEN",
+  "NO ST ADD STATED",
+  "NO STREET ADDR",
+  "NO STREET ADDR GIVEN",
+  "NO ADDRESS GIVEN",
+  "NO ADDRESS STATED",
+  "NO ADDRESS ON FILE",
+  "NO ADDRESS PROVIDED",
+  "ADDRESS UNKNOWN",
+  "STREET ADDRESS UNKNOWN",
+  "NOT KNOWN",
+  "NOT STATED",
+  "NOT GIVEN",
+  "SAME",
+  "SAME AS ABOVE",
 ]
 
 [area]
