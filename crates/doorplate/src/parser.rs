@@ -7,7 +7,7 @@ use std::fmt;
 
 use crate::assemble::assemble;
 use crate::clean::clean;
-use crate::country::strip_trailing;
+use crate::country::{foreign_address, strip_trailing};
 use crate::input::Fields;
 use crate::intersection;
 use crate::layer::CustomLayer;
@@ -191,6 +191,9 @@ impl Parser {
         if country {
             addr.diagnostics.warn(Warning::CountryIgnored);
         }
+        if foreign_address(&addr, &self.lex) {
+            addr.diagnostics.warn(Warning::NonUsAddress);
+        }
         if cut.is_some() {
             addr.diagnostics.warn(Warning::IntersectionDetected);
         }
@@ -277,6 +280,9 @@ impl Parser {
         addr.diagnostics.custom_layer = self.lex.layer();
         if country {
             addr.diagnostics.warn(Warning::CountryIgnored);
+        }
+        if foreign_address(&addr, &self.lex) {
+            addr.diagnostics.warn(Warning::NonUsAddress);
         }
         if cut.is_some() {
             addr.diagnostics.warn(Warning::IntersectionDetected);
