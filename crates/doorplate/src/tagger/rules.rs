@@ -1979,7 +1979,8 @@ impl Tagger<'_> {
     /// words after the suffix (a postdirectional, a unit). Not when the first
     /// name word makes a numbered street of it (`ONE MILE RD`, `THREE FORKS
     /// RD`, from `[numbered_street]`) or is a unit designator or a highway
-    /// prefix (#129).
+    /// prefix (#129). A singular suffix word may start the name (`ONE PARK AVE`,
+    /// #221), and so may an ordinal after a direction (`TWO WEST 47TH ST`).
     fn spelled_house_number(&self, lo: usize, hi: usize) -> bool {
         let lex = self.lex;
         if spelled_number(self.text(lo)).is_none() || hi < lo + 3 {
@@ -1988,15 +1989,29 @@ impl Tagger<'_> {
         let e = self.seg_end(lo, hi);
         let dir = longest_at(self.toks, lo + 1, e, |s| lex.directional(s)).map_or(0, |(_, w)| w);
         let n0 = lo + 1 + dir;
+        // `ONE WEST ST`: a spelled compass word is the street's name (#325).
+        if dir > 0
+            && n0 + 1 == e
+            && matches!(self.text(lo + 1), "NORTH" | "SOUTH" | "EAST" | "WEST")
+            && lex.suffix(self.text(n0)).is_some()
+        {
+            return true;
+        }
         if n0 + 1 >= e {
             return false;
         }
         let first = self.text(n0);
+        // A suffix word that is not a plural (`ONE PARK AVE`, `TWO WALL ST`) can be
+        // the name of a building's street; a plural (`SEVEN SPRINGS RD`) is a
+        // street name; so is an ordinal after a number that is not a direction's.
+        let plural = first.ends_with('S') && !first.ends_with("SS");
+        let suffix_name = lex.suffix(first).is_some() && !plural;
+        let ordinal_after_dir = dir > 0 && is_ordinal(first);
         if lex.is_numbered_street_word(first)
             || lex.unit(first).is_some()
             || lex.highway(first).is_some()
-            || lex.suffix(first).is_some()
-            || has_digit(first)
+            || (lex.suffix(first).is_some() && !suffix_name)
+            || (has_digit(first) && !ordinal_after_dir)
         {
             return false;
         }
