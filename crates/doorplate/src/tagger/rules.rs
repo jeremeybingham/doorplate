@@ -1072,6 +1072,7 @@ impl Tagger<'_> {
                 return self.delivery(lo, lo + half);
             }
         }
+        let hi = self.drop_repeated_tail(lo, hi);
         let hi = self.building(lo, hi);
         if lo >= hi || self.dual(lo, hi) || self.stray_box(lo, hi) || self.special_line(lo, hi) {
             return;
@@ -1138,6 +1139,36 @@ impl Tagger<'_> {
         }
         self.set(lo..e, Tag::Attention);
         e
+    }
+
+    /// A phrase of two or more words written twice, the copy ending the line: `260 KEARSING PKWY
+    /// KEARSING PKWY`, `867 MIDDLEBROOK AVE BLDG B STE 500 BLDG B STE 500`, `SNOWSHOE WAY UNIT 113
+    /// SNOWSHOE WAY` (#236). The copy is dropped, with `repeated_text`. The phrase holds a street
+    /// suffix, a unit designator or a digit (so it is a street or a unit, not a place name
+    /// that comes twice), and both copies are in one comma segment. Returns the new end.
+    fn drop_repeated_tail(&mut self, lo: usize, hi: usize) -> usize {
+        let seg = |k: usize| self.toks[k].seg;
+        for n in (2..=(hi.saturating_sub(lo)) / 2).rev() {
+            let j = hi - n;
+            if (j..hi).any(|k| seg(k) != seg(j)) {
+                continue;
+            }
+            for i in lo..=j - n {
+                if (i..i + n).any(|k| seg(k) != seg(i) || self.text(k) != self.text(k + (j - i))) {
+                    continue;
+                }
+                let street_like = (i..i + n).any(|k| {
+                    let t = self.text(k);
+                    has_digit(t) || self.lex.suffix(t).is_some() || self.lex.unit(t).is_some()
+                });
+                if street_like {
+                    self.set(j..hi, Tag::Skip);
+                    self.repeated();
+                    return j;
+                }
+            }
+        }
+        hi
     }
 
     /// A cut-off copy of the address ahead of the whole address, as some
