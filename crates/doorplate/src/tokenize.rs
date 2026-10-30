@@ -457,7 +457,7 @@ fn word_period(t: &str) -> Option<usize> {
 
 /// The index of the punctuation in `APT.1285`, `STE.200`, `APT:201`,
 /// `UNIT-4`, `BOX.2351`: a unit designator or box word, one of `.` `:` `-`,
-/// then the value.
+/// then the value; and `NO.9`, `NUM.12` (the number word, period only).
 fn unit_punct(t: &str, lex: &Lexicons) -> Option<usize> {
     let cut = t.find(['.', ':', '-'])?;
     let (letters, rest) = (&t[..cut], &t[cut + 1..]);
@@ -470,7 +470,9 @@ fn unit_punct(t: &str, lex: &Lexicons) -> Option<usize> {
         && (lex.unit(letters).is_some()
             || lex
                 .special(letters)
-                .is_some_and(|l| matches!(l.value, Special::Box | Special::PoBox)));
+                .is_some_and(|l| matches!(l.value, Special::Box | Special::PoBox))
+            // `NO.9`, `NUM.12`: the number word, with a period only (#293).
+            || (t.as_bytes()[cut] == b'.' && lex.is_number_filler(letters)));
     ok.then_some(cut)
 }
 

@@ -1571,8 +1571,20 @@ impl Tagger<'_> {
                 }
                 // Pub 28 sections 281 and 283.
                 Special::PoBox => {
-                    if let Some((v, hash)) = self.value_at(lo + w, hi) {
+                    // `PO BOX NO 12`, `PO BOX NO.12`: the number word is dropped (#293).
+                    let direct = self.value_at(lo + w, hi);
+                    let filler =
+                        direct.is_none() && lo + w < hi && lex.is_number_filler(self.text(lo + w));
+                    let found = if filler {
+                        self.value_at(lo + w + 1, hi)
+                    } else {
+                        direct
+                    };
+                    if let Some((v, hash)) = found {
                         tags.push((lo..lo + w, Tag::PoBox));
+                        if filler {
+                            tags.push((lo + w..lo + w + 1, Tag::Skip));
+                        }
                         value(&mut tags, v, hash, Tag::PoBoxNumber);
                         return Some(SpecialMatch {
                             tags,
@@ -2553,8 +2565,8 @@ impl Tagger<'_> {
             // "BOX 3300", "NO 65", "NUM 230", "LOC 12" after a street's suffix:
             // a unit written with a word that is not a designator in Pub 28;
             // the word is dropped and the value is a unit with no type (#128).
-            if found.is_empty()
-                && j == hi
+            // With a unit after it (`AVE NO. 9, REAR`) the marker still counts (#293).
+            if found.len() < 2
                 && last > name_lo + 1
                 && has_digit(t)
                 && is_unit_value(t)
