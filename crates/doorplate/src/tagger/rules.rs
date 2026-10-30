@@ -1280,6 +1280,28 @@ impl Tagger<'_> {
                 self.set(k..j, Tag::Attention);
                 return self.attention(j, hi);
             }
+            // "C/O ACME CORP PO BOX 3310", "C/O PO BOX 3310": a box ends the
+            // line, so the name stops before it (#259).
+            // Only when it is the last line: with more lines after it, the care-of
+            // line stands alone and the address follows (`C/O ACME BOX 5` over a street).
+            let boxed = (end == hi)
+                .then(|| {
+                    (k + w..end)
+                        .find(|&m| self.box_line(m, end, true).is_some_and(|b| b.end == end))
+                })
+                .flatten();
+            if let Some(m) = boxed {
+                // A street before the box (`C/O ACME 22 FERNHILL AVE BOX 5`) is
+                // the address, and the box its second line.
+                let stop = self.address_start(k + w, m).unwrap_or(m);
+                let tag = if stop == k + w {
+                    Tag::Skip
+                } else {
+                    Tag::Attention
+                };
+                self.set(k..stop, tag);
+                return (stop, hi);
+            }
         }
         if end == hi {
             // "PO BOX 23181 C/O YMF", or line 2 "ATTN: RYAN ADAIR".
@@ -1311,7 +1333,16 @@ impl Tagger<'_> {
         if j >= e || house_number(self.text(j)).is_none() {
             return false;
         }
-        self.street_to(j, e) || (j + 3..e).any(|k| self.starts_unit(k, e) && self.street_to(j, k))
+        self.street_to(j, e) || (j + 3..e).any(|k| self.unit_tail(k, e) && self.street_to(j, k))
+    }
+
+    /// Whether `k..e` is a unit that ends the line: a designator or `#` with
+    /// its value, a bare value (`AVE 13`, `AVE 3B`) or an ordinal and a floor
+    /// word (`AVE 4TH FL`, #259).
+    fn unit_tail(&self, k: usize, e: usize) -> bool {
+        self.starts_unit(k, e)
+            || (k + 1 == e && has_digit(self.text(k)) && is_unit_value(self.text(k)))
+            || (k + 1 < e && is_ordinal(self.text(k)) && self.starts_unit(k + 1, e))
     }
 
     /// Whether `j..e` is exactly a house number and a street (see

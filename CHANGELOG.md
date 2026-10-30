@@ -17,6 +17,8 @@ change to what an input produces needs a new key version.
 
 ### Changed
 
+- **Care-of text at the front is split from the address when a box or a bare unit ends the line** (#259, held for the `k4`): `C/O DANA QUILL PO BOX 3310` and `C/o Dana Quill BOX 3310` give the box with the name as `attention`, `C/O DANA QUILL 22 FERNHILL AVE 13` (or `3B`, `4TH FL`) gives the street; before, the whole line was the care-of text with key `None` and no warning. Across the seven large sources 1,903 keys change, 1,252 of them IRS. A name with a number and no suffix (`C/O DANA QUILL 22 FERNHILL`) and a name alone are unchanged.
+
 - **A spelled-out house number before a singular suffix word is the house number** (#221, held for the `k4`): `ONE PARK AVE`, `ONE UNION SQ`, `TWO WALL ST` give house number 1 or 2, and `TWO WEST 47TH ST` and `ONE WEST ST` are read the same way; before, the number word stayed in the street name with `missing_street_number`. Plural suffix words (`SEVEN SPRINGS RD`), the numbered streets (`ONE MILE RD`, `FOUR CORNERS RD`) and lines with no suffix at the end (`ONE MARLOW TOWER`) are unchanged. Across the seven large sources 1,722 keys change, 1,469 of them NY corporations.
 
 - **A digit-letter unit (`1A`, `5B`) after a street name with no suffix is the unit** (#324, held for the `k4`): `60 LARKMOOR 1A` is street `LARKMOOR`, unit `1A`; `60 LARKMOOR W 1A` keeps the `W` as the postdirectional. Before, the unit stayed in the street name with no warning. A plain number, a single letter and the `9-9` form are not changed, and neither are state routes (`NY 30A`), county route codes (`SCR 13C`) and grid numbers (`ECR 900N`). Across the seven large sources 1,722 keys change, 1,121 of them NY corporations.
