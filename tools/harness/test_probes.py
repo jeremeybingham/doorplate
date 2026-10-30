@@ -162,3 +162,20 @@ def test_the_no_suffix_unit_probe_leaves_streets_with_a_suffix_and_a_unit_on_lin
     assert "no-suffix-then-bare-unit" not in probes.hits("60 LARKMOOR ST 1A", None, None)
     assert "no-suffix-then-bare-unit" not in probes.hits("12 STATE ROUTE 9", None, None)
     assert "pier-last-word" not in probes.hits("40 PIER ST", None, None)
+
+
+def test_the_queue_pool_is_a_random_pick_not_the_head_of_the_file(tmp_path):
+    duckdb = pytest.importorskip("duckdb")
+    pytest.importorskip("doorplate")
+    p = tmp_path / "records.parquet"
+    values = ",".join(f"('s','a','{i}','640 PINEWOOD BOX {i}',NULL,'MIAMI','FL','33101')" for i in range(1, 401))
+    duckdb.sql(
+        f"copy (select * from (values {values}) t(source, role, record_id, line1, line2, city, state, zip)) to '{p}' (format parquet)"
+    )
+    con = duckdb.connect()
+    _found, _seen, samples = probes.run_source(p, 1, 7, 0, con, keep=20)
+    ids = sorted(int(r["record_id"]) for r in samples["box-after-street"])
+    assert len(ids) == 20
+    assert ids[-1] > 200  # the first 20 in file order would end at 20
+    again = probes.run_source(p, 1, 7, 0, con, keep=20)[2]["box-after-street"]
+    assert [r["record_id"] for r in again] == [r["record_id"] for r in samples["box-after-street"]]  # repeatable
