@@ -24,6 +24,7 @@ address exists or can receive mail.
 
 import argparse
 import json
+import random
 import re
 import sys
 from pathlib import Path
@@ -528,7 +529,10 @@ def run_source(path, sample, seed, compare, con, keep=0):
                 out["compared"] += 1
                 out["disagree"] += int(cmp_string(s, doorplate, usaddress) is not None)
         found[k] = out
-        samples[k] = [dict(zip(names, r)) for r in recs[:keep]]
+        # A random pick of the matches (seeded), not the first `keep` in file order: a file is often sorted, so the head holds
+        # one provider or one county, and a review of it is a review of that corner (queue-probes3 came from 200 consecutive rows).
+        picked = recs if len(recs) <= keep else random.Random(f"{seed}-{k}").sample(recs, keep)
+        samples[k] = [dict(zip(names, r)) for r in picked]
     return found, seen, samples
 
 
