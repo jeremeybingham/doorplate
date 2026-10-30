@@ -65,6 +65,7 @@ Every parsing bug fixed gets a case here (`CONTRIBUTING.md`).
   `nb-` (PO BOX with no number at the end of a street, `bare-po-box.jsonl`),
   `nm-` (words only on line 2 under a PO Box, `name-after-box.jsonl`),
   `hu-` (a `#` before a unit designator, `hash-before-designator.jsonl`),
+  `an-` (words on line 2 under a street are the attention line, `line2-attention.jsonl`),
   `lv-` (level words as units, `level-words.jsonl`),
   `bf-` (a box first, then a street; `PMB` before a PO Box, `box-first.jsonl`),
   `pn-` (`PO 5530`, a PO word with no `BOX`, `po-no-box.jsonl`),
@@ -434,3 +435,7 @@ Ids `lv-001` to `lv-011` (#292). `GROUND`, `GROUND LEVEL`, `MEZZANINE`, `GARAGE`
 ### `box-first.jsonl`
 
 Ids `bf-001` to `bf-006` (#302). `BOX 3310 FERNLEAF RD` is the box with the street left over; `PMB #31 PO BOX 2250` is the box with a `PMB` unit; and the cases that keep their reading (`PMB 31 123 MAIN ST`, a unit after the street).
+
+### `line2-attention.jsonl`
+
+Ids `an-001` to `an-012` (#350). Words only on line 2 under a street are the attention line when they look like a firm or a person (`&`, a business word, an `Att:` lead, two to four plain words); and the cases that stay unparsed (a leading `THE`, a government word, a unit word, a street suffix word, the street repeated, a single word, a place name, a lot or location word). `nm-006` in `name-after-box.jsonl` changed with this rule.

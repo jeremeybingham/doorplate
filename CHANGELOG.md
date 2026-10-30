@@ -15,6 +15,8 @@ change to what an input produces needs a new key version.
 
 ### Changed
 
+- **Words only on line 2 under a street are the attention line when they look like a firm or a person** (#350, **no key change**): `120 OAK BLVD` / `HARBOR & PINE PC`, `JANE ROE`, `FIRST BANK AND TRUST COMPANY` give `attention`; before they were `unparsed_remainder`. Two to four plain words, or up to seven with an `&` or a business word (`LLC`, `PC`, `ASSOCIATES`, `BANK`, `UNIVERSITY`...). Not a name, so the old result stays: a digit, a street suffix word (unless the line is marked as a firm and does not end in one), a unit designator or unit word (`STORE`, `AREA B`, `BARN`, `PRIMARY`), a government, lot, location or level word (`TOWNSHIP OF`, `VACANT PARCEL`, `CONCOURSE LEVEL`), a single word, a place name, or the street repeated. Field form only (`line2`), as for #303; `nm-006` changed from unparsed to attention. 2,999 rows lose `unparsed_remainder` in 36,920,703 rows of seven sources (NY corporations 1,338, Netsyms 733, NAD 449, NC voter 373, IRS 106; amateur radio and carrier census 0); no key changes, no unit key changes, no row gains the warning.
+
 - **Words only on line 2 under a PO Box are the attention line** (#303, **no key change**): `PO BOX 1234` / `JANE ROE` and `PO BOX 12` / `ACME CORP` give `attention`; before they were `unparsed_remainder`. A street suffix word (`ELDER RD`) or a digit keeps the old result. 343 rows lose `unparsed_remainder` in 36,920,000 rows of seven sources (NC voter 168, NY corporations 120, IRS 55); no key changes.
 
 ### Changed (key-affecting, held for the `k4`)
