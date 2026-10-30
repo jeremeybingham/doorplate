@@ -214,6 +214,13 @@ A trailing `USA`, `US` or `UNITED STATES` was dropped, or a street field that wa
 - **Rows in NAD (of 1M):** 66
 - **Measured:** too few rows
 
+### non_us_address
+
+The text left unplaced ends in the name of a country other than the United States (`LYON 69001 FRANCE`, `AJAX ONTARIO L1Z0E4 CANADA`), or, with no state, the country was read as the city (`LYON 69001, FRANCE`). The address is probably foreign and the US reading of it (the city and state fields as given, a street guess) is only that. Nothing is parsed in a foreign format: the text stays in `unparsed`. A US state name is never a country (`NEW MEXICO`), and a name that is also a surname (`FRANCE`, `JORDAN`, `CHINA`) counts only with a digit in the text, such as a postal code (#361).
+
+- **Rows in NAD (of 1M):** 0
+- **Measured:** 9,225 of 36,920,703 rows of the seven large sources: NC voter 7,998 (overseas mailing addresses), IRS 522, carrier census 498, NY corporations 204, Netsyms 2, amateur radio 1. By country: United Kingdom, Germany, Canada, Spain, Japan, France, Australia. Not scored against labeled data (no source labels a foreign address); the NC voter review found 21 of 150 cards were this shape
+
 ### placeholder
 
 The street line is stand-in text (`NO SITUS`); the key is `None`.

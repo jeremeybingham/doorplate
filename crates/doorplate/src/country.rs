@@ -62,3 +62,245 @@ fn ends_with_state(toks: &[Token], lex: &Lexicons) -> bool {
             && toks[n - 2].seg == toks[n - 1].seg
             && lex.state(&format!("{} {last}", toks[n - 2].text)).is_some())
 }
+
+/// Names of countries other than the United States, as written after an address (English names
+/// and common short forms; ISO 3166-1 short names). A foreign address ends in one (#361).
+const FOREIGN: &[&str] = &[
+    "AFGHANISTAN",
+    "ALBANIA",
+    "ALGERIA",
+    "ANDORRA",
+    "ANGOLA",
+    "ARGENTINA",
+    "ARMENIA",
+    "AUSTRALIA",
+    "AUSTRIA",
+    "AZERBAIJAN",
+    "BAHAMAS",
+    "BAHRAIN",
+    "BANGLADESH",
+    "BARBADOS",
+    "BELARUS",
+    "BELGIUM",
+    "BELIZE",
+    "BENIN",
+    "BERMUDA",
+    "BHUTAN",
+    "BOLIVIA",
+    "BOSNIA",
+    "BOTSWANA",
+    "BRAZIL",
+    "BRUNEI",
+    "BULGARIA",
+    "BURKINA FASO",
+    "BURMA",
+    "BURUNDI",
+    "CAMBODIA",
+    "CAMEROON",
+    "CANADA",
+    "CAYMAN ISLANDS",
+    "CHAD",
+    "CHILE",
+    "CHINA",
+    "COLOMBIA",
+    "COSTA RICA",
+    "CROATIA",
+    "CUBA",
+    "CYPRUS",
+    "CZECH REPUBLIC",
+    "CZECHIA",
+    "DENMARK",
+    "DOMINICAN REPUBLIC",
+    "ECUADOR",
+    "EGYPT",
+    "EL SALVADOR",
+    "ENGLAND",
+    "ESTONIA",
+    "ETHIOPIA",
+    "FIJI",
+    "FINLAND",
+    "FRANCE",
+    "GERMANY",
+    "GHANA",
+    "GREAT BRITAIN",
+    "GREECE",
+    "GUATEMALA",
+    "GUYANA",
+    "HAITI",
+    "HOLLAND",
+    "HONDURAS",
+    "HONG KONG",
+    "HUNGARY",
+    "ICELAND",
+    "INDIA",
+    "INDONESIA",
+    "IRAN",
+    "IRAQ",
+    "IRELAND",
+    "ISRAEL",
+    "ITALY",
+    "IVORY COAST",
+    "JAMAICA",
+    "JAPAN",
+    "JORDAN",
+    "KAZAKHSTAN",
+    "KENYA",
+    "KOREA",
+    "KUWAIT",
+    "KYRGYZSTAN",
+    "LAOS",
+    "LATVIA",
+    "LEBANON",
+    "LIBYA",
+    "LITHUANIA",
+    "LUXEMBOURG",
+    "MACAU",
+    "MACEDONIA",
+    "MADAGASCAR",
+    "MALAYSIA",
+    "MALDIVES",
+    "MALI",
+    "MALTA",
+    "MEXICO",
+    "MOLDOVA",
+    "MONACO",
+    "MONGOLIA",
+    "MONTENEGRO",
+    "MOROCCO",
+    "MOZAMBIQUE",
+    "MYANMAR",
+    "NAMIBIA",
+    "NEPAL",
+    "NETHERLANDS",
+    "NEW ZEALAND",
+    "NICARAGUA",
+    "NIGER",
+    "NIGERIA",
+    "NORTH KOREA",
+    "NORTHERN IRELAND",
+    "NORWAY",
+    "OMAN",
+    "PAKISTAN",
+    "PALESTINE",
+    "PANAMA",
+    "PARAGUAY",
+    "PERU",
+    "PHILIPPINES",
+    "POLAND",
+    "PORTUGAL",
+    "QATAR",
+    "ROMANIA",
+    "RUSSIA",
+    "RWANDA",
+    "SAUDI ARABIA",
+    "SCOTLAND",
+    "SENEGAL",
+    "SERBIA",
+    "SINGAPORE",
+    "SLOVAKIA",
+    "SLOVENIA",
+    "SOMALIA",
+    "SOUTH AFRICA",
+    "SOUTH KOREA",
+    "SPAIN",
+    "SRI LANKA",
+    "SUDAN",
+    "SWEDEN",
+    "SWITZERLAND",
+    "SYRIA",
+    "TAIWAN",
+    "TAJIKISTAN",
+    "TANZANIA",
+    "THAILAND",
+    "TRINIDAD",
+    "TUNISIA",
+    "TURKEY",
+    "TURKIYE",
+    "UAE",
+    "UGANDA",
+    "UK",
+    "UKRAINE",
+    "UNITED ARAB EMIRATES",
+    "UNITED KINGDOM",
+    "URUGUAY",
+    "UZBEKISTAN",
+    "VENEZUELA",
+    "VIETNAM",
+    "WALES",
+    "YEMEN",
+    "ZAMBIA",
+    "ZIMBABWE",
+];
+
+/// Names that are also surnames or US place names (`FRANCE`, `JORDAN`, `CHINA`, `MEXICO`): they
+/// count only with a digit in the text, such as a postal code.
+const SURNAME_LIKE: &[&str] = &[
+    "CANADA", "CHAD", "CHINA", "CUBA", "DENMARK", "EGYPT", "ENGLAND", "FRANCE", "GREECE",
+    "HOLLAND", "INDIA", "IRELAND", "ISRAEL", "ITALY", "JAPAN", "JORDAN", "LEBANON", "MALI",
+    "MALTA", "MEXICO", "NIGER", "NORWAY", "PANAMA", "PERU", "POLAND", "SCOTLAND", "SPAIN",
+    "SWEDEN", "TURKEY", "WALES",
+];
+
+/// Whether the parse ends in a non-US country name: in the unplaced text, or, with no state, in the
+/// city (`LYON 69001, FRANCE`, where the country was read as the city). See [`ends_in_foreign_country`].
+pub(crate) fn foreign_address(addr: &crate::ParsedAddress, lex: &Lexicons) -> bool {
+    let mut text = addr.diagnostics.unparsed.clone().unwrap_or_default();
+    if addr.state.is_none() {
+        if let Some(city) = &addr.city {
+            text = format!("{text} {city}");
+        }
+    }
+    !text.trim().is_empty() && ends_in_foreign_country(&text, lex)
+}
+
+/// Whether the text the parser could not place ends in a non-US country name (`LYON 69001 FRANCE`):
+/// the address is foreign, and the US parse of it is a guess (#361). A US state name is never one
+/// (`NEW MEXICO`, `GEORGIA`), and a name that is also a surname needs a digit in the text.
+pub(crate) fn ends_in_foreign_country(unparsed: &str, lex: &Lexicons) -> bool {
+    let upper = unparsed.to_uppercase();
+    let words: Vec<&str> = upper
+        .split(|c: char| !c.is_alphanumeric())
+        .filter(|w| !w.is_empty())
+        .collect();
+    let n = words.len();
+    for w in (1..=MAX_WORDS.min(n)).rev() {
+        let name = words[n - w..].join(" ");
+        if !FOREIGN.contains(&name.as_str()) {
+            continue;
+        }
+        let state = lex.state(&name).is_some()
+            || (n > w && lex.state(&format!("{} {name}", words[n - w - 1])).is_some());
+        let digit = words.iter().any(|w| w.chars().any(|c| c.is_ascii_digit()));
+        return !state && (digit || !SURNAME_LIKE.contains(&name.as_str()));
+    }
+    false
+}
+
+#[cfg(test)]
+mod foreign_tests {
+    use super::*;
+
+    #[test]
+    fn a_foreign_country_ends_the_unparsed_text() {
+        let lex = Lexicons::default();
+        for s in [
+            "LYON 69001 FRANCE",
+            "Ajax, Ontario L1Z0E4, Canada",
+            "ROLLESTON 7614 NEW ZEALAND",
+            "DUBAI UAE",
+            "LONDON NW1 6PU UNITED KINGDOM",
+        ] {
+            assert!(ends_in_foreign_country(s, &lex), "{s}");
+        }
+        for s in [
+            "JANE FRANCE",
+            "ATTN JORDAN",
+            "SUITE 4 NEW MEXICO",
+            "HARBOR & PINE",
+            "GEORGIA",
+            "TORONTO CANADA",
+        ] {
+            assert!(!ends_in_foreign_country(s, &lex), "{s}");
+        }
+    }
+}

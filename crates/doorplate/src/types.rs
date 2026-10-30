@@ -553,6 +553,11 @@ pub enum Warning {
     /// address. Other countries are not recognized and stay in the parse as
     /// ordinary text.
     CountryIgnored,
+    /// The text left unplaced ends in the name of a country other than the United States
+    /// (`LYON 69001 FRANCE`, `AJAX ONTARIO L1Z0E4 CANADA`): the address is probably foreign and the
+    /// US reading of it a guess. The text stays in [`Diagnostics::unparsed`]; no foreign format is
+    /// parsed (#361).
+    NonUsAddress,
     /// Two streets joined by `&`, `AND`, `@` or `AT` (`MAIN ST & 1ST AVE`):
     /// a corner, not an address. The first street is parsed, the second stays in
     /// [`Diagnostics::unparsed`], and [`ParsedAddress::key`] is `None`.
@@ -592,7 +597,7 @@ pub enum Warning {
 impl Warning {
     /// Every variant, in declaration order. Add new variants here too; the
     /// golden-corpus runner checks expected warning codes against this list.
-    pub const ALL: [Warning; 29] = [
+    pub const ALL: [Warning; 30] = [
         Warning::UnparsedRemainder,
         Warning::AmbiguousToken,
         Warning::Placeholder,
@@ -614,6 +619,7 @@ impl Warning {
         Warning::DefaultStateApplied,
         Warning::RepeatedLabel,
         Warning::CountryIgnored,
+        Warning::NonUsAddress,
         Warning::IntersectionDetected,
         Warning::SecondLineSkipped,
         Warning::SecondLineInStreet,
@@ -649,6 +655,7 @@ impl Warning {
             Warning::DefaultStateApplied => "default_state_applied",
             Warning::RepeatedLabel => "repeated_label",
             Warning::CountryIgnored => "country_ignored",
+            Warning::NonUsAddress => "non_us_address",
             Warning::IntersectionDetected => "intersection_detected",
             Warning::SecondLineSkipped => "second_line_skipped",
             Warning::SecondLineInStreet => "second_line_in_street",

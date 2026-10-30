@@ -65,6 +65,7 @@ Every parsing bug fixed gets a case here (`CONTRIBUTING.md`).
   `nb-` (PO BOX with no number at the end of a street, `bare-po-box.jsonl`),
   `nm-` (words only on line 2 under a PO Box, `name-after-box.jsonl`),
   `hu-` (a `#` before a unit designator, `hash-before-designator.jsonl`),
+  `fa-` (a non-US country ends the unplaced text, `non-us-address.jsonl`),
   `an-` (words on line 2 under a street are the attention line, `line2-attention.jsonl`),
   `lv-` (level words as units, `level-words.jsonl`),
   `bf-` (a box first, then a street; `PMB` before a PO Box, `box-first.jsonl`),
@@ -439,3 +440,7 @@ Ids `bf-001` to `bf-006` (#302). `BOX 3310 FERNLEAF RD` is the box with the stre
 ### `line2-attention.jsonl`
 
 Ids `an-001` to `an-012` (#350). Words only on line 2 under a street are the attention line when they look like a firm or a person (`&`, a business word, an `Att:` lead, two to four plain words); and the cases that stay unparsed (a leading `THE`, a government word, a unit word, a street suffix word, the street repeated, a single word, a place name, a lot or location word). `nm-006` in `name-after-box.jsonl` changed with this rule.
+
+### `non-us-address.jsonl`
+
+Ids `fa-001` to `fa-008` (#361). A foreign address (Ireland, Canada, Germany, the UAE, France) whose line 2 or last segment ends in a country name gets `non_us_address`; and the cases that do not (`ATTN JANE FRANCE` with no digit, `USA`, `NEW MEXICO`).
