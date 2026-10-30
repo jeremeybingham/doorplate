@@ -14,6 +14,13 @@ only between releases (on `main`, after 0.4.1, it still says 0.4.1). Rows with a
 use it). `diff` compares two such directories row by row and prints counts only, by source and role: the rows
 with a different key, with different warnings, and the shapes of the keys that changed. It never prints
 names or street text; the files stay in the git-ignored `local-data/`.
+
+`dump --unit` also writes the unit-level key (`key(unit=True)`) and the four unit fields (`unit_type`, `unit_number`,
+`second_unit_type`, `second_unit_number`). The property-level key has no unit, so a rule that only moves a unit value
+(from the second slot to the first, say) changes no property key and `diff` shows 0 without them. When both dumps have the
+columns, `diff` also counts, by source and role, the rows with a different unit-level key and with different unit fields,
+and prints the shapes of the changed unit-level keys; a changed unit-level key makes the exit status non-zero like a
+changed key.
 """
 
 import argparse
@@ -70,8 +77,12 @@ def dump(args):
     name = args.name or name
     sel = ", ".join(use)
     skip = "last_line is null" if has_last else "true"
-    schema = pa.schema([("rn", pa.int64()), ("role", pa.string()), ("record_id", pa.string()),
-                        ("key", pa.string()), ("warnings", pa.string())])
+    fields = [("rn", pa.int64()), ("role", pa.string()), ("record_id", pa.string()),
+              ("key", pa.string()), ("warnings", pa.string())]
+    if args.unit:
+        fields += [("key_unit", pa.string()), ("unit_type", pa.string()), ("unit_number", pa.string()),
+                   ("second_unit_type", pa.string()), ("second_unit_number", pa.string())]
+    schema = pa.schema(fields)
     writer = pq.ParquetWriter(out / f"{name}.parquet", schema)
     done = skipped = 0
     try:
@@ -89,17 +100,22 @@ def dump(args):
             keys = [p.key() if p is not None else None for p in parsed]
             warns = ["|".join(w if isinstance(w, str) else getattr(w, "code", str(w))
                               for w in p.warnings) if p is not None else None for p in parsed]
-            writer.write_table(pa.table({
+            cols_out = {
                 "rn": [rows["rn"][i] for i in idx], "role": [rows["role"][i] for i in idx],
-                "record_id": [rows["record_id"][i] for i in idx], "key": keys, "warnings": warns},
-                schema=schema))
+                "record_id": [rows["record_id"][i] for i in idx], "key": keys, "warnings": warns}
+            if args.unit:
+                cols_out["key_unit"] = [p.key(unit=True) if p is not None else None for p in parsed]
+                for f in ("unit_type", "unit_number", "second_unit_type", "second_unit_number"):
+                    cols_out[f] = [getattr(p, f) if p is not None else None for p in parsed]
+            writer.write_table(pa.table(cols_out, schema=schema))
             done += len(idx)
             print(f"{name}: {done} rows", file=sys.stderr)
     finally:
         writer.close()
     (out / f"{name}.json").write_text(json.dumps(
         {"source": name, "records": str(src), "doorplate": doorplate.__version__,
-         "commit": commit, "extension_older_than_source": stale, "rows": done, "skipped_last_line": skipped}, indent=2) + "\n")
+         "commit": commit, "extension_older_than_source": stale, "rows": done, "skipped_last_line": skipped,
+         "unit": bool(args.unit)}, indent=2) + "\n")
     print(f"{name}: {done} rows parsed with doorplate {doorplate.__version__} ({skipped} with last_line left out)")
 
 
@@ -134,6 +150,26 @@ def diff(args):
             for role, rows, kc, wc in res:
                 print(f"  {role or '(none)':<14} rows {rows:>9}  key changed {kc:>8}  warnings changed {wc:>8}")
                 total_changed += kc
+            ucols = {c for c in ("key_unit", "unit_type", "unit_number", "second_unit_type", "second_unit_number")}
+            have_unit = all(ucols <= {r[0] for r in con.execute(f"describe select * from {v}").fetchall()} for v in ("x", "y"))
+            if have_unit:
+                ures = con.execute("""
+                    select x.role, count(*) n,
+                      sum(case when body(x.key_unit) is distinct from body(y.key_unit) then 1 else 0 end) ukey,
+                      sum(case when x.unit_type is distinct from y.unit_type or x.unit_number is distinct from y.unit_number then 1 else 0 end) first_unit,
+                      sum(case when x.second_unit_type is distinct from y.second_unit_type
+                                 or x.second_unit_number is distinct from y.second_unit_number then 1 else 0 end) second_unit
+                    from x join y using (rn) group by 1 order by 1""").fetchall()
+                print("  unit level (dump --unit):")
+                for role, rows, uk, fu, su in ures:
+                    print(f"  {role or '(none)':<14} rows {rows:>9}  unit key changed {uk:>8}  first unit changed {fu:>8}  second unit changed {su:>8}")
+                    total_changed += uk
+                if sum(r[2] for r in ures):
+                    print("  shapes of changed unit-level keys (top 5, before):")
+                    for s_, c in con.execute("""
+                        select shape(x.key_unit), count(*) c from x join y using (rn)
+                        where body(x.key_unit) is distinct from body(y.key_unit) group by 1 order by c desc limit 5""").fetchall():
+                        print(f"    {c:>8}  {s_}")
             if sum(r[2] for r in res):
                 print("  shapes of changed keys (top 5, before):")
                 for s, c in con.execute("""
@@ -154,6 +190,8 @@ def main():
     d.add_argument("records")
     d.add_argument("--out", required=True)
     d.add_argument("--name", help="file name for the source (default: the records' source column)")
+    d.add_argument("--unit", action="store_true",
+                   help="also write the unit-level key and the unit fields (for a rule that moves or reads a unit)")
     f = sub.add_parser("diff", help="compare two dump directories")
     f.add_argument("a")
     f.add_argument("b")
