@@ -227,6 +227,7 @@ The street line is stand-in text (`NO SITUS`); the key is `None`.
 
 - **Rows in NAD (of 1M):** 0
 - **Measured:** NC voter: 278 rows, number 100% (the snapshot has a number the stand-in text hides)
+- **Registry phrases (#273):** `NO STREET ADDRESS`, `NO ST ADD STATED`, `NOT GIVEN`, `SAME AS ABOVE` and similar whole lines also count: 2,464 more rows of the seven large sources (NY corporations 1,813, carrier census 618, NC voter 30, IRS 3) get the warning and key `None`
 
 ### intersection_detected
 
