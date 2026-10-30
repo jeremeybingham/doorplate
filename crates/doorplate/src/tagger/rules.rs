@@ -1646,6 +1646,25 @@ impl Tagger<'_> {
                                 });
                             }
                         }
+                        // `BOX 3310 FERNLEAF RD`: a box, then a street with no house
+                        // number. The box is the delivery point; the street words are
+                        // left over, as after `PO BOX 12` (#302).
+                        if v + 1 < hi
+                            && lex.suffix(self.text(hi - 1)).is_some()
+                            && (v + 1..hi).all(|k| self.toks[k].seg == self.toks[lo].seg)
+                            && (v + 1..hi).all(|k| {
+                                !self.text(k).chars().any(|c| c.is_ascii_digit())
+                                    && lex.unit(self.text(k)).is_none()
+                            })
+                        {
+                            tags.push((lo..lo + w, Tag::PoBox));
+                            value(&mut tags, v, hash, Tag::PoBoxNumber);
+                            return Some(SpecialMatch {
+                                tags,
+                                end: v + 1,
+                                units: true,
+                            });
+                        }
                         // `BOX 123456` alone on the line is a PO Box.
                         if v + 1 == hi {
                             tags.push((lo..lo + w, Tag::PoBox));
@@ -1659,6 +1678,30 @@ impl Tagger<'_> {
                     }
                 }
                 Special::Attention => {}
+            }
+        }
+
+        // `PMB #31 PO BOX 2250`: a private mailbox number before a PO Box is the
+        // unit of that box (#302; Pub 28 section 285).
+        if lo + 1 < hi
+            && self
+                .lex
+                .unit(self.text(lo))
+                .is_some_and(|l| l.value.abbr == "PMB")
+        {
+            if let Some((pv, phash)) = self.value_at(lo + 1, hi) {
+                if let Some(mut m) = self.match_special(pv + 1, hi) {
+                    if m.tags.iter().any(|(_, t)| *t == Tag::PoBox) {
+                        let mut front = vec![(lo..lo + 1, Tag::UnitType(0))];
+                        if phash {
+                            front.push((pv - 1..pv, Tag::Skip));
+                        }
+                        front.push((pv..pv + 1, Tag::UnitNumber(0)));
+                        front.append(&mut m.tags);
+                        m.tags = front;
+                        return Some(m);
+                    }
+                }
             }
         }
 
