@@ -48,6 +48,7 @@ in each environment, then `diff` (counts only, never street text); the dumps rec
 comparison, not about warnings or flagged rows: #97 was called key-neutral from warning counts and then changed
 8.7% of the IRS file's keys (the 0.3.1 record in `key-format.md`). A rule pull request that says its keys do
 not change includes the count.
+A rule that only reads or moves a unit changes no property-level key, so dump both builds with `--unit` and read the "unit level" counts (the unit-level key and the unit fields, by source and role) as well.
 
 ## Labels
 
