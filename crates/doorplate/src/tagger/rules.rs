@@ -1304,11 +1304,32 @@ impl Tagger<'_> {
     /// Whether a street address runs from `j` to `e`: a house number, at least
     /// one name word (no digits, but an ordinal is fine) and a street suffix,
     /// which may be followed by a directional: `20 QUINCEWOOD CT`, `7100
-    /// ZEPHYRMILL DR S`, `500 5TH AVE`.
+    /// ZEPHYRMILL DR S`, `500 5TH AVE`. A highway route can stand for the
+    /// street (`2100 HWY 9 N`) and a unit may end the line (`20 QUINCEWOOD CT
+    /// RM 101`, `... CT #4`), so a name ahead of the number is still found (#281).
     fn address_at(&self, j: usize, e: usize) -> bool {
-        let lex = self.lex;
         if j >= e || house_number(self.text(j)).is_none() {
             return false;
+        }
+        self.street_to(j, e) || (j + 3..e).any(|k| self.starts_unit(k, e) && self.street_to(j, k))
+    }
+
+    /// Whether `j..e` is exactly a house number and a street (see
+    /// [`Self::address_at`]).
+    fn street_to(&self, j: usize, e: usize) -> bool {
+        let lex = self.lex;
+        // A prefix that is also a unit designator is the unit (`3FL 316`).
+        let route = self
+            .highway_at(j + 1, e)
+            .filter(|h| (h.pre.start..h.route).all(|k| lex.unit(self.text(k)).is_none()));
+        if let Some(h) = route {
+            let mut end = h.route + 1;
+            if end < e && lex.directional(self.text(end)).is_some() {
+                end += 1;
+            }
+            if end == e {
+                return true;
+            }
         }
         let mut last = e;
         if last > j + 2 && lex.directional(self.text(last - 1)).is_some() {
@@ -1331,25 +1352,32 @@ impl Tagger<'_> {
     /// Words that can be a recipient name ahead of a street: no digit, hash
     /// or dash, and nothing that belongs to an address (a PO Box or route
     /// word, a unit designator, a directional, a highway prefix; `CO` is read
-    /// as the company word it usually is; a single letter and a word such as
-    /// `BLOCK`, `NO` or `URB` are not names).
+    /// as the company word it usually is; a word such as `BLOCK`, `NO` or `URB`
+    /// is not a name, and neither is a single letter on its own; one among
+    /// longer words is an initial (`CARL E MCAFEE PC`), two in a row are not
+    /// (`OLD U S 23`). `DEPT` ends a name (`EXECUTIVE DEPT`) (#281).
     fn recipient_words(&self, lo: usize, hi: usize) -> bool {
         let lex = self.lex;
+        let named = (lo..hi).any(|i| !is_letter(self.text(i)));
         lo < hi
             && hi - lo <= 8
             && (lo..hi).all(|i| {
                 let t = self.text(i);
                 let highway = longest_at(self.toks, i, hi, |s| lex.highway(s))
                     .is_some_and(|(_, w)| w > 1 || !t.eq_ignore_ascii_case("CO"));
+                let department = lex.unit(t).is_some_and(|l| l.value.abbr() == "DEPT");
                 !has_digit(t)
-                    && !is_letter(t)
                     && !lex.is_non_recipient_word(t)
                     && !self.toks[i].is_hash()
                     && !self.toks[i].is_dash()
                     && lex.special(t).is_none()
-                    && lex.unit(t).is_none()
-                    && lex.directional(t).is_none()
+                    && (lex.unit(t).is_none() || department)
                     && !highway
+                    && if is_letter(t) {
+                        named && (i == lo || !is_letter(self.text(i - 1)))
+                    } else {
+                        lex.directional(t).is_none()
+                    }
             })
     }
 
@@ -1398,19 +1426,27 @@ impl Tagger<'_> {
     /// start of what is left (#127).
     fn co_lead(&mut self, lo: usize, hi: usize) -> usize {
         let lex = self.lex;
-        if lo + 1 >= hi || !self.text(lo).eq_ignore_ascii_case("CO") {
+        // `C O` written with a space is the same marker (#281).
+        let w = if lo + 2 < hi
+            && self.text(lo).eq_ignore_ascii_case("C")
+            && self.text(lo + 1).eq_ignore_ascii_case("O")
+        {
+            2
+        } else if lo + 1 < hi && self.text(lo).eq_ignore_ascii_case("CO") {
+            1
+        } else {
             return lo;
-        }
+        };
         if longest_at(self.toks, lo, hi, |s| lex.highway(s)).is_some_and(|(_, w)| w > 1) {
             return lo;
         }
         let e = self.seg_end(lo, hi);
-        let Some(j) = self.address_start(lo + 1, e) else {
+        let Some(j) = self.address_start(lo + w, e) else {
             return lo;
         };
-        if j == lo + 1 {
+        if j == lo + w {
             self.set(lo..j, Tag::Skip);
-        } else if self.recipient_words(lo + 1, j) {
+        } else if self.recipient_words(lo + w, j) {
             self.set(lo..j, Tag::Attention);
         } else {
             return lo;
