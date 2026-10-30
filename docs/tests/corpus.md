@@ -65,6 +65,7 @@ Every parsing bug fixed gets a case here (`CONTRIBUTING.md`).
   `nb-` (PO BOX with no number at the end of a street, `bare-po-box.jsonl`),
   `nm-` (words only on line 2 under a PO Box, `name-after-box.jsonl`),
   `hu-` (a `#` before a unit designator, `hash-before-designator.jsonl`),
+  `lv-` (level words as units, `level-words.jsonl`),
   `pn-` (`PO 5530`, a PO word with no `BOX`, `po-no-box.jsonl`),
   `nu-` (the number word `NO`/`NUM` before a unit or box value, `number-word.jsonl`),
   `nat-` (shapes found in a national address database, `national-data.jsonl`);
@@ -424,3 +425,7 @@ Ids `nu-001` to `nu-011` (#293). `NO.9` and `NUM.12` (a period, no space) read a
 ### `po-no-box.jsonl`
 
 Ids `pn-001` to `pn-006` (#305). `PO`, `P O` and `P.O.` with a number (or `#` and a number) that ends the line are a PO Box; and the cases that keep their reading (`PO RD 5`, `PO 12 MAIN ST`).
+
+### `level-words.jsonl`
+
+Ids `lv-001` to `lv-011` (#292). `GROUND`, `GROUND LEVEL`, `MEZZANINE`, `GARAGE` alone on line 2, on a comma segment or after the suffix are a unit with no type; `LL` and `LOWER LEVEL` are `LOWR`, `LOBBY LEVEL` is `LBBY`; and the names that keep their reading (`CAMP GROUND RD`, `LL BEAN RD`, `GARAGE ST`).
