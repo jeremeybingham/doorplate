@@ -599,6 +599,97 @@ impl Lexicons {
         matches!(s, "PO" | "P O")
     }
 
+    /// A word that marks a firm, office, church or school on a name line
+    /// (`SPOTTS FAIN PC`, `FIRST BANK AND TRUST COMPANY`), #350.
+    pub(crate) fn is_business_word(&self, s: &str) -> bool {
+        matches!(
+            s,
+            "LLC"
+                | "LLP"
+                | "PLLC"
+                | "PC"
+                | "PA"
+                | "LP"
+                | "LTD"
+                | "INC"
+                | "CORP"
+                | "CORPORATION"
+                | "CO"
+                | "COMPANY"
+                | "ASSOCIATES"
+                | "ASSOC"
+                | "SERVICES"
+                | "GROUP"
+                | "ATTORNEYS"
+                | "LAW"
+                | "FIRM"
+                | "BANK"
+                | "TRUST"
+                | "CHURCH"
+                | "TEMPLE"
+                | "UNIV"
+                | "UNIVERSITY"
+                | "HOMES"
+                | "PARTNERS"
+                | "HOLDINGS"
+                | "MANAGEMENT"
+                | "REALTY"
+                | "PROPERTIES"
+                | "APARTMENTS"
+                | "SOLUTIONS"
+                | "ENTERPRISES"
+        )
+    }
+
+    /// A word that is a unit or a place on line 2, not a name: `STORE`, `AREA B`,
+    /// `BARN`, `PRIMARY`, a government unit (`TOWNSHIP OF`), #350.
+    pub(crate) fn is_line2_non_name(&self, s: &str) -> bool {
+        matches!(
+            s,
+            "STORE"
+                | "AREA"
+                | "BARN"
+                | "PRIMARY"
+                | "MAIN"
+                | "REAR"
+                | "GARDEN"
+                | "SHOP"
+                | "STUDIO"
+                | "THE"
+                | "OF"
+                | "TOWNSHIP"
+                | "COUNTY"
+                | "CITY"
+                | "TOWN"
+                | "VILLAGE"
+                | "BOROUGH"
+                | "PARISH"
+                | "STATE"
+                | "DEPARTMENT"
+                | "DEPT"
+                | "BUILDING"
+                | "BLDG"
+                | "SUITE"
+                | "CAMPUS"
+                | "RESIDENCE"
+                | "DORM"
+                | "DORMITORY"
+                | "DORMS"
+                | "HALL"
+                | "LODGE"
+                | "HOUSING"
+                | "INT"
+                | "BEGIN"
+                | "END"
+                | "RIGHT"
+                | "LEFT"
+                | "UPPER"
+                | "LOWER"
+                | "FRONT"
+                | "BACK"
+        ) || self.is_level_word(s)
+    }
+
     /// A level word that stands alone as a unit with no type and no number:
     /// `GROUND`, `MEZZANINE`, `GARAGE`. Pub 28 has no designator for them (#292).
     /// `GROUND LEVEL`, `GROUND FLOOR`, `GROUND FLR` and `GARDEN LEVEL` are the value
