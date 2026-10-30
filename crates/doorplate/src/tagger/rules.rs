@@ -2456,6 +2456,17 @@ impl Tagger<'_> {
                 j = last;
                 continue;
             }
+            // "# APT-4", "#APT 4": a '#' right before the designator of the unit
+            // just found marks that unit; it is not a unit of its own (#340).
+            if self.toks[last].is_hash()
+                && found
+                    .last()
+                    .is_some_and(|(ty, _)| ty.start == j && ty.end > ty.start)
+            {
+                self.set(last..j, Tag::Skip);
+                j = last;
+                continue;
+            }
             // "#" with nothing after it.
             if self.toks[last].is_hash() {
                 self.set(last..j, Tag::Skip);
