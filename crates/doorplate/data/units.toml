@@ -89,7 +89,7 @@ forms = ["KEY"]
 name = "LOBBY"
 abbr = "LBBY"
 range_required = false
-forms = ["LOBBY", "LBBY"]
+forms = ["LOBBY", "LBBY", "LOBBY LEVEL"]
 
 [[unit]]
 name = "LOT"
@@ -103,7 +103,9 @@ observed = ["LT"]
 name = "LOWER"
 abbr = "LOWR"
 range_required = false
-forms = ["LOWER", "LOWR"]
+forms = ["LOWER", "LOWR", "LOWER LEVEL"]
+# observed: NY corporation address data, line 2 "LL" and "LOWER LEVEL" (issue #292)
+observed = ["LL"]
 
 [[unit]]
 name = "OFFICE"

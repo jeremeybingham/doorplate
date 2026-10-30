@@ -599,6 +599,25 @@ impl Lexicons {
         matches!(s, "PO" | "P O")
     }
 
+    /// A level word that stands alone as a unit with no type and no number:
+    /// `GROUND`, `MEZZANINE`, `GARAGE`. Pub 28 has no designator for them (#292).
+    /// `GROUND LEVEL`, `GROUND FLOOR`, `GROUND FLR` and `GARDEN LEVEL` are the value
+    /// `GROUND` or `GARDEN`: the level word is dropped, so the USPS line (`# GROUND`)
+    /// reads back to the same unit.
+    pub(crate) fn is_level_word(&self, s: &str) -> bool {
+        matches!(
+            s,
+            "GROUND"
+                | "GROUND LEVEL"
+                | "GROUND FLOOR"
+                | "GROUND FLR"
+                | "MEZZANINE"
+                | "GARAGE"
+                | "GARDEN LEVEL"
+                | "CELLAR"
+        )
+    }
+
     /// A word that stands for a unit designator after a street's suffix but is
     /// not one in Pub 28: `BOX 3300`, `NO 65`, `NUM 230`, `LOC 12` (#128).
     pub(crate) fn is_unit_marker(&self, t: &str) -> bool {
