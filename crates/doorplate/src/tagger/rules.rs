@@ -2456,6 +2456,105 @@ impl Tagger<'_> {
         self.set(i..j, Tag::Name);
     }
 
+    /// Where plain words after a street's suffix start (#374): `3908 INLAND AVE
+    /// MARLOW`, `2440 DEMING WAY HALE AND PARTNERS`, `208 COLCHESTER AVE MANN
+    /// HALL`. After a house number, a name and a suffix word come one to four
+    /// words with no digit, in the street's own segment, and none of them is a
+    /// suffix, direction, unit, box, route, placeholder or state word, and the
+    /// name before the suffix has a word that is not a direction. It applies
+    /// only on pre-split fields with a city, state or ZIP, or when a comma ends the
+    /// street's segment, so the words cannot be a city or an area word before it. A
+    /// postdirectional right after the suffix stays with the street. A suffix
+    /// at the start of the name (`AVENUE OF THE AMERICAS`) does not count.
+    fn text_after_suffix(&self, i: usize, j: usize) -> Option<usize> {
+        let lex = self.lex;
+        // `100 MAIN ST DOTHAN` and `12 OAK ST ZZDOWNTOWN TAMPA FL` may end in a city or area.
+        if !(self.country_street
+            || (j < self.toks.len() && self.toks[j].seg != self.toks[j - 1].seg))
+            || i == 0
+            || j < i + 3
+            || !matches!(self.tags[i - 1], Tag::StreetNumber)
+        {
+            return None;
+        }
+        // Only a common street type counts: `PARK`, `LAKE` or `HILL` sit inside
+        // names (`BABSON PARK CUTOFF`).
+        const COMMON: [&str; 13] = [
+            "ST", "AVE", "RD", "DR", "LN", "BLVD", "CT", "WAY", "PL", "CIR", "TRL", "PKWY", "TER",
+        ];
+        // `LA` is also the Spanish article (`AVENIDA DE LA LUNA`).
+        let common = |k: usize| {
+            self.text(k) != "LA"
+                && lex
+                    .suffix(self.text(k))
+                    .is_some_and(|l| COMMON.contains(&l.value.abbr()))
+        };
+        let s = (i + 1..j - 1).rev().find(|&k| common(k))?;
+        if (i..s).all(|k| lex.directional(self.text(k)).is_some()) {
+            return None;
+        }
+        let mut t = s + 1;
+        // An abbreviated direction right after the suffix stays with the street; a
+        // spelled one begins the text (`JOHN ST EAST ROCKAWAY`).
+        if let Some((_, w)) = longest_at(self.toks, t, j, |x| lex.directional(x)) {
+            if w == 1 && self.text(t).len() <= 2 {
+                t += w;
+            }
+        }
+        let words = t..j;
+        if words.is_empty() || words.len() > 4 {
+            return None;
+        }
+        // Words that go on a street's name: `SO` and `NO` for south and north, a
+        // direction of travel, a business or alternate route (`ST BUS`), an extension, a cut-off.
+        const CONTINUES: [&str; 24] = [
+            "SO",
+            "NO",
+            "ES",
+            "WE",
+            "EA",
+            "NORT",
+            "SOUT",
+            "SOUTHBOUND",
+            "NORTHBOUND",
+            "EASTBOUND",
+            "WESTBOUND",
+            "ALT",
+            "ALTERNATE",
+            "BUSINESS",
+            "BUS",
+            "BYPASS",
+            "BYP",
+            "EXTENDED",
+            "EXTENTION",
+            "EXT",
+            "CUTOFF",
+            "CUT",
+            "OFF",
+            "CONNECTOR",
+        ];
+        let seg = self.toks[s].seg;
+        let plain = |k: usize| {
+            let w = self.text(k);
+            self.toks[k].seg == seg
+                && (w == "&" || (w.len() >= 2 && w.bytes().all(|c| c.is_ascii_alphabetic())))
+                && !common(k)
+                && !CONTINUES.contains(&w)
+                && lex.directional(w).is_none()
+                && lex.unit(w).is_none()
+                && lex.special(w).is_none()
+                && lex.highway(w).is_none()
+                && lex.state(w).is_none()
+                && !lex.is_placeholder(w)
+        };
+        // A street type last (`OAK ST RIVER RD`) is another street, not text, and
+        // a word that is also in the name is the place (`TOTTEN AVE FORT TOTTEN`).
+        let shared = words
+            .clone()
+            .any(|k| (i..s).any(|n| self.text(n) == self.text(k)));
+        (words.clone().all(plain) && !shared && lex.suffix(self.text(j - 1)).is_none()).then_some(t)
+    }
+
     /// Predirectional, name, suffix and postdirectional in `i..j` (Pub 28
     /// section 233). `hi` is the end of the whole delivery line.
     fn street_body(&mut self, i: usize, j: usize, hi: usize) {
@@ -2463,6 +2562,17 @@ impl Tagger<'_> {
         let (mut i, mut j) = (i, j);
         if i >= j {
             return;
+        }
+        // `3908 INLAND AVE MARLOW`: plain words after the suffix are not the
+        // street's (#374).
+        if let Some(cut) = self.text_after_suffix(i, j) {
+            let tag = if lex.is_building_word(self.text(j - 1)) {
+                Tag::Building
+            } else {
+                Tag::Attention
+            };
+            self.set(cut..j, tag);
+            j = cut;
         }
         // Postdirectional, unless it is a letter naming the street right
         // after a lone suffix word ("AVENUE N", like "AVENUE G").
