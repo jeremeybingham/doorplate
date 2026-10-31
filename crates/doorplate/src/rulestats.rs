@@ -98,5 +98,5 @@ pub(crate) fn disabled(loc: &Location<'_>) -> bool {
     }
     let file = loc.file().rsplit('/').next().unwrap_or("");
     let site = format!("{file}:{}", loc.line());
-    off.iter().any(|o| *o == site)
+    off.contains(&site)
 }
