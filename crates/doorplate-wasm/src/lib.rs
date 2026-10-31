@@ -5,6 +5,9 @@
 //! `parse`, `result_ptr`) and a few lines of JavaScript, so the build is
 //! `cargo build --target wasm32-unknown-unknown` and nothing else.
 //!
+//! `parse_batch` parses many rows in one call for the page's CSV section, and writes the same columns
+//! as `doorplate parse-file` (`json::COLUMNS`).
+//!
 //! The JSON is the command-line tool's record (`json::record`, so the demo
 //! cannot disagree with `doorplate parse`) plus `spans`: each component's
 //! range in the input, in UTF-16 units, which is how JavaScript indexes a
@@ -104,6 +107,44 @@ fn run_fields(json_text: &str) -> String {
     record(PARSER.with(|p| p.parse_fields(&fields)), "")
 }
 
+/// Many rows in one call (the CSV section of the demo page): `{"mode": "line", "rows": ["123 MAIN ST,
+/// MIAMI FL", ...]}` for one-line addresses, or `{"mode": "fields", "rows": [[line1, line2, city, state,
+/// zip], ...]}` with any entry null, as `Parser::parse_fields` takes them. The answer is
+/// `{"columns": [...], "rows": [[...], null, ...]}`: the columns of `doorplate parse-file`, one array
+/// of strings per row, and null for a row with no address text.
+fn run_batch(json_text: &str) -> String {
+    let Ok(Value::Object(m)) = serde_json::from_str::<Value>(json_text) else {
+        return json!({ "error": "the batch must be a JSON object" }).to_string();
+    };
+    let Some(Value::Array(rows)) = m.get("rows") else {
+        return json!({ "error": "the batch needs a `rows` array" }).to_string();
+    };
+    let fields_mode = m.get("mode").and_then(Value::as_str) == Some("fields");
+    let out: Vec<Value> = PARSER.with(|p| {
+        rows.iter()
+            .map(|row| {
+                let parsed = if fields_mode {
+                    let cell = |i: usize| row.get(i).and_then(Value::as_str).map(str::to_string);
+                    p.parse_fields(&Fields {
+                        line1: cell(0),
+                        line2: cell(1),
+                        city: cell(2),
+                        state: cell(3),
+                        zip: cell(4),
+                    })
+                } else {
+                    p.parse(row.as_str().unwrap_or(""))
+                };
+                match parsed {
+                    Ok(a) => json!(json::row(&a)),
+                    Err(_) => Value::Null,
+                }
+            })
+            .collect()
+    });
+    json!({ "columns": json::COLUMNS, "rows": out }).to_string()
+}
+
 fn store(out: String) -> usize {
     RESULT.with(|r| {
         let mut r = r.borrow_mut();
@@ -149,6 +190,16 @@ pub unsafe extern "C" fn parse(ptr: *const u8, len: usize) -> usize {
 pub unsafe extern "C" fn parse_fields(ptr: *const u8, len: usize) -> usize {
     let bytes = std::slice::from_raw_parts(ptr, len);
     store(run_fields(&String::from_utf8_lossy(bytes)))
+}
+
+/// Like [`parse`], for many rows at once (see `run_batch`).
+///
+/// # Safety
+/// `ptr` must point to `len` initialized bytes.
+#[no_mangle]
+pub unsafe extern "C" fn parse_batch(ptr: *const u8, len: usize) -> usize {
+    let bytes = std::slice::from_raw_parts(ptr, len);
+    store(run_batch(&String::from_utf8_lossy(bytes)))
 }
 
 #[no_mangle]
@@ -255,6 +306,53 @@ mod tests {
         assert_eq!(v["error"], "fields must be a JSON object");
         let v: Value = serde_json::from_str(&run_fields("{}")).unwrap();
         assert_eq!(v["error"], "address input is empty");
+    }
+
+    #[test]
+    fn a_batch_is_the_parse_file_columns() {
+        let v: Value = serde_json::from_str(&run_batch(
+            r#"{"mode": "line", "rows": ["123 north main street apt 4, Miami FL 33101", "", "PO BOX 5 ORLANDO FL 32801"]}"#,
+        ))
+        .unwrap();
+        assert_eq!(v["columns"].as_array().unwrap().len(), json::COLUMNS.len());
+        let rows = v["rows"].as_array().unwrap();
+        assert_eq!(rows.len(), 3);
+        assert!(rows[1].is_null());
+        let a = Parser::new()
+            .parse("123 north main street apt 4, Miami FL 33101")
+            .unwrap();
+        assert_eq!(rows[0], json!(json::row(&a)));
+        let col = |name: &str| json::COLUMNS.iter().position(|c| *c == name).unwrap();
+        assert_eq!(rows[0][col("street_number")], "123");
+        assert_eq!(rows[2][col("po_box")], "5");
+    }
+
+    #[test]
+    fn a_batch_of_fields_reads_each_row_as_fields() {
+        let v: Value = serde_json::from_str(&run_batch(
+            r#"{"mode": "fields", "rows": [["123 N MAIN ST", null, "MIAMI", "FL", "33101"], [null, null, null, null, null], ["1 A ST"]]}"#,
+        ))
+        .unwrap();
+        let rows = v["rows"].as_array().unwrap();
+        let f = Fields {
+            line1: Some("123 N MAIN ST".into()),
+            city: Some("MIAMI".into()),
+            state: Some("FL".into()),
+            zip: Some("33101".into()),
+            ..Fields::default()
+        };
+        let a = Parser::new().parse_fields(&f).unwrap();
+        assert_eq!(rows[0], json!(json::row(&a)));
+        assert!(rows[1].is_null());
+        assert!(!rows[2].is_null());
+    }
+
+    #[test]
+    fn a_bad_batch_is_an_error_object() {
+        let v: Value = serde_json::from_str(&run_batch("[1]")).unwrap();
+        assert!(v["error"].is_string());
+        let v: Value = serde_json::from_str(&run_batch(r#"{"mode": "line"}"#)).unwrap();
+        assert!(v["error"].is_string());
     }
 
     #[test]

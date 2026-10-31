@@ -7,6 +7,10 @@ change to what an input produces needs a new key version.
 
 ## [Unreleased]
 
+### Added
+
+- **A batch export in the browser build** (#335, `crates/doorplate-wasm`, no change to the library or its API): `parse_batch` parses many rows in one call and returns the columns of `doorplate parse-file`, for the CSV section of the demo page that follows. 100,000 invented-shape rows in 4.2 s in Node (42 us a row; 78 us a row through `parse` one call at a time).
+
 ### Changed
 
 - **Fourteen redundant `Unparsed` marks and a duplicate warning removed from the tagger** (#409, no output change): a token no rule claims already ends as `Unparsed`, and `SecondLineSkipped` is also raised by `second_line_notes`. Found by the rule audit (#401, `docs/tools/rule-stats.md`). Keys, warnings and unit fields are identical to the `k4` cut over the seven key sources.
