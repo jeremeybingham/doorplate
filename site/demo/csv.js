@@ -17,13 +17,15 @@
   var running = false, cancelled = false, downloadUrl = null;
   var pending = {}, nextId = 1;
 
-  // Defense in depth: after this, the page may load only its own files. Added when this script runs,
+  // Defense in depth: after this, the page may load only its own files. 'wasm-unsafe-eval' is needed:
+  // without it the browser refuses to compile WebAssembly, and the one-address demo above stops working
+  // (this was a bug in the first version; tools/docs/smoke_demo_csv.py now checks the box too). Added when this script runs,
   // so it limits what happens from here on (the worker and the download); the claim itself is checked
   // in the browser's network tab and by tools/docs/smoke_demo_csv.py.
   try {
     var meta = document.createElement("meta");
     meta.httpEquiv = "Content-Security-Policy";
-    meta.content = "default-src 'self'; connect-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; worker-src 'self' blob:; form-action 'none'";
+    meta.content = "default-src 'self'; connect-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; worker-src 'self' blob:; form-action 'none'";
     document.head.appendChild(meta);
   } catch (e) { /* the claim does not rest on this */ }
 
