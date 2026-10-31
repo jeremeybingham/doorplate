@@ -1,11 +1,11 @@
 # Roadmap
 
 What is planned, what depends on what, and what is deliberately not planned.
-`doorplate` 0.4.1 is an alpha. Priorities follow the data people bring: the more real,
+`doorplate` 0.5.0 is an alpha. Priorities follow the data people bring: the more real,
 messy addresses it sees, the sooner the items below that need them can happen. To send
 some, see [Sharing messy data](../CONTRIBUTING.md#sharing-messy-data).
 
-**Last reviewed 2026-10-28, against the issues up to #277.** The rules for the labels, the milestones and the order are in
+**Last reviewed 2026-10-31, against the issues up to #391.** The rules for the labels, the milestones and the order are in
 [`backlog.md`](backlog.md); the two trackers are #200 (0.4.x) and #201 (0.5.0, the `k4`).
 
 ## Stability while it is an alpha
@@ -19,6 +19,17 @@ some, see [Sharing messy data](../CONTRIBUTING.md#sharing-messy-data).
   and are not guaranteed for yours.
 
 ## Released
+
+**0.5.0 (2026-10-31)**, the `k4` (tracker #201): the parser rules that change keys, cut together and measured row by row. Keys changed: store the `k4:`
+prefix and re-parse to re-key. The rules came from four reviews of real rows (the IRS extract, the FMCSA carriers, the FCC amateur licensees, the NY
+corporations and the Boston, NC voter and campus-box queues): a name or recipient text around the street, boxes and routes written oddly or glued,
+units left in the street name, a letter after the house number, a half written without its slash, a repeated line, care-of text in front, spelled-out
+house numbers, a nearly right ZIP, and the warnings `repeated_text`, `zip_repaired` and `non_us_address`. What changed and the measured counts per rule
+are in [`CHANGELOG.md`](../CHANGELOG.md); the `k4` against the frozen `k3` keys of 0.4.0 changes 127,869 of 36,920,703 keys (0.35%).
+
+The release was proved with probes and a full run: one probe per open issue (35 of 35 open rule issues have a probe or a written reason), counted on 0.4.1 and
+on the cut over 146.6 million Netsyms rows and the seven large sources; the suite's whole-address score rises from 92.3% to 93.4%, the Florida one-line
+check and the geocode `city_diff` do not move, and `parse` is 8 to 12% slower ([`benchmarks.md`](benchmarks.md), "0.4.1 to 0.5.0").
 
 **0.4.1 (2026-10-28)**, decided 2026-10-27: everything done in 0.4.x, with **no key change and no parse-rule change** (a custom layer changes parsing only when one is loaded): tooling, documentation and extensibility (tracker #200).
 
@@ -43,35 +54,31 @@ the first review of real rows, #125 and its issues #126 to #130, #114, #143 to #
 changed, is in [`CHANGELOG.md`](../CHANGELOG.md) and [`key-format.md`](key-format.md). It stays an alpha: the `k3` is new and has only
 been checked on the project's own data, so a `k4` is likely.
 
-## Next: 0.5.0, the `k4` (tracker #201)
+## Next: 0.5.x, performance
 
-The key-changing rules, cut together once the 0.4.x tooling has produced evidence (it has: three reviews of real rows: #125, closed, #245 and #225). Nothing is
-scheduled; each rule needs a source, an invented corpus case, and a row-by-row measurement against the frozen `k3` keys.
-
-- **Research first** (it may produce more issues, or none): campus boxes, box and route typos and recipient text after the suffix (#131); spelled-out
-  building numbers (#221); more state data, and whether it is needed (#213); the Virginia SCC and Boston SAM data now in `local-data/` (its triage, #205, is closed; the ingest and review queues are in #225).
-- **From the first review of real rows** (#125, IRS extract): done in 0.4.0, except what #131 holds.
-- **From the second review** (#245, the FMCSA carriers against usaddress; 150 of 150 rows answered):
-  - **A repeated string** (#236, P2): a line written twice, or a tail that repeats the city, state and ZIP, about 287 distinct strings in the sample. The first step is a
-    warning (`version:O`, no key change; it could be added before the `k4`), then a rule for the repeated tail (`version:K`).
-  - **Box and route forms** that are not read, glued words, `PO` with no `BOX`, `RUR RTE` (#248); a BOX beside a street (#240);
-    unit forms left in the street name (#241: the glued floor `3FL` is done; the rest are one issue each, #288 to #296); grid-style house numbers (#242, which may be a warning rather than a rule: a leading letter is ambiguous); two suffix words and then a unit (#243); a building name before the house number (#281).
-- **From the third review** (#225, the FCC amateur licensees against usaddress; 150 of 150 rows answered): care-of text at the front with no separator takes the whole line,
-  key `None` and no warning (#259; a warning could come before the `k4`); a `PO BOX` on line 2 whose number equals the ZIP loses its number and leaves a stray `PO BOX` (#260, `version:O`,
-  no key change); a spaced hyphen after the suffix keeps the unit or place in the street name (#261). The round adds evidence to #8, #92, #236, #240, #242, #243 and #248
-  (a letter direction before a single number, route and box forms, Puerto Rico street-first forms, repeated text). The NY corporations queue (reviewed, 150 rows) adds the largest single group of the three rounds: a comma on line 1 that hides the street on line 2, 11.8% of its rows (#268, P1); also `SO` for `SOUTH` (#269), a decision on `46 A LINDEN AVE` (#270), a unit value that is also a suffix code such as `SUITE LA` (#272), placeholder text as the street (#273) and two house numbers joined by `&` (#274), with evidence on #221, #236, #240, #241, #242, #243, #244 and #261. The TX licensing queue (reviewed, 150 rows) adds a ZIP with its leading zero or its ZIP+4 cut short that makes the whole last line unplaced, 8.9% of its rows (#275, P1), and a unit with a second part on line 1 that hides the street on line 2 (#276), with evidence on #8, #236, #241, #242, #244, #248, #270 and #274.
-- **From harness counts:** NAD unit text left in `unparsed_remainder` (#238); two bare numbers on line 2 glued into one unit (#196); a bare `BAY` with no number
-  (#193, a warning, rides along).
-- **State-dependent rules and the reading that feeds them:** Texas `RR`, `PR 462` and county road names (#8), Florida place gaps (#11), the
-  [geocode benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark)'s place-name gap (#29), Puerto Rico and the uncited parts of Pub 28 (#92; the round-2
-  review adds the `URB` shape).
+Decided 2026-10-31: 0.5.x is performance-focused again. #390 holds the baseline (the 8 to 12% that 0.5.0 gave up) and the plan: profile each tokenizer and
+tagger pass, guard the cheap ones, and keep every key (`key_diff.py` against `local-data/keycompare/k4-cut` must show 0 differences). Parse rules found
+since the list closed are in **Later** (each is measured, none reached the P2 line): #384 (a campus box with two plain words), #387 (a lost fraction
+before a lone letter), #388 (`EAST TR 56` read with a suffix), #375, #294 and the rest; #391 proposes a review queue for the letter after a house
+number. The next key version is `k5`; nothing is scheduled for it.
 
 ## Waiting, on data or demand
 
-- **Later** (the milestone): the examples notebook as a page on the site (#253); the usaddress comparison post (#88); the address-structure labels usaddress has (#35); research on Canadian addresses (#203);
-  a unit or a box in the city field (#244, a warning); a half written without its slash (#247); the 0.4.1 size figures in the docs and the announcement (#277).
+- **Later** (the milestone): wanted or known, none at the P2 line, none scheduled. By kind:
+  - *Units:* two suffix words then a unit (#243), a unit value that is a suffix code (#272), `SUT` and `STU` (#289), two units joined by `&` (#290), a floor in parentheses (#291), a
+    unit of more than one part (#294), a building word after a route (#295), a unit between the house number and the street name (#296), unit text with no designator on line 2 (#320),
+    words Pub 28 does not list as designators (#321), `PIER` as a last word (#327), a bare number or letter after a street with no suffix (#345), a name and a floor on line 1 (#351),
+    a word and a number after a suffix (#375), a campus box with two plain words (#384), NAD unit misses (#238), a bare `BAY` (#193).
+  - *Boxes and routes:* glued box and route words (#304), a route after a street (#307), `PO BOX` with a placeholder on line 2 (#358), a box followed by street words (#366).
+  - *House numbers and street names:* `SO` for `SOUTH` (#269), two house numbers joined by `&` (#274), a spaced hyphen between a building and a street (#310) or after a suffix (#341), grid numbers (#311),
+    a letter before the house number (#312), Queens and Hawaii numbers written with a space (#313), a letter then a direction then a name (#360), a lost fraction before a lone letter (#387),
+    a compass word with `KY` or `TR` (#388), and the letter after a house number (#391, a review queue).
+  - *State and road forms:* Texas `PR` roads (#314), Alabama `<NAME> ROAD <number>` (#315), the FM number before the road type (#316), `AND` between two highways (#317); Puerto Rico (#318, #319, the epic #332, #92).
+  - *City field and line 2:* a unit or a box in the city field (#244), the city field holds the state (#357), a `CO` prefix with a fuller name on line 2 (#367).
+  - *Data, API, docs and speed:* Florida pack gaps (#11), more state data (#213), the address-structure labels usaddress has (#35), Canadian addresses (#203), the usaddress comparison post (#88), the examples notebook as a page (#253),
+    the docs site move off Material for MkDocs (#233), the 0.4.1 size figures (#277), a browser page for CSV files (#335), and the performance work of 0.5.x (#390).
 - **Tooling** (never shipped, never closed): the review tool's deferred sharing helpers (#222, item 4); the tracker of what has been hand-reviewed and the
-  queues to come (#225; the FCC queue is reviewed, its findings are #259 to #261); comparing with libpostal (#215).
+  queues to come (#225; the queues so far are reviewed and filed); comparing with libpostal (#215); evaluating MessyStreets (#323).
 - **More shapes and rules** not tied to a state, known and not yet an issue: named buildings without a building word (`THE GARRETT`, `UPTOWN SQUARE`);
   highway modifiers before a city on one line
   (`NORTH HIGHWAY 71 BUSINESS LOWELL`); a comma after a directional (`3324 N, ANDREWS AVE`); a PO box on line 2 beside a street with no number; a unit

@@ -7,6 +7,8 @@ change to what an input produces needs a new key version.
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-10-31
+
 ### Added
 
 - **Probe coverage check** (tooling only, no parser change): `probes.py --coverage` lists the open rule issues that have a probe, those excused with a reason (`NO_PROBE`: #11, #92, #213, #238, #345) and any with neither (exit status 1); the `repeated-line` probe (#236) now counts, in `probes.py` and in the `agg_probes` of a `run.py` run (it had no code before); a partial key is recognised for any key version (`k4n:`, `k4n:`), so the probe counts survive the `k4` cut. The report field `k3n` is now `partial_key`.
@@ -20,6 +22,8 @@ change to what an input produces needs a new key version.
 - **`repeated_text` warning** (#236, `version:O`, **no key change**): raised when text that appears twice in the input is read once and the copy dropped: a line written twice (`812 ASHGROVE ST 812 ASHGROVE ST`, `PO BOX 7 PO BOX 7`), a cut-off copy of the address ahead of it, or the city, state or ZIP written again at the end of line 1. Not raised with `second_line_skipped`. Added to 38,422 of 36,920,703 rows of seven large sources (0.10%), no key changes. A repeat that is not dropped (the street name keeps the city, ZIP+4 in the ZIP field) has no warning yet and is the held `k4` rule.
 
 ### Changed
+
+- **Speed and size:** `parse` is 8 to 12% slower than in 0.4.1 (the corpus inputs 63,901 to 56,114 per second, the suite's `parse_tokens` 39,244 to 35,951, `parse_many` on 4 threads 149,972 to 133,873): the 0.5.0 rules add tokenizer and tagger passes. The wheel is 2.1 MB (2.0 MB in 0.4.1). 0.5.x is to be performance-focused (#390). Accuracy on the benchmark suite rises (whole suite 92.3% to 93.4%, the `hard` stratum 54.6% to 61.8%); the geocode benchmark dev split falls 0.2 points (94.5% to 94.3%) because of #270, which joins a letter after the house number to the number ([`docs/benchmarks.md`](docs/benchmarks.md), "0.4.1 to 0.5.0"; #391).
 
 - **The match key is `k4`** (keys changed: store the prefix, re-parse to re-key): the prefix is `k4:` (`k4n:` with no state or ZIP) and the segment layout is unchanged. The value of some keys changes because of the rules listed below, each marked "held for the `k4`" (the `k3` is retired; the library no longer produces it). Against the frozen `k3` keys of 0.4.0 (seven large sources, 36,920,703 rows, property-level key) **127,869 keys change (0.35%)**: NY corporations 47,314, carrier census 43,367, NC voter 15,411, amateur radio 7,174, IRS 5,771, Netsyms 4,935, NAD 3,897. The prefix itself is the only change to every other key: a build with the rules and the `k3` prefix and the cut build differ in 0 keys. The per-rule counts in the entries below were each measured against the build before the rule, so they do not add up to this figure. [`docs/key-format.md`](docs/key-format.md) has the version history.
 
