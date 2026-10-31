@@ -33,7 +33,7 @@
 //!   the segment or comes before a state or ZIP:
 //!   `WILSON STREETDADE CITY FL` -> `STREET` `DADE` `CITY`.
 
-use crate::classify::{house_number, is_ordinal, zip_parts, ORDINAL_SUFFIXES};
+use crate::classify::{house_number, is_ordinal, is_unit_value, zip_parts, ORDINAL_SUFFIXES};
 use crate::clean::Cleaned;
 use crate::lexicon::{Lexicons, MatchKind, Special, MAX_PLACE_WORDS};
 use crate::types::{FieldName, Span};
@@ -143,6 +143,7 @@ pub(crate) fn tokenize(
     join_split_grid_number(&mut out, lex);
     join_directional_comma(&mut out, lex);
     drop_unit_separators(&mut out, lex);
+    join_unit_hyphen(&mut out, lex);
     out
 }
 
@@ -209,6 +210,52 @@ fn drop_unit_separators(out: &mut Vec<Token>, lex: &Lexicons) {
         } else {
             k += 1;
         }
+    }
+}
+
+/// A spaced hyphen inside a unit (#309). After a unit designator or `#`, `APT - 1` is `APT 1`
+/// (the hyphen is dropped), and `SUITE 12 - 340` is the one value `12-340`, as `SUITE 12-340`
+/// already was. The values have a digit and are not ordinals (`STE 4 - 6TH FLOOR` is a unit
+/// and a floor), all in one segment, and the last one ends it (`UNIT 2 - 7101 HORNE` is a unit
+/// and a house number).
+fn join_unit_hyphen(out: &mut Vec<Token>, lex: &Lexicons) {
+    let designator = |t: &Token| {
+        t.is_hash()
+            || lex
+                .unit(&t.text)
+                .is_some_and(|l| l.kind != MatchKind::Observed)
+    };
+    let value = |t: &Token| {
+        t.text.bytes().any(|c| c.is_ascii_digit()) && is_unit_value(&t.text) && !is_ordinal(&t.text)
+    };
+    let mut k = 1;
+    while k + 1 < out.len() {
+        let same = out[k - 1].seg == out[k].seg && out[k].seg == out[k + 1].seg;
+        // The value ends its segment: `UNIT 2 - 7101 HORNE` is a unit number and a house
+        // number (a Canadian form), not one unit value.
+        let ends = out.get(k + 2).map_or(true, |t| t.seg != out[k].seg);
+        if same && ends && out[k].is_dash() {
+            // `SUITE 12 - 340`: designator, value, hyphen, value.
+            if k >= 2
+                && out[k - 2].seg == out[k].seg
+                && designator(&out[k - 2])
+                && value(&out[k - 1])
+                && value(&out[k + 1])
+            {
+                let next = out.remove(k + 1);
+                out.remove(k);
+                out[k - 1].text.push('-');
+                out[k - 1].text.push_str(&next.text);
+                out[k - 1].span.end = next.span.end;
+                continue;
+            }
+            // `APT - 1`: designator, hyphen, value.
+            if designator(&out[k - 1]) && value(&out[k + 1]) {
+                out.remove(k);
+                continue;
+            }
+        }
+        k += 1;
     }
 }
 
