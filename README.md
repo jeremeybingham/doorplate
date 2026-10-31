@@ -19,7 +19,8 @@ command-line tool (abi3 wheels for Python 3.10 and later); no runtime dependenci
 to download, no machine-learned model, and parsing never panics.
 
 **[Try it in your browser](https://jeremeybingham.github.io/doorplate/demo/)**: type an address and watch it
-be taken apart, with the output, as you type. The parser runs on your machine; nothing is sent anywhere.
+be taken apart, with the output, as you type, or drop in a CSV file and download it with the parsed columns added (the
+columns of `doorplate parse-file`). The parser runs on your machine; nothing is sent anywhere.
 
 This library formats and parses; it **does not validate** that an address exists or can
 receive mail. Pub 28 formatting is not deliverability, and validation needs
