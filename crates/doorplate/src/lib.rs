@@ -36,6 +36,9 @@ mod layer;
 pub mod lexicon;
 mod parser;
 mod place;
+#[cfg(feature = "rule-stats")]
+#[doc(hidden)]
+pub mod rulestats;
 mod tagger;
 mod tokenize;
 mod types;

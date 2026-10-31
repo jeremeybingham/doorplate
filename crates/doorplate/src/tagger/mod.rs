@@ -182,19 +182,28 @@ impl<'a> Tagger<'a> {
         self.warn(Warning::RepeatedText);
     }
 
+    #[cfg_attr(feature = "rule-stats", track_caller)]
     pub(super) fn warn(&mut self, w: Warning) {
+        #[cfg(feature = "rule-stats")]
+        crate::rulestats::at("warn", std::panic::Location::caller(), format!("{w:?}"));
         if !self.warnings.contains(&w) {
             self.warnings.push(w);
         }
     }
 
+    #[cfg_attr(feature = "rule-stats", track_caller)]
     fn decide(&mut self, d: Decision) {
+        #[cfg(feature = "rule-stats")]
+        crate::rulestats::at("decide", std::panic::Location::caller(), format!("{d:?}"));
         if !self.decisions.contains(&d) {
             self.decisions.push(d);
         }
     }
 
+    #[cfg_attr(feature = "rule-stats", track_caller)]
     fn set(&mut self, r: Range<usize>, tag: Tag) {
+        #[cfg(feature = "rule-stats")]
+        crate::rulestats::at("set", std::panic::Location::caller(), format!("{tag:?}"));
         for t in self.tags.get_mut(r).into_iter().flatten() {
             *t = tag;
         }
