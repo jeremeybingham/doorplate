@@ -2456,6 +2456,26 @@ impl Tagger<'_> {
         self.set(i..j, Tag::Name);
     }
 
+    /// A common street type or a spelled-out direction (`RD`, `LOOP`, `NORTH`): the
+    /// word after a `#` that copies the street (`410 BILL LOHR RD # RD`) is not a
+    /// unit (#362). Single letters and two-letter directions are left to the unit
+    /// rules, so `# N` and `# NE` keep their reading.
+    fn road_word(&self, t: &str) -> bool {
+        const COMMON: [&str; 13] = [
+            "ST", "AVE", "RD", "DR", "LN", "BLVD", "CT", "WAY", "PL", "CIR", "TRL", "LOOP", "PKWY",
+        ];
+        // A two-letter variant (`LA`, `CR`, `BL`, `LP`) can be a unit or an article, so
+        // only the standard two-letter abbreviations count.
+        self.lex.suffix(t).is_some_and(|l| {
+            COMMON.contains(&l.value.abbr()) && (t.len() > 2 || t == l.value.abbr())
+        }) || (t.len() >= 4 && self.lex.directional(t).is_some())
+    }
+
+    /// A unit designator right before the `#` at `hash` (`UNIT # NORTH`).
+    fn hash_has_designator(&self, floor: usize, hash: usize) -> bool {
+        longest_ending(self.toks, floor, hash, |s| self.lex.unit(s)).is_some()
+    }
+
     /// Where plain words after a street's suffix start (#374): `3908 INLAND AVE
     /// MARLOW`, `2440 DEMING WAY HALE AND PARTNERS`, `208 COLCHESTER AVE MANN
     /// HALL`. After a house number, a name and a suffix word come one to four
@@ -3008,6 +3028,18 @@ impl Tagger<'_> {
             if !found.is_empty() && self.toks[last].is_dash() {
                 self.set(last..j, Tag::Skip);
                 j = last;
+                continue;
+            }
+            // "410 BILL LOHR RD # RD": a street type or spelled direction after a bare
+            // '#' repeats the street; it is not a unit and is dropped (#362).
+            if last > floor
+                && self.toks[last - 1].is_hash()
+                && is_unit_word(t)
+                && self.road_word(t)
+                && !self.hash_has_designator(floor, last - 1)
+            {
+                self.set(last - 1..j, Tag::Skip);
+                j = last - 1;
                 continue;
             }
             // "# 309", "UNIT 203", "LOT H28", and a word after '#': "# REAR".
