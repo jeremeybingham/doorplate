@@ -16,6 +16,7 @@ pub use key::normalize_key;
 use key::normalize_key_cow;
 
 use std::collections::HashSet;
+use std::sync::OnceLock;
 
 use crate::layer::{CustomLayer, Layer, LayerInfo};
 use crate::types::{
@@ -284,6 +285,72 @@ fn find<'a, V>(index: &'a [(&'static str, V)], key: &str) -> Option<&'a V> {
         .map(|(_, v)| v)
 }
 
+/// A set of bits that says "certainly not in the table" for most keys that are not, so a lookup
+/// that would miss (83% of them, #90) skips its binary search. Two bits per key from one 64-bit
+/// FNV-1a hash, 16 bits per key at least: about 1.4% of misses still search. It never says no to
+/// a key that is in the table, so the result of a lookup does not change (#400).
+struct Filter {
+    bits: Box<[u64]>,
+    /// Bit count minus one; the count is a power of two.
+    mask: u64,
+}
+
+impl Filter {
+    fn new<'a>(keys: impl Iterator<Item = &'a str> + Clone) -> Self {
+        let n = keys.clone().count().max(1);
+        let size = (n * 16).next_power_of_two().max(64);
+        let mut f = Filter {
+            bits: vec![0u64; size / 64].into_boxed_slice(),
+            mask: (size - 1) as u64,
+        };
+        for k in keys {
+            let (a, b) = f.probes(k);
+            f.bits[(a >> 6) as usize] |= 1 << (a & 63);
+            f.bits[(b >> 6) as usize] |= 1 << (b & 63);
+        }
+        f
+    }
+
+    #[inline]
+    fn probes(&self, key: &str) -> (u64, u64) {
+        let mut h: u64 = 0xcbf2_9ce4_8422_2325;
+        for &c in key.as_bytes() {
+            h = (h ^ u64::from(c)).wrapping_mul(0x0000_0100_0000_01b3);
+        }
+        (h & self.mask, (h >> 32) & self.mask)
+    }
+
+    #[inline]
+    fn may_contain(&self, key: &str) -> bool {
+        let (a, b) = self.probes(key);
+        self.bits[(a >> 6) as usize] >> (a & 63) & 1 != 0
+            && self.bits[(b >> 6) as usize] >> (b & 63) & 1 != 0
+    }
+}
+
+/// [`find`], after the table's [`Filter`] (built on first use) has had its say.
+#[inline]
+fn find_filtered<'a, V>(
+    filter: &OnceLock<Filter>,
+    index: &'a [(&'static str, V)],
+    key: &str,
+) -> Option<&'a V> {
+    let f = filter.get_or_init(|| Filter::new(index.iter().map(|(k, _)| *k)));
+    if f.may_contain(key) {
+        find(index, key)
+    } else {
+        None
+    }
+}
+
+/// `find` on one of the keyed tables, with a filter of its own.
+macro_rules! find_in {
+    ($index:expr, $key:expr) => {{
+        static FILTER: OnceLock<Filter> = OnceLock::new();
+        find_filtered(&FILTER, $index, $key)
+    }};
+}
+
 /// Access to the compiled lexicon tables. Cheap to copy, `Send + Sync`.
 ///
 /// Every lookup normalizes its input with [`normalize_key`] first, so
@@ -316,12 +383,17 @@ impl Lexicons {
 
     /// Street suffix: `"AVENUE"`, `"Ave."`, `"AVNUE"` -> AVE.
     pub fn suffix(&self, s: &str) -> Option<Lookup<StreetSuffix>> {
-        self.suffix_base(s)
-            .or_else(|| self.layer?.suffix.get(&*normalize_key_cow(s)).copied())
+        self.suffix_key(&normalize_key_cow(s))
     }
 
-    fn suffix_base(&self, s: &str) -> Option<Lookup<StreetSuffix>> {
-        let (i, kind) = *find(tables::SUFFIX_INDEX, &normalize_key_cow(s))?;
+    /// [`Self::suffix`] for a spelling that is already a key (see [`normalize_key`]).
+    fn suffix_key(&self, key: &str) -> Option<Lookup<StreetSuffix>> {
+        self.suffix_base(key)
+            .or_else(|| self.layer?.suffix.get(key).copied())
+    }
+
+    fn suffix_base(&self, key: &str) -> Option<Lookup<StreetSuffix>> {
+        let (i, kind) = *find_in!(tables::SUFFIX_INDEX, key)?;
         let row = tables::SUFFIXES.get(usize::from(i))?;
         Some(Lookup {
             value: StreetSuffix {
@@ -355,12 +427,17 @@ impl Lexicons {
 
     /// Directional: `"NORTH EAST"`, `"N.E."`, `"ne"` -> NE.
     pub fn directional(&self, s: &str) -> Option<Lookup<Directional>> {
-        self.directional_base(s)
-            .or_else(|| self.layer?.directional.get(&*normalize_key_cow(s)).copied())
+        self.directional_key(&normalize_key_cow(s))
     }
 
-    fn directional_base(&self, s: &str) -> Option<Lookup<Directional>> {
-        let (value, kind) = *find(tables::DIRECTIONAL_INDEX, &normalize_key_cow(s))?;
+    /// [`Self::directional`] for a spelling that is already a key (see [`normalize_key`]).
+    fn directional_key(&self, key: &str) -> Option<Lookup<Directional>> {
+        self.directional_base(key)
+            .or_else(|| self.layer?.directional.get(key).copied())
+    }
+
+    fn directional_base(&self, key: &str) -> Option<Lookup<Directional>> {
+        let (value, kind) = *find_in!(tables::DIRECTIONAL_INDEX, key)?;
         Some(Lookup { value, kind })
     }
 
@@ -372,7 +449,7 @@ impl Lexicons {
     }
 
     fn unit_base(&self, s: &str) -> Option<Lookup<UnitType>> {
-        let (i, kind) = *find(tables::UNIT_INDEX, &normalize_key_cow(s))?;
+        let (i, kind) = *find_in!(tables::UNIT_INDEX, &normalize_key_cow(s))?;
         let row = tables::UNITS.get(usize::from(i))?;
         Some(Lookup {
             value: UnitType {
@@ -392,7 +469,7 @@ impl Lexicons {
     }
 
     fn state_base(&self, s: &str) -> Option<Lookup<StateCode>> {
-        let (i, kind) = *find(tables::STATE_INDEX, &normalize_key_cow(s))?;
+        let (i, kind) = *find_in!(tables::STATE_INDEX, &normalize_key_cow(s))?;
         let row = tables::STATES.get(usize::from(i))?;
         Some(Lookup {
             value: StateCode {
@@ -411,7 +488,7 @@ impl Lexicons {
     }
 
     fn special_base(&self, s: &str) -> Option<Lookup<Special>> {
-        let (value, kind) = *find(tables::SPECIAL_INDEX, &normalize_key_cow(s))?;
+        let (value, kind) = *find_in!(tables::SPECIAL_INDEX, &normalize_key_cow(s))?;
         Some(Lookup { value, kind })
     }
 
@@ -422,7 +499,7 @@ impl Lexicons {
     }
 
     fn highway_base(&self, s: &str) -> Option<Lookup<HighwayPrefix>> {
-        let (i, kind) = *find(tables::HIGHWAY_INDEX, &normalize_key_cow(s))?;
+        let (i, kind) = *find_in!(tables::HIGHWAY_INDEX, &normalize_key_cow(s))?;
         let standard = *tables::HIGHWAYS.get(usize::from(i))?;
         Some(Lookup {
             value: HighwayPrefix { standard },
@@ -451,13 +528,13 @@ impl Lexicons {
 
     /// Military delivery-line type: `"PSC"`, `"Postal Service Center"` -> PSC.
     pub fn military(&self, s: &str) -> Option<Lookup<MilitaryKind>> {
-        let (value, kind) = *find(tables::MILITARY_INDEX, &normalize_key_cow(s))?;
+        let (value, kind) = *find_in!(tables::MILITARY_INDEX, &normalize_key_cow(s))?;
         Some(Lookup { value, kind })
     }
 
     /// Military post office: `"APO"`, `"FPO"`, `"DPO"`.
     pub fn military_post_office(&self, s: &str) -> Option<Lookup<MilitaryPostOffice>> {
-        let (value, kind) = *find(tables::MILITARY_PO_INDEX, &normalize_key_cow(s))?;
+        let (value, kind) = *find_in!(tables::MILITARY_PO_INDEX, &normalize_key_cow(s))?;
         Some(Lookup { value, kind })
     }
 
@@ -765,10 +842,12 @@ impl Lexicons {
     fn place_key_into(&self, s: &str, out: &mut String) {
         place_key::place_key_into(
             s,
+            // A word of the place key is upper-case letters and digits only, so it is
+            // already a lexicon key and needs no normalizing (#400).
             |w| {
-                self.directional(w)
+                self.directional_key(w)
                     .map(|l| l.value.name())
-                    .or_else(|| self.suffix(w).map(|l| l.value.name()))
+                    .or_else(|| self.suffix_key(w).map(|l| l.value.name()))
             },
             out,
         );
@@ -1336,6 +1415,70 @@ mod tests {
                 "{s:?}"
             );
         }
+    }
+
+    /// The filter in front of a table search never changes a result (#400): every key of every
+    /// table is found, and a large set of other strings (the keys cut, grown and changed by a
+    /// letter, and generated ones) gives the same answer as the search alone.
+    #[test]
+    fn the_filter_in_front_of_a_table_changes_no_lookup() {
+        fn check<V: PartialEq + std::fmt::Debug>(index: &[(&'static str, V)], probes: &[String]) {
+            let filter = OnceLock::new();
+            for (k, _) in index {
+                assert_eq!(find_filtered(&filter, index, k), find(index, k), "{k:?}");
+            }
+            for p in probes {
+                assert_eq!(find_filtered(&filter, index, p), find(index, p), "{p:?}");
+            }
+        }
+        let mut probes: Vec<String> = Vec::new();
+        let mut x: u64 = 0x9E37_79B9_7F4A_7C15;
+        let mut next = move || {
+            x ^= x << 13;
+            x ^= x >> 7;
+            x ^= x << 17;
+            x
+        };
+        let words: Vec<String> = LEX
+            .suffixes()
+            .flat_map(|s| [s.abbr().to_string(), s.name().to_string()])
+            .chain(
+                LEX.units()
+                    .flat_map(|u| [u.abbr().to_string(), u.name().to_string()]),
+            )
+            .chain(LEX.states().map(|s| s.code().to_string()))
+            .collect();
+        for w in &words {
+            probes.push(w[..w.len() - 1].to_string());
+            probes.push(format!("{w}S"));
+            probes.push(format!("{w} {w}"));
+            let mut b = w.clone().into_bytes();
+            let i = (next() % b.len() as u64) as usize;
+            b[i] = b'A' + (next() % 26) as u8;
+            probes.push(String::from_utf8(b).unwrap());
+        }
+        for _ in 0..30_000 {
+            let n = 1 + (next() % 8) as usize;
+            probes.push(
+                (0..n)
+                    .map(|_| match next() % 30 {
+                        26 => ' ',
+                        27 => '1',
+                        28 => '-',
+                        _ => (b'A' + (next() % 26) as u8) as char,
+                    })
+                    .collect(),
+            );
+        }
+        probes.extend(["", " ", "é", "ß"].map(String::from));
+        check(tables::SUFFIX_INDEX, &probes);
+        check(tables::DIRECTIONAL_INDEX, &probes);
+        check(tables::UNIT_INDEX, &probes);
+        check(tables::STATE_INDEX, &probes);
+        check(tables::SPECIAL_INDEX, &probes);
+        check(tables::HIGHWAY_INDEX, &probes);
+        check(tables::MILITARY_INDEX, &probes);
+        check(tables::MILITARY_PO_INDEX, &probes);
     }
 
     #[test]
