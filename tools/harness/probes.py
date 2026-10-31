@@ -59,8 +59,8 @@ PROBES = [
     (
         "box-line1-street-line2",
         "303",
-        "a PO box on line 1, a street name on line 2",
-        rf"^{BOX} [0-9]+ \| [A-Z]",
+        "a PO box on line 1, a street on line 2 (a house number, or a name ending in a street suffix)",
+        rf"^{BOX} [0-9]+ \| (?:[0-9]+ [A-Z]|[A-Z0-9 ]+ {SUF}\b)",
         "S",
         2,
     ),
@@ -442,6 +442,42 @@ PROBES = [
     ("city-is-state", "357", "the city field holds the state and the real city is on line 2", None, "S", 3),
     ("unit-or-box-in-city", "244", "a unit or a box in the city field", None, "S", 2),
 ]
+# Open rule issues that have no probe, and why. Every other open issue with the label `area:rules` has a probe in PROBES; the
+# issues about docs, tooling, the API or the architecture, and the trackers, are not text shapes and need none.
+NO_PROBE = {
+    11: "research: which state data to add; no text shape, a gap in the tables",
+    92: "research: the uncited parts of Pub 28; reading work, not a shape",
+    213: "research: whether more state data is needed; measured by the label comparisons, not a text shape",
+    238: "a family of unit misses in NAD, split into #320 and #321, which have probes",
+    345: "research: a bare number after a street is a unit in some sources and a name in others; no text shape tells them apart",
+}
+NOT_A_SHAPE_LABELS = ("tracker", "area:docs", "area:tooling", "area:api", "area:architecture")
+
+
+def coverage(issues):
+    """Which open issues are proved by a probe. `issues` is the list of open issues (dicts with `number` and `labels`, as
+    `gh issue list --json number,labels` gives them). Returns ({number: [probe keys]}, {number: reason}, [numbers with neither]).
+    Counts of issue numbers only."""
+    by_issue = {}
+    for key, issue, *_ in PROBES:
+        for i in str(issue).split(","):
+            if i.strip().isdigit():
+                by_issue.setdefault(int(i), []).append(key)
+    covered, excused, missing = {}, {}, []
+    for it in issues:
+        n = it["number"]
+        labels = {lab["name"] if isinstance(lab, dict) else lab for lab in it.get("labels", [])}
+        if labels & set(NOT_A_SHAPE_LABELS):
+            continue
+        if n in by_issue:
+            covered[n] = by_issue[n]
+        elif n in NO_PROBE:
+            excused[n] = NO_PROBE[n]
+        elif "area:rules" in labels:
+            missing.append(n)
+    return covered, excused, sorted(missing)
+
+
 EFFORT = {"S": 1, "M": 2, "L": 4, "D": 2}
 FLAGGED = (
     "unparsed_remainder",
@@ -471,8 +507,15 @@ def regexes():
 CITY_UNIT = re.compile(rf"^(?:{UN}|BOX|{BOX}|#)\b")
 
 
+def repeated_line(line1):
+    """Line 1 is the same words twice (`812 ASHGROVE ST 812 ASHGROVE ST`): four or more words, the halves equal."""
+    w = re.sub(r"[^A-Z0-9 ]", " ", (line1 or "").upper()).split()
+    return len(w) >= 4 and len(w) % 2 == 0 and w[: len(w) // 2] == w[len(w) // 2 :]
+
+
 def hits(line1, line2, zip_code=None, city=None, state=None):
-    """Probe keys whose pattern matches this address. `city` and `state` are for the two probes on the city field."""
+    """Probe keys whose pattern matches this address. `city` and `state` are for the two probes on the city field;
+    `repeated-line` needs no pattern (the halves of line 1 are equal)."""
     t = text_of(line1, line2)
     out = [k for k, rx in regexes().items() if rx.search(t)]
     c = (city or "").upper().strip()
@@ -482,6 +525,9 @@ def hits(line1, line2, zip_code=None, city=None, state=None):
     # A unit designator or a box in the city field (#244).
     if c and CITY_UNIT.match(c):
         out.append("unit-or-box-in-city")
+    # The street line written twice (#236).
+    if repeated_line(line1):
+        out.append("repeated-line")
     # PO BOX on line 2 whose number is the ZIP.
     m = re.match(rf"^{BOX} ([0-9]{{5}})$", (line2 or "").upper().strip())
     if m and zip_code and m.group(1) == str(zip_code)[:5]:
@@ -500,9 +546,17 @@ def is_puerto_rico(row):
     return st in ("PR", "PUERTO RICO") or z in ("006", "007", "009") or bool(PR_WORDS.search(text_of(row.get("line1"), row.get("line2"))))
 
 
+PARTIAL_KEY = re.compile(r"^k[0-9]+n:")
+
+
+def is_partial_key(key):
+    """A key without state and ZIP (`k3n:`, `k4n:`: the prefix of any version)."""
+    return bool(PARTIAL_KEY.match(str(key)))
+
+
 def is_flagged(warnings, key):
     """A warning from the list, or a key without state and ZIP."""
-    return bool(set(warnings) & set(FLAGGED)) or str(key).startswith("k3n:")
+    return bool(set(warnings) & set(FLAGGED)) or is_partial_key(key)
 
 
 def score(rows, harm, size, precision=1.0):
@@ -546,7 +600,7 @@ def summarize(report, baseline=BASELINE_DISAGREE):
 
 
 def run_source(path, sample, seed, compare, con, keep=0):
-    """({key: {"rows", "flagged", "k3n", "compared", "disagree"}}, rows seen, {key: up to `keep` matching rows})
+    """({key: {"rows", "flagged", "partial_key", "compared", "disagree"}}, rows seen, {key: up to `keep` matching rows})
     for one records file."""
     import doorplate
 
@@ -586,7 +640,7 @@ def run_source(path, sample, seed, compare, con, keep=0):
             usaddress = None
     for k, idx in matched.items():
         recs = [rows[i] for i in idx]
-        out = {"rows": len(idx), "flagged": 0, "k3n": 0, "compared": 0, "disagree": 0}
+        out = {"rows": len(idx), "flagged": 0, "partial_key": 0, "compared": 0, "disagree": 0}
         res = doorplate.parse_fields_many(
             line1=[r[0] for r in recs],
             line2=[r[1] for r in recs],
@@ -599,7 +653,7 @@ def run_source(path, sample, seed, compare, con, keep=0):
                 continue
             key = a.key()
             out["flagged"] += int(is_flagged(a.warnings, key))
-            out["k3n"] += int(str(key).startswith("k3n:"))
+            out["partial_key"] += int(is_partial_key(key))
         if usaddress is not None and cmp_string is not None:
             step = max(1, len(recs) // compare)
             for r in recs[::step][:compare]:
@@ -694,8 +748,25 @@ def main(argv=None):
     ap.add_argument("--queue-n", type=int, default=50, help="matches per probe")
     ap.add_argument("--exclude-probes", default="", help="comma-separated probe keys to leave out of the queue (already reviewed, or held back)")
     ap.add_argument("--exclude-pr", action="store_true", help="leave Puerto Rico rows out of the queue (is_puerto_rico)")
+    ap.add_argument("--coverage", action="store_true", help="check that every open rule issue has a probe or a reason (needs `gh`); numbers only")
     ap.add_argument("--confirm", action="store_true", help="run (without it: the plan only)")
     args = ap.parse_args(argv)
+    if args.coverage:
+        import subprocess
+
+        raw = subprocess.run(
+            ["gh", "issue", "list", "--state", "open", "--limit", "500", "--json", "number,labels"],
+            capture_output=True, text=True, check=True,
+        ).stdout
+        covered, excused, missing = coverage(json.loads(raw))
+        print(f"open rule issues with a probe: {len(covered)}; with a reason and no probe: {len(excused)}; with neither: {len(missing)}")
+        for n, why in sorted(excused.items()):
+            print(f"  #{n}: no probe, {why}")
+        for n in missing:
+            print(f"  #{n}: NO PROBE and no reason")
+        closed = sorted({k for k, issue, *_ in PROBES for i in str(issue).split(",") if i.strip().isdigit() and int(i) not in covered} )
+        print(f"{len(closed)} of {len(PROBES)} probes belong to issues that are not open (the closed half of the proof)")
+        return 1 if missing else 0
     if args.summary:
         table, total = summarize(json.loads(args.summary.read_text()))
         print(f"{total:,} rows represented")
