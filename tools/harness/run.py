@@ -355,7 +355,7 @@ def process_chunk(rows, present, fields_many, parse_many):
     probe_counts = Counter()
     for r, a in zip(rows, parsed):
         rid, source, role, provider, line1, line2, rcity, rstate, rzip, last_line, label_number = r
-        for pk in probes.hits(line1, line2, rzip):
+        for pk in probes.hits(line1, line2, rzip, rcity, rstate):
             bad = a is None or probes.is_flagged(a.warnings, a.key())
             probe_counts[(source or "", role or "", pk, "rows")] += 1
             if bad:

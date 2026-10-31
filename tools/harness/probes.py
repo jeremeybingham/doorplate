@@ -373,6 +373,74 @@ PROBES = [
         "M",
         3,
     ),
+    # Probes for the issues filed after the first registry (2026-10-31): patterns over line 1 and line 2, as above.
+    (
+        "single-letter-name-initial",
+        "360",
+        "a single letter after the house number before a name and suffix (77 B BEAL RD, 9311 J W CLAY BLVD)",
+        rf"^[0-9]+ [ABCDFGHIJKLMOPQRTUVXYZ] (?:[A-Z] )?[A-Z]{{3,}}[A-Z ]* {SUF}\b",
+        "M",
+        3,
+    ),
+    (
+        "unit-copies-street-word",
+        "362",
+        "a unit that copies the street's suffix or direction (VEGA LOOP #LN, US HWY 13 N # NORTH, ORANGE ST # 1/2)",
+        rf"\b(?:{SUF}|LOOP|N|S|E|W) ?# ?(?:RD|DR|LN|CT|ST|AVE|PL|LOOP|NORTH|SOUTH|EAST|WEST|N|S|E|W|1/2)(?: \||$)",
+        "M",
+        2,
+    ),
+    (
+        "name-and-floor-line1",
+        "351",
+        "a name and a floor on line 1 with the street on line 2",
+        rf"^[A-Z][A-Z .&']+ (?:[0-9]+(?:ST|ND|RD|TH) )?(?:FL|FLOOR)\b[^|]*\| [0-9]+ [A-Z0-9 ]+ {SUF}\b",
+        "S",
+        3,
+    ),
+    (
+        "po-box-placeholder-line2",
+        "358",
+        "PO BOX with a placeholder word or no number on line 2 (PO BOX NA, PO BOX None, P. O. BOX)",
+        rf"\| {BOX}(?: (?:NA|N/A|NONE|NO|NULL|UNKNOWN|0+|X+))? ?$",
+        "S",
+        2,
+    ),
+    (
+        "box-then-street-words",
+        "366",
+        "a box followed by street words (P O BOX 2856 MEADOW RD)",
+        rf"^{BOX} [0-9]+ [A-Z]+(?: [A-Z]+){{0,2}} {SUF}\b(?! ?[0-9])",
+        "S",
+        2,
+    ),
+    (
+        "co-prefix-fuller-name-line2",
+        "367",
+        "a CO prefix on line 1 and a % name on line 2 (CO HARBOR 2100 OAK ST over % HARBOR HOLDINGS)",
+        rf"^CO [A-Z0-9&' ]+ [0-9]+ [A-Z0-9 ]+ {SUF}\b[^|]*\| ?%",
+        "S",
+        3,
+    ),
+    (
+        "word-number-after-suffix",
+        "375",
+        "a designator-like word and a number after a street suffix (1900 OAK AVE MSC 518)",
+        rf"^[0-9]+ [A-Z0-9 ]+ {SUF} (?!(?:{UN}|BOX|PO|PMB|NO|NUM|LOT|SPC|SP|TRLR|APT|STE|UNIT|DEPT|RM|BLDG|FL)\b)[A-Z]{{2,5}}(?: BOX)? [0-9]+[A-Z]?(?: \||$)",
+        "S",
+        2,
+    ),
+    (
+        "half-without-slash",
+        "247",
+        "a half written without its slash (31 1 2 ELM PLACE)",
+        r"^[0-9]+ (?:[0-9]+ )?(?:1 2|1 4|3 4) [A-Z]{2}",
+        "S",
+        2,
+    ),
+    # Needs the city field (hits(): city and state), so no pattern.
+    ("city-is-state", "357", "the city field holds the state and the real city is on line 2", None, "S", 3),
+    ("unit-or-box-in-city", "244", "a unit or a box in the city field", None, "S", 2),
 ]
 EFFORT = {"S": 1, "M": 2, "L": 4, "D": 2}
 FLAGGED = (
@@ -400,10 +468,20 @@ def regexes():
     return _COMPILED
 
 
-def hits(line1, line2, zip_code=None):
-    """Probe keys whose pattern matches this address."""
+CITY_UNIT = re.compile(rf"^(?:{UN}|BOX|{BOX}|#)\b")
+
+
+def hits(line1, line2, zip_code=None, city=None, state=None):
+    """Probe keys whose pattern matches this address. `city` and `state` are for the two probes on the city field."""
     t = text_of(line1, line2)
     out = [k for k, rx in regexes().items() if rx.search(t)]
+    c = (city or "").upper().strip()
+    # The city field holds the state (NY, or the state's name) and line 2 is plain words: the real city is there (#357).
+    if c and state and (c == str(state).upper().strip()) and re.fullmatch(r"[A-Z][A-Z .'-]+", (line2 or "").upper().strip()):
+        out.append("city-is-state")
+    # A unit designator or a box in the city field (#244).
+    if c and CITY_UNIT.match(c):
+        out.append("unit-or-box-in-city")
     # PO BOX on line 2 whose number is the ZIP.
     m = re.match(rf"^{BOX} ([0-9]{{5}})$", (line2 or "").upper().strip())
     if m and zip_code and m.group(1) == str(zip_code)[:5]:
@@ -494,7 +572,7 @@ def run_source(path, sample, seed, compare, con, keep=0):
     samples = {}
     matched = {}
     for i, (l1, l2, c, s, z, ll, *_rest) in enumerate(rows):
-        for k in hits(l1, l2, z):
+        for k in hits(l1, l2, z, c, s):
             matched.setdefault(k, []).append(i)
     seen = len(rows)
     usaddress = cmp_string = None

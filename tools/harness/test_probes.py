@@ -64,10 +64,50 @@ def test_keys_are_unique_and_every_pattern_compiles():
         ("NO ADDRESS ON FILE", None, None, "placeholder"),
         ("100 OAK ST", "PO BOX 33101", "33101-1234", "po-box-equals-zip"),
         ("ONE MARLOW TOWER", None, None, "spelled-number"),
+        ("77 B BEAL RD", None, None, "single-letter-name-initial"),
+        ("9311 J W CLAY BLVD", None, None, "single-letter-name-initial"),
+        ("146 VEGA LOOP #LN", None, None, "unit-copies-street-word"),
+        ("US HWY 13 N # NORTH", None, None, "unit-copies-street-word"),
+        ("12 ORANGE ST # 1/2", None, None, "unit-copies-street-word"),
+        ("HUB WORKS 2ND FL", "300 ELM CT", None, "name-and-floor-line1"),
+        ("100 OAK ST", "PO BOX NA", None, "po-box-placeholder-line2"),
+        ("100 OAK ST", "P O BOX", None, "po-box-placeholder-line2"),
+        ("P O BOX 2856 MEADOW RD", None, None, "box-then-street-words"),
+        ("CO HARBOR 2100 OAK ST 16", "% HARBOR HOLDINGS LLP", None, "co-prefix-fuller-name-line2"),
+        ("1900 OAK AVE MSC 518", None, None, "word-number-after-suffix"),
+        ("5500 WABASH AVE RHIT BOX 507", None, None, "word-number-after-suffix"),
+        ("31 1 2 ELM PLACE", None, None, "half-without-slash"),
     ],
 )
 def test_each_shape_is_found(line1, line2, zip_code, expect):
     assert expect in probes.hits(line1, line2, zip_code)
+
+
+def test_the_city_field_probes_need_the_city_and_state():
+    assert "city-is-state" in probes.hits("100 OAK ST", "BRONX", "10451", "NY", "NY")
+    assert "city-is-state" not in probes.hits("100 OAK ST", "BRONX", "10451", "BRONX", "NY")
+    assert "city-is-state" not in probes.hits("100 OAK ST", "SUITE 4", "10451", "NY", "NY")
+    assert "city-is-state" not in probes.hits("100 OAK ST", "BRONX", "10451")
+    assert "unit-or-box-in-city" in probes.hits("88 FERN ST", None, "27713", "APT C", "NC")
+    assert "unit-or-box-in-city" in probes.hits("500 E MILL BLVD", None, "27713", "BOX 1204", "NC")
+    assert "unit-or-box-in-city" not in probes.hits("88 FERN ST", None, "27713", "DURHAM", "NC")
+
+
+def test_the_new_probes_leave_ordinary_addresses_alone():
+    for line1, line2 in [
+        ("123 N MAIN ST", None),
+        ("77 OAK ST APT 4", None),
+        ("1900 OAK AVE SUITE 518", None),
+        ("100 OAK ST", "PO BOX 12"),
+        ("PO BOX 2856", None),
+        ("12 1/2 ELM ST", None),
+        ("146 VEGA LOOP APT 4", None),
+    ]:
+        got = set(probes.hits(line1, line2, None)) & {
+            "single-letter-name-initial", "unit-copies-street-word", "po-box-placeholder-line2",
+            "box-then-street-words", "word-number-after-suffix", "half-without-slash", "name-and-floor-line1",
+        }
+        assert not got, (line1, line2, got)
 
 
 def test_an_ordinary_address_hits_nothing():
