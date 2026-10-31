@@ -41,15 +41,58 @@ about 10% from run to run on its own), and package and import sizes were unchang
 
 | | doorplate | usaddress |
 |---|---|---|
-| Benchmark suite, `natural` stratum (16,001), whole address (coarse) | 98.3% | 96.1% |
-| Benchmark suite, whole suite (19,586), whole address (coarse) | 92.3% | 85.5% |
-| [Geocode benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark), dev split, whole address (coarse) | 94.5% | 88.1% |
-| usaddress's own test files, whole address (coarse) | 99.2% | 100.0% |
-| Addresses per second, one thread, benchmark suite inputs (`parse_tokens` / `usaddress.parse`) | 38,305 | 8,937 |
-| Addresses per second, `parse_many` on 4 threads, suite inputs (usaddress has no batch call) | 152,376 | 8,937 |
+| Benchmark suite, `natural` stratum (16,001), whole address (coarse) | 98.5% | 96.1% |
+| Benchmark suite, whole suite (19,586), whole address (coarse) | 93.4% | 85.5% |
+| [Geocode benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark), dev split, whole address (coarse) | 94.3% | 88.1% |
+| usaddress's own test files, whole address (coarse) | 99.1% | 100.0% |
+| Addresses per second, one thread, benchmark suite inputs (`parse_tokens` / `usaddress.parse`) | 35,951 | 9,037 |
+| Addresses per second, `parse_many` on 4 threads, suite inputs (usaddress has no batch call) | 133,873 | 9,037 |
 | One address in Rust (median of the corpus shapes, criterion, unpinned) | 5 to 12 µs | |
-| Installed size (wheel / package and dependencies) | 1.8 MB (4.5 MB unpacked) | 4.8 MB |
+| Installed size (wheel / package and dependencies) | 2.1 MB (5.1 MB unpacked) | 4.8 MB |
 | Import time | 1 ms | 10 ms |
+
+## 0.4.1 to 0.5.0
+
+The same benchmarks on the 0.4.1 build (the tag `v0.4.1`, in its own worktree) and on `main` at 958bb72 (0.5.0-dev, the `k4` cut), on one machine on
+2026-10-31, both measured the same way in the same session: the suite and the private twin with each build's Python package, the geocode splits and
+the Florida check with a command-line binary built from each tree, speed on a quiet machine (the suite's 4-CPU profile; the Python script unpinned).
+0.5.0 reads many more shapes (the closed rule list of the `k4`, tracker #201); the key changes are in the changelog and in
+[`key-format.md`](key-format.md).
+
+| | 0.4.1 | 0.5.0 | Change |
+|---|---|---|---|
+| Suite, `natural` stratum (16,001), whole address (coarse) | 98.3% | 98.5% | +0.2 |
+| Suite, whole (19,586) | 92.3% | 93.4% | +1.1 |
+| Suite, `hard` stratum (2,585) | 54.6% | 61.8% | +7.2 |
+| Suite, `hand` stratum (1,000) | 94.3% | 94.3% | same |
+| Suite, the private twin: `natural` / whole | 98.2% / 92.1% | 98.4% / 93.2% | +0.2 / +1.1 |
+| Fields input (`parse_fields`), whole record right | 99.1% | 99.1% | same |
+| Unit number right (fields input) | 97.8% | 98.0% | +0.2 |
+| Key stability, one key across two to four styles | 91.7% | 91.7% | same |
+| Geocode benchmark, dev (60,522) | 94.5% | 94.3% | -0.2 |
+| Geocode benchmark, train (148,173) | 94.4% | 94.2% | -0.2 |
+| Geocode benchmark, test (30,622; optimistic) | 96.8% | 96.7% | -0.1 |
+| usaddress's own test files, whole address | 99.2% | 99.1% | -0.1 |
+| One-line Florida check (300,000 records, city right) | 94.7% | 94.7% | 0 gained, 0 lost |
+| Geocode `city_diff` (train80, held-out train, dev, test) | | | 0 gained, 0 lost on every split |
+
+The gain is in the rare shapes: the `hard` stratum (a name or recipient text around the address, boxes, a unit written oddly) moves 7.2 points and
+the `natural` stratum 0.2. The geocode benchmark loses 0.2 on dev: 113 of its 60,522 strings read their street parts differently, and at least 92
+of them are one rule (#270: a letter A to D after the house number joins the number, `123 A ELM ST` is `123A`, as the reviewed sources write it;
+the benchmark's labels keep the letter in the street name). No city changed. The suite does not attribute a gain to a rule, and "improves the suite
+score" is not a reason for one (see below).
+
+**Speed is lower.** Python, `benchmarks/speed_python.py` (100,000 addresses, best of several runs): `parse` on the golden-corpus inputs 63,901 to 56,114 per
+second (-12%), on the geocode addresses 41,908 to 37,784 (-10%). The suite's own speed track (4 CPUs): `parse_tokens` on one thread 39,244 to 35,951
+(-8%), `parse_many` on 4 threads 149,972 to 133,873 (-11%). Each figure is one session, and the suite's speed track varies by about 10% from run to run
+on its own, but the four rows move the same way. The cause has not been looked for: the 0.5.0 rules add tokenizer and tagger passes. It is not a
+regression test failure (nothing in `cargo test` measures speed); a profile is a follow-up.
+
+**Size.** The wheel is 2.1 MB (5.1 MB unpacked) against 2.0 MB for 0.4.1; the CLI binary is 6.2 MB (5.2 MB stripped); import time is 1 ms; resident
+memory after parsing 100,000 addresses is 158 MB (a loop of `parse`) to 253 MB (`parse_many`, all results kept).
+
+The detailed tables below ("The benchmark suite", "Accuracy") are the 0.4.0 run; the figures above are the current ones, and the changelog has the
+rules behind them.
 
 ## 0.3.1 to 0.4.0
 

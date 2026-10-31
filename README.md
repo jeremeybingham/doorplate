@@ -207,8 +207,8 @@ what the input said; the place found is reported beside it. Sources and licenses
 ## Benchmarks
 | | doorplate | usaddress |
 |---|---|---|
-| Whole address right, [benchmark suite](docs/running-benchmarks.md), `natural` stratum (16,001 addresses written in five styles) | 98.3% | 96.1% |
-| Whole address right, [geocode benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark) dev split (60,522 one-line addresses) | 94.5% | 88.1% |
+| Whole address right, [benchmark suite](docs/running-benchmarks.md), `natural` stratum (16,001 addresses written in five styles) | 98.5% | 96.1% |
+| Whole address right, [geocode benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark) dev split (60,522 one-line addresses) | 94.3% | 88.1% |
 | Addresses per second from Python, one thread (suite inputs) | about 38,300 | about 8,900 |
 
 The suite is 19,586 labeled addresses neither library was made from; it keeps both libraries' blind spots on purpose, so read

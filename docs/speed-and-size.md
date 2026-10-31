@@ -80,7 +80,7 @@ for `parse_many` on the same strings (a separate run on 2026-10-17 on all 14 thr
 | | Size |
 |---|---|
 | `doorplate` CLI binary (release, as built) | 5.5 MB (4.6 MB stripped) |
-| `doorplate` wheel (abi3, one wheel per platform) | 1.8 MB |
+| `doorplate` wheel (abi3, one wheel per platform) | 2.1 MB |
 | The extension module inside it | 4.4 MB |
 | `usaddress` and its dependencies, installed | 4.8 MB (the model is 134 KB; the rest is python-crfsuite) |
 
