@@ -8,7 +8,8 @@ permalink: /demo/
 <p>
   Type or paste a US address. doorplate reads it as you type, colors each part by what it decided
   the part is, and shows what it writes: the components, the USPS and RESO output, a match key and
-  warnings. One line, any style; there are examples below the box.
+  warnings. One line, any style; there are examples below the box. A whole spreadsheet of
+  addresses can be parsed further down: <a href="#csv">Parse a CSV file</a>.
 </p>
 <p class="dp-note">
   The parser runs in your browser as WebAssembly. Nothing you type is sent anywhere.
@@ -43,6 +44,73 @@ permalink: /demo/
 </div>
 <p id="dp-status" class="dp-note">Loading the parser (about 1.4 MB)…</p>
 
+
+<h2 id="csv">Parse a CSV file</h2>
+<p>
+  Have a spreadsheet of addresses? Pick the file, say which column holds the address (or which hold
+  line 1, line 2, city, state and ZIP), and download the same file with the parsed parts added.
+  The columns are the ones <code>doorplate parse-file</code> writes, with the prefix <code>addr_</code>.
+</p>
+<p class="dp-note">
+  <strong>The file stays on your computer.</strong> This page reads it in your browser, the parser
+  runs here as WebAssembly in a background worker, and the result is built in memory and handed back
+  as a download. Nothing is uploaded, and this page loads no analytics or other scripts.
+  To check, open your browser's developer tools, choose the Network tab, and run a file: the only
+  requests are this page's own files.
+  doorplate parses and formats addresses; it does not validate that an address exists or can
+  receive mail, and an alpha can be wrong: read the output before you use it.
+</p>
+
+<div id="dp-csv">
+  <p id="dp-csv-status" class="dp-note">Loading the parser for this section…</p>
+  <label for="dp-csv-file" class="dp-label">CSV file (UTF-8 or Latin-1; comma, semicolon, tab or pipe)</label>
+  <input id="dp-csv-file" type="file" accept=".csv,.tsv,.txt,text/csv,text/plain" disabled>
+
+  <div id="dp-csv-config" hidden>
+    <p id="dp-csv-info" class="dp-note"></p>
+    <p id="dp-csv-big" class="dp-note dp-csv-warn" hidden></p>
+    <label class="dp-csv-check"><input type="checkbox" id="dp-csv-header" checked> The first row is a header</label>
+    <div class="dp-csv-scroll"><table class="dp-table" id="dp-csv-preview"></table></div>
+
+    <h3>Where is the address?</h3>
+    <p>
+      <label class="dp-csv-check"><input type="radio" name="dp-csv-mode" id="dp-csv-mode-line" checked> One column with the whole address</label>
+      <label class="dp-csv-check"><input type="radio" name="dp-csv-mode" id="dp-csv-mode-fields"> Separate columns (line 1, line 2, city, state, ZIP)</label>
+    </p>
+    <div id="dp-csv-one"><label for="dp-csv-addr">Address column</label> <select id="dp-csv-addr"></select></div>
+    <div id="dp-csv-multi" hidden>
+      <div><label for="dp-csv-line1">Line 1</label> <select id="dp-csv-line1"></select></div>
+      <div><label for="dp-csv-line2">Line 2</label> <select id="dp-csv-line2"></select></div>
+      <div><label for="dp-csv-city">City</label> <select id="dp-csv-city"></select></div>
+      <div><label for="dp-csv-state">State</label> <select id="dp-csv-state"></select></div>
+      <div><label for="dp-csv-zip">ZIP</label> <select id="dp-csv-zip"></select></div>
+    </div>
+
+    <h3>Columns to add</h3>
+    <p class="dp-note">
+      <button type="button" id="dp-csv-default" class="dp-csv-btn">Default set</button>
+      <button type="button" id="dp-csv-all" class="dp-csv-btn">Everything</button>
+      Your own columns are copied unchanged.
+    </p>
+    <div id="dp-csv-cols" class="dp-csv-cols"></div>
+    <p>
+      <label class="dp-csv-check"><input type="checkbox" id="dp-csv-guard" checked>
+        Write a leading apostrophe before an added cell that starts with =, +, - or @, so a
+        spreadsheet reads it as text and never runs it as a formula</label>
+    </p>
+    <p>
+      <button type="button" id="dp-csv-go" class="dp-csv-btn dp-csv-main">Parse the file</button>
+      <button type="button" id="dp-csv-cancel" class="dp-csv-btn" hidden>Cancel</button>
+    </p>
+  </div>
+
+  <div id="dp-csv-result" hidden>
+    <h3>Done</h3>
+    <div id="dp-csv-summary"></div>
+    <p><a id="dp-csv-download" href="#" class="dp-csv-main-link"></a></p>
+  </div>
+</div>
+
 <p class="dp-note">
   The same parser is the <a href="https://pypi.org/project/doorplate/">Python package</a>, the
   <a href="https://crates.io/crates/doorplate">Rust crate</a> and the
@@ -55,6 +123,19 @@ permalink: /demo/
 
 <style>
   .dp-note { font-size: .9rem; color: #6a6a6a; }
+  .dp-csv-check { display: inline-block; margin: 0 1rem .25rem 0; font-size: .9rem; }
+  .dp-csv-cols { display: flex; flex-wrap: wrap; gap: .1rem .75rem; margin-bottom: .5rem; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .8rem; }
+  .dp-csv-scroll { overflow-x: auto; max-height: 14rem; margin-bottom: .5rem; }
+  #dp-csv select { font: inherit; font-size: .9rem; max-width: 100%; margin: 0 0 .35rem .5rem; }
+  #dp-csv div > label { display: inline-block; min-width: 7rem; }
+  #dp-csv-preview th, #dp-csv-preview td { width: auto; white-space: nowrap; padding: .15rem .5rem; font-size: .8rem; }
+  .dp-csv-btn { font: inherit; font-size: .9rem; padding: .3rem .8rem; border: 1px solid #888; border-radius: 4px; background: transparent; color: inherit; cursor: pointer; }
+  .dp-csv-btn:hover { background: rgba(128, 128, 128, .15); }
+  .dp-csv-main { font-weight: 600; }
+  .dp-csv-main-link { font-weight: 600; }
+  .dp-csv-warn { color: #a05a00; }
+  .dp-csv-bad { color: #c02020; }
+  @media (prefers-color-scheme: dark) { .dp-csv-warn { color: #e6a000; } .dp-csv-bad { color: #ff7b7b; } }
   .dp-label { font-weight: 600; display: block; margin-bottom: .25rem; }
   #dp-q { width: 100%; box-sizing: border-box; font: inherit; padding: .6rem .75rem; border: 1px solid #888; border-radius: 4px; }
   .dp-examples { font-size: .85rem; margin: .5rem 0 0; }
@@ -100,6 +181,9 @@ permalink: /demo/
     .dp-g-unparsed { background: #5a1a1a; color: #ffd6d6; outline-color: #ff7b7b; }
   }
 </style>
+
+<script src="csv-core.js"></script>
+<script src="csv.js"></script>
 
 {% raw %}
 <script>

@@ -52,6 +52,11 @@ doorplate parse-file split.csv --column line1 --line2 line2 --city city --state 
 doorplate parse-file addresses.csv --column address --default-state FL -o parsed.csv
 ```
 
+The [demo page](https://jeremeybingham.github.io/doorplate/demo/#csv) does the same in the browser, with no install: pick the file, choose the
+address column (or the line 1, line 2, city, state and ZIP columns), tick the columns to add, and download the result. The file is read and parsed
+in the tab (WebAssembly in a worker), nothing is uploaded, and the columns and their `addr_` prefix are `parse-file`'s. It holds the whole result
+in memory, so for files of several hundred megabytes use `parse-file`.
+
 Every input column is kept, and the new `addr_` columns are the components (`street_number`, `street_name`,
 `unit_number`, `city`, `state`, `zip5`, ...), the shapes (`po_box`, `rural_route`, `military`, `general_delivery`),
 `place`, the USPS lines, `key`, `key_unit`, `slug`, `warnings` (stable codes joined by commas; [what each tells you](warnings.md)) and `unparsed`. PO
