@@ -141,6 +141,7 @@ pub(crate) fn tokenize(
         p.piece(a, b, paren, next_starts_numeric, lex);
     }
     join_split_grid_number(&mut out, lex);
+    join_lost_fraction(&mut out, lex);
     join_directional_comma(&mut out, lex);
     drop_unit_separators(&mut out, lex);
     join_unit_hyphen(&mut out, lex);
@@ -287,6 +288,63 @@ fn join_split_grid_number(out: &mut Vec<Token>, lex: &Lexicons) {
     let digits = out.remove(1);
     out[0].text.push_str(&digits.text);
     out[0].span.end = digits.span.end;
+}
+
+/// `31 1 2 ELM PLACE`, `838 21 1 2 RD`: a half or quarter written without its slash (`1 2`,
+/// `1 4`, `3 4`), right after the house number or after a whole-number street name, with a
+/// plain word next. The two digits are one fraction, `1/2` (#247). The line must open with the
+/// house number, and a unit designator or box word next (`5 1 2 STE 100`) keeps the digits
+/// apart.
+fn join_lost_fraction(out: &mut Vec<Token>, lex: &Lexicons) {
+    if house_number(out.first().map_or("", |t| t.text.as_str())).is_none() {
+        return;
+    }
+    let half_at = |k: usize| {
+        matches!(
+            (
+                out.get(k).map(|t| t.text.as_str()),
+                out.get(k + 1).map(|t| t.text.as_str())
+            ),
+            (Some("1"), Some("2")) | (Some("1"), Some("4")) | (Some("3"), Some("4"))
+        )
+    };
+    // The whole number of a street name (`21` in `838 21 1 2 RD`) may come first.
+    let whole = out.get(1).is_some_and(|t| {
+        (1..=3).contains(&t.text.len()) && t.text.bytes().all(|c| c.is_ascii_digit())
+    });
+    let k = if half_at(1) {
+        1
+    } else if whole && half_at(2) {
+        2
+    } else {
+        return;
+    };
+    let Some(word) = out.get(k + 2) else {
+        return;
+    };
+    // A bare suffix and nothing after it (`12 1 2 ST`) has no street name to count; after a
+    // whole number it is the suffix of `21 1/2 RD`.
+    let bare_suffix = k == 1
+        && out.get(k + 3).map_or(true, |t| t.seg != word.seg)
+        && lex
+            .suffix(&word.text)
+            .is_some_and(|l| l.kind != MatchKind::Observed);
+    let plain = word.text.len() >= 2
+        && !bare_suffix
+        && word.text.bytes().all(|c| c.is_ascii_alphabetic())
+        && lex
+            .unit(&word.text)
+            .map_or(true, |l| l.kind == MatchKind::Observed)
+        && !lex.is_bare_box_word(&word.text);
+    let same = out[..=k + 2]
+        .iter()
+        .all(|t| t.seg == out[0].seg && t.span.field == out[0].span.field);
+    if plain && same {
+        let denom = out.remove(k + 1);
+        out[k].text.push('/');
+        out[k].text.push_str(&denom.text);
+        out[k].span.end = denom.span.end;
+    }
 }
 
 /// `3324 N, ANDREWS AVE`: a comma right after a lone directional that follows
