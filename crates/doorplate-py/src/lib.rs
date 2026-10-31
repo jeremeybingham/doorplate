@@ -964,11 +964,15 @@ fn _rule_stats_run(
     n
 }
 
+/// `(kind, site, label, fires, inputs)`.
+#[cfg(feature = "rule-stats")]
+type RuleStatsRow = (String, String, String, u64, u64);
+
 /// The rule firing counts of this thread so far, as `(kind, site, label, fires, inputs)`, and the
 /// number of parses; then reset (feature `rule-stats`).
 #[cfg(feature = "rule-stats")]
 #[pyfunction]
-fn _rule_stats_take() -> (Vec<(String, String, String, u64, u64)>, u64) {
+fn _rule_stats_take() -> (Vec<RuleStatsRow>, u64) {
     let (rows, parses) = doorplate::rulestats::take();
     (
         rows.into_iter()
