@@ -15,9 +15,9 @@ parsing never panics.
 This library formats and parses; it **does not validate** that an address exists or
 can receive mail.
 
-> **Alpha release (0.4.1).** Expect rough edges. The match key is versioned (`k3:`)
+> **Alpha release (0.4.1).** Expect rough edges. The match key is versioned (`k4:`)
 > and will probably get new versions as the parser improves, so store the version
-> prefix with your keys and plan to re-key. `k3` is new in 0.4.0 and has only been checked on the project's own test data, so a `k4` may follow soon. Names in the API and the warning codes may
+> prefix with your keys and plan to re-key. `k4` is new in 0.5.0 and has only been checked on the project's own data (37 million rows of public records), so a `k5` may follow. Names in the API and the warning codes may
 > still change before 1.0.
 >
 > **Help wanted: messy addresses.** If it parses your addresses badly, please
@@ -41,7 +41,7 @@ assert_eq!(a.unit_number.as_deref(), Some("4"));
 
 a.to_usps().line1;                // Some("123 N MAIN ST APT 4")
 a.to_reso();                      // RESO Data Dictionary 2.0 fields
-a.key(KeyOptions::property());    // Some("k3:S|123|N|MAIN|ST||FL|33101")
+a.key(KeyOptions::property());    // Some("k4:S|123|N|MAIN|ST||FL|33101")
 a.slug();                         // Some("123-n-main-st-apt-4-miami-fl-33101"), display only
 a.to_display().line1;             // Some("123 N Main St Apt 4"); to_long(): "123 North Main Street Apartment 4"
 a.diagnostics.warnings;           // e.g. MissingZip, UnparsedRemainder
@@ -89,7 +89,7 @@ measurements on a few data sets, not promises for yours.
 ## The match key
 
 `a.key(...)` identifies a property for deduplication and joins. It uses the street
-parts, state and ZIP, not the city, and it is versioned: the `k3:` format will not
+parts, state and ZIP, not the city, and it is versioned: the `k4:` format will not
 change in place. [Key format](https://github.com/jeremeybingham/doorplate/blob/main/docs/key-format.md) is the contract. The
 slug is for URLs and display; it is not unique.
 

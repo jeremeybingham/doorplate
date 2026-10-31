@@ -26,8 +26,8 @@ def test_parse_components_and_formats():
     assert a.unparsed is None
     assert a.to_usps()["line1"] == "123 N MAIN ST APT 4"
     assert a.to_usps()["last_line"] == "MIAMI FL 33101"
-    assert a.key() == "k3:S|123|N|MAIN|ST||FL|33101"
-    assert a.key(unit=True) == "k3:S|123|N|MAIN|ST||FL|33101|4|"
+    assert a.key() == "k4:S|123|N|MAIN|ST||FL|33101"
+    assert a.key(unit=True) == "k4:S|123|N|MAIN|ST||FL|33101|4|"
     assert a.slug() == "123-n-main-st-apt-4-miami-fl-33101"
     assert a.to_reso()["StreetName"] == "MAIN"
     assert a.to_reso()["UnparsedAddress"] == "123 N MAIN ST APT 4, MIAMI, FL 33101"

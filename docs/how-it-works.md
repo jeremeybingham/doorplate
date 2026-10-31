@@ -126,7 +126,7 @@ often rows that carry it disagree with labeled data: [`warnings.md`](warnings.md
 - **`default_state` is a lookup hint, never a fill.** When the input names no state
   and has no known ZIP, a city is looked up in the hinted state and the state's
   state data readings apply. `state` stays empty, `missing_state` still fires and the
-  key keeps its `k3n` form; `default_state_applied` says when the hint decided
+  key keeps its `k4n` form; `default_state_applied` says when the hint decided
   something.
 - **Dual addresses keep both.** A record with a street address and a PO Box fills
   the street fields and `po_box` and raises `dual_address`. The key, the slug and
@@ -169,11 +169,11 @@ often rows that carry it disagree with labeled data: [`warnings.md`](warnings.md
 The canonical key is a deterministic string for deduplication and joins:
 `123 N. Main Street, Apt 4` and `123 north main st #4` give the same key. It uses
 the street components, state and ZIP5 and leaves out the city, which is the noisiest
-field. Addresses missing a state or ZIP get the weaker `k3n:` prefix and a warning.
+field. Addresses missing a state or ZIP get the weaker `k4n:` prefix and a warning.
 Unit inclusion is an option (off by default, property level).
 
-The key format is versioned (`k3:`). Any change to what an input produces needs a
-new version prefix (`k4:`) and an update to `docs/key-format.md`; `k3` is never
+The key format is versioned (`k4:`). Any change to what an input produces needs a
+new version prefix (`k5:`) and an update to `docs/key-format.md`; `k4` is never
 edited in place. This is an alpha release, so expect new key versions as the parser
 improves; store the version with your keys. The slug is built from the
 USPS output, is for display, and is not unique or versioned.

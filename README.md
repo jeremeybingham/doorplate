@@ -26,9 +26,9 @@ receive mail. Pub 28 formatting is not deliverability, and validation needs
 postal-service-certified data; warnings such as `zip_city_mismatch` are hints about the
 input, not verdicts.
 
-> **Alpha release (0.4.1).** Expect rough edges. This documentation MAY describe features from pre-release versions. The match key is versioned (`k3:`) and
+> **Alpha release (0.4.1).** Expect rough edges. This documentation MAY describe features from pre-release versions. The match key is versioned (`k4:`) and
 > will probably get new versions as the parser improves, so store the version prefix
-> with your keys and plan to re-key. `k3` is new in 0.4.0 and has only been checked on the project's own test data, so a `k4` may follow soon. Accuracy and speed are measurements on a few
+> with your keys and plan to re-key. `k4` is new in 0.5.0 and has only been checked on the project's own data (37 million rows of public records), so a `k5` may follow. Accuracy and speed are measurements on a few
 > datasets, not guarantees. Names in the API and the warning codes may still change
 > before 1.0.
 >
@@ -51,7 +51,7 @@ a = doorplate.parse("123 north main street apt 4, Miami FL 33101")
 
 a.street_name, a.unit_number        # ("MAIN", "4")
 a.to_usps()["line1"]                # "123 N MAIN ST APT 4"
-a.key()                             # "k3:S|123|N|MAIN|ST||FL|33101"
+a.key()                             # "k4:S|123|N|MAIN|ST||FL|33101"
 a.slug()                            # "123-n-main-st-apt-4-miami-fl-33101"
 a.to_display()["line1"]             # "123 N Main St Apt 4" (mixed case, display only)
 a.warnings                          # []
@@ -65,7 +65,7 @@ $ doorplate parse "123 N. Main St #4, miami, fl 33101" --usps
 123 N MAIN ST # 4
 MIAMI FL 33101
 $ doorplate parse "123 N. Main St #4, miami, fl 33101" | jq -r .key
-k3:S|123|N|MAIN|ST||FL|33101
+k4:S|123|N|MAIN|ST||FL|33101
 ```
 
 ## Features
@@ -77,7 +77,7 @@ k3:S|123|N|MAIN|ST||FL|33101
 - **One line or separate fields.** `parse` takes a single string; `parse_fields` takes `line1`, `line2`, `city`,
   `state` and `zip` as your data has them, in whatever combination is filled in.
 - **Output you can load.** Components, USPS Publication 28 lines, RESO Data Dictionary 2.0 fields, a display
-  form for people, usaddress-style labels, a canonical match key (`k3:...`), a URL-safe slug.
+  form for people, usaddress-style labels, a canonical match key (`k4:...`), a URL-safe slug.
 - **Diagnostics.** Stable warning codes and the text it could not place, so doubtful rows go to review instead
   of into your database.
 - **Place data.** A national list of 50,375 places and 41,154 ZIPs finds the city on a line with no commas and
@@ -124,12 +124,12 @@ One address, followed through:
 | Place | `MIAMI`, Dade County, found by name (`city` keeps what you wrote) |
 | USPS (Pub 28) | `123 N MAIN ST APT 4` / `MIAMI FL 33101` |
 | RESO | `StreetNumber` `123`, `StreetDirPrefix` `N`, `StreetName` `MAIN`, `StreetSuffix` `ST`, `UnitNumber` `APT 4`, `City` `MIAMI`, `StateOrProvince` `FL`, `PostalCode` `33101`, `UnparsedAddress` `123 N MAIN ST APT 4, MIAMI, FL 33101` |
-| Key | `k3:S\|123\|N\|MAIN\|ST\|\|FL\|33101` (with the unit: `k3:S\|123\|N\|MAIN\|ST\|\|FL\|33101\|4\|`) |
+| Key | `k4:S\|123\|N\|MAIN\|ST\|\|FL\|33101` (with the unit: `k4:S\|123\|N\|MAIN\|ST\|\|FL\|33101\|4\|`) |
 | Slug | `123-n-main-st-apt-4-miami-fl-33101` |
 | Warnings | none |
 
 **The key** identifies a property for deduplication and joins. It uses the street
-parts, state and ZIP, not the city, and it is versioned: the `k3:` format will not
+parts, state and ZIP, not the city, and it is versioned: the `k4:` format will not
 change in place. [`docs/key-format.md`](docs/key-format.md) is the contract.
 **The slug** is for URLs and display; it is not unique. **Warnings** are stable
 snake_case codes (`missing_zip`, `unparsed_remainder`, `dual_address`, ...) meant
@@ -141,10 +141,10 @@ warnings that say what is missing:
 ```python
 >>> a = doorplate.parse("12 elm st. #5 orlando fl")
 >>> a.to_usps()["line1"], a.key(), a.warnings
-('12 ELM ST # 5', 'k3n:S|12||ELM|ST||FL|', ['missing_zip'])
+('12 ELM ST # 5', 'k4n:S|12||ELM|ST||FL|', ['missing_zip'])
 ```
 
-With no ZIP the key starts `k3n:` (a weaker match), and `missing_zip` says why.
+With no ZIP the key starts `k4n:` (a weaker match), and `missing_zip` says why.
 Only input with no address text at all is an error.
 
 ## Install
@@ -253,7 +253,7 @@ GitHub readers). Start with [Getting started](https://doorplate.readthedocs.io/e
 | Page | Contents |
 |---|---|
 | [`docs/how-it-works.md`](docs/how-it-works.md) | The pipeline, the design choices |
-| [`docs/key-format.md`](docs/key-format.md), [`docs/warnings.md`](docs/warnings.md) | The `k3` key (the contract) and what each warning tells you |
+| [`docs/key-format.md`](docs/key-format.md), [`docs/warnings.md`](docs/warnings.md) | The `k4` key (the contract) and what each warning tells you |
 | [`docs/custom-layers.md`](docs/custom-layers.md), [`docs/anonymizing.md`](docs/anonymizing.md) | Your own spellings and places; sharing messy data |
 | [`docs/benchmarks.md`](docs/benchmarks.md) | Accuracy, speed and size |
 | [`docs/roadmap.md`](docs/roadmap.md), [`CHANGELOG.md`](CHANGELOG.md) | Planned work; release notes |

@@ -19,9 +19,9 @@ ANSWER = {
     "ts": "2026-10-22T10:11:12+00:00", "id": "irs-eo-bmf|organization|1", "seq": 1, "source": "irs-eo-bmf", "role": "organization",
     "input": INPUT, "cluster": {"shape": "a a a 9 a a | % a a", "warnings": "missing_street_number", "size": 41},
     "verdict": "corrected", "corrected": "123 SMITH ST, % JOHN SMITH, MIAMI FL 33101", "note": "John Smith is the contact; delete ACME",
-    "parse": {"key": "k3:S||ACME HOLDINGS LLC 123 SMITH|ST||FL|33101", "warnings": ["missing_street_number"], "unparsed": None,
+    "parse": {"key": "k4:S||ACME HOLDINGS LLC 123 SMITH|ST||FL|33101", "warnings": ["missing_street_number"], "unparsed": None,
               "components": {"street_name": "ACME HOLDINGS LLC 123 SMITH", "attention": "% JOHN SMITH", "city": "MIAMI"}},
-    "corrected_parse": {"key": "k3:S|123||SMITH|ST||FL|33101", "warnings": [], "unparsed": None,
+    "corrected_parse": {"key": "k4:S|123||SMITH|ST||FL|33101", "warnings": [], "unparsed": None,
                         "components": {"street_number": "123", "street_name": "SMITH", "attention": "% JOHN SMITH"}},
 }
 
@@ -79,7 +79,7 @@ def test_a_right_parse_shows_its_warning_verdict_and_old_answers_say_not_recorde
 
 def test_a_draft_is_shown_and_labelled_as_not_a_correction():
     a = dict(ANSWER, verdict="unclear", draft="123 SMITH ST, MIAMI FL 33101",
-             draft_parse={"key": "k3:S|123||SMITH|ST||FL|33101", "warnings": [], "unparsed": None, "components": {"street_number": "123"}})
+             draft_parse={"key": "k4:S|123||SMITH|ST||FL|33101", "warnings": [], "unparsed": None, "components": {"street_number": "123"}})
     a.pop("corrected"); a.pop("corrected_parse")
     text = full.entry(1, a, {"line2"})
     assert "## 1. unclear" in text and "- draft (an attempt, not saved as a correction): '123 SMITH ST, MIAMI FL 33101'" in text
@@ -117,7 +117,7 @@ NC = {
     "input": {"line1": "C/O PAT QUINN", "line2": "CPO 4821 HOLLIS CT", "city": "CHAPEL HILL", "state": "NC", "zip": "27514"},
     "cluster": {"shape": "a/a a a | a 9 a a", "warnings": "", "size": 3},
     "verdict": "both_wrong", "corrected": "CPO 4821 HOLLIS CT, CHAPEL HILL NC 27514", "note": "Pat Quinn is a name, delete it",
-    "parse": {"key": "k3:S|4821||HOLLIS|CT||NC|27514", "warnings": [], "unparsed": None,
+    "parse": {"key": "k4:S|4821||HOLLIS|CT||NC|27514", "warnings": [], "unparsed": None,
               "components": {"attention": "C/O PAT QUINN", "street_name": "CPO 4821 HOLLIS", "zip": "27514"}},
 }
 

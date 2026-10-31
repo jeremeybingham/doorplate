@@ -131,7 +131,7 @@ def diff(args):
     # The key with letters as a and digits as 9, so counts can be given without street text. A SQL macro,
     # not a Python function: DuckDB 2.0 needs numpy for those.
     con.execute("create macro shape(k) as regexp_replace(regexp_replace(k, '\\p{L}', 'a', 'g'), '\\p{Nd}', '9', 'g')")
-    # The version prefix (`k2`, `k3`) is left out of the comparison, so the keys of the cut compare row by row with
+    # The version prefix (`k2`, `k3`, `k4`) is left out of the comparison, so the keys of the cut compare row by row with
     # the frozen keys of the version before it: a changed key is a changed layout or value, not the new prefix.
     con.execute("create macro body(k) as regexp_replace(k, '^k[0-9]+', 'k')")
     total_changed = 0

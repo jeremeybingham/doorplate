@@ -32,7 +32,7 @@ New to the project? Read the [project README](../README.md), then
 |---|---|
 | [`how-it-works.md`](how-it-works.md) | The pipeline, the principles, the warnings, the lexicon layers, the tests |
 | [`warnings.md`](warnings.md) | What each warning tells you, in two groups, and how often rows that carry it disagree with labeled data |
-| [`key-format.md`](key-format.md) | The match key (`k3`) and the slug: the contract, and when a key changes |
+| [`key-format.md`](key-format.md) | The match key (`k4`) and the slug: the contract, and when a key changes |
 | [`reso-mapping.md`](reso-mapping.md) | The RESO Data Dictionary 2.0 field mapping |
 | [`usps-pub28-notes.md`](usps-pub28-notes.md) | The USPS Publication 28 rules: the source of every table and parser rule, and what was left as it is on purpose |
 

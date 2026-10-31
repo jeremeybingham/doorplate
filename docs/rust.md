@@ -20,7 +20,7 @@ assert_eq!(a.unit_number.as_deref(), Some("4"));
 
 a.to_usps().line1;                // Some("123 N MAIN ST APT 4")
 a.to_reso();                      // RESO Data Dictionary 2.0 fields
-a.key(KeyOptions::property());    // Some("k3:S|123|N|MAIN|ST||FL|33101")
+a.key(KeyOptions::property());    // Some("k4:S|123|N|MAIN|ST||FL|33101")
 a.slug();                         // Some("123-n-main-st-apt-4-miami-fl-33101"), display only
 a.to_display().line1;             // Some("123 N Main St Apt 4"); to_long(): "123 North Main Street Apartment 4"
 a.diagnostics.warnings;           // e.g. MissingZip, UnparsedRemainder
@@ -86,6 +86,6 @@ assert!(a.text.contains(" N ") && a.text.contains(", FL 331") && !a.text.contain
 ## The match key
 
 `a.key(...)` identifies a property for deduplication and joins. It uses the street
-parts, state and ZIP, not the city, and it is versioned: the `k3:` format will not
+parts, state and ZIP, not the city, and it is versioned: the `k4:` format will not
 change in place. [Key format](key-format.md) is the contract. The
 slug is for URLs and display; it is not unique.

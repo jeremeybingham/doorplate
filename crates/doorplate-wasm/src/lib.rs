@@ -187,7 +187,7 @@ mod tests {
     fn record_plus_spans() {
         let input = "123 north main street apt 4, Miami FL 33101";
         let v = parsed(input);
-        assert_eq!(v["key"], "k3:S|123|N|MAIN|ST||FL|33101");
+        assert_eq!(v["key"], "k4:S|123|N|MAIN|ST||FL|33101");
         assert_eq!(v["usps"]["line1"], "123 N MAIN ST APT 4");
         let got = covered(input, &v);
         assert!(got.contains(&("StreetName".into(), "main".into())));
@@ -224,7 +224,7 @@ mod tests {
     fn fields_spans_index_their_own_field() {
         let fields = r#"{"line1": "123 N MAIN ST", "line2": "% JOHN SMITH", "city": "MIAMI", "state": "FL", "zip": "33101"}"#;
         let v: Value = serde_json::from_str(&run_fields(fields)).unwrap();
-        assert_eq!(v["key"], "k3:S|123|N|MAIN|ST||FL|33101");
+        assert_eq!(v["key"], "k4:S|123|N|MAIN|ST||FL|33101");
         let by_field = |f: &str, c: &str| {
             v["spans"]
                 .as_array()

@@ -1,10 +1,10 @@
-# Canonical key and slug spec (version k3)
+# Canonical key and slug spec (version k4)
 
 This page specifies the **key** (below) and the **slug** (last section).
 
 The key is versioned, and a given version is a contract: stored keys must keep
 meaning the same thing, so any change to what an input produces needs a new version
-prefix (`k4:`) and an update here. `k3` is never edited in place.
+prefix (`k5:`) and an update here. `k4` is never edited in place.
 
 **This is an alpha release.** Expect new key versions as the parser improves: the
 parser's behavior is still settling, and every fix that changes how an input is read
@@ -19,14 +19,14 @@ does not say the address exists or is deliverable (see README).
 ## Format
 
 ```
-k3:S|<number>|<predir>|<name>|<suffix>|<postdir>|<state>|<zip5>[|<unit>|<unit2>]
-k3:P|<box>|<state>|<zip5>
-k3:R|<RR|HC>|<route>|<box>|<state>|<zip5>
-k3:M|<kind>|<number>|<box>|<post office>|<state>|<zip5>
-k3:G|<state>|<zip5>
+k4:S|<number>|<predir>|<name>|<suffix>|<postdir>|<state>|<zip5>[|<unit>|<unit2>]
+k4:P|<box>|<state>|<zip5>
+k4:R|<RR|HC>|<route>|<box>|<state>|<zip5>
+k4:M|<kind>|<number>|<box>|<post office>|<state>|<zip5>
+k4:G|<state>|<zip5>
 ```
 
-- Prefix `k3:`, then a one-letter **form**, then segments separated by `|`.
+- Prefix `k4:`, then a one-letter **form**, then segments separated by `|`.
   Every form has a fixed number of segments, and an empty value leaves an
   empty segment (`...||...`).
 - Forms: `S` street, `P` PO Box, `R` rural or highway contract route, `M`
@@ -65,8 +65,8 @@ k3:G|<state>|<zip5>
 
 ## Strong and partial keys
 
-A key with both a state and a ZIP5 uses the `k3:` prefix. If either is
-missing, the prefix is `k3n:` and the same body follows (`k3n:S|123||MAIN|ST||FL|`).
+A key with both a state and a ZIP5 uses the `k4:` prefix. If either is
+missing, the prefix is `k4n:` and the same body follows (`k4n:S|123||MAIN|ST||FL|`).
 A partial key matches less reliably, and it can never equal a located key, so
 the two kinds do not mix in a join by accident. `MissingState` or
 `MissingZip` is also set in the diagnostics.
@@ -102,7 +102,7 @@ Applied to every free-text segment (number, name, route, box, unit):
 Spelling variants (`North`/`N`, `Street`/`ST`, `Florida`/`FL`) are resolved by
 the parser through the Pub 28 tables, not by the key. Sources for those
 tables: `docs/usps-pub28-notes.md`. The key format itself (segments, form
-letters, dropped unit type, `k3n`) is this library's own convention, not a
+letters, dropped unit type, `k4n`) is this library's own convention, not a
 USPS rule.
 
 ## No key
@@ -115,15 +115,15 @@ address on it.
 
 ## Stability
 
-`k3` is the format as of version 0.4.0. The key is a function of the parse, and
+`k4` is the format as of version 0.5.0. The key is a function of the parse, and
 the parse is a function of the shipped tables and rules: a bug fix that changes what
-an input produces is a key change and needs `k4`. The slug and `place` are not part
+an input produces is a key change and needs `k5`. The slug and `place` are not part
 of the key and may change with parser improvements.
 
 **A custom layer can change a key.** A layer ([`custom-layers.md`](custom-layers.md), #3) adds spellings
 and words the shipped tables do not have, so the same input can parse, and key, differently with and
 without it, or with another layer. This is not a key change in the sense above (the format and the
-shipped rules are the same; `k3` stays `k3`), but stored keys are only comparable when they come from
+shipped rules are the same; `k4` stays `k4`), but stored keys are only comparable when they come from
 the same layer. Every parse reports the layer it used (`Diagnostics::custom_layer`: its name, version
 and a content fingerprint); store the fingerprint beside the keys, and re-key when the layer changes.
 A parse with no layer is identical to one from a build without the feature.
@@ -143,7 +143,7 @@ key-affecting changes are cut together as one version, not released one by one. 
 change a key waits until the foundation checkpoint has passed (the comparison with 0.3.1 over the large
 sources shows zero differences, and its keys are frozen: [`backlog.md`](backlog.md), "The checkpoint"); its
 issue is labeled `version:K`. After the checkpoint such a change merges to `main` as an ordinary pull request,
-measured against the frozen keys, and stays unreleased until the `k3` is cut. The list is that label:
+measured against the frozen keys, and stays unreleased until the next key version is cut. The list is that label:
 [issues labeled `version:K`](https://github.com/jeremeybingham/doorplate/issues?q=is%3Aissue+is%3Aopen+label%3Aversion%3AK).
 Changes that do not alter a key (a new warning, a new output field, tooling, docs) ship as usual
 ([the roadmap](roadmap.md)).
@@ -158,18 +158,24 @@ Changes that do not alter a key (a new warning, a new output field, tooling, doc
   the corpus key expectations (`tests/corpus/keys.jsonl`, `tools/corpus/emit_expect.py`) rewritten
   from the spec.
 
-**When to cut it.** With 0.4.0 (decided 2026-10-23, issue #138: first planned as 0.5.0, then folded into 0.4.0
-because the project has no users). The list of rules is closed (`backlog.md`, "Scope of phase 2"), so the cut is
-when they are done. There is no count or evidence threshold: the project is one person's, so the call is made from
-how smoothly the items progress.
+**When to cut it.** The `k3` was cut with 0.4.0 (decided 2026-10-23, issue #138). The `k4` is cut with 0.5.0 (tracker #201, release plan
+of 2026-10-31): the rules are merged to `main` one pull request at a time under the `k3` prefix, each measured against the frozen
+keys, and the prefix changes in one pull request at the end (the cut), before the "after" measurements and the release. There is no
+count or evidence threshold: the project is one person's, so the call is made from how smoothly the items progress.
 
 ## Version history
 
-- **`k3`** (this page) starts with 0.4.0. The segment layout is the same as `k2` (decided 2026-10-25: no rule on the
+- **`k4`** (this page) starts with 0.5.0. The segment layout is the same as `k3` (no rule on the 0.5.0 list needed a layout
+  change); the value of some keys changes, because 0.5.0 reads some inputs differently: the rules are listed in the changelog (each
+  is marked "held for the `k4`") and measured against the frozen `k3` keys (`local-data/keycompare/k3-cut`, seven large sources,
+  36,920,703 rows). The prefix is the only change to a key that no rule touched, so re-keying is a re-parse. Frozen from there:
+  a change to what an input produces needs `k5`.
+
+- **`k3`** started with 0.4.0 and is retired with 0.5.0 (the library no longer produces it). The segment layout is the same as `k2` (decided 2026-10-25: no rule on the
   0.4.0 list needed a layout change); the value of some keys changes, because 0.4.0 reads some inputs differently:
   the rules are listed in the changelog (each is marked "held for the `k3`") and measured in
   [`backlog.md`](backlog.md). The prefix is the only change to a key that no rule touched, so re-keying is a re-parse.
-  Frozen from there: a change to what an input produces needs `k4`.
+  It was frozen from there: a change to what an input produced needed `k4`.
 
 - **`k1`** was the key of versions 0.1.0 and 0.2.0. It is retired: the library no longer
   produces it and cannot compute it. The segment layout is the same as `k2`; `k2` exists
