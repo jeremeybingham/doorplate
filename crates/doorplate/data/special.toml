@@ -56,18 +56,22 @@ forms = ["BOX", "BX"]
 # delivery) to RR. RD is also the ROAD suffix, so the tagger takes it as a
 # rural route only in the RD ## BOX ## position.
 standard = "RR"
-forms = ["RR", "R R", "RURAL ROUTE", "RURAL RTE", "RURAL RT", "RURAL", "RFD", "RFD ROUTE", "RURAL FREE DELIVERY", "RD", "RTE", "RT", "ROUTE"]
+forms = ["RR", "R R", "RURAL ROUTE", "RURAL RTE", "RURAL RT", "RURAL", "RFD", "RFD ROUTE", "RURAL FREE DELIVERY", "RD", "RTE", "RT", "ROUTE",
+  # `RUR` for `RURAL`: 1,343 rows of the carrier census (issue #306).
+  "RUR", "RUR RTE", "RUR RT", "RUR ROUTE"]
 
 [highway_contract]
 # Pub 28 section 251: write HC ## BOX ##. Use the HC abbreviation; do not use
 # HIGHWAY CONTRACT, ROUTE, NUMBER, NO, STAR ROUTE or the pound sign. Those
 # words are accepted here as input only; the emitter writes HC.
 standard = "HC"
-forms = ["HC", "H C", "HCR", "HIGHWAY CONTRACT", "HIGHWAY CONTRACT ROUTE", "HWY CONTRACT", "STAR ROUTE", "STAR RTE",
+forms = ["HC", "H C", "HCR", "HRC", "HIGHWAY CONTRACT", "HIGHWAY CONTRACT ROUTE", "HWY CONTRACT", "STAR ROUTE", "STAR RTE",
   # With ROUTE written out, which section 251 says to drop (seen in input:
   # HC ROUTE 72, HC R 32, HIGHWAY CONTRACT RTE 46, HWY CONTRACT ROUTE 102).
   "HC ROUTE", "HC RTE", "HC RT", "HC R", "HCR ROUTE",
-  "HIGHWAY CONTRACT RTE", "HIGHWAY CONTRACT RT", "HWY CONTRACT ROUTE", "HWY CONTRACT RTE"]
+  "HIGHWAY CONTRACT RTE", "HIGHWAY CONTRACT RT", "HWY CONTRACT ROUTE", "HWY CONTRACT RTE",
+  # `HRC` for `HCR`, 21 rows (issue #306).
+  "HRC ROUTE", "HRC RTE", "HRC RT"]
 
 [general_delivery]
 # Pub 28 section 261: GENERAL DELIVERY, spelled out, no abbreviation. The
