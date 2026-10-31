@@ -53,7 +53,7 @@ fn fields_and_one_line_give_the_same_key() {
             "{line1}: all in line 1"
         );
         // A state or a ZIP alone still tells the state data; the key then has
-        // the `k3n` prefix for the missing part, so compare the address part.
+        // the `k4n` prefix for the missing part, so compare the address part.
         let street = |k: &Option<String>| {
             k.as_ref()
                 .unwrap()

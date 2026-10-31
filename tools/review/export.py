@@ -43,7 +43,7 @@ def codes(values):
 
 
 def key_shape(key):
-    """`k3:S|123|N|MAIN|ST||FL|33101` -> `a9:a|9|a|a|a||a|9`: the key's layout without its values."""
+    """`k4:S|123|N|MAIN|ST||FL|33101` -> `a9:a|9|a|a|a||a|9`: the key's layout without its values."""
     return shape(key) if isinstance(key, str) else None
 
 

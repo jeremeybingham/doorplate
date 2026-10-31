@@ -31,7 +31,7 @@ doorplate layer check DIR                                    # load a custom lay
 
 ```sh
 $ doorplate parse "123 N. Main St #4, miami, fl 33101" | jq -r .key
-k3:S|123|N|MAIN|ST||FL|33101
+k4:S|123|N|MAIN|ST||FL|33101
 ```
 
 `doorplate --help` lists every option.

@@ -199,7 +199,7 @@ class ParsedAddress:
     def address_type(self) -> str:
         """`street`, `po_box`, `rural_route`, `military`, `general_delivery`, `dual` or `unknown`."""
     def key(self, unit: bool = False) -> str | None:
-        """The match key (`k3:...`), or `None` when there is nothing to key on. With `unit=True` the unit numbers are part of it."""
+        """The match key (`k4:...`), or `None` when there is nothing to key on. With `unit=True` the unit numbers are part of it."""
     def slug(self) -> str | None:
         """A URL-safe label, for display only. Use `key()` for identity."""
     def to_usps(self, max_line: int | None = None) -> Usps:

@@ -48,7 +48,7 @@ Fern Holow WA 98991
 
 Without the layer `TRAYL` is part of the street name and `Fern Holow` is an unknown city; with it the suffix is `TRL`, the
 place is `FERN HOLLOW` (reported in `place`, with `source: "variant"`), and the key changes from
-`k3:S|120||FERN HOLLOW TRAYL|||WA|98991` to `k3:S|120||FERN HOLLOW|TRL||WA|98991`. The notebook
+`k4:S|120||FERN HOLLOW TRAYL|||WA|98991` to `k4:S|120||FERN HOLLOW|TRL||WA|98991`. The notebook
 ([`examples/quickstart.ipynb`](../examples/quickstart.ipynb), "Your own spellings and places") and
 [`examples/custom_layer_example.py`](../examples/custom_layer_example.py) walk through it from Python.
 
@@ -402,7 +402,7 @@ Every parse made with a layer reports it in `Diagnostics::custom_layer`: the lay
 `None`.
 
 **A layer can change a key.** `123 Oak Trayl` has no suffix without the layer above and has `TRL` with it, and the key differs.
-That is not a new key version (`k3` is still the format and the shipped rules are unchanged), but stored keys are only comparable when
+That is not a new key version (`k4` is still the format and the shipped rules are unchanged), but stored keys are only comparable when
 they came from the same layer. Store the fingerprint beside the keys, and re-key when it changes
 ([`key-format.md`](key-format.md), "Stability"). A parse with no layer, or with an empty one, is identical to a build without the
 feature: 100,000 sampled rows gave the same keys, USPS lines and warnings, at the same speed.

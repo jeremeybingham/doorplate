@@ -116,9 +116,9 @@ def test_an_ordinary_address_hits_nothing():
 
 
 def test_flagged_and_score():
-    assert probes.is_flagged(["unparsed_remainder"], "k3:S|1||A|ST||FL|33101")
-    assert probes.is_flagged([], "k3n:S|1||A|ST|||")
-    assert not probes.is_flagged(["dual_address"], "k3:S|1||A|ST||FL|33101")
+    assert probes.is_flagged(["unparsed_remainder"], "k4:S|1||A|ST||FL|33101")
+    assert probes.is_flagged([], "k4n:S|1||A|ST|||")
+    assert not probes.is_flagged(["dual_address"], "k4:S|1||A|ST||FL|33101")
     assert probes.score(100, 3, "S") == 300
     assert probes.score(100, 3, "M", precision=0.5) == 75
 
@@ -162,8 +162,8 @@ def test_summary_corrects_rows_by_the_excess_disagreement_and_suggests_a_priorit
             "a": {
                 "rows_seen": 100000,
                 "probes": {
-                    "sut-stu": {"rows": 5, "flagged": 1, "k3n": 0, "compared": 5, "disagree": 4},  # 80%: mostly real
-                    "placeholder": {"rows": 50, "flagged": 0, "k3n": 0, "compared": 50, "disagree": 1},  # 2%: below the baseline
+                    "sut-stu": {"rows": 5, "flagged": 1, "partial_key": 0, "compared": 5, "disagree": 4},  # 80%: mostly real
+                    "placeholder": {"rows": 50, "flagged": 0, "partial_key": 0, "compared": 50, "disagree": 1},  # 2%: below the baseline
                 },
             }
         },
@@ -230,7 +230,7 @@ def test_a_street_line_written_twice_is_found_and_a_repeated_word_is_not():
 
 
 def test_a_partial_key_is_recognised_for_any_key_version():
-    assert probes.is_partial_key("k3n:S|1||A|ST|||")
+    assert probes.is_partial_key("k4n:S|1||A|ST|||")
     assert probes.is_partial_key("k4n:S|1||A|ST|||")
     assert not probes.is_partial_key("k4:S|1||A|ST||FL|33101")
     assert probes.is_flagged([], "k4n:S|1||A|ST|||")

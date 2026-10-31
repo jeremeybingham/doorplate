@@ -550,7 +550,7 @@ PARTIAL_KEY = re.compile(r"^k[0-9]+n:")
 
 
 def is_partial_key(key):
-    """A key without state and ZIP (`k3n:`, `k4n:`: the prefix of any version)."""
+    """A key without state and ZIP (`k4n:`, `k4n:`: the prefix of any version)."""
     return bool(PARTIAL_KEY.match(str(key)))
 
 

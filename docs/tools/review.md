@@ -101,7 +101,7 @@ behind the source without anyone noticing (the second review ran a build five da
 parse that `main` no longer gives). `server.py` compares the build's time with the newest file under `crates/doorplate/src`,
 `crates/doorplate/data` and `crates/doorplate-wasm/src` and, when the source is newer, prints a warning at start-up and shows a red
 banner on the page with the build command; `--strict` refuses to start instead. The header always shows the parser the page runs
-(`parser 0.4.1, key k3`): check it before a queue, and rebuild with `cargo build -p doorplate-wasm --target wasm32-unknown-unknown --release`
+(`parser 0.4.1, key k4`): check it before a queue, and rebuild with `cargo build -p doorplate-wasm --target wasm32-unknown-unknown --release`
 (a few seconds when little changed). The check goes by file times, so touching a source file also trips it; rebuilding clears it.
 
 | Key | Verdict | Meaning |

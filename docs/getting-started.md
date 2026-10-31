@@ -30,7 +30,7 @@ import doorplate
 
 a = doorplate.parse("123 north main street apt 4, Miami FL 33101")
 a.to_usps()["line1"]   # "123 N MAIN ST APT 4"
-a.key()                # "k3:S|123|N|MAIN|ST||FL|33101"
+a.key()                # "k4:S|123|N|MAIN|ST||FL|33101"
 a.warnings             # []
 ```
 
@@ -41,7 +41,7 @@ $ doorplate parse "123 N. Main St #4, miami, fl 33101" --usps
 123 N MAIN ST # 4
 MIAMI FL 33101
 $ doorplate parse "123 N. Main St #4, miami, fl 33101" | jq -r .key
-k3:S|123|N|MAIN|ST||FL|33101
+k4:S|123|N|MAIN|ST||FL|33101
 ```
 
 Rust:
@@ -51,7 +51,7 @@ use doorplate::{KeyOptions, Parser};
 
 let a = Parser::new().parse("123 north main street apt 4, Miami FL 33101")?;
 a.to_usps().line1;                // Some("123 N MAIN ST APT 4")
-a.key(KeyOptions::property());    // Some("k3:S|123|N|MAIN|ST||FL|33101")
+a.key(KeyOptions::property());    // Some("k4:S|123|N|MAIN|ST||FL|33101")
 ```
 
 ## What you get
@@ -64,12 +64,12 @@ One address, followed through:
 | Place | `MIAMI`, Dade County, found by name (`city` keeps what you wrote) |
 | USPS (Pub 28) | `123 N MAIN ST APT 4` / `MIAMI FL 33101` |
 | RESO | `StreetNumber` `123`, `StreetDirPrefix` `N`, `StreetName` `MAIN`, `StreetSuffix` `ST`, `UnitNumber` `APT 4`, `City` `MIAMI`, `StateOrProvince` `FL`, `PostalCode` `33101`, `UnparsedAddress` `123 N MAIN ST APT 4, MIAMI, FL 33101` |
-| Key | `k3:S\|123\|N\|MAIN\|ST\|\|FL\|33101` (with the unit: `k3:S\|123\|N\|MAIN\|ST\|\|FL\|33101\|4\|`) |
+| Key | `k4:S\|123\|N\|MAIN\|ST\|\|FL\|33101` (with the unit: `k4:S\|123\|N\|MAIN\|ST\|\|FL\|33101\|4\|`) |
 | Slug | `123-n-main-st-apt-4-miami-fl-33101` |
 | Warnings | none |
 
 **The key** identifies a property for deduplication and joins. It uses the street
-parts, state and ZIP, not the city, and it is versioned: the `k3:` format will not
+parts, state and ZIP, not the city, and it is versioned: the `k4:` format will not
 change in place. [`docs/key-format.md`](key-format.md) is the contract.
 **The slug** is for URLs and display; it is not unique. **Warnings** are stable
 snake_case codes (`missing_zip`, `unparsed_remainder`, `dual_address`, ...) meant
@@ -81,10 +81,10 @@ warnings that say what is missing:
 ```python
 >>> a = doorplate.parse("12 elm st. #5 orlando fl")
 >>> a.to_usps()["line1"], a.key(), a.warnings
-('12 ELM ST # 5', 'k3n:S|12||ELM|ST||FL|', ['missing_zip'])
+('12 ELM ST # 5', 'k4n:S|12||ELM|ST||FL|', ['missing_zip'])
 ```
 
-With no ZIP the key starts `k3n:` (a weaker match), and `missing_zip` says why.
+With no ZIP the key starts `k4n:` (a weaker match), and `missing_zip` says why.
 Only input with no address text at all is an error.
 
 ## What it does not do

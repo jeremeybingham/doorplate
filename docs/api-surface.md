@@ -43,7 +43,7 @@ words. The mapping above goes into the documentation as the reference.
    `MatchKind`, `PlaceKind`, `PlaceSource`, `StateKind`, `Special`.
 3. **Inputs are different from results.** `Fields` (five fixed parts of an address) is built by callers and
    stays open. `ParseOptions` (one field, `default_state`) will grow (the custom layer, #3). `KeyOptions` will not
-   in practice: a new key option changes the key, which is a `k3`.
+   in practice: a new key option changes the key, which is a new key version.
 4. **`Lexicons` had 28 public methods**, including helpers that exist for the tagger (`is_number_marker`,
    `is_no_data_line`, `is_city_head`, `is_area_word`, `is_building_word`, `is_placeholder`, `is_country`,
    `place_key`). They were public by accident; #137 made them crate-private.
@@ -133,7 +133,7 @@ code is, measured: [`warnings.md`](warnings.md). New codes come with the parser 
 
 ## The key and the slug
 
-The key is `k3:` plus pipe-separated parts (the format and when it changes are in
+The key is `k4:` plus pipe-separated parts (the format and when it changes are in
 [`key-format.md`](key-format.md)); `KeyOptions` has one switch, `include_unit` (`KeyOptions::property()` is the
 property-level key, `KeyOptions::unit()` the unit-level key, which carries the unit numbers). The slug is for display, not for
 matching. **Keep** both; the `ParseOptions` builder above is the only change.
@@ -148,7 +148,7 @@ and the READMEs. **Keep.** The result structs become `#[non_exhaustive]`, so a f
 
 With users, a rename or removal is announced one release ahead: the old name stays and works, the CHANGELOG says
 what replaces it and when it goes, and Python raises a `DeprecationWarning` where the language allows (Rust uses
-`#[deprecated]`). A change that alters a key is never a deprecation: it is a new key version (`k3`). Before 0.4.0
+`#[deprecated]`). A change that alters a key is never a deprecation: it is a new key version (`k4`, then `k5`). Before 0.4.0
 none of this applies, which is why the breaking changes above are made now and without shims.
 
 ## What changes in 0.4.0 and what waits
