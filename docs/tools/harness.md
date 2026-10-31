@@ -162,6 +162,38 @@ on the queue, then the verdicts give a precision). The score that orders the iss
 registry is counted by `run.py` into `agg_probes/` (schema version 9), so a full Netsyms run counts every probe over all its rows without keeping text.
 Add a probe when an issue is opened, with its pattern, size and harm; remove it when the issue closes.
 
+## MessyStreets (`messy_score.py`, #323)
+
+[MessyStreets](https://github.com/EdGaere/MessyStreets) (Gaere and von Wangenheim, ACM SIGSPATIAL '26, DOI 10.1145/3841645.3843362; cite it with any
+score) is 3 tiers of 10,000 verbatim addresses from websites' schema.org markup (the December 2024 Web Data Commons extract), multinational. It is
+a source of web business addresses, a kind none of our registries cover. Its labels are the page's own fields (not hand-checked) plus, for gold
+and silver, the street name of an OpenStreetMap or OpenAddresses record that the address was matched to; there are no token labels.
+
+**Rules of use** (`docs/data-policy.md`, `local-data/messy-streets/NOTICE.md`): local, aggregates only, nothing from the rows in the repository;
+the terms were accepted by the owner on 2026-10-31 (Web Data Commons says "research purposes only"; whether a parser evaluation counts is
+asked in #395). **Gold and silver are held-out checks**: they are scored in bulk and never read, never queued. **Raw is the work list**: it may be
+read (`full-ok.txt` lists `messy-streets`, for the raw queue only) and feeds rule issues like any source.
+
+**To repeat it.**
+
+```sh
+# 1. Data (once): the three release_*_10k_final.jsonl.gz files from the repository root, in local-data/messy-streets/ (NOTICE.md has the hashes)
+python tools/ingest/ingest.py tools/ingest/specs/messy-streets.toml --confirm    # US-like rows only: gold, silver, raw roles
+# 2. Score (a second; retake it for each release and put the table in docs/benchmarks.md)
+python tools/harness/messy_score.py --confirm
+# 3. The review round on raw (queue built 2026-10-31; its state is in #225)
+python tools/review/compare_sample.py local-data/messy-streets/records.parquet --role raw --out local-data/review/queue-compare-messy.jsonl --confirm
+python tools/review/server.py local-data/review/queue-compare-messy.jsonl
+```
+
+`messy_score.py` parses each address's one `input` string (street, locality, region, ZIP, country joined) and compares ZIP5, state, city and street
+name with the markup; the queue instead uses the street lines, city, state and ZIP joined as the harness does. A literal `nan` in the markup counts as
+a missing label. Misses are questions, not bug counts: a page's locality can be a neighbourhood or county, and the rates are not an accuracy claim.
+
+**What it found so far.** On the raw tier (2,316 US-like rows): a unit word in the street field 9.3% (city agreement 83%); the street field repeating the
+city, state or ZIP 2 to 8% (city agreement 6 to 28%; the paper's Table 1 shows the same shape): #397; non-Latin text in the street 0.3%; no literal
+`\n` escapes in the US rows. The paper has no US-only numbers; its Table 1 is seven illustrative gold examples, not a failure count.
+
 ## Label scoring (`label_score.py`, and `nad_score.py` for NAD)
 
 Some sources label the parts of each address (NAD, the NC voter snapshot), which the Netsyms
