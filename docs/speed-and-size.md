@@ -166,3 +166,16 @@ Candidates, ranked by the effect on batch throughput and memory (not by effort):
 Not done, and why: the chunk size of `parse_many` and a different allocator were not measured (a new dependency is
 ruled out anyway). The held-results memory in Python (2.46 KB each, against 928 bytes inline) is mostly the owned
 `String` and `Vec` fields of a result; a smaller result type is an API change.
+
+### Profiling without `perf` (callgrind), and 0.4.1 to 0.5.0 (#390)
+
+When `perf` is not installed (it was not on the 2026-10-31 machine), `valgrind --tool=callgrind` gives instruction counts per function, which
+repeat exactly from run to run: build `profile_loop` with `RUSTFLAGS="-C force-frame-pointers=yes" CARGO_PROFILE_RELEASE_STRIP=false`, run
+`valgrind --tool=callgrind --callgrind-out-file=OUT target/release/examples/profile_loop FILE 1` on a few thousand inputs of
+`benchmarks/profile_inputs.py`'s `mix.txt`, and read `callgrind_annotate --inclusive=yes OUT`. Compare two builds function by function; a function
+that inlines differently in the two builds shows as new or gone, so check the callers before believing a difference.
+
+The 0.5.0 slowdown (9% in time, 9.0% in instructions per parse, 157,500 to 171,600, on the `natural` mix) was 57% tokenizer and 41% tagger. Most of the
+tokenizer part was `drop_unit_separators` (#308) looking up the previous and next word of every token before testing whether the token was a `-` or `/`;
+testing the token first recovers about half of the gap (22.6 to 21.8 us per parse) with the same output. The rest is mostly the tagger's added rules
+making more lookups on the same tokens (#400).

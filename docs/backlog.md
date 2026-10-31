@@ -19,8 +19,7 @@ project has no users and the foundation went quickly; it saves a version and a r
 | **Later** | Wanted or known, not planned for a release: new API surface, parse rules below the P2 line, anything waiting on demand or a decision. The list by kind is in [`roadmap.md`](roadmap.md), "Waiting" (#11, #35, #88, #92, #193, #203, #213, #233, #238, #243, #244, #253, #269, #272, #274, #277, #289 to #291, #294 to #296, #304, #307, #310 to #321, #327, #332, #335, #341, #345, #351, #357, #358, #360, #366, #367, #375, #384, #387, #388, #390, #391) | |
 | **Tooling** | Tooling that is not planned for a release (the harness, review tool, benchmarks and CI items waiting for a rule or a decision): never shipped, never closed. Now holds #215 (libpostal), #222 (the review helpers still deferred), #225 (the review tracker), #323 (MessyStreets) | |
 
-`main` is the 0.5 line. It carries the last released version (`0.5.0` now) until the release pull request sets the next one; there is no
-`-dev` suffix between releases (decided 2026-10-28), so a build from `main` reports the last released version. There is no 0.3.2. The project has no users, so a release is not made for a minor
+`main` is the 0.5 line. It carries the next patch version with a `-dev` suffix (`0.5.1-dev` now, decided 2026-10-31) until the release pull request sets the release version, so a build from `main` reports a version no release has used (it said the last release until 2026-10-31). There is no 0.3.2. The project has no users, so a release is not made for a minor
 fix. **A 0.3.x patch needs a very good reason:** a correctness bug in shipped output that matters (a wrong key, a panic
 on valid input: the never-panic rule), a security or supply-chain problem, or a broken published artifact (a wheel that
 does not install, a crate that does not build). It goes on a `release/0.3` branch cut from the `v0.3.1` tag, with the
