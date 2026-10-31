@@ -9,6 +9,8 @@ change to what an input produces needs a new key version.
 
 ### Changed
 
+- **Faster special-word search** (#406, no output change): a run of tokens is tried as a special word of two words or more only when its first token starts one in the table (a custom layer always tries). 18.5 to 17.4 us per parse on the suite's `natural` mix (about 6% more parses per second). Keys, warnings and unit fields are identical to the `k4` cut over the seven key sources.
+
 - **Faster lexicon lookups** (#400, no output change): each keyed table (suffixes, directionals, units, states, special words, highway prefixes, military) has a small bit filter, built on first use, that answers "not in the table" without the binary search; 83% of the lookups of a parse miss. The place-key words skip a second normalization. About 19% more parses per second than the commit before (18.4 against 21.8 us per parse on the suite's `natural` mix, one pinned CPU), which is 11% faster than 0.4.1. Keys, warnings and unit fields are identical to the `k4` cut over the seven key sources.
 
 - **`main` reports `0.5.1-dev`** (#390): builds from `main` after 0.5.0 carry the next patch version with a `-dev` suffix instead of the last release, so a result or a key dump names the build it came from. `CONTRIBUTING.md` and `docs/backlog.md` no longer say there is no suffix between releases.

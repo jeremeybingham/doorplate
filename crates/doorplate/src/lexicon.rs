@@ -487,6 +487,32 @@ impl Lexicons {
             .or_else(|| self.layer?.special.get(&*normalize_key_cow(s)).copied())
     }
 
+    /// Whether a special word of two words or more may start with `first`, the text of one token:
+    /// false means that a run of tokens starting here can only be a special word if it is the
+    /// one token (`longest_at` then skips the longer runs). Exact for the shipped table; a layer
+    /// may add any spelling, so with a layer the answer is always yes (#406).
+    pub(crate) fn special_run_may_start(&self, first: &str) -> bool {
+        static FIRST: OnceLock<(Filter, Vec<&'static str>)> = OnceLock::new();
+        if self.layer.is_some() {
+            return true;
+        }
+        let key = normalize_key_cow(first);
+        // Nothing left after normalizing (`.`): the run's first word is a later token.
+        if key.is_empty() {
+            return true;
+        }
+        let (filter, words) = FIRST.get_or_init(|| {
+            let mut words: Vec<&'static str> = tables::SPECIAL_INDEX
+                .iter()
+                .filter_map(|(k, _)| k.split_once(' ').map(|(w, _)| w))
+                .collect();
+            words.sort_unstable_by(|a, b| cmp_keys(a, b));
+            words.dedup();
+            (Filter::new(words.iter().copied()), words)
+        });
+        filter.may_contain(&key) && find_str(words, &key)
+    }
+
     fn special_base(&self, s: &str) -> Option<Lookup<Special>> {
         let (value, kind) = *find_in!(tables::SPECIAL_INDEX, &normalize_key_cow(s))?;
         Some(Lookup { value, kind })
@@ -1479,6 +1505,47 @@ mod tests {
         check(tables::HIGHWAY_INDEX, &probes);
         check(tables::MILITARY_INDEX, &probes);
         check(tables::MILITARY_PO_INDEX, &probes);
+    }
+
+    /// `special_run_may_start` never says no to a word that starts a special word of two words or
+    /// more (#406): every such key's first word says yes, in any spelling, and no run of two to
+    /// four words from a word list starts with a word that says no and is a special word. (A token
+    /// of periods only, which would normalize to nothing, is never made by the tokenizer.)
+    #[test]
+    fn a_word_that_starts_no_multi_word_special_starts_none() {
+        let keys: Vec<&str> = tables::SPECIAL_INDEX.iter().map(|(k, _)| *k).collect();
+        for k in &keys {
+            if let Some((first, _)) = k.split_once(' ') {
+                assert!(LEX.special_run_may_start(first), "{k}");
+                assert!(LEX.special_run_may_start(&first.to_lowercase()), "{k}");
+            }
+        }
+        let mut pool: Vec<String> = keys
+            .iter()
+            .flat_map(|k| k.split(' ').map(String::from))
+            .collect();
+        pool.extend(["MAIN", "ST", "N", "A", "7", "P.O.", "po", "box", "Rural"].map(String::from));
+        pool.sort();
+        pool.dedup();
+        let mut x: u64 = 0xD1B5_4A32_D192_ED03;
+        let mut next = move || {
+            x ^= x << 13;
+            x ^= x >> 7;
+            x ^= x << 17;
+            x
+        };
+        let mut checked = 0;
+        for _ in 0..200_000 {
+            let n = 2 + (next() % 3) as usize;
+            let run: Vec<&str> = (0..n)
+                .map(|_| pool[(next() % pool.len() as u64) as usize].as_str())
+                .collect();
+            if !LEX.special_run_may_start(run[0]) {
+                checked += 1;
+                assert!(LEX.special(&run.join(" ")).is_none(), "{run:?}");
+            }
+        }
+        assert!(checked > 10_000, "{checked}");
     }
 
     #[test]
