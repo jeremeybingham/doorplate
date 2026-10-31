@@ -144,6 +144,7 @@ One probe per open issue: a pattern over line 1 and line 2 (`tools/harness/probe
 it counts, per probe and source, the rows whose text has the shape, how many of those the parser flags today (a warning in
 `unparsed_remainder`, `missing_street_number`, `possibly_truncated`, `missing_unit_number`, `invalid_zip`, or a key without state and ZIP) and, with
 `--compare`, how many of a sample of them usaddress reads differently. Counts only.
+`hits(line1, line2, zip, city, state)` also takes the city and state, for the probes on the city field (`city-is-state`, #357; `unit-or-box-in-city`, #244). The registry covers the open issues up to #375 (2026-10-31); a probe for a closed issue stays in it to show the shape fall after the fix.
 
 ```sh
 python tools/harness/probes.py local-data/*/records.parquet --sample 10 --compare 300 --out local-data/backlog-probes/report.json --confirm
