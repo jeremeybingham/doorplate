@@ -21,6 +21,10 @@ doctest = false
 [lints]
 workspace = true
 
+[features]
+# Rule firing counts (#401): `doorplate._rule_stats_run` and `_rule_stats_take`, for tools/rules only.
+rule-stats = ["doorplate/rule-stats"]
+
 [dependencies]
 # rayon: `parse_many` parses in parallel while the GIL is released.
 doorplate = { workspace = true, features = ["rayon", "custom-layer"] }

@@ -140,12 +140,44 @@ pub(crate) fn tokenize(
         }
         p.piece(a, b, paren, next_starts_numeric, lex);
     }
-    join_split_grid_number(&mut out, lex);
-    join_lost_fraction(&mut out, lex);
-    join_directional_comma(&mut out, lex);
-    drop_unit_separators(&mut out, lex);
-    join_unit_hyphen(&mut out, lex);
+    pass("join_split_grid_number", &mut out, |o| {
+        join_split_grid_number(o, lex)
+    });
+    pass("join_lost_fraction", &mut out, |o| {
+        join_lost_fraction(o, lex)
+    });
+    pass("join_directional_comma", &mut out, |o| {
+        join_directional_comma(o, lex)
+    });
+    pass("drop_unit_separators", &mut out, |o| {
+        drop_unit_separators(o, lex)
+    });
+    pass("join_unit_hyphen", &mut out, |o| join_unit_hyphen(o, lex));
     out
+}
+
+/// Run a post-pass over the tokens. With the `rule-stats` feature, count it when it changed them.
+#[cfg(not(feature = "rule-stats"))]
+#[inline]
+fn pass(_name: &str, out: &mut Vec<Token>, f: impl FnOnce(&mut Vec<Token>)) {
+    f(out);
+}
+
+#[cfg(feature = "rule-stats")]
+fn pass(name: &str, out: &mut Vec<Token>, f: impl FnOnce(&mut Vec<Token>)) {
+    let before = out.clone();
+    f(out);
+    if *out != before {
+        crate::rulestats::named(name);
+    }
+}
+
+/// Count a tokenizer reading by name (`rule-stats` only).
+macro_rules! rule_hit {
+    ($name:expr) => {
+        #[cfg(feature = "rule-stats")]
+        crate::rulestats::named($name);
+    };
 }
 
 /// The hyphen's index in `STREET-SUITE`: a street suffix, one hyphen, a unit designator, both
@@ -512,11 +544,13 @@ impl Piece<'_> {
         // left to state data.
         // `1174-1/2`: a hyphen before a fraction is a space (`1174 1/2`).
         if let Some(cut) = fraction_hyphen(t) {
+            rule_hit!("sub:fraction_hyphen");
             self.emit(t[..cut].to_string(), s2, s2 + cut, paren);
             self.emit(t[cut + 1..].to_string(), s2 + cut + 1, e2, paren);
             return;
         }
         if let Some(cut) = route_hyphen(t, lex) {
+            rule_hit!("sub:route_hyphen");
             self.emit(t[..cut].to_string(), s2, s2 + cut, paren);
             self.emit(t[cut + 1..].to_string(), s2 + cut + 1, e2, paren);
             return;
@@ -524,6 +558,7 @@ impl Piece<'_> {
         // `STREET-SUITE 303`, `CT-UNIT 4`: a street suffix, a hyphen glued to a unit
         // designator (#308). The pieces are words of their own.
         if let Some(cut) = suffix_hyphen_designator(t, lex) {
+            rule_hit!("sub:suffix_hyphen_designator");
             self.emit(t[..cut].to_string(), s2, s2 + cut, paren);
             self.sub(s2 + cut + 1, e2, pa, pb, paren, next_numeric, lex);
             return;
@@ -531,6 +566,7 @@ impl Piece<'_> {
         // `ST/ 36`, `ROAD/APT 7L`: a street suffix glued to a slash. The slash is a token of
         // its own, dropped later when a unit follows (`drop_unit_separators`).
         if let Some(cut) = suffix_slash(t, self.after, lex) {
+            rule_hit!("sub:suffix_slash");
             self.emit(t[..cut].to_string(), s2, s2 + cut, paren);
             self.emit("/".to_string(), s2 + cut, s2 + cut + 1, paren);
             self.sub(s2 + cut + 1, e2, pa, pb, paren, next_numeric, lex);
@@ -539,6 +575,7 @@ impl Piece<'_> {
         // A unit designator joined to its value by punctuation: `APT.1285`,
         // `STE.200`, `APT:201`, `UNIT-4`.
         if let Some(cut) = unit_punct(t, lex) {
+            rule_hit!("sub:unit_punct");
             self.emit(t[..cut].to_string(), s2, s2 + cut, paren);
             self.sub(s2 + cut + 1, e2, pa, pb, paren, next_numeric, lex);
             return;
@@ -548,6 +585,7 @@ impl Piece<'_> {
         if let Some(cut) =
             word_period(t).filter(|&c| !known_word(&format!("{}{}", &t[..c], &t[c + 1..]), lex))
         {
+            rule_hit!("sub:word_period");
             self.sub(s2, s2 + cut, pa, pb, paren, next_numeric, lex);
             self.sub(s2 + cut + 1, e2, pa, pb, paren, next_numeric, lex);
             return;
@@ -576,6 +614,7 @@ impl Piece<'_> {
                 )
             });
             if let Some(cut) = cut {
+                rule_hit!("sub:glue_split_or_place");
                 self.emit(t[..cut].to_string(), s2, s2 + cut, paren);
                 self.emit(t[cut..].to_string(), s2 + cut, e2, paren);
                 return;

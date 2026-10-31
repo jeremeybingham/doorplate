@@ -937,6 +937,80 @@ fn anonymize(text: &str, seed: Option<u64>) -> String {
         .text
 }
 
+/// Rule firing counts (#401, feature `rule-stats`): parse each record on this thread and count which
+/// rules fire: as fields, or with `oneline` joined into one line (`line1, line2, city, state zip`),
+/// under `default_state` if given. Returns the number parsed.
+#[cfg(feature = "rule-stats")]
+#[pyfunction]
+#[pyo3(signature = (line1, line2, city, state, zip, oneline=false, default_state=None))]
+fn _rule_stats_run(
+    line1: Vec<Option<String>>,
+    line2: Vec<Option<String>>,
+    city: Vec<Option<String>>,
+    state: Vec<Option<String>>,
+    zip: Vec<Option<String>>,
+    oneline: bool,
+    default_state: Option<&str>,
+) -> PyResult<usize> {
+    let parser = match default_state {
+        Some(st) => Parser::with_options(ParseOptions::new().default_state(st))
+            .map_err(|e| PyValueError::new_err(e.to_string()))?,
+        None => Parser::new(),
+    };
+    let n = line1.len();
+    for i in 0..n {
+        let get = |v: &Vec<Option<String>>| v.get(i).cloned().flatten();
+        let fields = Fields {
+            line1: get(&line1),
+            line2: get(&line2),
+            city: get(&city),
+            state: get(&state),
+            zip: get(&zip),
+        };
+        if oneline {
+            let last = [fields.state.clone(), fields.zip.clone()]
+                .into_iter()
+                .flatten()
+                .collect::<Vec<_>>()
+                .join(" ");
+            let line = [
+                fields.line1.clone(),
+                fields.line2.clone(),
+                fields.city.clone(),
+                Some(last),
+            ]
+            .into_iter()
+            .flatten()
+            .filter(|p| !p.is_empty())
+            .collect::<Vec<_>>()
+            .join(", ");
+            let _ = parser.parse(&line);
+        } else {
+            let _ = parser.parse_fields(&fields);
+        }
+        doorplate::rulestats::end_parse();
+    }
+    Ok(n)
+}
+
+/// `(kind, site, label, fires, inputs)`.
+#[cfg(feature = "rule-stats")]
+type RuleStatsRow = (String, String, String, u64, u64);
+
+/// The rule firing counts of this thread so far, as `(kind, site, label, fires, inputs)`, and the
+/// number of parses; then reset (feature `rule-stats`).
+#[cfg(feature = "rule-stats")]
+#[pyfunction]
+fn _rule_stats_take() -> (Vec<RuleStatsRow>, u64) {
+    let (rows, parses) = doorplate::rulestats::take();
+    (
+        rows.into_iter()
+            .map(|r| (r.kind, r.site, r.label, r.fires, r.inputs))
+            .collect(),
+        parses,
+    )
+}
+
 #[pymodule]
 fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add("__version__", doorplate::VERSION)?;
@@ -953,6 +1027,11 @@ fn _core(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(parse_many, m)?)?;
     m.add_function(wrap_pyfunction!(_parse_columns, m)?)?;
     m.add_function(wrap_pyfunction!(parse_fields_many, m)?)?;
+    #[cfg(feature = "rule-stats")]
+    {
+        m.add_function(wrap_pyfunction!(_rule_stats_run, m)?)?;
+        m.add_function(wrap_pyfunction!(_rule_stats_take, m)?)?;
+    }
     m.add_function(wrap_pyfunction!(tag, m)?)?;
     m.add_function(wrap_pyfunction!(parse_tokens, m)?)?;
     m.add_function(wrap_pyfunction!(address_type, m)?)?;

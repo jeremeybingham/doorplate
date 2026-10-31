@@ -17,6 +17,9 @@ default = ["places-us"]
 # National place list (data/places/, docs/places.md): places and ZIPs for every
 # state, DC and Puerto Rico, under the curated state data (data/states/).
 places-us = []
+# Rule firing counts (#401): which tagger and tokenizer rules fire, per call site. Research only;
+# off by default and not part of the public API (`doorplate::rulestats`).
+rule-stats = []
 # Parallel `Parser::parse_many`.
 rayon = ["dep:rayon"]
 # Golden-corpus loader and runner (`doorplate::corpus`), used by the corpus
@@ -53,3 +56,11 @@ criterion = { version = "0.5", default-features = false }
 [[bench]]
 name = "parse"
 harness = false
+
+[[example]]
+name = "rule_stats"
+required-features = ["rule-stats"]
+
+[[example]]
+name = "rule_disable"
+required-features = ["rule-stats", "corpus"]

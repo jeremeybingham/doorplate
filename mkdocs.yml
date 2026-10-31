@@ -107,6 +107,7 @@ nav:
           - Harness run columns: tools/harness-schema.md
           - The review tool: tools/review.md
           - The ingest tool: tools/ingest.md
+          - Rule firing counts: tools/rule-stats.md
       - Repository layout and tests: repository.md
       - Tests:
           - The golden corpus: tests/corpus.md
