@@ -219,3 +219,44 @@ def test_the_queue_pool_is_a_random_pick_not_the_head_of_the_file(tmp_path):
     assert ids[-1] > 200  # the first 20 in file order would end at 20
     again = probes.run_source(p, 1, 7, 0, con, keep=20)[2]["box-after-street"]
     assert [r["record_id"] for r in again] == [r["record_id"] for r in samples["box-after-street"]]  # repeatable
+
+
+def test_a_street_line_written_twice_is_found_and_a_repeated_word_is_not():
+    assert "repeated-line" in probes.hits("812 ASHGROVE ST 812 ASHGROVE ST", None)
+    assert "repeated-line" in probes.hits("12 ELM ST. 12 ELM ST", None)
+    assert "repeated-line" not in probes.hits("812 ASHGROVE ST", None)
+    assert "repeated-line" not in probes.hits("100 100 MAIN ST", None)
+    assert "repeated-line" not in probes.hits("1 1", None)
+
+
+def test_a_partial_key_is_recognised_for_any_key_version():
+    assert probes.is_partial_key("k3n:S|1||A|ST|||")
+    assert probes.is_partial_key("k4n:S|1||A|ST|||")
+    assert not probes.is_partial_key("k4:S|1||A|ST||FL|33101")
+    assert probes.is_flagged([], "k4n:S|1||A|ST|||")
+
+
+def test_coverage_names_the_rule_issues_with_no_probe_and_no_reason():
+    issues = [
+        {"number": 247, "labels": [{"name": "area:rules"}]},       # a probe
+        {"number": 345, "labels": [{"name": "area:rules"}]},       # a reason
+        {"number": 9999, "labels": [{"name": "area:rules"}]},      # neither
+        {"number": 201, "labels": [{"name": "area:rules"}, {"name": "tracker"}]},  # a tracker
+        {"number": 233, "labels": [{"name": "area:docs"}]},        # not a text shape
+    ]
+    covered, excused, missing = probes.coverage(issues)
+    assert covered == {247: ["half-without-slash"]}
+    assert list(excused) == [345]
+    assert missing == [9999]
+
+
+def test_every_no_probe_reason_is_for_an_issue_without_a_probe():
+    with_probe = {int(i) for _k, issue, *_ in probes.PROBES for i in str(issue).split(",") if i.strip().isdigit()}
+    assert not set(probes.NO_PROBE) & with_probe
+
+
+def test_the_box_then_line2_probe_wants_a_street_on_line_2_not_any_words():
+    assert "box-line1-street-line2" in probes.hits("PO BOX 123", "45 OAK ST")
+    assert "box-line1-street-line2" in probes.hits("PO BOX 123", "OAK ST")
+    assert "box-line1-street-line2" not in probes.hits("PO BOX 123", "SPRINGFIELD VALLEY")
+    assert "box-line1-street-line2" not in probes.hits("PO BOX 123", "ACME HOLDINGS")
