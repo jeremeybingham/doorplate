@@ -9,6 +9,8 @@ change to what an input produces needs a new key version.
 
 ### Changed
 
+- **Fourteen redundant `Unparsed` marks and a duplicate warning removed from the tagger** (#409, no output change): a token no rule claims already ends as `Unparsed`, and `SecondLineSkipped` is also raised by `second_line_notes`. Found by the rule audit (#401, `docs/tools/rule-stats.md`). Keys, warnings and unit fields are identical to the `k4` cut over the seven key sources.
+
 - **Faster special-word search** (#406, no output change): a run of tokens is tried as a special word of two words or more only when its first token starts one in the table (a custom layer always tries). 18.5 to 17.4 us per parse on the suite's `natural` mix (about 6% more parses per second). Keys, warnings and unit fields are identical to the `k4` cut over the seven key sources.
 
 - **Faster lexicon lookups** (#400, no output change): each keyed table (suffixes, directionals, units, states, special words, highway prefixes, military) has a small bit filter, built on first use, that answers "not in the table" without the binary search; 83% of the lookups of a parse miss. The place-key words skip a second normalization. About 19% more parses per second than the commit before (18.4 against 21.8 us per parse on the suite's `natural` mix, one pinned CPU), which is 11% faster than 0.4.1. Keys, warnings and unit fields are identical to the `k4` cut over the seven key sources.

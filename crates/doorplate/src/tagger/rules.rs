@@ -79,7 +79,6 @@ impl Tagger<'_> {
                 let starts_segment = hi - 1 - w == seg_start && seg_start > lo;
                 let long = self.lens.whole.unwrap_or(0) >= super::TRUNCATION_MIN_LEN;
                 if starts_segment || long {
-                    self.set(hi - 1..hi, Tag::Unparsed);
                     self.warn(Warning::InvalidZip);
                     self.incomplete = Some(hi - 1);
                     end -= 1;
@@ -103,7 +102,6 @@ impl Tagger<'_> {
                 } else if let Some((_, w)) =
                     longest_at(toks, seg_start, end, |s| self.state_ok(s, false))
                 {
-                    self.set(seg_start + w..end, Tag::Unparsed);
                     state = Some(seg_start..seg_start + w);
                 }
             } else if let Some((_, w)) =
@@ -657,7 +655,6 @@ impl Tagger<'_> {
         if whole.is_some() {
             self.set(r, Tag::State);
         } else {
-            self.set(r, Tag::Unparsed);
             self.warn(Warning::UnknownState);
         }
     }
@@ -699,7 +696,6 @@ impl Tagger<'_> {
                 self.warn(Warning::ZipRepaired);
             }
         } else {
-            self.set(r, Tag::Unparsed);
             self.warn(Warning::InvalidZip);
         }
     }
@@ -1036,7 +1032,6 @@ impl Tagger<'_> {
                 })
                 .is_some_and(|(_, w)| lo + w == hi))
         {
-            self.set(lo..hi, Tag::Unparsed);
             return;
         }
         let mut lo = lo;
@@ -1562,7 +1557,6 @@ impl Tagger<'_> {
             || (line.len() < street.len() && same(&street[street.len() - line.len()..], line))
         {
             self.set(k..hi, Tag::Skip);
-            self.warn(Warning::SecondLineSkipped);
             return Some((lo, k));
         }
         let address = all_digits(self.text(rest.start))
@@ -1667,7 +1661,6 @@ impl Tagger<'_> {
         if !numbered || self.lex.suffix(self.text(end - 1)).is_none() {
             return false;
         }
-        self.set(lo..v, Tag::Unparsed);
         self.street_from(v, hi);
         true
     }
@@ -2178,7 +2171,6 @@ impl Tagger<'_> {
         if is_glued_ordinal(t0) {
             // "409742ND SQ": 4097 42ND or 40974 2ND. Don't guess.
             self.warn(Warning::AmbiguousStreetNumber);
-            self.set(lo..hi, Tag::Unparsed);
             return;
         }
         // "31967,32037,32067, PUNTA GORDA": a list of house numbers, each in
@@ -2190,12 +2182,10 @@ impl Tagger<'_> {
             .count();
         if numbers >= 2 {
             self.warn(Warning::MultipleAddresses);
-            self.set(lo..lo + numbers, Tag::Unparsed);
             i += numbers;
         } else if is_slash_pair(t0) {
             // "5210/5212 BRISTO ST"
             self.warn(Warning::MultipleAddresses);
-            self.set(i..i + 1, Tag::Unparsed);
             i += 1;
         } else if hi == lo + 1 && all_digits(t0) && !t0.bytes().all(|c| c == b'0') {
             // "4871" alone: a house number and no street (#130).
@@ -2238,7 +2228,6 @@ impl Tagger<'_> {
             // "1309 1329 E VINE ST": more house numbers. The first is the
             // address's; the rest are left unparsed.
             while self.second_house_number(i, hi) {
-                self.set(i..i + 1, Tag::Unparsed);
                 self.warn(Warning::MultipleAddresses);
                 i += 1;
             }
@@ -2286,7 +2275,6 @@ impl Tagger<'_> {
                     .iter()
                     .all(|t| t.seg == self.toks[hi - 1].seg)
             {
-                self.set(hi - w..hi, Tag::Unparsed);
                 hi -= w;
             }
         }
@@ -2941,12 +2929,10 @@ impl Tagger<'_> {
         while found.len() < 2 && j > floor {
             let last = j - 1;
             let t = self.text(last);
-            // "(110)" is a unit; "(OFF)" is not.
+            // "(110)" is a unit; "(OFF)" is not, and is left unparsed.
             if self.toks[last].paren {
                 if is_unit_value(t) {
                     found.push((last..last, last..j));
-                } else {
-                    self.set(last..j, Tag::Unparsed);
                 }
                 j = last;
                 continue;
@@ -2954,7 +2940,6 @@ impl Tagger<'_> {
             // "UNIT 12 BLU SPA": a business name after a whole unit.
             if found.is_empty() && j == hi {
                 if let Some(w) = self.words_after_unit(floor, hi) {
-                    self.set(w..hi, Tag::Unparsed);
                     j = w;
                     continue;
                 }
@@ -2997,7 +2982,6 @@ impl Tagger<'_> {
                 && is_cut_designator(t, &lex)
                 && self.suffix_before(name_lo, last)
             {
-                self.set(last..j, Tag::Unparsed);
                 self.incomplete = Some(last);
                 j = last;
                 continue;
