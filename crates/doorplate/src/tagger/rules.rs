@@ -423,7 +423,10 @@ impl Tagger<'_> {
     fn looks_like_city(&self, lo: usize, hi: usize) -> bool {
         let toks = &self.toks[lo..hi];
         !toks.iter().any(|t| has_digit(&t.text))
-            && longest_at(self.toks, lo, hi, |s| self.lex.special(s)).is_none()
+            && longest_at(self.toks, lo, self.special_hi(lo, hi), |s| {
+                self.lex.special(s)
+            })
+            .is_none()
             && longest_at(self.toks, lo, hi, |s| self.lex.military(s)).is_none()
     }
 
@@ -1028,7 +1031,7 @@ impl Tagger<'_> {
         // stays in `unparsed`.
         if (lo..hi).all(|k| self.toks[k].seg == self.toks[lo].seg)
             && (self.lex.is_bare_box_word(&join(&self.toks[lo..hi]))
-                || longest_at(self.toks, lo, hi, |s| {
+                || longest_at(self.toks, lo, self.special_hi(lo, hi), |s| {
                     self.lex.special(s).filter(|l| l.value == Special::PoBox)
                 })
                 .is_some_and(|(_, w)| lo + w == hi))
@@ -1253,7 +1256,7 @@ impl Tagger<'_> {
     fn attention(&mut self, lo: usize, hi: usize) -> (usize, usize) {
         let lex = self.lex;
         let word = |k: usize| {
-            longest_at(self.toks, k, hi, |s| {
+            longest_at(self.toks, k, self.special_hi(k, hi), |s| {
                 lex.special(s).filter(|l| l.value == Special::Attention)
             })
             .map(|(_, w)| w)
@@ -1317,6 +1320,15 @@ impl Tagger<'_> {
     }
 
     /// The end of the comma segment that holds `k`, at most `hi`.
+    /// The end to give `longest_at` for a special word starting at token `k`: just that token
+    /// when no special word of two words or more starts with it (#406).
+    fn special_hi(&self, k: usize, hi: usize) -> usize {
+        match self.toks.get(k) {
+            Some(t) if !self.lex.special_run_may_start(&t.text) => hi.min(k + 1),
+            _ => hi,
+        }
+    }
+
     fn seg_end(&self, k: usize, hi: usize) -> usize {
         (k..hi)
             .find(|&e| self.toks[e].seg != self.toks[k].seg)
@@ -1694,7 +1706,9 @@ impl Tagger<'_> {
                 && lex.directional(self.text(i)).is_none()
         };
         // `PO BOX`, `LOCK BOX`, `FIRM CALLER`: the usual box words are not school codes.
-        if longest_at(self.toks, k, e, |s| lex.special(s)).is_some_and(|(_, w)| k + w > b) {
+        if longest_at(self.toks, k, self.special_hi(k, e), |s| lex.special(s))
+            .is_some_and(|(_, w)| k + w > b)
+        {
             return None;
         }
         let lead = b - k;
@@ -1740,7 +1754,9 @@ impl Tagger<'_> {
         if let Some(m) = self.campus_box(k, hi) {
             return Some(m);
         }
-        let (l, w) = longest_at(self.toks, k, hi, |s| self.lex.special(s))?;
+        let (l, w) = longest_at(self.toks, k, self.special_hi(k, hi), |s| {
+            self.lex.special(s)
+        })?;
         if !(l.value == Special::PoBox || bare && l.value == Special::Box) {
             return None;
         }
@@ -1794,7 +1810,7 @@ impl Tagger<'_> {
             return Some(m);
         }
         let lex = self.lex;
-        let special = longest_at(self.toks, lo, hi, |s| lex.special(s));
+        let special = longest_at(self.toks, lo, self.special_hi(lo, hi), |s| lex.special(s));
         let mut tags = Vec::new();
         let value = |tags: &mut Vec<(Range<usize>, Tag)>, v: usize, hash: bool, tag: Tag| {
             if hash {
@@ -1992,7 +2008,7 @@ impl Tagger<'_> {
     /// value's index.
     fn box_part(&self, k: usize, hi: usize) -> Option<(Range<usize>, usize)> {
         let lex = self.lex;
-        let (_, w) = longest_at(self.toks, k, hi, |s| {
+        let (_, w) = longest_at(self.toks, k, self.special_hi(k, hi), |s| {
             lex.special(s)
                 .filter(|l| matches!(l.value, Special::Box | Special::PoBox))
         })?;
