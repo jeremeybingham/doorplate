@@ -6,6 +6,7 @@
 use std::cell::RefCell;
 use std::collections::{BTreeMap, BTreeSet};
 use std::panic::Location;
+use std::sync::OnceLock;
 
 #[derive(Default)]
 struct Stats {
@@ -80,4 +81,22 @@ pub fn take() -> (Vec<Row>, u64) {
             .collect();
         (rows, s.parses)
     })
+}
+
+/// Whether the call at `loc` is switched off by the environment variable `DOORPLATE_DISABLE`
+/// (`file:line` entries separated by commas, as in the report): the call then does nothing. For the
+/// deletion check of a rule (#401): no rebuild per site.
+pub(crate) fn disabled(loc: &Location<'_>) -> bool {
+    static OFF: OnceLock<Vec<String>> = OnceLock::new();
+    let off = OFF.get_or_init(|| {
+        std::env::var("DOORPLATE_DISABLE")
+            .map(|v| v.split(',').map(|s| s.trim().to_string()).collect())
+            .unwrap_or_default()
+    });
+    if off.is_empty() {
+        return false;
+    }
+    let file = loc.file().rsplit('/').next().unwrap_or("");
+    let site = format!("{file}:{}", loc.line());
+    off.iter().any(|o| *o == site)
 }

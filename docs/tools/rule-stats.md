@@ -38,3 +38,13 @@ Only counts are written. The records are fields, so this exercises the pre-split
 from the right) run on real text; `--default-state XX` parses under that default state with the state and ZIP left out, which is the only way the
 default-state rules run.
 
+## The deletion check
+
+With the feature on, the environment variable `DOORPLATE_DISABLE` (`file:line` entries as in the report, comma-separated) makes those tagger calls do
+nothing, with no rebuild per site. `tools/rules/disable_check.py INPUTS` runs the `rule_disable` example once without, then once per call site with it
+switched off, and prints for each: the golden-corpus cases of `passing.txt` that now fail, and how many of INPUTS change key, warnings or unparsed text.
+A site with no change on the corpus and a few tens of thousands of public inputs is a candidate. For the real rows, run `key_diff.py dump-all --unit`
+with the variable set (and the extension built with the feature) and `diff` against the frozen keys; to find which site a changed row belongs to, write
+the changed rows' fields into `local-data/` and run `disable_check.py` on that file. Switching a `decide` off changes nothing in these outputs (decisions
+are internal); a `set(..., Tag::Unparsed)` is not always a no-op: an explicit mark and an untagged leftover are reported differently (`unparsed_remainder`).
+

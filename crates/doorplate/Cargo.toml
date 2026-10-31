@@ -60,3 +60,7 @@ harness = false
 [[example]]
 name = "rule_stats"
 required-features = ["rule-stats"]
+
+[[example]]
+name = "rule_disable"
+required-features = ["rule-stats", "corpus"]
