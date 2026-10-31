@@ -194,6 +194,30 @@ there is the same cheaper lookups.
 The binary grew by about half a megabyte: the state data is folded into the core and the lexicon tables carry the
 rules' new spellings. The wheel is compressed, so it did not move.
 
+## MessyStreets: web addresses (held out)
+
+[MessyStreets](https://github.com/EdGaere/MessyStreets) (Gaere and von Wangenheim, ACM SIGSPATIAL '26, DOI 10.1145/3841645.3843362) is a
+benchmark for geocoders: 3 tiers of 10,000 verbatim addresses from websites' schema.org markup (the December 2024 Web Data Commons extract),
+multinational. We use the US-like rows only (an explicit US country, or no country and a state and ZIP; `tools/ingest/specs/messy-streets.toml`),
+locally and as aggregates (`docs/data-policy.md`; the data is not in the repository). **Gold** (existence checked against OpenStreetMap or
+OpenAddresses, components judged by an LLM) and **silver** (existence only) are held-out checks: their rows are never read or queued for review.
+**Raw** (a random sample, neither check) is the work list for rules.
+
+`tools/harness/messy_score.py` parses the one `input` string a geocoder would get and compares ZIP5, state, city and street name with the
+page's own markup fields (street name: with the street of the existence record; gold and silver only). Rows with an empty or `nan` label for a
+field are left out of that field's count (the count is in parentheses).
+
+| 0.5.0-dev (`7bc011f`, 2026-10-31) | Rows | ZIP5 | State | City | Street name |
+|---|---|---|---|---|---|
+| Gold (held out) | 4,270 | 99.9% (4,218) | 98.3% (4,128) | 91.7% (4,254) | 88.3% (4,270) |
+| Silver (held out) | 2,509 | 99.8% (2,205) | 97.9% (2,416) | 88.8% (2,493) | 87.8% (2,509) |
+| Raw (work list) | 2,316 | 99.8% (2,041) | 97.8% (2,246) | 88.6% (2,298) | not available |
+
+Read with care: the labels are the web page's own markup, not hand-checked, so a miss is a question and not a bug count; a page's locality can be a
+neighbourhood or a county; the street-name match is lenient (every word of our street name is a word of the verified street). These are not
+accuracy figures for doorplate and are not comparable with other parsers' scores on other labels. They are recorded per release to see whether a
+rule change moved them; the gold and silver rows are not tuned to. Retake with `python tools/harness/messy_score.py --confirm`.
+
 ## The benchmark suite
 
 `benchmarks/suite/v1/` holds 19,586 labeled addresses and `python benchmarks/suite.py all` scores doorplate
