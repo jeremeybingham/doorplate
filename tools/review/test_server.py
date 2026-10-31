@@ -46,9 +46,9 @@ def test_a_corrected_answer_needs_the_string_and_keeps_the_page_parses(review):
     with pytest.raises(ValueError):
         review.answer({"id": "inv|site|1", "verdict": "corrected", "corrected": "  "})
     rec = review.answer({"id": "inv|site|1", "verdict": "corrected", "corrected": " 123 QUINCEWOOD ST, MIAMI FL 33101 ",
-                         "parse": {"key": "k3:old"}, "corrected_parse": {"key": "k3:new"}, "note": " the number twice "})
+                         "parse": {"key": "k4:old"}, "corrected_parse": {"key": "k4:new"}, "note": " the number twice "})
     assert rec["corrected"] == "123 QUINCEWOOD ST, MIAMI FL 33101"
-    assert rec["parse"] == {"key": "k3:old"} and rec["corrected_parse"] == {"key": "k3:new"}
+    assert rec["parse"] == {"key": "k4:old"} and rec["corrected_parse"] == {"key": "k4:new"}
     assert rec["note"] == "the number twice"
     assert rec["input"]["line1"] == "123 456 QUINCEWOOD ST" and rec["cluster"]["size"] == 3
 
@@ -71,11 +71,11 @@ def test_a_dual_address_is_its_own_verdict(review):
 def test_text_left_in_the_correction_box_is_kept_as_a_draft_under_any_other_verdict(review):
     # "I can't tell" with an attempt in the box: the note and the attempt are both recorded, and it is not a correction
     rec = review.answer({"id": "inv|site|1", "verdict": "unclear", "note": " still bad ", "draft": " 123 QUINCEWOOD ST ",
-                         "parse": {"key": "k3:old"}, "draft_parse": {"key": "k3:draft"}})
+                         "parse": {"key": "k4:old"}, "draft_parse": {"key": "k4:draft"}})
     assert rec["verdict"] == "unclear" and rec["note"] == "still bad"
-    assert rec["draft"] == "123 QUINCEWOOD ST" and rec["draft_parse"] == {"key": "k3:draft"} and "corrected" not in rec
+    assert rec["draft"] == "123 QUINCEWOOD ST" and rec["draft_parse"] == {"key": "k4:draft"} and "corrected" not in rec
     # a draft equal to the original is not an attempt; nor is blank text; and a draft_parse never arrives alone
-    rec = review.answer({"id": "inv|site|2", "verdict": "junk", "draft": "5  OAK AVE, BLDG", "draft_parse": {"key": "k3:x"}})
+    rec = review.answer({"id": "inv|site|2", "verdict": "junk", "draft": "5  OAK AVE, BLDG", "draft_parse": {"key": "k4:x"}})
     assert "draft" not in rec and "draft_parse" not in rec
     assert "draft" not in review.answer({"id": "inv|site|2", "verdict": "skip", "draft": "   "})
 
@@ -99,9 +99,9 @@ def test_usaddress_right_can_carry_a_correction(tmp_path):
     with pytest.raises(ValueError):
         r.answer({"id": "inv|site|1", "verdict": "usaddress_right", "corrected": "123 456 QUINCEWOOD ST, MIAMI, FL 33101"})
     rec = r.answer({"id": "inv|site|1", "verdict": "usaddress_right", "corrected": "123 QUINCEWOOD ST APT 456", "draft": "ignored",
-                    "corrected_parse": {"key": "k3:x"}})
+                    "corrected_parse": {"key": "k4:x"}})
     assert rec["verdict"] == "usaddress_right" and rec["corrected"] == "123 QUINCEWOOD ST APT 456"
-    assert "draft" not in rec and rec["corrected_parse"] == {"key": "k3:x"}
+    assert "draft" not in rec and rec["corrected_parse"] == {"key": "k4:x"}
 
 
 def test_a_correction_verdict_ignores_a_draft_field(review):

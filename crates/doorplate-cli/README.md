@@ -12,8 +12,8 @@ warnings. It wraps the [`doorplate`](https://crates.io/crates/doorplate) library
 This tool formats and parses; it **does not validate** that an address exists or can
 receive mail.
 
-> **Alpha release (0.4.1).** The match key is versioned (`k3:`) and will probably
-> get new versions, so store the version prefix with your keys. `k3` is new in 0.4.0 and has only been checked on the project's own test data, so a `k4` may follow soon. Options and output
+> **Alpha release (0.4.1).** The match key is versioned (`k4:`) and will probably
+> get new versions, so store the version prefix with your keys. `k4` is new in 0.5.0 and has only been checked on the project's own data (37 million rows of public records), so a `k5` may follow. Options and output
 > fields may still change before 1.0. If it parses your addresses badly, please
 > [open an issue](https://github.com/jeremeybingham/doorplate/issues/new?template=misparse-or-messy-data.md).
 
@@ -44,7 +44,7 @@ doorplate layer check DIR                                    # load a custom lay
 
 ```sh
 $ doorplate parse "123 N. Main St #4, miami, fl 33101" | jq -r .key
-k3:S|123|N|MAIN|ST||FL|33101
+k4:S|123|N|MAIN|ST||FL|33101
 ```
 
 `doorplate --help` lists every option.

@@ -10,9 +10,9 @@ some, see [Sharing messy data](../CONTRIBUTING.md#sharing-messy-data).
 
 ## Stability while it is an alpha
 
-- **Keys.** The match key is versioned (`k3:`) and each version is a contract
+- **Keys.** The match key is versioned (`k4:`) and each version is a contract
   ([`key-format.md`](key-format.md)), but expect new versions. A parser fix that changes
-  what an input produces changes its key, and that needs a new version, so `k3:` and later
+  what an input produces changes its key, and that needs a new version, so `k4:` and later
   are likely as the parser improves. Store the version prefix with the keys.
 - **API and warning codes.** Names may change before 1.0, with a note in the changelog.
 - **Accuracy and speed** are measured on a few datasets ([`benchmarks.md`](benchmarks.md))

@@ -98,7 +98,7 @@ def test_pandas_recipe_with_chosen_columns():
     flat["warnings"] = [",".join(a.warnings) if a else None for a in parsed]
     out = pd.concat([df, flat.add_prefix("addr_")], axis=1)
     assert out.loc[0, "addr_street_name"] == "MAIN"
-    assert out.loc[0, "addr_key"] == "k3:S|123|N|MAIN|ST||FL|33101"
+    assert out.loc[0, "addr_key"] == "k4:S|123|N|MAIN|ST||FL|33101"
     assert pd.isna(out.loc[1, "addr_street_name"]) and pd.isna(out.loc[1, "addr_key"])
 
 
@@ -120,7 +120,7 @@ def test_polars_recipe_with_chosen_columns():
     out = df.hstack(flat)
     assert out.height == 3 and out["id"].to_list() == [1, 2, 3]
     assert out["addr_street_name"].to_list() == ["MAIN", None, None]
-    assert out["addr_key"].to_list()[0] == "k3:S|123|N|MAIN|ST||FL|33101"
+    assert out["addr_key"].to_list()[0] == "k4:S|123|N|MAIN|ST||FL|33101"
     assert out["addr_zip5"].to_list() == ["33101", None, "33601"]
     # An all-None column keeps its String type.
     assert out.schema["addr_unit_number"] == pl.String

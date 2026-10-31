@@ -69,7 +69,7 @@ jobs:
           maturin sdist -m crates/doorplate-py/Cargo.toml -o dist-sdist
           python -m venv clean-env
           clean-env/bin/pip install dist-sdist/*.tar.gz
-          clean-env/bin/python -c "import doorplate as d; a = d.parse('123 N Main St Apt 4, Miami FL 33101'); assert a.key() == 'k3:S|123|N|MAIN|ST||FL|33101', a.key(); assert a.place['name'] == 'MIAMI'"
+          clean-env/bin/python -c "import doorplate as d; a = d.parse('123 N Main St Apt 4, Miami FL 33101'); assert a.key() == 'k4:S|123|N|MAIN|ST||FL|33101', a.key(); assert a.place['name'] == 'MIAMI'"
 
   fuzz:
     runs-on: ubuntu-latest

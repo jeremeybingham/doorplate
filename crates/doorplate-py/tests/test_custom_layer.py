@@ -125,7 +125,7 @@ def test_the_demo_layer_loads_and_changes_what_it_says():
     base, a = doorplate.parse(text), doorplate.parse(text, custom_layer=layer)
     assert base.street_suffix is None and base.place is None
     assert a.street_suffix == "TRL" and a.place["name"] == "FERN HOLLOW"
-    assert a.key() == "k3:S|120||FERN HOLLOW|TRL||WA|98991"
+    assert a.key() == "k4:S|120||FERN HOLLOW|TRL||WA|98991"
     assert "non_standard_abbreviation" in a.warnings
     lane = doorplate.parse("5 Pine Lanne, Lantrn Port, WA", custom_layer=layer)
     assert lane.street_suffix == "LN" and "non_standard_abbreviation" not in lane.warnings  # kind = "variant"

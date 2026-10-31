@@ -40,6 +40,14 @@ def test_diff_of_equal_dumps_exits_zero(tmp_path):
     assert "total rows with a changed key: 0" in r.stdout
 
 
+def test_the_version_prefix_is_left_out_of_the_comparison(tmp_path):
+    a = dump(tmp_path, "a", "k3:S|1||MAIN|ST||FL|33101")
+    b = dump(tmp_path, "b", "k4:S|1||MAIN|ST||FL|33101")
+    r = subprocess.run([sys.executable, str(SCRIPT), "diff", str(a), str(b)], capture_output=True, text=True)
+    assert r.returncode == 0, r.stderr
+    assert "total rows with a changed key: 0" in r.stdout
+
+
 def test_diff_header_names_each_build_by_version_and_commit(tmp_path):
     a = dump(tmp_path, "a", "k3:S|1||MAIN|ST||FL|33101")
     b = dump(tmp_path, "b", "k3:S|1||MAIN|ST||FL|33101")
