@@ -26,7 +26,7 @@ receive mail. Pub 28 formatting is not deliverability, and validation needs
 postal-service-certified data; warnings such as `zip_city_mismatch` are hints about the
 input, not verdicts.
 
-> **Alpha release (0.4.1).** Expect rough edges. This documentation MAY describe features from pre-release versions. The match key is versioned (`k4:`) and
+> **Alpha release (0.5.0).** Expect rough edges. This documentation MAY describe features from pre-release versions. The match key is versioned (`k4:`) and
 > will probably get new versions as the parser improves, so store the version prefix
 > with your keys and plan to re-key. `k4` is new in 0.5.0 and has only been checked on the project's own data (37 million rows of public records), so a `k5` may follow. Accuracy and speed are measurements on a few
 > datasets, not guarantees. Names in the API and the warning codes may still change
@@ -230,8 +230,7 @@ a few data sets, not promises for yours. The method, every other figure and the 
   and places is not part of this release.
 
 ## Where it is going
-0.4.1 is out (an alpha: the `k3` key is new and a `k4` may follow). The 0.4.x releases are about tooling, documentation and
-extensibility; the key-changing rules wait for 0.5.0 (`k4`). What is planned, what depends on what, and what is deliberately not
+0.5.0 is out (an alpha: the `k4` key is new and a `k5` may follow). 0.5.0 is the key-changing release (`k4`); 0.5.x is for speed. What is planned, what depends on what, and what is deliberately not
 planned (validation, geocoding, international addresses) are in [`docs/roadmap.md`](docs/roadmap.md).
 
 ## Coming from usaddress

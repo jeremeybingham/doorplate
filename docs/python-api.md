@@ -2,7 +2,7 @@
 
 The `doorplate` package: `pip install doorplate`, Python 3.10 or later. It formats and parses; it does not validate
 that an address exists or can receive mail. This page is generated from the package's type stubs
-(`crates/doorplate-py/python/doorplate/__init__.pyi`), so it describes the latest release (0.4.1) and, on the `latest`
+(`crates/doorplate-py/python/doorplate/__init__.pyi`), so it describes the latest release (0.5.0) and, on the `latest`
 version of this site, the code on `main`, which can be ahead of PyPI; the
 [changelog](https://github.com/jeremeybingham/doorplate/blob/main/CHANGELOG.md) says what changed in each release. The tour is in the [package README](https://github.com/jeremeybingham/doorplate/blob/main/crates/doorplate-py/README.md) and the
 [notebook](https://github.com/jeremeybingham/doorplate/blob/main/examples/quickstart.ipynb).
