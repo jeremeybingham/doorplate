@@ -7,6 +7,10 @@ change to what an input produces needs a new key version.
 
 ## [Unreleased]
 
+### Changed
+
+- **Faster tokenizer pass** (#390, no output change): `drop_unit_separators` tests for a `-` or `/` before it looks up the neighbouring words, which recovers about 4% of the parse speed lost between 0.4.1 and 0.5.0. Keys and warnings are identical to the `k4` cut over the seven key sources.
+
 ## [0.5.0] - 2026-10-31
 
 ### Added

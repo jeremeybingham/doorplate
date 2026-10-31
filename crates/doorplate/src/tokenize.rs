@@ -200,13 +200,17 @@ fn drop_unit_separators(out: &mut Vec<Token>, lex: &Lexicons) {
     let mut k = 1;
     while k + 1 < out.len() {
         let (prev, sep, next) = (&out[k - 1], &out[k], &out[k + 1]);
-        let separator = sep.text == "-" || sep.text == "/";
+        // Almost no token is a separator: test it before any lookup (#390).
+        if sep.text != "-" && sep.text != "/" {
+            k += 1;
+            continue;
+        }
         let after_suffix = prev.seg == sep.seg
             && lex
                 .suffix(&prev.text)
                 .is_some_and(|l| l.kind != MatchKind::Observed);
         let unit_next = unit_like(&next.text, lex);
-        if separator && after_suffix && next.seg == sep.seg && unit_next {
+        if after_suffix && next.seg == sep.seg && unit_next {
             out.remove(k);
         } else {
             k += 1;
