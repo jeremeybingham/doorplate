@@ -13,9 +13,10 @@ aggregate numbers leave `local-data/`, and nothing is committed from it.
 | `compare.py` | Compares two runs (before and after a rule change): totals, warning codes, states |
 | `label_score.py` | Scores any records file that has `label_*` columns against our parse, or against another file's labels paired by `pair_id` (counts only) |
 | `nad_score.py` | The NAD scorecard: makes the NAD sample, then runs `label_score.py` on it |
+| `messy_score.py` | The MessyStreets scorecard (#323): parses each web address as one string and compares ZIP5, state, city and street name with the page's own fields, per tier (counts only) |
 | `shapes_report.py` | The worklist for a run: warning rates, the share with an `unparsed` remainder, and the top failure shapes per source and role; with `--before RUN`, what changed |
 | `state_patterns.py` | Per-state counts of street patterns (Texas `RR`, `PR 123`, county roads, hyphenated numbers, `URB`, state-route spellings, a trailing number, a last word not in the suffix table) from a records file or the NAD Parquet: the evidence for the state rules (#53). Counts only |
-| `test_run.py`, `test_label_score.py`, `test_shapes_report.py`, `test_state_patterns.py` | Tests on invented rows (`pytest tools/harness`) |
+| `test_run.py`, `test_label_score.py`, `test_messy_score.py`, `test_shapes_report.py`, `test_state_patterns.py` | Tests on invented rows (`pytest tools/harness`) |
 | `SCHEMA.md` | The artifacts' columns and the comparison rules (copied into every run) |
 
 ## Safe by default
