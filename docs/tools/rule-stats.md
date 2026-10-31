@@ -17,3 +17,20 @@ rules that did, and the sites that fired in at most N inputs. Output is counts a
 A site that never fires in a run is not yet a dead rule: it is a candidate for the deletion check (disable it alone, then run the
 golden corpus, `passing.txt` and the key diff against the frozen keys). Read the result against the data the run covered: the corpus
 and the suite's inputs cover the rules that have a test; the key sources show which rules matter on real addresses.
+
+## Over the key sources
+
+`tools/rules/run_sources.py` runs the same count over the records files of the key comparison (`local-data/keycompare/sources.txt`): it parses
+a random sample (default 2,000,000 rows per source, a fixed seed; `--sample 0` for every row) with `parse_fields` on one thread and writes one TSV per
+source into `OUTDIR`, which `rule_stats.py` merges with the others. The extension must be built with the feature, in a venv of its own so the
+other tools keep the normal build:
+
+```
+uv venv /tmp/venv-rs && uv pip install -p /tmp/venv-rs/bin/python maturin duckdb pyarrow
+(cd crates/doorplate-py && VIRTUAL_ENV=/tmp/venv-rs PATH=/tmp/venv-rs/bin:$PATH maturin develop --release --features rule-stats)
+/tmp/venv-rs/bin/python -I tools/rules/run_sources.py local-data/rule-stats/sample2m
+```
+
+The sample of 2,000,000 rows covers four of the seven sources whole (IRS, Netsyms, the amateur radio file and NAD have fewer rows) and takes about 15 minutes.
+Only counts are written. The records are fields, so this exercises the pre-split path; the one-line path is covered by the corpus and the suite.
+
