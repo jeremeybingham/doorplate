@@ -34,3 +34,7 @@ uv venv /tmp/venv-rs && uv pip install -p /tmp/venv-rs/bin/python maturin duckdb
 The sample of 2,000,000 rows covers four of the seven sources whole (IRS, Netsyms, the amateur radio file and NAD have fewer rows) and takes about 15 minutes.
 Only counts are written. The records are fields, so this exercises the pre-split path; the one-line path is covered by the corpus and the suite.
 
+`--oneline` joins each row's fields into one line (`line 1, line 2, city, state ZIP`) and uses `parse()`, so the one-line paths (the last line read
+from the right) run on real text; `--default-state XX` parses under that default state with the state and ZIP left out, which is the only way the
+default-state rules run.
+

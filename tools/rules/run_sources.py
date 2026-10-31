@@ -6,7 +6,8 @@
 
 Needs the extension built with the `rule-stats` feature (in a venv of its own, not the one other tools
 use). For each records file in `local-data/keycompare/sources.txt` it parses a random sample of N rows
-(default 2,000,000; 0 for every row; reservoir sample with a fixed seed) with `parse_fields` on one
+(default 2,000,000; 0 for every row; reservoir sample with a fixed seed) with `parse_fields` (or `parse` on the fields joined into one line with `--oneline`, under a default
+state with `--default-state XX`) on one
 thread, and writes `OUTDIR/<source>.tsv` in the format of the `rule_stats` example. Rows with a
 `last_line` are left out, as in `key_diff.py`. Only counts are written or printed; DuckDB errors can
 quote rows, so only their type is printed.
@@ -29,6 +30,13 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("out")
     ap.add_argument("--sample", type=int, default=2_000_000)
+    ap.add_argument(
+        "--oneline", action="store_true", help="join the fields into one line, parse()"
+    )
+    ap.add_argument(
+        "--default-state",
+        help="parse under this default_state (a USPS code), with the state and ZIP left out",
+    )
     ap.add_argument(
         "--sources", default=str(ROOT / "local-data/keycompare/sources.txt")
     )
@@ -66,7 +74,14 @@ def main():
                     break
                 cols_out = {c: [r[i] for r in batch] for i, c in enumerate(use)}
                 empty = [None] * len(batch)
-                core._rule_stats_run(*(cols_out.get(c, empty) for c in FIELDS))
+                if args.default_state:
+                    # The hint only matters when the input names no state or ZIP.
+                    cols_out["state"] = cols_out["zip"] = empty
+                core._rule_stats_run(
+                    *(cols_out.get(c, empty) for c in FIELDS),
+                    args.oneline,
+                    args.default_state,
+                )
                 done += len(batch)
                 print(f"{name}: {done} rows, {time.time() - t:.0f} s", file=sys.stderr)
         except Exception as e:  # noqa: BLE001 - DuckDB errors can quote rows

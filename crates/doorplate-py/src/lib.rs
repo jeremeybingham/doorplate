@@ -937,31 +937,60 @@ fn anonymize(text: &str, seed: Option<u64>) -> String {
         .text
 }
 
-/// Rule firing counts (#401, feature `rule-stats`): parse each record's fields on this thread and
-/// count which rules fire. Returns the number parsed.
+/// Rule firing counts (#401, feature `rule-stats`): parse each record on this thread and count which
+/// rules fire: as fields, or with `oneline` joined into one line (`line1, line2, city, state zip`),
+/// under `default_state` if given. Returns the number parsed.
 #[cfg(feature = "rule-stats")]
 #[pyfunction]
+#[pyo3(signature = (line1, line2, city, state, zip, oneline=false, default_state=None))]
 fn _rule_stats_run(
     line1: Vec<Option<String>>,
     line2: Vec<Option<String>>,
     city: Vec<Option<String>>,
     state: Vec<Option<String>>,
     zip: Vec<Option<String>>,
-) -> usize {
-    let parser = Parser::new();
+    oneline: bool,
+    default_state: Option<&str>,
+) -> PyResult<usize> {
+    let parser = match default_state {
+        Some(st) => Parser::with_options(ParseOptions::new().default_state(st))
+            .map_err(|e| PyValueError::new_err(e.to_string()))?,
+        None => Parser::new(),
+    };
     let n = line1.len();
     for i in 0..n {
         let get = |v: &Vec<Option<String>>| v.get(i).cloned().flatten();
-        let _ = parser.parse_fields(&Fields {
+        let fields = Fields {
             line1: get(&line1),
             line2: get(&line2),
             city: get(&city),
             state: get(&state),
             zip: get(&zip),
-        });
+        };
+        if oneline {
+            let last = [fields.state.clone(), fields.zip.clone()]
+                .into_iter()
+                .flatten()
+                .collect::<Vec<_>>()
+                .join(" ");
+            let line = [
+                fields.line1.clone(),
+                fields.line2.clone(),
+                fields.city.clone(),
+                Some(last),
+            ]
+            .into_iter()
+            .flatten()
+            .filter(|p| !p.is_empty())
+            .collect::<Vec<_>>()
+            .join(", ");
+            let _ = parser.parse(&line);
+        } else {
+            let _ = parser.parse_fields(&fields);
+        }
         doorplate::rulestats::end_parse();
     }
-    n
+    Ok(n)
 }
 
 /// `(kind, site, label, fires, inputs)`.

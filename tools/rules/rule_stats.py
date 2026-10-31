@@ -38,7 +38,7 @@ def static_sites():
     out = {k: {} for k in KINDS}
     for fn in sorted(SRC.glob("*.rs")):
         for n, text in enumerate(fn.read_text().splitlines(), 1):
-            if re.search(r"\bfn (set|warn|decide)\b", text):
+            if re.search(r"\bfn (set|warn|decide)\b|hint_used\.set", text):
                 continue
             for kind, pat in KINDS.items():
                 if re.search(pat, text):
