@@ -125,8 +125,8 @@ The same calls under doorplate's own names are `parse_tokens(s)` and `tag(s)`. T
 
 | | doorplate | usaddress |
 |---|---|---|
-| Whole address right, benchmark suite, `natural` stratum (16,001 addresses written in five styles) | 98.3% | 96.1% |
-| Whole address right, [geocode benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark) dev split (60,522 one-line addresses) | 94.5% | 88.1% |
+| Whole address right, benchmark suite, `natural` stratum (16,001 addresses written in five styles) | 98.5% | 96.1% |
+| Whole address right, [geocode benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark) dev split (60,522 one-line addresses) | 94.3% | 88.1% |
 | Addresses per second, one thread (suite inputs) | about 38,300 | about 8,900 |
 
 The suite is 19,586 labeled addresses that neither library was made from; it also holds both libraries' known blind spots
