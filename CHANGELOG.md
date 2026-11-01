@@ -18,6 +18,8 @@ change to what an input produces needs a new key version.
 
 ### Changed
 
+- **Faster glued-city search in the tokenizer** (#428, no output change): `glue_place` looks for a street-suffix cut whose right part starts a city first, and runs its two vetoes (the word ends a place begun earlier in the segment; the word is itself a city start) only when a cut exists. The vetoes could only turn the answer into no, and ran for every unknown word of five letters or more. 122,400 to 108,300 instructions per parse (-11.6%) on the suite's `natural` mix. Keys, warnings and unit fields are identical to the `k4` cut over the seven key sources.
+
 - **Bit filter for the place tables** (#425, no output change): `find_place` and `any_place`, which `place_key` calls for every city candidate, are behind the same kind of bit filter as the other keyed tables (#405), so a candidate that is not a place skips the binary search. 125,500 to 122,400 instructions per parse (-2.5%) on the suite's `natural` mix. Keys, warnings and unit fields are identical to the `k4` cut over the seven key sources.
 
 - **Faster keyed lookups on raw spellings** (#424, no output change): `state`, `unit`, `special`, `highway` and the military lookups first test the first two bytes of the spelling against the first two bytes of the table's keys (a 2 KB bit set per table, built with the filter), so a spelling that cannot be a key is rejected before it is normalized. 132,500 to 125,500 instructions per parse (-5.3%) on the suite's `natural` mix. Keys, warnings and unit fields are identical to the `k4` cut over the seven key sources.
