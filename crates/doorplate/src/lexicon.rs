@@ -590,24 +590,42 @@ impl Lexicons {
     /// may add any spelling, so with a layer the answer is always yes (#406).
     pub(crate) fn special_run_may_start(&self, first: &str) -> bool {
         static FIRST: OnceLock<(Filter, Vec<&'static str>)> = OnceLock::new();
-        if self.layer.is_some() {
-            return true;
-        }
-        let key = normalize_key_cow(first);
-        // Nothing left after normalizing (`.`): the run's first word is a later token.
-        if key.is_empty() {
-            return true;
-        }
-        let (filter, words) = FIRST.get_or_init(|| {
-            let mut words: Vec<&'static str> = tables::SPECIAL_INDEX
-                .iter()
-                .filter_map(|(k, _)| k.split_once(' ').map(|(w, _)| w))
-                .collect();
-            words.sort_unstable_by(|a, b| cmp_keys(a, b));
-            words.dedup();
-            (Filter::new(words.iter().copied()), words)
-        });
-        filter.may_contain(&key) && find_str(words, &key)
+        self.layer.is_some()
+            || may_start_multi(&FIRST, first, || {
+                tables::SPECIAL_INDEX.iter().map(|(k, _)| *k).collect()
+            })
+    }
+
+    /// [`Self::special_run_may_start`] for highway prefixes (`STATE ROAD`, `COUNTY HWY`), in the base
+    /// table and in the state data's (`FL|STATE ROAD`) (#438).
+    pub(crate) fn highway_run_may_start(&self, first: &str) -> bool {
+        static FIRST: OnceLock<(Filter, Vec<&'static str>)> = OnceLock::new();
+        self.layer.is_some()
+            || may_start_multi(&FIRST, first, || {
+                let state = tables::STATE_HIGHWAY_INDEX
+                    .iter()
+                    .map(|(k, _)| k.split_once('|').map_or(*k, |(_, w)| w));
+                let base = tables::HIGHWAY_INDEX.iter().map(|(k, _)| *k);
+                base.chain(state).collect()
+            })
+    }
+
+    /// [`Self::special_run_may_start`] for directionals (`NORTH EAST`) (#438).
+    pub(crate) fn directional_run_may_start(&self, first: &str) -> bool {
+        static FIRST: OnceLock<(Filter, Vec<&'static str>)> = OnceLock::new();
+        self.layer.is_some()
+            || may_start_multi(&FIRST, first, || {
+                tables::DIRECTIONAL_INDEX.iter().map(|(k, _)| *k).collect()
+            })
+    }
+
+    /// [`Self::special_run_may_start`] for states (`NEW YORK`) (#438).
+    pub(crate) fn state_run_may_start(&self, first: &str) -> bool {
+        static FIRST: OnceLock<(Filter, Vec<&'static str>)> = OnceLock::new();
+        self.layer.is_some()
+            || may_start_multi(&FIRST, first, || {
+                tables::STATE_INDEX.iter().map(|(k, _)| *k).collect()
+            })
     }
 
     fn special_base(&self, s: &str) -> Option<Lookup<Special>> {
@@ -1192,6 +1210,30 @@ impl Lexicons {
     }
 }
 
+/// Whether some key of two words or more starts with `first` (the text of one token): the first
+/// words of the keys from `keys` are kept in a bit filter and a sorted list. A token that
+/// normalizes to nothing says yes (#406, #438).
+fn may_start_multi(
+    cell: &'static OnceLock<(Filter, Vec<&'static str>)>,
+    first: &str,
+    keys: impl FnOnce() -> Vec<&'static str>,
+) -> bool {
+    let key = normalize_key_cow(first);
+    if key.is_empty() {
+        return true;
+    }
+    let (filter, words) = cell.get_or_init(|| {
+        let mut words: Vec<&'static str> = keys()
+            .into_iter()
+            .filter_map(|k| k.split_once(' ').map(|(w, _)| w))
+            .collect();
+        words.sort_unstable_by(|a, b| cmp_keys(a, b));
+        words.dedup();
+        (Filter::new(words.iter().copied()), words)
+    });
+    filter.may_contain(&key) && find_str(words, &key)
+}
+
 fn find_str(sorted: &[&str], key: &str) -> bool {
     sorted.binary_search_by(|k| cmp_keys(k, key)).is_ok()
 }
@@ -1714,6 +1756,45 @@ mod tests {
             }
         }
         assert!(checked > 10_000, "{checked}");
+    }
+
+    /// The first-word tests of the highway, directional and state tables (#438) never say no to a word
+    /// that starts a key of two words or more, in any spelling.
+    #[test]
+    fn first_word_tests_keep_every_multi_word_key() {
+        let hw: Vec<&str> = tables::HIGHWAY_INDEX.iter().map(|(k, _)| *k).collect();
+        let st_hw: Vec<&str> = tables::STATE_HIGHWAY_INDEX
+            .iter()
+            .map(|(k, _)| k.split_once('|').map_or(*k, |(_, w)| w))
+            .collect();
+        let dirs: Vec<&str> = tables::DIRECTIONAL_INDEX.iter().map(|(k, _)| *k).collect();
+        let states: Vec<&str> = tables::STATE_INDEX.iter().map(|(k, _)| *k).collect();
+        let mut multi = 0;
+        for k in hw.iter().chain(&st_hw) {
+            if let Some((first, _)) = k.split_once(' ') {
+                multi += 1;
+                assert!(LEX.highway_run_may_start(first), "{k}");
+                assert!(LEX.highway_run_may_start(&first.to_lowercase()), "{k}");
+            }
+        }
+        for k in &dirs {
+            if let Some((first, _)) = k.split_once(' ') {
+                multi += 1;
+                assert!(LEX.directional_run_may_start(first), "{k}");
+            }
+        }
+        for k in &states {
+            if let Some((first, _)) = k.split_once(' ') {
+                multi += 1;
+                assert!(LEX.state_run_may_start(first), "{k}");
+                assert!(LEX.state_run_may_start(&first.to_lowercase()), "{k}");
+            }
+        }
+        assert!(multi > 50, "{multi}");
+        // A word that starts nothing says no, and the longer runs are not words.
+        assert!(!LEX.highway_run_may_start("ZZZQ"));
+        assert!(!LEX.state_run_may_start("ZZZQ"));
+        assert!(!LEX.directional_run_may_start("ZZZQ"));
     }
 
     #[test]
