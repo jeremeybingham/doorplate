@@ -9,6 +9,7 @@ change to what an input produces needs a new key version.
 
 ### Added
 
+- **MessyStreets ingest blanks the markup's missing-value strings and decodes HTML entities; `messy_score.py --joined`** (tooling only, #323, #419): `NaN`, `undefined`, `null`, `none` and `n/a` in the city, state or ZIP are nulls, so the review queue no longer parses `IL NaN`; `--joined` scores the cleaned fields. No library change.
 - **`--cache-usaddress` for the benchmark scripts** (tooling only): `benchmarks/suite.py` and `benchmarks/speed_python.py` can reuse the usaddress predictions and timings stored by an earlier run (same usaddress version and inputs; a timing also needs the same machine and CPU count), so a re-benchmark of doorplate does not run usaddress again. The report marks cached rows and their date. See `docs/running-benchmarks.md`.
 
 - **Parse a CSV file in the browser** (#335): the Try doorplate page (`/demo/#csv`) takes a CSV file (UTF-8 or Latin-1; comma, semicolon, tab or pipe), lets you pick the address column or the line 1, line 2, city, state and ZIP columns, and returns the file with the `addr_` columns of `doorplate parse-file` added, parsed in a Web Worker by the same WebAssembly. Nothing is uploaded. 100,000 rows in 3.6 s in headless Chromium. Added cells that start with `=`, `+`, `-` or `@` get a leading apostrophe by default. Tests: `tools/docs/test_demo_csv.py` (the reader and writer under Node), `tools/docs/smoke_demo_csv.py` (a browser run).

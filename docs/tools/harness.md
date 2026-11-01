@@ -186,6 +186,12 @@ python tools/review/compare_sample.py local-data/messy-streets/records.parquet -
 python tools/review/server.py local-data/review/queue-compare-messy.jsonl
 ```
 
+**Missing-value strings (2026-11-01).** The markup has the literal strings `NaN`, `undefined`, `null`, `none` and `n/a` for a missing field (a data
+pipeline wrote them) and HTML entities such as `&amp;`. The ingest spec now turns the strings into nulls and decodes the entities; before, the review
+queue joined them into the one-line string (`... IL NaN`), and 13.1% of the raw US rows (303 of 2,315) read as give-ups for that reason: 405 rows had
+text left unparsed, 194 after cleaning. The first review round (`queue-compare-messy`, 150 cards) was mostly that; the round on cleaned rows is
+`queue-compare-messy2`. `--joined` scores the cleaned fields (`docs/benchmarks.md`).
+
 `messy_score.py` parses each address's one `input` string (street, locality, region, ZIP, country joined) and compares ZIP5, state, city and street
 name with the markup; the queue instead uses the street lines, city, state and ZIP joined as the harness does. A literal `nan` in the markup counts as
 a missing label. Misses are questions, not bug counts: a page's locality can be a neighbourhood or county, and the rates are not an accuracy claim.
