@@ -93,15 +93,13 @@ runs, so `123 N OAK ST` is `9 a a a`. The input text comes from the records file
 manifest, joined to the flagged rows by `(source, role, record_id)`; a `--db` run has no text, so it
 gets the leftover shapes only. Counts only, so the report can be quoted (`docs/data-policy.md`).
 
-Two sections answer the two questions the shapes alone could not (#112). **`street` mismatch: top input shapes** lists the
+Two sections answer the two questions the shapes alone could not. **`street` mismatch: top input shapes** lists the
 forms behind the `street` check. **`missing_street_number`: a spelled-out number and a street suffix** counts the rows of that
 code whose line 1 starts with a number word (`ONE` to `TWENTY`) and whose parse found a suffix, by word. It only measures, and it
-reads the run's own parse: a run made before #129 (spelled-out numbers read as house numbers, 2026-10-24) still counts the rows
-that rule now fixes. Check the run's commit (`manifest.json`) against the rule you are asking about. On the `s9-*` runs
-(commit `140ccf72`, 2026-10-20, schema 7, before the `k3` rules) it was 15,120 NY registry rows; parsing those same 15,120 rows
-with the 2026-10-27 build, 1,523 still have no house number, mostly where the number word is part of a street name
-(`ONE HOLLOW ...`, `ONE WEST ...`, `ONE PARK ...`, `ONE UNION ...`). The `street` mismatch rates of those runs (FMCSA US
-carriers 2.5% and 2.9%, NY corporations 1.0% to 2.6%, Netsyms 0.28%) are likewise of the old build: rerun before quoting them.
+reads the run's own parse: a run made before the spelled-out-number rule (spelled-out numbers read as house numbers) still counts the rows
+that rule now fixes. Check the run's commit (`manifest.json`) against the rule you are asking about. Most rows that still have no house number are
+ones where the number word is part of a street name (`ONE HOLLOW ...`, `ONE WEST ...`, `ONE PARK ...`, `ONE UNION ...`). Rates from an old run
+are of the old build: rerun before quoting them.
 
 To see what the failing rows actually are, and to say what the right answer is, `tools/review/` draws a few rows from each of the biggest shapes of a run and shows them to a person (`docs/tools/review.md`, issue #122).
 
@@ -145,7 +143,7 @@ One probe per open issue: a pattern over line 1 and line 2 (`tools/harness/probe
 it counts, per probe and source, the rows whose text has the shape, how many of those the parser flags today (a warning in
 `unparsed_remainder`, `missing_street_number`, `possibly_truncated`, `missing_unit_number`, `invalid_zip`, or a key without state and ZIP) and, with
 `--compare`, how many of a sample of them usaddress reads differently. Counts only.
-`hits(line1, line2, zip, city, state)` also takes the city and state, for the probes on the city field (`city-is-state`, #357; `unit-or-box-in-city`, #244). The registry covers the open issues up to #375 (2026-10-31); a probe for a closed issue stays in it to show the shape fall after the fix.
+`hits(line1, line2, zip, city, state)` also takes the city and state, for the probes on the city field (`city-is-state`, `unit-or-box-in-city`). The registry covers the open issues; a probe for a closed issue stays in it to show the shape fall after the fix.
 
 **Coverage and what "proved" means.** `python tools/harness/probes.py --coverage` (needs `gh`) checks the open issues labeled `area:rules`: each has a probe in the registry or a reason in `NO_PROBE` (research, or a family whose members have the probes); trackers and the docs, tooling, API and architecture issues are not text shapes and are skipped. It prints issue numbers and counts only and exits 1 when one has neither. Before a release the probe counts are taken twice, on the last release's build and on the release commit (a full Netsyms run into `agg_probes`, and `probes.py` over the seven records files). An **open** issue is proved when its probe counts rows (the shape exists in the data); a **closed** issue is proved when its flagged count fell, or the rows still flagged are explained (a different shape, a record with no state or ZIP, which gives a partial key). A key without state and ZIP counts as flagged, so a probe over a source with many such records shows a flagged share that no rule can lower.
 
@@ -170,7 +168,7 @@ a source of web business addresses, a kind none of our registries cover. Its lab
 and silver, the street name of an OpenStreetMap or OpenAddresses record that the address was matched to; there are no token labels.
 
 **Rules of use** (`docs/data-policy.md`, `local-data/messy-streets/NOTICE.md`): local, aggregates only, nothing from the rows in the repository;
-the terms were accepted by the owner on 2026-10-31 (Web Data Commons says "research purposes only"; whether a parser evaluation counts is
+the terms were accepted by the owner (Web Data Commons says "research purposes only"; whether a parser evaluation counts is
 asked in #395). **Gold and silver are held-out checks**: they are scored in bulk and never read, never queued. **Raw is the work list**: it may be
 read (`full-ok.txt` lists `messy-streets`, for the raw queue only) and feeds rule issues like any source.
 
@@ -181,12 +179,12 @@ read (`full-ok.txt` lists `messy-streets`, for the raw queue only) and feeds rul
 python tools/ingest/ingest.py tools/ingest/specs/messy-streets.toml --confirm    # US-like rows only: gold, silver, raw roles
 # 2. Score (a second; retake it for each release and put the table in docs/benchmarks.md)
 python tools/harness/messy_score.py --confirm
-# 3. The review round on raw (queue built 2026-10-31; its state is in #225)
+# 3. The review round on raw (the state of the reviews is in #225)
 python tools/review/compare_sample.py local-data/messy-streets/records.parquet --role raw --out local-data/review/queue-compare-messy.jsonl --confirm
 python tools/review/server.py local-data/review/queue-compare-messy.jsonl
 ```
 
-**Missing-value strings (2026-11-01).** The markup has the literal strings `NaN`, `undefined`, `null`, `none` and `n/a` for a missing field (a data
+**Missing-value strings.** The markup has the literal strings `NaN`, `undefined`, `null`, `none` and `n/a` for a missing field (a data
 pipeline wrote them) and HTML entities such as `&amp;`. The ingest spec now turns the strings into nulls and decodes the entities; before, the review
 queue joined them into the one-line string (`... IL NaN`), and 13.1% of the raw US rows (303 of 2,315) read as give-ups for that reason: 405 rows had
 text left unparsed, 194 after cleaning. The first review round (`queue-compare-messy`, 150 cards) was mostly that; the round on cleaned rows is
@@ -197,7 +195,7 @@ name with the markup; the queue instead uses the street lines, city, state and Z
 a missing label. Misses are questions, not bug counts: a page's locality can be a neighbourhood or county, and the rates are not an accuracy claim.
 
 **What it found so far.** On the raw tier (2,316 US-like rows): a unit word in the street field 9.3% (city agreement 83%); the street field repeating the
-city, state or ZIP 2 to 8% (city agreement 6 to 28%; the paper's Table 1 shows the same shape): #397; non-Latin text in the street 0.3%; no literal
+city, state or ZIP 2 to 8% (city agreement 6 to 28%; the paper's Table 1 shows the same shape): see #397; non-Latin text in the street 0.3%; no literal
 `\n` escapes in the US rows. The paper has no US-only numbers; its Table 1 is seven illustrative gold examples, not a failure count.
 
 ## Label scoring (`label_score.py`, and `nad_score.py` for NAD)
@@ -225,7 +223,7 @@ modifier `EXT`; Pub 28 appendix C1 lists `EXT` as a primary suffix, and we read 
 with the suffix `EXT`); the scorer compares our suffix with the modifier and accepts the name with its type spelled out. A
 suffix inside the label's name with no type (`OAK ST`) is the same name as our `OAK` + `ST`. A labeled unit whose value is
 nowhere in the text we parsed is the source's, not a miss, and is counted apart (`labeled units are nowhere in the text`). On
-the NC pair score (5,630,889 pairs, 2026-10-27) these took the suffix differences from about 3,000 to 1,292 (0.02%; about
+on the NC pair score (5,630,889 pairs) these took the suffix differences from about 3,000 to 1,292 (0.02%; about
 1,700 were `EXT`), the name from 2.33% to 2.05% and the unit from 0.58% to 0.39%. What is left is mostly the source: in the
 sampled suffix swaps (`CT` to `DR` 141 pairs, `DR` to `RD` 107, `RD` to `DR` 95) our suffix is a word of the as-entered line in
 over 90% of the sampled pairs and the county's label is not, and the 33 postdirectional `E` read as `SE` have `SE` in the
@@ -269,8 +267,8 @@ python tools/harness/nad_score.py
 
 Read the figures with care: many providers put the suffix inside the name and leave the type empty
 (those rows are skipped, since there is no label to compare), and `Unit` is spelled out
-(`Apartment 4`). On the 2026-10-19 sample (NAD r24, seed 7) scored on 2026-10-27 with the quieter scorer (#112) we differ from a labeled value
-in 0.08% of suffixes, 0.69% of predirectionals, 0.14% of postdirectionals (0.50% before the city-copy fix, #29)
+(`Apartment 4`). On a sample (NAD r24, seed 7), scored with the quieter scorer, we differ from a labeled value
+in 0.08% of suffixes, 0.69% of predirectionals, 0.14% of postdirectionals (0.50% before the city-copy fix)
 and 3.17% of units (it was 3.6% with the old scorer). The scorer does not compare spelled-out designators, so they are not the
 cause: 4,206 of the 132,763 labeled units are rows where we found no unit, and 3,494 of those (83%) carry `unparsed_remainder`,
 the unit text left over (digit-led text 35%, a word or a single letter we do not read as a designator 38%, condo words
