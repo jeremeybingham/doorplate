@@ -40,3 +40,9 @@ def test_street_name_is_found_in_the_verified_street():
     assert ms.pass_("street", None, p, "NORTH OAK STREET") is True
     assert ms.pass_("street", None, p, "ELM STREET") is False
     assert ms.pass_("street", None, p, None) is None
+
+
+def test_joined_is_the_queue_string():
+    assert ms.joined("12 Oak St", None, "Springfield", "IL", "62704") == "12 Oak St, Springfield, IL 62704"
+    assert ms.joined("12  Oak St", "Suite 3", None, "IL", None) == "12 Oak St, Suite 3, IL"
+    assert ms.joined("12 Oak St", None, None, None, None) == "12 Oak St"

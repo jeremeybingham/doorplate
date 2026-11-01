@@ -22,17 +22,34 @@ WITH t AS (
   SELECT 'silver', json FROM read_ndjson_objects('local-data/messy-streets/release_silver_10k_final.jsonl.gz')
   UNION ALL
   SELECT 'raw', json FROM read_ndjson_objects('local-data/messy-streets/release_raw_10k_final.jsonl.gz')
-), f AS (
+), f0 AS (
   SELECT tier,
          json_extract_string(j, '$.id') AS id,
-         nullif(trim(json_extract_string(j, '$.aux.address.streetAddress')), '') AS street,
-         nullif(trim(json_extract_string(j, '$.aux.address.addressLocality')), '') AS city,
-         nullif(trim(json_extract_string(j, '$.aux.address.addressRegion')), '') AS state,
-         nullif(trim(json_extract_string(j, '$.aux.address.postalCode')), '') AS zip,
+         json_extract_string(j, '$.aux.address.streetAddress') AS street,
+         json_extract_string(j, '$.aux.address.addressLocality') AS city,
+         json_extract_string(j, '$.aux.address.addressRegion') AS state,
+         json_extract_string(j, '$.aux.address.postalCode') AS zip,
          upper(trim(coalesce(json_extract_string(j, '$.aux.address.addressCountry'), ''))) AS country,
          coalesce(json_extract_string(j, '$.aux.existence.address.payload.street'),
                   json_extract_string(j, '$.aux.existence.address.payload.street_name')) AS existing_street
   FROM t
+), f1 AS (
+  -- HTML entities decoded (&amp; &#39; ...), then trimmed; the markup's literal missing-value strings
+  -- (nan, null, none, undefined, n/a: a data pipeline wrote them for a missing field) become null, so a
+  -- parser is never handed `IL NaN` (#323, review of the raw tier, 2026-11-01)
+  SELECT tier, id, country, existing_street,
+         trim(replace(replace(replace(replace(replace(replace(street, '&amp;', '&'), '&#39;', chr(39)), '&quot;', '"'), '&lt;', '<'), '&gt;', '>'), '&nbsp;', ' ')) AS street,
+         trim(replace(replace(replace(replace(replace(replace(city, '&amp;', '&'), '&#39;', chr(39)), '&quot;', '"'), '&lt;', '<'), '&gt;', '>'), '&nbsp;', ' ')) AS city,
+         trim(replace(replace(replace(replace(replace(replace(state, '&amp;', '&'), '&#39;', chr(39)), '&quot;', '"'), '&lt;', '<'), '&gt;', '>'), '&nbsp;', ' ')) AS state,
+         trim(replace(replace(replace(replace(replace(replace(zip, '&amp;', '&'), '&#39;', chr(39)), '&quot;', '"'), '&lt;', '<'), '&gt;', '>'), '&nbsp;', ' ')) AS zip
+  FROM f0
+), f AS (
+  SELECT tier, id, country, existing_street,
+         nullif(street, '') AS street,
+         CASE WHEN lower(city) IN ('nan', 'null', 'none', 'undefined', 'n/a') THEN NULL ELSE nullif(city, '') END AS city,
+         CASE WHEN lower(state) IN ('nan', 'null', 'none', 'undefined', 'n/a') THEN NULL ELSE nullif(state, '') END AS state,
+         CASE WHEN lower(zip) IN ('nan', 'null', 'none', 'undefined', 'n/a') THEN NULL ELSE nullif(zip, '') END AS zip
+  FROM f1
 )
 SELECT * FROM f
 WHERE country IN ('US', 'USA', 'UNITED STATES', 'UNITED STATES OF AMERICA')

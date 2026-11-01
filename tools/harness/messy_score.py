@@ -4,6 +4,7 @@
     python tools/harness/messy_score.py                 # the plan
     python tools/harness/messy_score.py --confirm       # score all three tiers
     python tools/harness/messy_score.py --confirm --tier raw
+    python tools/harness/messy_score.py --confirm --joined     # parse the cleaned fields, joined as the review queue does
 
 Reads `local-data/messy-streets/records.parquet` (tools/ingest/specs/messy-streets.toml: the US-like
 rows) and the tier files for each row's `input`, the one string a geocoder would be given (street,
@@ -78,7 +79,13 @@ def pass_(field, label, a, verified):
     return bool(ours) and ours <= set(words(verified))
 
 
-def score(tiers):
+def joined(line1, line2, city, state, zip_):
+    """The string the review queue parses (tools/review/compare_sample.py): the cleaned fields, joined with commas."""
+    parts = [line1, line2, city, " ".join(x for x in (state, zip_) if x)]
+    return ", ".join(" ".join(p.split()) for p in parts if p and p.strip())
+
+
+def score(tiers, use_joined=False):
     import duckdb
     from doorplate import parse_many
 
@@ -86,15 +93,20 @@ def score(tiers):
     out = {}
     for t in tiers:
         rows = con.execute(f"""
-            select r.zip, r.state, r.city, r.label_name, json_extract_string(j.json, '$.input') as inp
+            select r.zip, r.state, r.city, r.label_name, json_extract_string(j.json, '$.input') as inp,
+                   r.line1, r.line2
             from read_parquet('{DIR / "records.parquet"}') r
             join read_ndjson_objects('{DIR / f"release_{t}_10k_final.jsonl.gz"}') j
               on json_extract_string(j.json, '$.id') = r.record_id
             where r.role = '{t}'""").fetchall()
-        parsed = parse_many([r[4] or "" for r in rows])
+        if use_joined:
+            texts = [joined(r[5], r[6], r[2], r[1], r[0]) for r in rows]
+        else:
+            texts = [r[4] or "" for r in rows]
+        parsed = parse_many(texts)
         c = Counter()
         c["rows"] = len(rows)
-        for (z, s, city, lab, _), a in zip(rows, parsed):
+        for (z, s, city, lab, *_), a in zip(rows, parsed):
             for f, label in (("zip", z), ("state", s), ("city", city), ("street", None)):
                 r = pass_(f, label, a, lab)
                 if r is None:
@@ -118,6 +130,8 @@ def report(out):
 def main():
     p = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     p.add_argument("--tier", choices=TIERS, action="append", help="a tier to score (default: all three)")
+    p.add_argument("--joined", action="store_true",
+                   help="parse the cleaned fields joined with commas (what the review queue parses) instead of the dataset's `input`")
     p.add_argument("--confirm", action="store_true", help="score (without it, print the plan)")
     args = p.parse_args()
     tiers = args.tier or list(TIERS)
@@ -126,7 +140,7 @@ def main():
     if not args.confirm:
         sys.exit(f"plan: parse the `input` of the US-like rows of {', '.join(tiers)} and compare ZIP5, state, city, "
                  "street name with the markup (counts only, about a minute). Re-run with --confirm.")
-    report(score(tiers))
+    report(score(tiers, args.joined))
 
 
 if __name__ == "__main__":

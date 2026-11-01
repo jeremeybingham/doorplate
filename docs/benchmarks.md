@@ -207,11 +207,25 @@ OpenAddresses, components judged by an LLM) and **silver** (existence only) are 
 page's own markup fields (street name: with the street of the existence record; gold and silver only). Rows with an empty or `nan` label for a
 field are left out of that field's count (the count is in parentheses).
 
-| 0.5.0-dev (`7bc011f`, 2026-10-31) | Rows | ZIP5 | State | City | Street name |
+| The dataset's `input` (0.5.0-dev, `7bc011f`, 2026-10-31) | Rows | ZIP5 | State | City | Street name |
 |---|---|---|---|---|---|
 | Gold (held out) | 4,270 | 99.9% (4,218) | 98.3% (4,128) | 91.7% (4,254) | 88.3% (4,270) |
 | Silver (held out) | 2,509 | 99.8% (2,205) | 97.9% (2,416) | 88.8% (2,493) | 87.8% (2,509) |
 | Raw (work list) | 2,316 | 99.8% (2,041) | 97.8% (2,246) | 88.6% (2,298) | not available |
+
+The dataset's `input` string carries the markup's literal missing-value strings (`NaN`, `undefined`, `null`): the ingest keeps them out of the
+records since 2026-11-01 (#323), and `--joined` parses the cleaned fields joined with commas, the way the review queue does (no country
+word). Measured on `main` (0.5.1-dev, `2e5441e`, 2026-11-01), the same rows:
+
+| Cleaned fields, joined (`--joined`) | Rows | ZIP5 | State | City | Street name |
+|---|---|---|---|---|---|
+| Gold (held out) | 4,270 | 99.9% (4,218) | 98.8% (4,128) | 97.7% (4,254) | 89.6% (4,270) |
+| Silver (held out) | 2,509 | 99.8% (2,205) | 98.4% (2,416) | 97.7% (2,493) | 90.2% (2,509) |
+| Raw (work list) | 2,316 | 99.9% (2,041) | 98.4% (2,246) | 97.8% (2,298) | not available |
+
+The city figure moves most (88.6% to 97.8% on raw): 303 of the 2,315 raw rows carry a missing-value string in the city, state or ZIP, and
+70% of them leave text unparsed with it and none without. This is not a gain in the parser: the two tables parse different strings. Use the
+first for comparison with other geocoders on the dataset's own input, the second for the work list.
 
 Read with care: the labels are the web page's own markup, not hand-checked, so a miss is a question and not a bug count; a page's locality can be a
 neighbourhood or a county; the street-name match is lenient (every word of our street name is a word of the verified street). These are not
