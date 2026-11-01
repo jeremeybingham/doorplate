@@ -291,6 +291,8 @@ fn find<'a, V>(index: &'a [(&'static str, V)], key: &str) -> Option<&'a V> {
 /// a key that is in the table, so the result of a lookup does not change (#400).
 struct Filter {
     bits: Box<[u64]>,
+    /// The first two bytes of every ASCII key of two bytes or more ([`pair_slot`]), for [`Filter::rules_out_raw`].
+    pairs: Box<[u64; 256]>,
     /// Bit count minus one; the count is a power of two.
     mask: u64,
 }
@@ -302,8 +304,15 @@ impl Filter {
         let mut f = Filter {
             bits: vec![0u64; size / 64].into_boxed_slice(),
             mask: (size - 1) as u64,
+            pairs: Box::new([0; 256]),
         };
         for k in keys {
+            if let [a, b, ..] = *k.as_bytes() {
+                if a < 0x80 && b < 0x80 {
+                    let i = pair_slot(a, b);
+                    f.pairs[i >> 6] |= 1 << (i & 63);
+                }
+            }
             let (a, b) = f.probes(k);
             f.bits[(a >> 6) as usize] |= 1 << (a & 63);
             f.bits[(b >> 6) as usize] |= 1 << (b & 63);
@@ -326,6 +335,29 @@ impl Filter {
         self.bits[(a >> 6) as usize] >> (a & 63) & 1 != 0
             && self.bits[(b >> 6) as usize] >> (b & 63) & 1 != 0
     }
+
+    /// Whether a spelling cannot normalize to a key of the table, from its first two bytes alone
+    /// (no normalizing, no hash): when both are ASCII and neither is a period or a space, the key
+    /// starts with them in upper case, and no key of the table does. Anything else (a shorter
+    /// spelling, a leading period or space, non-ASCII) is not ruled out here (#424).
+    #[inline]
+    fn rules_out_raw(&self, raw: &str) -> bool {
+        let [a, b, ..] = *raw.as_bytes() else {
+            return false;
+        };
+        let plain = |c: u8| c < 0x80 && c != b'.' && c != b' ' && !(9..=13).contains(&c);
+        if !(plain(a) && plain(b)) {
+            return false;
+        }
+        let i = pair_slot(a.to_ascii_uppercase(), b.to_ascii_uppercase());
+        self.pairs[i >> 6] >> (i & 63) & 1 == 0
+    }
+}
+
+/// The slot of a pair of ASCII bytes in [`Filter::pairs`]: 14 bits, no two pairs share one.
+#[inline]
+fn pair_slot(a: u8, b: u8) -> usize {
+    usize::from(a & 0x7f) << 7 | usize::from(b & 0x7f)
 }
 
 /// [`find`], after the table's [`Filter`] (built on first use) has had its say.
@@ -343,11 +375,35 @@ fn find_filtered<'a, V>(
     }
 }
 
+/// [`find_filtered`] on a spelling that is not yet a key: the first two bytes rule out most
+/// spellings the table cannot hold (83% of lookups miss) before they are normalized. Same result as
+/// `find_filtered(filter, index, &normalize_key_cow(raw))` (#424).
+#[inline]
+fn find_filtered_raw<'a, V>(
+    filter: &OnceLock<Filter>,
+    index: &'a [(&'static str, V)],
+    raw: &str,
+) -> Option<&'a V> {
+    let f = filter.get_or_init(|| Filter::new(index.iter().map(|(k, _)| *k)));
+    if f.rules_out_raw(raw) {
+        return None;
+    }
+    find_filtered(filter, index, &normalize_key_cow(raw))
+}
+
 /// `find` on one of the keyed tables, with a filter of its own.
 macro_rules! find_in {
     ($index:expr, $key:expr) => {{
         static FILTER: OnceLock<Filter> = OnceLock::new();
         find_filtered(&FILTER, $index, $key)
+    }};
+}
+
+/// [`find_in!`] on a raw spelling (see [`find_filtered_raw`]).
+macro_rules! find_raw_in {
+    ($index:expr, $raw:expr) => {{
+        static FILTER: OnceLock<Filter> = OnceLock::new();
+        find_filtered_raw(&FILTER, $index, $raw)
     }};
 }
 
@@ -449,7 +505,7 @@ impl Lexicons {
     }
 
     fn unit_base(&self, s: &str) -> Option<Lookup<UnitType>> {
-        let (i, kind) = *find_in!(tables::UNIT_INDEX, &normalize_key_cow(s))?;
+        let (i, kind) = *find_raw_in!(tables::UNIT_INDEX, s)?;
         let row = tables::UNITS.get(usize::from(i))?;
         Some(Lookup {
             value: UnitType {
@@ -469,7 +525,7 @@ impl Lexicons {
     }
 
     fn state_base(&self, s: &str) -> Option<Lookup<StateCode>> {
-        let (i, kind) = *find_in!(tables::STATE_INDEX, &normalize_key_cow(s))?;
+        let (i, kind) = *find_raw_in!(tables::STATE_INDEX, s)?;
         let row = tables::STATES.get(usize::from(i))?;
         Some(Lookup {
             value: StateCode {
@@ -514,7 +570,7 @@ impl Lexicons {
     }
 
     fn special_base(&self, s: &str) -> Option<Lookup<Special>> {
-        let (value, kind) = *find_in!(tables::SPECIAL_INDEX, &normalize_key_cow(s))?;
+        let (value, kind) = *find_raw_in!(tables::SPECIAL_INDEX, s)?;
         Some(Lookup { value, kind })
     }
 
@@ -525,7 +581,7 @@ impl Lexicons {
     }
 
     fn highway_base(&self, s: &str) -> Option<Lookup<HighwayPrefix>> {
-        let (i, kind) = *find_in!(tables::HIGHWAY_INDEX, &normalize_key_cow(s))?;
+        let (i, kind) = *find_raw_in!(tables::HIGHWAY_INDEX, s)?;
         let standard = *tables::HIGHWAYS.get(usize::from(i))?;
         Some(Lookup {
             value: HighwayPrefix { standard },
@@ -554,13 +610,13 @@ impl Lexicons {
 
     /// Military delivery-line type: `"PSC"`, `"Postal Service Center"` -> PSC.
     pub fn military(&self, s: &str) -> Option<Lookup<MilitaryKind>> {
-        let (value, kind) = *find_in!(tables::MILITARY_INDEX, &normalize_key_cow(s))?;
+        let (value, kind) = *find_raw_in!(tables::MILITARY_INDEX, s)?;
         Some(Lookup { value, kind })
     }
 
     /// Military post office: `"APO"`, `"FPO"`, `"DPO"`.
     pub fn military_post_office(&self, s: &str) -> Option<Lookup<MilitaryPostOffice>> {
-        let (value, kind) = *find_in!(tables::MILITARY_PO_INDEX, &normalize_key_cow(s))?;
+        let (value, kind) = *find_raw_in!(tables::MILITARY_PO_INDEX, s)?;
         Some(Lookup { value, kind })
     }
 
@@ -1455,6 +1511,27 @@ mod tests {
             }
             for p in probes {
                 assert_eq!(find_filtered(&filter, index, p), find(index, p), "{p:?}");
+            }
+            // The same keys and probes in other spellings: the raw lookup (#424) answers what the
+            // search alone gives for the normalized key.
+            for t in index
+                .iter()
+                .map(|(k, _)| *k)
+                .chain(probes.iter().map(String::as_str))
+            {
+                for raw in [
+                    t.to_string(),
+                    t.to_lowercase(),
+                    format!(" {t} "),
+                    format!("\t{}\r\n", t.replace(' ', " \t ")),
+                    t.replace(' ', ". "),
+                    format!("{}.", t.to_lowercase()),
+                    format!("{t}\u{a0}"),
+                    format!("é{t}"),
+                ] {
+                    let want = find(index, &normalize_key(&raw));
+                    assert_eq!(find_filtered_raw(&filter, index, &raw), want, "{raw:?}");
+                }
             }
         }
         let mut probes: Vec<String> = Vec::new();
