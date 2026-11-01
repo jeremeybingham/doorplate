@@ -18,6 +18,22 @@ change to what an input produces needs a new key version.
 
 ### Changed
 
+- **Half the time per parse of 0.4.1** (no output change; the entries below and the first performance round, #390 to #406, together): about 85,900 instructions per parse on the suite's `natural` mix against 157,500 for 0.4.1 and 171,600 for 0.5.0 (callgrind), and 15.6 us per parse against 31.1 (0.4.1) and 33.3 (0.5.0) on one pinned CPU, so 2.1 times the parses per second. From Python, `parse` on the golden-corpus inputs runs at 72,755 per second (0.4.1: 63,901), because the object work around a parse is not the parser. The method, the figures and the dead ends are on `docs/speed-and-size.md`; further leads are #418 (Later).
+
+- **Two bytes before normalizing in the first-word tests** (#444, no output change): the first-word filters (special words, highways, directionals, states) reject a token by its first two bytes before it is normalized. -2.0% instructions per parse (1,752.8M to 1,718.3M over five passes of 4,000 inputs). Keys, warnings and unit fields are identical to the `k4` cut over the seven key sources.
+
+- **A level-phrase guard in `units`, and first-byte runs in the binary searches** (#442, no output change): `units` looks for a level word only when the last word of the line can end one, and each keyed table's filter holds where the run of keys for each first byte starts, so a lookup that passes the filter searches that run, not the whole table. -1.6% together (-0.7% and -0.9%). Keys, warnings and unit fields are identical to the `k4` cut over the seven key sources.
+
+- **Plain tokens skip the punctuation readings in `Piece::sub`** (#440, no output change): a token of ASCII letters and digits goes straight to the glue rules; six readings that need a hyphen, slash, period or colon are not tried. -6.3% instructions per parse. Keys, warnings and unit fields are identical to the `k4` cut over the seven key sources.
+
+- **`join` sized once, and first-word tests for `highway_at`** (#438, #439, no output change): `classify::join` reserves the summed length first, and `highway_at` (and the directional and state tables) try a run of more than one token only when some multi-word key starts with its first word. -4.4% together (-2.7% for `join`). Keys, warnings and unit fields are identical to the `k4` cut over the seven key sources.
+
+- **`zip_agrees` evaluated lazily in `last_line_in`** (#436, no output change): the ZIP-agreement check (a state lookup, a ZIP lookup and a place search per word run) is worked out only when the state is also a street suffix written after a street. -5.6% instructions per parse. Keys, warnings and unit fields are identical to the `k4` cut over the seven key sources.
+
+- **Anchors computed once per piece in the tokenizer** (#432, no output change): whether a later piece is a state or ZIP is tested once per piece instead of once per piece pair, which removes a loop that grew with the square of the piece count. -1.5% instructions per parse. Keys, warnings and unit fields are identical to the `k4` cut over the seven key sources.
+
+- **`highway_in` builds its key without `format!`** (#430, no output change): it normalizes once and pushes into one pre-sized `String`. -2.0% instructions per parse. Keys, warnings and unit fields are identical to the `k4` cut over the seven key sources.
+
 - **Faster glued-city search in the tokenizer** (#428, no output change): `glue_place` looks for a street-suffix cut whose right part starts a city first, and runs its two vetoes (the word ends a place begun earlier in the segment; the word is itself a city start) only when a cut exists. The vetoes could only turn the answer into no, and ran for every unknown word of five letters or more. 122,400 to 108,300 instructions per parse (-11.6%) on the suite's `natural` mix. Keys, warnings and unit fields are identical to the `k4` cut over the seven key sources.
 
 - **Bit filter for the place tables** (#425, no output change): `find_place` and `any_place`, which `place_key` calls for every city candidate, are behind the same kind of bit filter as the other keyed tables (#405), so a candidate that is not a place skips the binary search. 125,500 to 122,400 instructions per parse (-2.5%) on the suite's `natural` mix. Keys, warnings and unit fields are identical to the `k4` cut over the seven key sources.
