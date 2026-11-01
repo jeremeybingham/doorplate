@@ -818,15 +818,6 @@ fn glue_place(
     if n < 5 || !t.bytes().all(|c| c.is_ascii_alphabetic()) || known_word(t, lex) {
         return None;
     }
-    // This word ends a place that began earlier in the segment.
-    for from in 0..before.len() {
-        let mut name = before[from..].join(" ");
-        name.push(' ');
-        name.push_str(t);
-        if lex.is_place(&name) {
-            return None;
-        }
-    }
     let after = &rest[..rest.len().min(MAX_PLACE_WORDS)];
     // The city starting with `first`, ending before word `j` of `after`.
     let city_at = |first: &str| {
@@ -855,10 +846,23 @@ fn glue_place(
             ends && lex.is_place(&city)
         })
     };
+    // The answer is the first cut whose left part is a street suffix and whose right part starts
+    // a city, unless the word ends a place that began earlier or is itself the city's start; those
+    // two tests only ever say no, so they run after a cut is found (most words have none).
+    let cut = (2..n - 2).find(|&cut| lex.suffix(&t[..cut]).is_some() && city_at(&t[cut..]))?;
+    // This word ends a place that began earlier in the segment.
+    for from in 0..before.len() {
+        let mut name = before[from..].join(" ");
+        name.push(' ');
+        name.push_str(t);
+        if lex.is_place(&name) {
+            return None;
+        }
+    }
     if city_at(t) {
         return None;
     }
-    (2..n - 2).find(|&cut| lex.suffix(&t[..cut]).is_some() && city_at(&t[cut..]))
+    Some(cut)
 }
 
 /// A state code that is also a street suffix (`CT`, `KY`, `MT`, `WY`, `LA`) ends
@@ -889,6 +893,126 @@ fn known_word(t: &str, lex: &Lexicons) -> bool {
 mod tests {
     use super::*;
     use crate::clean::clean;
+
+    /// `glue_place` before #428: the two vetoes first, then the cut search.
+    fn glue_place_vetoes_first(
+        t: &str,
+        before: Vec<&str>,
+        rest: &[&str],
+        later_seg: bool,
+        later_anchor: bool,
+        lex: &Lexicons,
+    ) -> Option<usize> {
+        let n = t.len();
+        if n < 5 || !t.bytes().all(|c| c.is_ascii_alphabetic()) || known_word(t, lex) {
+            return None;
+        }
+        for from in 0..before.len() {
+            let mut name = before[from..].join(" ");
+            name.push(' ');
+            name.push_str(t);
+            if lex.is_place(&name) {
+                return None;
+            }
+        }
+        let after = &rest[..rest.len().min(MAX_PLACE_WORDS)];
+        let city_at = |first: &str| {
+            (0..=after.len().min(MAX_PLACE_WORDS - 1)).any(|j| {
+                let ends = match after.get(j) {
+                    None => {
+                        later_seg
+                            && j == rest.len()
+                            && !after[..j].last().is_some_and(|w| lex.suffix(w).is_some())
+                    }
+                    Some(w) => {
+                        (lex.state(w).is_some() || zip_parts(w).is_some())
+                            && !later_anchor
+                            && (j + 1 == rest.len()
+                                || (j + 2 == rest.len() && zip_parts(rest[j + 1]).is_some()))
+                            && suffix_state_confirmed(w, rest.get(j + 1).copied(), lex)
+                    }
+                };
+                let mut city = first.to_string();
+                for w in &after[..j] {
+                    city.push(' ');
+                    city.push_str(w);
+                }
+                ends && lex.is_place(&city)
+            })
+        };
+        if city_at(t) {
+            return None;
+        }
+        (2..n - 2).find(|&cut| lex.suffix(&t[..cut]).is_some() && city_at(&t[cut..]))
+    }
+
+    /// Finding the cut first and running the two vetoes after it (#428) gives the answer of the
+    /// old order, on place words, suffix-plus-place words and random words in random contexts.
+    #[test]
+    fn glue_place_runs_the_vetoes_after_the_cut_without_changing_its_answer() {
+        let lex = Lexicons::builtin();
+        let mut words: Vec<String> = lex
+            .places()
+            .flat_map(|p| {
+                p.name()
+                    .split(' ')
+                    .map(|w| w.to_ascii_uppercase())
+                    .collect::<Vec<_>>()
+            })
+            .filter(|w| w.len() >= 3 && w.bytes().all(|c| c.is_ascii_alphabetic()))
+            .collect();
+        words.sort();
+        words.dedup();
+        let suffixes: Vec<&str> = lex
+            .suffixes()
+            .flat_map(|s| [s.abbr(), s.name()])
+            .filter(|w| w.bytes().all(|c| c.is_ascii_alphabetic()))
+            .collect();
+        let states: Vec<&str> = lex.states().map(|s| s.code()).collect();
+        let mut x: u64 = 0x9E37_79B9_7F4A_7C15;
+        let mut next = move || {
+            x ^= x << 13;
+            x ^= x >> 7;
+            x ^= x << 17;
+            x
+        };
+        let pick = |n: u64, len: usize| (n % len as u64) as usize;
+        let (mut some, mut none) = (0, 0);
+        for _ in 0..60_000 {
+            let w = &words[pick(next(), words.len())];
+            let t = match next() % 3 {
+                0 => w.clone(),
+                1 => format!("{}{w}", suffixes[pick(next(), suffixes.len())]),
+                _ => format!("{}{}", w, words[pick(next(), words.len())]),
+            };
+            let before: Vec<&str> = (0..next() % 3)
+                .map(|_| words[pick(next(), words.len())].as_str())
+                .collect();
+            let mut rest: Vec<&str> = Vec::new();
+            for _ in 0..next() % 3 {
+                rest.push(&words[pick(next(), words.len())]);
+            }
+            match next() % 3 {
+                0 => rest.push(states[pick(next(), states.len())]),
+                1 => {
+                    rest.push(states[pick(next(), states.len())]);
+                    rest.push("12345");
+                }
+                _ => {}
+            }
+            let (later_seg, later_anchor) = (next() % 2 == 0, next() % 4 == 0);
+            let want =
+                glue_place_vetoes_first(&t, before.clone(), &rest, later_seg, later_anchor, &lex);
+            let got = glue_place(&t, before, &rest, later_seg, later_anchor, &lex);
+            assert_eq!(got, want, "{t} {rest:?}");
+            if got.is_some() {
+                some += 1;
+            } else {
+                none += 1;
+            }
+        }
+        assert!(some > 20 && none > 20, "{some} cuts, {none} none");
+    }
 
     fn toks(s: &str) -> Vec<String> {
         tokenize(&clean(s), None, 0, &Lexicons::builtin())
