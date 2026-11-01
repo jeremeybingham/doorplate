@@ -381,7 +381,7 @@ pub(crate) fn longest_ending<T>(
 }
 
 pub(crate) fn join(run: &[Token]) -> String {
-    let mut s = String::new();
+    let mut s = String::with_capacity(run.iter().map(|t| t.text.len() + 1).sum());
     for t in run {
         if !s.is_empty() {
             s.push(' ');
