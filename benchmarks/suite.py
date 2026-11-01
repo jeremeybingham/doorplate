@@ -35,6 +35,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tools" / "compare"))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _common import cache_get, cache_put, inputs_id  # noqa: E402
 SUITE = ROOT / "benchmarks" / "suite" / "v1"
 PROFILE_CPUS, PROFILE_GB = 4, 8
 
@@ -169,7 +171,16 @@ def run_compare(args):
         recs = recs[: args.limit]
     inputs = [r["input"] for r in recs]
     t0 = time.time()
-    preds = {lib: predict(lib, inputs) for lib in ("doorplate", "usaddress")}
+    preds = {"doorplate": predict("doorplate", inputs)}
+    key = f"suite-compare-predictions|{inputs_id(inputs)}"
+    hit = cache_get(key, timing=False) if args.cache_usaddress else None
+    if hit:
+        preds["usaddress"] = hit[0]
+        print(f"(usaddress predictions from the cache made {hit[1]}; same usaddress version and inputs)\n")
+    else:
+        preds["usaddress"] = predict("usaddress", inputs)
+        if args.cache_usaddress:
+            cache_put(key, preds["usaddress"], timing=False)
     res = {lib: [score_record(r, p, lib, C) for r, p in zip(recs, preds[lib])] for lib in preds}
     shared = [not any(C.norm(l) in C.OUT_OF_SCOPE for _, l in r["tokens"]) for r in recs]
     n = len(recs)
@@ -343,12 +354,14 @@ def speed_worker(args):
 
 def run_speed(args):
     rows = {}
+    ua_key = f"suite-speed-usaddress|{inputs_id([r['input'] for r in load('compare.jsonl.gz')][: args.limit or None])}|{'unpinned' if args.no_profile else 'profile'}"
+    cached_ua = cache_get(ua_key, timing=True) if args.cache_usaddress else None
     for threads in (1, PROFILE_CPUS):
         env = dict(os.environ, RAYON_NUM_THREADS=str(threads))
         cmd = [sys.executable, __file__, "_speed_worker", "--suite", str(SUITE_DIR)]
         if args.limit:
             cmd += ["--limit", str(args.limit)]
-        if threads == 1:
+        if threads == 1 and not cached_ua:
             cmd.append("--with-usaddress")
         if args.no_profile:
             cmd.append("--no-profile")
@@ -358,15 +371,19 @@ def run_speed(args):
         rows[threads] = json.loads(p.stdout.strip().splitlines()[-1])
     one, four = rows[1], rows[PROFILE_CPUS]
     n = one["n"]
+    if cached_ua:
+        one["usaddress_parse"] = cached_ua[0]
+    elif args.cache_usaddress:
+        cache_put(ua_key, one["usaddress_parse"], timing=True)
     ps = lambda secs: f"{n / secs:,.0f}"
     out = [f"## Speed and memory ({n:,} strings; the best of 3 runs; 1 and {PROFILE_CPUS} threads, never all cores)", "",
            "| | Time | Strings per second | Relative to usaddress `parse` |", "|---|---|---|---|"]
     ua = one["usaddress_parse"]
-    out += [f"| usaddress `parse` (1 thread; it has no batch call) | {ua:.2f} s | {ps(ua)} | 1.0x |",
+    out += [f"| usaddress `parse` (1 thread; it has no batch call){' (from the cache made ' + cached_ua[1] + ')' if cached_ua else ''} | {ua:.2f} s | {ps(ua)} | 1.0x |",
             f"| doorplate `parse_tokens` (1 thread) | {one['parse_tokens']:.2f} s | {ps(one['parse_tokens'])} | {ua / one['parse_tokens']:.1f}x |",
             f"| doorplate `parse_many` (1 thread) | {one['parse_many']:.2f} s | {ps(one['parse_many'])} | {ua / one['parse_many']:.1f}x |",
             f"| doorplate `parse_many` ({PROFILE_CPUS} threads) | {four['parse_many']:.2f} s | {ps(four['parse_many'])} | {ua / four['parse_many']:.1f}x |",
-            "", f"Peak resident memory: {one['peak_rss_mb']:.0f} MB (1 thread, usaddress loaded), {four['peak_rss_mb']:.0f} MB "
+            "", f"Peak resident memory: {one['peak_rss_mb']:.0f} MB (1 thread, usaddress {'not loaded: its timing is cached' if cached_ua else 'loaded'}), {four['peak_rss_mb']:.0f} MB "
             f"({PROFILE_CPUS} threads, doorplate only). Accuracy does not depend on the profile; speed does, so read the ratios, not the "
             "absolute figures.", ""]
     text = "\n".join(out)
@@ -386,6 +403,9 @@ def main():
     ap.add_argument("--min-group", type=int, default=30, help="smallest group to print in a breakdown")
     ap.add_argument("--no-profile", action="store_true", help="do not pin CPUs, threads or memory")
     ap.add_argument("--with-usaddress", action="store_true", help=argparse.SUPPRESS)
+    ap.add_argument("--cache-usaddress", action="store_true",
+                    help="reuse the usaddress predictions and timing stored by an earlier run (same usaddress version, "
+                         "inputs and, for the timing, machine); store them when there are none")
     args = ap.parse_args()
     SUITE_DIR = args.suite
     threads = int(os.environ.get("RAYON_NUM_THREADS", PROFILE_CPUS)) if args.what == "_speed_worker" else PROFILE_CPUS

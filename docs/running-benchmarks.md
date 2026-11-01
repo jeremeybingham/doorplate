@@ -65,6 +65,12 @@ python benchmarks/suite.py doorplate                        # the doorplate-only
 python benchmarks/suite.py speed                            # speed and peak memory
 ```
 
+`--cache-usaddress` reuses the usaddress results stored by an earlier run instead of running usaddress again (the comparison
+track's predictions and the speed track's `parse` timing; `speed_python.py` takes the same flag for its usaddress rows). A stored result is
+used only when the usaddress version and the inputs are the same, and, for a timing, the machine and CPU count; otherwise usaddress is run and
+its result stored. The file is `local-data/benchmarks/usaddress-cache.json` (delete it to start again), and the report says which rows came
+from the cache and when they were made. Quote a cached figure as cached: usaddress's time was measured on that earlier day.
+
 `--suite DIR` scores another version (a rebuilt copy, or the private twin), `--limit N` runs the first N
 records (a quick test), `--min-group N` changes the smallest group a breakdown prints, `--out FILE` also
 writes the Markdown.

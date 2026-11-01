@@ -89,6 +89,76 @@ def best(fn, runs=5):
     return min(times)
 
 
+# ---- the usaddress cache ---------------------------------------------------------------------------------
+# usaddress does not change between runs of this repository's benchmarks, and timing it is most of a run. With
+# the cache switched on (--cache-usaddress, in speed_python.py and suite.py) a usaddress result is reused when
+# the usaddress version, the inputs and (for a timing) the machine are the same, and is stored when it is not.
+# Delete the file to start again. Timings are only reused on the machine that made them.
+
+USADDRESS_CACHE = ROOT / "local-data" / "benchmarks" / "usaddress-cache.json"
+
+
+def usaddress_version():
+    from importlib.metadata import PackageNotFoundError, version
+
+    try:
+        return version("usaddress")
+    except PackageNotFoundError:
+        return None
+
+
+def machine_id():
+    """The CPU model, the CPUs this process may use and the OS: what a stored timing belongs to."""
+    cpu = "unknown CPU"
+    try:
+        for line in Path("/proc/cpuinfo").read_text().splitlines():
+            if line.startswith("model name"):
+                cpu = line.split(":", 1)[1].strip()
+                break
+    except OSError:
+        cpu = platform.processor() or cpu
+    return f"{cpu}; {usable_cpus()} threads; {platform.system()}"
+
+
+def inputs_id(texts):
+    """A short fingerprint of a list of input strings."""
+    import hashlib
+
+    h = hashlib.sha256()
+    for t in texts:
+        h.update(t.encode("utf-8", "replace"))
+        h.update(b"\n")
+    return f"{len(texts)}:{h.hexdigest()[:16]}"
+
+
+def cache_get(key, timing, path=None):
+    """(value, stamp) of a stored usaddress result, or None. A timing also needs the same machine."""
+    path = path or USADDRESS_CACHE
+    try:
+        entry = json.loads(path.read_text()).get(key)
+    except (OSError, ValueError):
+        return None
+    if not entry or entry.get("usaddress") != usaddress_version():
+        return None
+    if timing and entry.get("machine") != machine_id():
+        return None
+    return entry["value"], entry.get("stamp", "an earlier run")
+
+
+def cache_put(key, value, timing, path=None):
+    import datetime
+
+    path = path or USADDRESS_CACHE
+    try:
+        data = json.loads(path.read_text())
+    except (OSError, ValueError):
+        data = {}
+    data[key] = {"value": value, "usaddress": usaddress_version(), "stamp": datetime.date.today().isoformat(),
+                 "machine": machine_id() if timing else None}
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(data))
+
+
 def need_cli():
     if not CLI.exists():
         sys.exit(f"{CLI} not found: cargo build --release -p doorplate-cli")
