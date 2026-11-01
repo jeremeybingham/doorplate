@@ -112,7 +112,7 @@ doorplate parse-file addresses.csv --column address -o parsed.csv    # a CSV fil
 ```
 
 Polars, DuckDB (in SQL), split columns and the timings are in [pandas, Polars and DuckDB](https://doorplate.readthedocs.io/en/latest/dataframes/); on the benchmark suite's
-inputs `parse_many` handles about 152,000 addresses per second on 4 CPUs (`usaddress.parse` in a loop: about 8,900).
+inputs `parse_many` handles about 138,000 addresses per second on 4 CPUs (`usaddress.parse` in a loop: about 9,300).
 Runnable versions: [`examples/`](examples/README.md).
 
 ## What you get
@@ -210,7 +210,7 @@ what the input said; the place found is reported beside it. Sources and licenses
 |---|---|---|
 | Whole address right, [benchmark suite](docs/running-benchmarks.md), `natural` stratum (16,001 addresses written in five styles) | 98.5% | 96.1% |
 | Whole address right, [geocode benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark) dev split (60,522 one-line addresses) | 94.3% | 88.1% |
-| Addresses per second from Python, one thread (suite inputs) | about 38,300 | about 8,900 |
+| Addresses per second from Python, one thread (suite inputs) | about 43,400 | about 9,300 |
 
 [usaddress](https://github.com/datamade/usaddress) is DataMade's widely used Python library that labels the parts of a US address with a statistical model.
 
