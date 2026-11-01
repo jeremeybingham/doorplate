@@ -336,6 +336,9 @@ struct Filter {
     pairs: Box<[u64; 256]>,
     /// Bit count minus one; the count is a power of two.
     mask: u64,
+    /// For keys given in sorted order: `starts[b]..starts[b + 1]` is the run of keys whose first byte
+    /// is `b`, so a search covers one run, not the table (#442). Empty when a key is empty.
+    starts: Box<[u32]>,
 }
 
 impl Filter {
@@ -346,8 +349,15 @@ impl Filter {
             bits: vec![0u64; size / 64].into_boxed_slice(),
             mask: (size - 1) as u64,
             pairs: Box::new([0; 256]),
+            starts: Box::default(),
         };
+        let mut starts = vec![0u32; 257];
+        let mut bucketed = true;
         for k in keys {
+            match k.as_bytes().first() {
+                Some(&c) => starts[usize::from(c) + 1] += 1,
+                None => bucketed = false,
+            }
             if let [a, b, ..] = *k.as_bytes() {
                 if a < 0x80 && b < 0x80 {
                     let i = pair_slot(a, b);
@@ -358,7 +368,26 @@ impl Filter {
             f.bits[(a >> 6) as usize] |= 1 << (a & 63);
             f.bits[(b >> 6) as usize] |= 1 << (b & 63);
         }
+        if bucketed {
+            for i in 1..257 {
+                starts[i] += starts[i - 1];
+            }
+            f.starts = starts.into_boxed_slice();
+        }
         f
+    }
+
+    /// The part of the sorted `index` that can hold `key`: the keys with its first byte.
+    #[inline]
+    fn run<'a, V>(&self, index: &'a [(&'static str, V)], key: &str) -> &'a [(&'static str, V)] {
+        match (key.as_bytes().first(), self.starts.len()) {
+            (Some(&c), 257) => {
+                let lo = self.starts[usize::from(c)] as usize;
+                let hi = self.starts[usize::from(c) + 1] as usize;
+                index.get(lo..hi).unwrap_or(index)
+            }
+            _ => index,
+        }
     }
 
     #[inline]
@@ -410,7 +439,7 @@ fn find_filtered<'a, V>(
 ) -> Option<&'a V> {
     let f = filter.get_or_init(|| Filter::new(index.iter().map(|(k, _)| *k)));
     if f.may_contain(key) {
-        find(index, key)
+        find(f.run(index, key), key)
     } else {
         None
     }
@@ -947,6 +976,15 @@ impl Lexicons {
                 | "GARAGE"
                 | "GARDEN LEVEL"
                 | "CELLAR"
+        )
+    }
+
+    /// Whether a level phrase (see [`Self::is_level_word`]) or `LL` can end with `last`: the last word
+    /// of every phrase, so a line whose last word says no needs no further look (#442).
+    pub(crate) fn ends_level_phrase(&self, last: &str) -> bool {
+        matches!(
+            last,
+            "GROUND" | "MEZZANINE" | "GARAGE" | "CELLAR" | "LEVEL" | "FLOOR" | "FLR" | "LL"
         )
     }
 
@@ -1795,6 +1833,26 @@ mod tests {
         assert!(!LEX.highway_run_may_start("ZZZQ"));
         assert!(!LEX.state_run_may_start("ZZZQ"));
         assert!(!LEX.directional_run_may_start("ZZZQ"));
+    }
+
+    /// `ends_level_phrase` says yes to the last word of every level phrase (#442).
+    #[test]
+    fn level_phrases_end_in_a_word_that_says_yes() {
+        for phrase in [
+            "GROUND",
+            "GROUND LEVEL",
+            "GROUND FLOOR",
+            "GROUND FLR",
+            "MEZZANINE",
+            "GARAGE",
+            "GARDEN LEVEL",
+            "CELLAR",
+            "LL",
+        ] {
+            let last = phrase.rsplit(' ').next().unwrap_or(phrase);
+            assert!(LEX.ends_level_phrase(last), "{phrase}");
+        }
+        assert!(!LEX.ends_level_phrase("ST"));
     }
 
     #[test]

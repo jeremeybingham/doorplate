@@ -2962,7 +2962,7 @@ impl Tagger<'_> {
             // `GROUND`, `MEZZANINE`, `GARAGE`, `LL`: a level word alone on a later line
             // or comma segment, or right after the street's suffix, is a unit; Pub 28
             // has no designator for most, so it is a value with no type (#292).
-            if found.is_empty() && j == hi {
+            if found.is_empty() && j == hi && lex.ends_level_phrase(t) {
                 let level = (1..=2).rev().find_map(|w| {
                     let k = j.checked_sub(w)?;
                     let own_segment = (k..j).all(|i| self.toks[i].seg == self.toks[k].seg);
