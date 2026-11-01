@@ -140,14 +140,14 @@ often rows that carry it disagree with labeled data: [`warnings.md`](warnings.md
 - **A trailing country is ignored.** `USA`, `US` or `UNITED STATES` after the
   address is dropped with `country_ignored`; other countries are not recognized.
 - **A second address line that is used or dropped without a component of its own is
-  reported** (#45), so a pipeline can audit those rows: `second_line_skipped` (line 2 is a
+  reported**, so a pipeline can audit those rows: `second_line_skipped` (line 2 is a
   copy of the end of line 1 or of the city, or a line of no-data markers, and is dropped),
   `second_line_in_street` (line 2 became part of the street that line 1 began: the route of
   `COUNTY RD` / `A`, a suffix or a directional) and `second_line_building` (line 2 is the
   building name, which no emitter prints). A unit, an attention line, the city, state and ZIP,
   or a street that is on line 2 alone get no warning: they are components of their own. These
   are warnings, like `country_ignored`, not a separate list; none changes a component or a key.
-- **A letter after the house number is reported** (#102, #270): `123 A MAIN ST` raises
+- **A letter after the house number is reported**: `123 A MAIN ST` raises
   `ambiguous_number_letter` because the letter may be the number's suffix (`123A`) or the first word of the
   street. The letters `A` to `D` are read as the number's suffix (`123A MAIN ST`; decided from the NAD and NC
   voter labels, `warnings.md`), the others stay in the street name (`12 F OAK ST`). It is not raised when the
@@ -212,12 +212,11 @@ at compile time.
    `Lexicons` after them; the tagger does not change. It adds spellings of existing rows and words to the word
    lists, and can read a spelling differently in one state.
 
-### What a layer can extend (the audit of #137)
+### What a layer can extend
 
-Everything the tagger and tokenizer know about words goes through `Lexicons`; the audit of 2026-10-23 found no
-table read around it. The word lists below were hard-coded in the tagger and are now behind `Lexicons` too
+Everything the tagger and tokenizer know about words goes through `Lexicons`; no table is read around it. The word lists below are behind `Lexicons` too
 (`is_number_filler`, `is_value_joiner`, `is_intersection_connector`); they are constants in `lexicon.rs` until a
-layer needs them as data. What a layer (#3) may add, by table:
+layer needs them as data. What a layer may add, by table:
 
 | Table | Source | Read through | A layer may |
 |---|---|---|---|
@@ -241,9 +240,9 @@ What stays **code**, by design, and a layer cannot change:
   `ROAD`, `COUNTY ROAD` and `COUNTY HIGHWAY`, `WASHINGTON` before the District, `U S` before a route. They need
   those rows to exist, so a layer must not remove them (layering is add-only anyway).
 - One state-specific rule in code, which breaks the rule that the core has none: the Queens house-number exception in
-  `place.rs` (`NY` and `QUEENS`, #99). It moves to the state data when #8 gives that data a rule format.
+  `place.rs` (`NY` and `QUEENS`). It would move to the state data if that data gets a rule format.
 
-**The interface for #3.** A layer is a folder with the shape of a state's folder: `places.tsv`, `zips.tsv`, a
+**The interface for a layer.** A layer is a folder with the shape of a state's folder: `places.tsv`, `zips.tsv`, a
 state-scoped `overrides.toml`, and an `aliases.toml` for spellings of the base tables and the word lists above. It
 is add-only, validated on load with the checks `build.rs` runs (they move into the library for the loader),
 deterministic, and reported in the output beside `state_data_version` (its name and a hash). The loader reads it

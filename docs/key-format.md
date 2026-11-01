@@ -139,11 +139,8 @@ the keys of a representative sample before and after: `tools/harness/compare.py`
 changed.
 
 **Holding policy.** A new key version makes every stored key re-key and is a breaking change, so
-key-affecting changes are cut together as one version, not released one by one. A finding that would
-change a key waits until the foundation checkpoint has passed (the comparison with 0.3.1 over the large
-sources shows zero differences, and its keys are frozen: [`backlog.md`](backlog.md), "The checkpoint"); its
-issue is labeled `version:K`. After the checkpoint such a change merges to `main` as an ordinary pull request,
-measured against the frozen keys, and stays unreleased until the next key version is cut. The list is that label:
+key-affecting changes are cut together as one version, not released one by one. Such a change merges to `main` as an ordinary pull
+request, measured against the frozen keys, and stays unreleased until the next key version is cut. Its issue is labeled `version:K`:
 [issues labeled `version:K`](https://github.com/jeremeybingham/doorplate/issues?q=is%3Aissue+is%3Aopen+label%3Aversion%3AK).
 Changes that do not alter a key (a new warning, a new output field, tooling, docs) ship as usual
 ([the roadmap](roadmap.md)).
@@ -158,36 +155,28 @@ Changes that do not alter a key (a new warning, a new output field, tooling, doc
   the corpus key expectations (`tests/corpus/keys.jsonl`, `tools/corpus/emit_expect.py`) rewritten
   from the spec.
 
-**When to cut it.** The `k3` was cut with 0.4.0 (decided 2026-10-23, issue #138). The `k4` is cut with 0.5.0 (tracker #201, release plan
-of 2026-10-31): the rules are merged to `main` one pull request at a time under the `k3` prefix, each measured against the frozen
-keys, and the prefix changes in one pull request at the end (the cut), before the "after" measurements and the release. There is no
-count or evidence threshold: the project is one person's, so the call is made from how smoothly the items progress.
+**When to cut it.** Key-affecting rules are merged one pull request at a time under the current prefix, each measured against the frozen
+keys, and the prefix changes in one pull request at the end (the cut), before the release. There is no count or evidence threshold:
+the call is made from how smoothly the items progress.
 
 ## Version history
 
-- **`k4`** (this page) starts with 0.5.0. The segment layout is the same as `k3` (no rule on the 0.5.0 list needed a layout
-  change); the value of some keys changes, because 0.5.0 reads some inputs differently: the rules are listed in the changelog (each
-  is marked "held for the `k4`") and measured against the frozen `k3` keys (`local-data/keycompare/k3-cut`, seven large sources,
-  36,920,703 rows). The prefix is the only change to a key that no rule touched, so re-keying is a re-parse. Frozen from there:
-  a change to what an input produces needs `k5`.
+- **`k4`** (this page) starts with 0.5.0. The segment layout is the same as `k3`; the value of some keys changes, because 0.5.0
+  reads some inputs differently: the rules are listed in the changelog (each is marked "held for the `k4`") and were measured against
+  the frozen `k3` keys over seven large public sources (36,920,703 rows). The prefix is the only change to a key that no rule
+  touched, so re-keying is a re-parse. Frozen from there: a change to what an input produces needs `k5`.
 
-- **`k3`** started with 0.4.0 and is retired with 0.5.0 (the library no longer produces it). The segment layout is the same as `k2` (decided 2026-10-25: no rule on the
-  0.4.0 list needed a layout change); the value of some keys changes, because 0.4.0 reads some inputs differently:
-  the rules are listed in the changelog (each is marked "held for the `k3`") and measured in
-  [`backlog.md`](backlog.md). The prefix is the only change to a key that no rule touched, so re-keying is a re-parse.
-  It was frozen from there: a change to what an input produced needed `k4`.
+- **`k3`** started with 0.4.0 and is retired with 0.5.0 (the library no longer produces it). The segment layout is the same as
+  `k2`; the value of some keys changes, because 0.4.0 reads some inputs differently: the rules are listed in the changelog (each is
+  marked "held for the `k3`"). The prefix is the only change to a key that no rule touched, so re-keying is a re-parse.
 
-- **`k1`** was the key of versions 0.1.0 and 0.2.0. It is retired: the library no longer
-  produces it and cannot compute it. The segment layout is the same as `k2`; `k2` exists
-  because 0.3.0 changes how some inputs are read, and a changed reading changes the key
-  (the changes are listed in the changelog).
-- **`k2`** started with 0.3.0, released 2026-10-20, and was frozen from there; it is retired with 0.4.0 (the library no
-  longer produces it). Key-affecting changes found after the freeze were held for `k3` (see "Changing the key"). **One exception: 0.3.1** (2026-10-22) corrected the keys of inputs with a `%` care-of
-  line or `IN CARE OF` (issue #97). 0.3.0 left the care-of text over, which pushed the tail of line 1 into the street
-  name, so those keys were wrong; they were corrected under `k2` instead of waiting for `k3`, by the owner's
-  call, because the project has no users yet. Measured against 0.3.0 over about 19 million rows: 172,455 of the
-  1,975,975 IRS rows, 799 NY, 59 FMCSA and 18 FCC rows changed, all of them inputs with such a line, and no
-  other input changed. This is an exception to the freeze, recorded here so the history is accurate. If you stored `k2` keys from 0.3.0 for addresses like these, re-parse them.
+- **`k2`** started with 0.3.0 and is retired with 0.4.0 (the library no longer produces it). The segment layout is the same as
+  `k1`; `k2` exists because 0.3.0 reads some inputs differently, and a changed reading changes the key (the changes are listed in the
+  changelog). **One exception: 0.3.1** corrected the keys of inputs with a `%` care-of line or `IN CARE OF`: 0.3.0 left the care-of
+  text over, which pushed the tail of line 1 into the street name, so those keys were wrong. They were corrected under `k2` instead
+  of waiting for `k3`. If you stored `k2` keys from 0.3.0 for addresses like these, re-parse them.
+
+- **`k1`** was the key of versions 0.1.0 and 0.2.0. It is retired: the library no longer produces it and cannot compute it.
 
 ## Slug
 

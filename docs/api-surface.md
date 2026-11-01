@@ -1,9 +1,8 @@
 # API surface audit
 
-The audit of #135: every public name and shape of the Rust crate, the Python package and the command-line
-tool, with one decision for each (keep, change in 0.4.0, hide, or later). It was made on `main` on 2026-10-23,
-at the start of 0.4.0, while the project has no users: this is the last cheap moment to rename things.
-The decisions were confirmed by the owner on 2026-10-23 and made in the same release; the rest follow from rules that already exist.
+Every public name and shape of the Rust crate, the Python package and the command-line tool, with the decision for
+each (keep, changed in 0.4.0, hidden, or later). The audit was made at the start of 0.4.0 and its decisions were made in
+that release; the rest follow from rules that already exist.
 
 The public Rust items were listed from `cargo +nightly rustdoc -p doorplate --all-features -- -Z unstable-options
 --output-format json` (59 public items in the crate root, `lexicon` and `corpus`); the Python names from
@@ -42,15 +41,15 @@ words. The mapping above goes into the documentation as the reference.
 2. **Enums that can grow are closed:** `AddressType`, `ParseError` and `OptionsError` (one variant each),
    `MatchKind`, `PlaceKind`, `PlaceSource`, `StateKind`, `Special`.
 3. **Inputs are different from results.** `Fields` (five fixed parts of an address) is built by callers and
-   stays open. `ParseOptions` (one field, `default_state`) will grow (the custom layer, #3). `KeyOptions` will not
+   stays open. `ParseOptions` (one field, `default_state`) will grow (the custom layer). `KeyOptions` will not
    in practice: a new key option changes the key, which is a new key version.
 4. **`Lexicons` had 28 public methods**, including helpers that exist for the tagger (`is_number_marker`,
    `is_no_data_line`, `is_city_head`, `is_area_word`, `is_building_word`, `is_placeholder`, `is_country`,
-   `place_key`). They were public by accident; #137 made them crate-private.
+   `place_key`). They were public by accident; they are now crate-private.
 5. **`corpus` is public behind a feature** (`Corpus`, `Report`, `Comparison`, `Case`, `load`, `baseline_path`,
    `read_baseline`, `write_baseline`): test infrastructure for this repository and `doorplate corpus test`.
 6. `lexicon::{normalize_key, MAX_FORM_WORDS, MAX_PLACE_WORDS}` are public for the build script and the layer.
-7. The Cargo features after #101: `places-us` (default), `rayon`, `corpus`. No feature per state.
+7. The Cargo features: `places-us` (default), `rayon`, `corpus`. No feature per state.
 
 ### Decisions
 
@@ -60,9 +59,9 @@ words. The mapping above goes into the documentation as the reference.
 | Open enums: `AddressType`, `ParseError`, `OptionsError`, `MatchKind`, `PlaceKind`, `PlaceSource`, `StateKind`, `RouteKind`, `Special` | **Done: `#[non_exhaustive]`** (0.4.0, breaking): a `match` needs a `_` arm |
 | Closed enums: `Directional` (8 compass points), `MilitaryKind`, `MilitaryPostOffice`, `RouteKind` (fixed by USPS), `FieldName` (the five `Fields`), `InputKind` | **Keep closed** |
 | `Fields`, `Span` | **Keep open** (callers build `Fields`; `Span` is two offsets and a field name) |
-| `ParseOptions` | **Done: `#[non_exhaustive]` with builder methods** (`ParseOptions::new().default_state("FL")`); it will grow with #3 |
+| `ParseOptions` | **Done: `#[non_exhaustive]` with builder methods** (`ParseOptions::new().default_state("FL")`); it will grow with the custom layer |
 | `KeyOptions` | **Keep open**: its constructors `property()` and `unit()` are how it is built, and a new option would change the key |
-| `Lexicons` helpers | **Done (#137): the tagger's predicates (`is_*`, `place_key`) are crate-private**; the typed lookups, the place functions and the iterators stay public as the layer interface ([`how-it-works.md`](how-it-works.md), "What a layer can extend") |
+| `Lexicons` helpers | **Done: the tagger's predicates (`is_*`, `place_key`) are crate-private**; the typed lookups, the place functions and the iterators stay public as the layer interface ([`how-it-works.md`](how-it-works.md), "What a layer can extend") |
 | `corpus` module | **Keep behind its feature, documented as unstable** (no semver promise) |
 | `lexicon::{normalize_key, MAX_*}` | **Keep** (needed by `build.rs`, which includes the same file) |
 | `VERSION` | **Keep** |
@@ -77,15 +76,15 @@ words. The mapping above goes into the documentation as the reference.
    `parse_fields`, `parse_many`, `parse_fields_many`, `parse_tokens`, `tag`, `address_type`, `__version__`. The
    helper modules `doorplate.pandas`, `.polars` and `.duckdb` each export `AVAILABLE_COLUMNS`, `DEFAULT_COLUMNS`
    and `parse_column` (DuckDB also `register`). `doorplate.compat` is the usaddress-shaped module (`parse`, `tag`,
-   `RepeatedLabelError`; #36); it is not re-exported at the top level.
-2. `ParsedAddress.confidence` is gone in #136; `library_version` and `state_data_version` are properties, also in
+   `RepeatedLabelError`); it is not re-exported at the top level.
+2. `ParsedAddress.confidence` is gone; `library_version` and `state_data_version` are properties, also in
    `to_dict()["provenance"]`.
 3. `repeated_labels()` is a method of `ParsedAddress` in Python and of `TaggedAddress` in Rust. It describes the
    usaddress-shaped `tag()` output, so it belongs with it.
 4. `parse_many` and `parse_fields_many` return `None` for an empty input, where Rust returns `Err(EmptyInput)`.
    `parse` raises `ParseError`.
-5. `parse_tokens` cut tokens differently from `usaddress.parse` (`#value`, commas): #78. The difference was in the
-   emitter, not the tokenizer, so no key can change; it is made right in 0.4.0.
+5. `parse_tokens` cut tokens differently from `usaddress.parse` (`#value`, commas) (fixed in 0.4.0). The difference was in the
+   emitter, not the tokenizer, so no key changed.
 6. `key(unit=False)` in Python is `key(KeyOptions)` in Rust.
 7. `to_usps()` returns `line1`, `line2`, `last_line`; the helper columns are `usps_line1`, `usps_line2`,
    `usps_last_line`.
@@ -98,7 +97,7 @@ words. The mapping above goes into the documentation as the reference.
 | `ParsedAddress` attributes and methods | **Keep** |
 | `repeated_labels()` | **Keep** (a convenience beside `tag()`; moving it would break Python for no gain) |
 | `None` for an empty input in the batch calls | **Keep, document** (the batch must not stop at one empty cell) |
-| `parse_tokens` | **Done (#78): cuts the input into the tokens of `usaddress.tokenize`** (0.4.0, breaking for code that relied on the old cuts; no key or parse change) |
+| `parse_tokens` | **Done: cuts the input into the tokens of `usaddress.tokenize`** (0.4.0, breaking for code that relied on the old cuts; no key or parse change) |
 | Helper columns and the `addr_` prefix | **Keep** (names match the attributes; the prefix keeps columns apart) |
 | Type stubs | **Keep in step**: any change above updates `__init__.pyi` in the same change |
 
@@ -106,7 +105,7 @@ words. The mapping above goes into the documentation as the reference.
 
 ### Findings
 
-1. Subcommands: `parse` (one address, `--line1`.. fields, or stdin), `parse-file`, `anonymize` (0.4.x, #105: stdin lines or named CSV columns, `--seed`), `corpus test`, `--version`,
+1. Subcommands: `parse` (one address, `--line1`.. fields, or stdin), `parse-file`, `anonymize` (0.4.x: stdin lines or named CSV columns, `--seed`), `corpus test`, `--version`,
    `--help`. Exit codes: 0 success, 1 a usage error (unknown command or flag), 2 an empty address.
 2. The JSON record: `input`, `components`, `warnings`, `unparsed`, `key`, `key_unit`, `slug`, `usps`, `reso`,
    `place`, `provenance` (`library_version`, `state_data_version`). `components` carries only the parts present.
@@ -156,24 +155,21 @@ none of this applies, which is why the breaking changes above are made now and w
 - **In 0.4.0 (done):** the `#[non_exhaustive]` additions and the `ParseOptions` builder (Rust, breaking, no output
   change). The key comparison with 0.3.1 must show zero
   differences after them.
-- **Decided elsewhere:** `confidence` (#136, done); the state data version (#7, done).
+- **Decided elsewhere:** `confidence` and the state data version (both done).
 - **0.4.0, phase 2 (the parser rules):** anything that alters a key.
 
 ## Is it stable enough for a beta?
 
-The answer (updated 2026-10-23, when the `k3` was folded into 0.4.0): **not after the foundation phase, yes at 0.4.0
-once the `k3` is in.** After the foundation phase the Rust, Python and CLI surfaces above are
-settled except for two things that are still moving: the custom layer (#3, whose interface #137 settled) and
-the key itself (the `k3`, still to come in phase 2). The beta notice should
-wait for the `k3`: a beta that changes its key afterwards is not a beta. The alpha notice in the four READMEs
-stays until then.
+Not yet. The Rust, Python and CLI surfaces above are settled for 0.5.x, but the `k4` key is new in 0.5.0 and has only been checked on
+the project's own data, and a `k5` is planned for an eventual 0.6.0 release. The alpha notice in the four READMEs stays until
+then: a beta that changes its key afterwards is not a beta.
 
-## Added in 0.4.x: the anonymizer (#105)
+## Added in 0.4.x: the anonymizer
 
 New public API, additive (`version:O`; no key change): Rust `Anonymizer` (`new`, `with_seed`, `seed`, `anonymize`) and
 `Anonymized { text, faithful }`; Python `Anonymizer(seed=None)` (`seed`, `anonymize`, `anonymize_many`), `Anonymized`
 (`text`, `faithful`) and `anonymize(text, seed=None) -> str`; the command `doorplate anonymize`. Decisions (owner chose the
-public form on 2026-10-27; the rest are the implementer's, open to overruling):
+public form; the rest are the implementer's, open to overruling):
 
 | Question | Decision |
 |---|---|
