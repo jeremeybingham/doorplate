@@ -2381,11 +2381,22 @@ impl Tagger<'_> {
         let lex = self.lex;
         // A state data may add prefix spellings (`SR` in Florida).
         let state = self.places.map(|c| c.state);
+        // The end to give `longest_at` from token `k`: just that token when no key of two words or
+        // more in the table starts with it (#438).
+        let end_for = |k: usize, may: &dyn Fn(&str) -> bool| match self.toks.get(k) {
+            Some(t) if !may(&t.text) => hi.min(k + 1),
+            _ => hi,
+        };
         let try_at = |p: usize| {
-            let (l, w) = longest_at(self.toks, p, hi, |s| match state {
-                Some(st) => lex.highway_in(st, s),
-                None => lex.highway(s),
-            })?;
+            let (l, w) = longest_at(
+                self.toks,
+                p,
+                end_for(p, &|t| lex.highway_run_may_start(t)),
+                |s| match state {
+                    Some(st) => lex.highway_in(st, s),
+                    None => lex.highway(s),
+                },
+            )?;
             let route = p + w;
             // Appendix F allows letter routes (`STATE ROUTE MM`); taken only
             // after a county prefix (`COUNTY ROAD J`), where a letter is
@@ -2405,7 +2416,8 @@ impl Tagger<'_> {
                 route,
             });
         }
-        if let Some((_, w)) = longest_at(self.toks, i, hi, |s| lex.directional(s)) {
+        let dir_end = end_for(i, &|t| lex.directional_run_may_start(t));
+        if let Some((_, w)) = longest_at(self.toks, i, dir_end, |s| lex.directional(s)) {
             if let Some((prefix, route)) = try_at(i + w) {
                 return Some(HighwayAt {
                     pre: i..i + w,
@@ -2415,7 +2427,8 @@ impl Tagger<'_> {
                 });
             }
         }
-        let (_, w) = longest_at(self.toks, i, hi, |s| self.highway_state(s))?;
+        let state_end = end_for(i, &|t| lex.state_run_may_start(t));
+        let (_, w) = longest_at(self.toks, i, state_end, |s| self.highway_state(s))?;
         let state = i..i + w;
         if let Some((prefix, route)) = try_at(i + w) {
             return Some(HighwayAt {
