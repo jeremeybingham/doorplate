@@ -13,7 +13,7 @@ This tool formats and parses; it **does not validate** that an address exists or
 receive mail.
 
 > **Alpha release (0.5.0).** The match key is versioned (`k4:`) and will probably
-> get new versions, so store the version prefix with your keys. `k4` is new in 0.5.0 and has only been checked on the project's own data (37 million rows of public records), so a `k5` may follow. Options and output
+> get new versions, so store the version prefix with your keys. `k4` is new in 0.5.0 and has only been checked on the project's own data (37 million rows of public records), and a `k5` is planned for an eventual 0.6.0 release. Options and output
 > fields may still change before 1.0. If it parses your addresses badly, please
 > [open an issue](https://github.com/jeremeybingham/doorplate/issues/new?template=misparse-or-messy-data.md).
 
