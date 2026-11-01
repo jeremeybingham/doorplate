@@ -983,7 +983,7 @@ mod tests {
             let t = match next() % 3 {
                 0 => w.clone(),
                 1 => format!("{}{w}", suffixes[pick(next(), suffixes.len())]),
-                _ => format!("{}{}", w, &words[pick(next(), words.len())]),
+                _ => format!("{}{}", w, words[pick(next(), words.len())]),
             };
             let before: Vec<&str> = (0..next() % 3)
                 .map(|_| words[pick(next(), words.len())].as_str())
