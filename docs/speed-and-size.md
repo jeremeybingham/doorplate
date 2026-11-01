@@ -183,3 +183,22 @@ making more lookups on the same tokens (#400).
 **Lookups that miss (#400, 2026-10-31).** Callgrind's callers show where the lookups come from: `place_key` expands every word of every city candidate through the directional and suffix tables (about 15 calls each per parse), and `longest_at` tries up to four joined runs per start (about 25 `special` lookups per parse), and 83% of all lookups miss. A per-token cache of the results (tried first) removed none of this and changed nothing in time: the tagger asks about each token about once; the repeats are different runs. What helped is answering a miss without the binary search: each keyed table has a bit filter (two bits per key from one FNV-1a hash, 16 bits per key; about 1.4% of misses still search) that never says no to a key in the table, so no result changes. 21.8 to 18.4 us per parse (+19% parses per second), instructions per parse 165,200 to 143,600. The wall time fell more than the instruction count: a binary search over a table mispredicts its branches.
 
 **Special words (#406).** After the filters, `longest_at` with the special-word table still joined and normalized runs of up to four tokens at every start, and `special` was 7.4% of a parse. A run longer than one token can only be a special word if some multi-word key of the table starts with its first token (a short set of words, tested with the same bit filter), so the other starts try the one token only. 18.5 to 17.4 us per parse (instructions 143,600 to 138,200); a layer may add any spelling, so with a layer every run is tried. The per-table cap on run length (the other half of #406) was not built: it would change about 45 call sites for the directional table alone, about 1%.
+
+**The release profile (#421, 2026-11-01).** Cargo's defaults (16 codegen units, no LTO) were the only setting; the root `Cargo.toml` now has `[profile.release]` with `lto = "fat"` and `codegen-units = 1`. Measured on `main` at `f69389f`, each variant built with `CARGO_PROFILE_RELEASE_*` variables, callgrind on the first 4,000 inputs of the `natural` mix (one pass, startup included; wall time on this machine varied 19 to 31 us for one binary, so instructions lead):
+
+| Variant | Instructions per parse |
+|---|---|
+| Cargo defaults | 136,700 |
+| `codegen-units = 1` only | 137,000 (+0.2%) |
+| thin LTO | 134,300 (-1.7%) |
+| fat LTO, `codegen-units = 1` (kept) | 132,500 (-3.1%) |
+| the same plus `panic = "abort"` (CLI only) | 132,400 (-3.2%) |
+
+| Size and build time | Defaults | Kept |
+|---|---|---|
+| CLI binary, unstripped / stripped | 6.49 / 5.46 MB | 5.41 / 5.22 MB |
+| Wheel (maturin, stripped) | 2.194 MB | 2.151 MB |
+| WebAssembly, raw / gzip | 3.81 / 1.51 MB | 3.82 / 1.52 MB |
+| Cold build: CLI / wheel / wasm | 12 / 17 / 12 s | 37 / 39 / 21 s |
+
+Not kept: `panic = "abort"` (0.05% of instructions, 2% of the stripped CLI, and the Python extension cannot use it) and an explicit `opt-level = 3` (the release default). For WebAssembly, `opt-level = "s"` is 1.8% smaller (3.74 MB) but 25% slower (about 57 against 45 us per address through `parse_batch` in Node), and fat LTO changes its speed less than the noise, so the module keeps the default level. `wasm-opt` was not installed and was not tried.

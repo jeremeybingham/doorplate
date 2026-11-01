@@ -21,3 +21,9 @@ doorplate = { path = "crates/doorplate", version = "0.5.1-dev" }
 unwrap_used = "warn"
 expect_used = "warn"
 panic = "warn"
+
+# Fat LTO and one codegen unit: about 3% fewer instructions per parse, a smaller CLI and wheel,
+# about 2.3 times the release build time (#421, `docs/speed-and-size.md`).
+[profile.release]
+lto = "fat"
+codegen-units = 1

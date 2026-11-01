@@ -18,6 +18,8 @@ change to what an input produces needs a new key version.
 
 ### Changed
 
+- **Release profile: fat LTO, one codegen unit** (#421, no output change): the library, CLI, wheel and WebAssembly module build with `lto = "fat"` and `codegen-units = 1`. 136,700 to 132,500 instructions per parse (-3.1%) on the suite's `natural` mix; the unstripped CLI binary 6.49 to 5.41 MB, the wheel 2.19 to 2.15 MB; the release build takes about 2.3 times as long (wheel 17 to 39 s). The WebAssembly module is not smaller or faster. Keys, warnings and unit fields are identical to the `k4` cut over the seven key sources.
+
 - **Fourteen redundant `Unparsed` marks and a duplicate warning removed from the tagger** (#409, no output change): a token no rule claims already ends as `Unparsed`, and `SecondLineSkipped` is also raised by `second_line_notes`. Found by the rule audit (#401, `docs/tools/rule-stats.md`). Keys, warnings and unit fields are identical to the `k4` cut over the seven key sources.
 
 - **Faster special-word search** (#406, no output change): a run of tokens is tried as a special word of two words or more only when its first token starts one in the table (a custom layer always tries). 18.5 to 17.4 us per parse on the suite's `natural` mix (about 6% more parses per second). Keys, warnings and unit fields are identical to the `k4` cut over the seven key sources.
