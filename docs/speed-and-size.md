@@ -1,40 +1,40 @@
 # Speed, size and memory
 
-Speed, installed size, memory and where the time goes, measured on 0.3.0 and rerun on 0.4.0. The accuracy figures, the
-benchmark suite and the caveats that apply to every number are on [Accuracy](benchmarks.md); how to rerun these
-scripts is in [Running the benchmarks](running-benchmarks.md). Speed figures belong to one machine: read the ratios.
+Speed, installed size, memory and where the time goes, measured on `main` (0.5.1-dev, `c68760e`; the engine changes since 0.5.0
+are speed only, and keys, warnings and unit fields are equal to 0.5.0's). The accuracy figures, the benchmark suite and the
+caveats that apply to every number are on [Accuracy](benchmarks.md); how to rerun these scripts is in
+[Running the benchmarks](running-benchmarks.md). Speed figures belong to one machine (Intel Core i9-9900K, Linux on WSL2): read the ratios.
 
 ## Speed
 
 ### Rust (criterion, `crates/doorplate/benches/parse.rs`)
 
-Median of a measurement run, one thread unless noted (0.4.0; [0.3.1 to 0.4.0](benchmarks.md#031-to-040) has the same table for
-both builds). The corpus has grown from 529 to 762 inputs since the figures of 0.3.1, so the corpus rows do not compare.
+Median of a measurement run, one thread unless noted, unpinned (it varies by several percent from run to run).
 
 | Benchmark | Time |
 |---|---|
-| `parse`, street only (`1305 SUNWOOD DR`) | 4.8 µs |
-| `parse`, PO box | 6.8 µs |
-| `parse`, military | 6.9 µs |
-| `parse`, highway | 9.3 µs |
-| `parse_fields` (street, city, state, ZIP) | 10.0 µs |
-| `parse`, unit and ZIP+4 | 11.1 µs |
-| `parse`, full one line | 12.4 µs |
-| The 762 corpus inputs, one by one | 11.3 ms (15 µs each) |
-| The same, `parse_many` (rayon, 14 threads) | 2.6 ms (3.4 µs each) |
-| `to_usps` | 0.75 µs |
-| `to_reso` | 1.44 µs |
-| `key` | 0.36 µs |
-| `slug` | 0.97 µs |
+| `parse`, street only (`1305 SUNWOOD DR`) | 4.1 µs |
+| `parse`, PO box | 7.5 µs |
+| `parse`, military | 6.0 µs |
+| `parse`, highway | 7.7 µs |
+| `parse_fields` (street, city, state, ZIP) | 10.7 µs |
+| `parse`, unit and ZIP+4 | 10.6 µs |
+| `parse`, full one line | 10.8 µs |
+| The corpus inputs, one by one | 12.4 ms |
+| The same, `parse_many` (rayon, 14 threads) | 2.7 ms |
+| `to_usps` | 0.60 µs |
+| `to_reso` | 1.13 µs |
+| `key` | 0.44 µs |
+| `slug` | 1.21 µs |
 
 Parsing is by far the biggest cost; the emitters are about a tenth of a parse
 or less, and a `ParsedAddress` builds them only when asked.
 
 The command-line tool: `doorplate parse-file` over 440,288 distinct Florida
-addresses (line 1, line 2, city, state and ZIP columns; this run a random sample of the
-Florida DBPR files, 2026) took 14.5 s,
-30,400 rows per second on one thread, including reading the CSV and writing
-about 30 columns per row (a 0.3.0 figure on private files, not retaken for 0.4.0).
+addresses (line 1, line 2, city, state and ZIP columns, a random sample of the
+Florida DBPR files) took 14.5 s, 30,400 rows per second on one thread, including
+reading the CSV and writing about 30 columns per row. That run is on private files
+and on an older build; read it as an order of magnitude.
 
 ### Python
 
@@ -45,33 +45,38 @@ shape of the cost on other inputs.
 
 | | Corpus inputs | Geocode addresses |
 |---|---|---|
-| doorplate `parse` | 16.2 µs | 26.0 µs |
-| doorplate `parse`, then `key()` and `to_usps()` | 20.5 µs | 30.6 µs |
-| doorplate `tag` | 19.6 µs | 28.9 µs |
-| doorplate `parse_tokens` | 19.5 µs | 27.3 µs |
-| doorplate `parse_many` (4 threads) | 5.2 µs | 7.3 µs |
-| usaddress `parse` | 93.3 µs | 96.5 µs |
-| usaddress `tag` | 100.8 µs | 100.9 µs |
+| doorplate `parse` | 13.7 µs | 16.8 µs |
+| doorplate `parse`, then `key()` and `to_usps()` | 18.3 µs | 20.8 µs |
+| doorplate `tag` | 16.8 µs | 20.4 µs |
+| doorplate `parse_tokens` | 17.6 µs | 21.1 µs |
+| doorplate `parse_many` (4 threads) | 5.0 µs | 5.8 µs |
+| usaddress `parse` | 87.0 µs | 93.4 µs |
+| usaddress `tag` | 95.5 µs | 97.8 µs |
 
-Call by call on one thread, `parse_tokens` is 4.8x `usaddress.parse` on the
-corpus inputs and 3.5x on the geocode addresses. `parse_many` parses on all
-the cores it is given (4 here) with the GIL released: 18x and 13x `usaddress.parse`, which is
+Call by call on one thread, `parse_tokens` is 4.9x `usaddress.parse` on the
+corpus inputs and 4.4x on the geocode addresses. `parse_many` parses on all
+the cores it is given (4 here) with the GIL released: 17x and 16x `usaddress.parse`, which is
 single-threaded (usaddress could be run in several processes; that is a
-different comparison). A Python call costs about what the Rust parse does
-(16 µs against 15 µs on the corpus); the boundary is not the bottleneck.
+different comparison). A Python call costs about what the Rust parse does;
+the boundary is not the bottleneck. The usaddress rows come from a cache of
+one run on this machine (same usaddress version and inputs).
 
 Building DataFrames (`crates/doorplate-py/benchmarks/bench_batch.py`, 100,000
-corpus addresses, 4 CPUs): a loop of `parse` 1.58 s, `parse_many` 0.54 s (2.9x),
+corpus addresses, 4 CPUs, 0.4.0): a loop of `parse` 1.58 s, `parse_many` 0.54 s (2.9x),
 `parse_many` into a pandas frame of seven columns 0.71 s (2.2x), into a Polars
-frame 0.64 s (2.5x). Reading attributes from 100,000 Python objects is now
+frame 0.64 s (2.5x). Reading attributes from 100,000 Python objects is
 most of the time; `to_dict()` on every row costs about as much as parsing again.
-**Columns built in Rust (#24, 2026-10-27, measured before and after on the same inputs).** `parse_column` used to read each column off the Python objects (serial, about as long as the parse itself); it now asks Rust for the columns (`_parse_columns`: one list of strings per column, built on a thread per column with the GIL released), with identical values (a test compares every column on the whole corpus). The 15 default columns of 100,000 corpus addresses: pandas 1.03 s to 0.83 s, Polars 0.86 s to 0.70 s, DuckDB 0.79 s to 0.70 s (4 CPUs, the profile above); on 14 CPUs, where the parse is cheap, pandas 0.76 s to 0.54 s, Polars 0.61 s to 0.42 s, DuckDB 0.65 s to 0.51 s. The gain is 1.1x to 1.25x on 4 CPUs and 1.3x to 1.5x on 14, and it grows with the number of columns. No Arrow dependency was added; a public Arrow result is not built (the issue's option 2) because the remaining cost is Python strings, and no user has asked for it. The pre-split path (`parse_fields_many`) still goes through Python objects.
+`parse_column` asks Rust for the columns (one list of strings per column, built on a thread per column
+with the GIL released) instead of reading them off the Python objects: for the 15 default columns of
+100,000 corpus addresses that is 1.1x to 1.25x faster on 4 CPUs and 1.3x to 1.5x on 14, and the gain
+grows with the number of columns. No Arrow dependency was added and no public Arrow result is built: the
+remaining cost is Python strings. The pre-split path (`parse_fields_many`) still goes through Python objects.
 
 The DuckDB functions (`doorplate.duckdb`) parse a 100,000-row table in 0.59 s with seven
 struct fields (2.7x a loop of `parse`) and 0.86 s with all fifteen (1.8x): the cost of
 building the Arrow struct grows with the columns, so ask for only those you need. A
 1,000,000-row table with four fields ran at about 213,000 rows/s, against about 280,000/s
-for `parse_many` on the same strings (a separate run on 2026-10-17 on all 14 threads, not repeated for 0.4.0).
+for `parse_many` on the same strings (an older run on all 14 threads, not repeated).
 
 ## Size and memory
 
@@ -79,16 +84,15 @@ for `parse_many` on the same strings (a separate run on 2026-10-17 on all 14 thr
 
 | | Size |
 |---|---|
-| `doorplate` CLI binary (release, as built) | 5.5 MB (4.6 MB stripped) |
-| `doorplate` wheel (abi3, one wheel per platform) | 2.1 MB |
-| The extension module inside it | 4.4 MB |
+| `doorplate` CLI binary (release, as built) | 5.2 MB (5.0 MB stripped) |
+| `doorplate` wheel (abi3, one wheel per platform) | 2.1 MB (5.0 MB unpacked) |
+| The extension module inside it | 4.8 MB |
 | `usaddress` and its dependencies, installed | 4.8 MB (the model is 134 KB; the rest is python-crfsuite) |
 
 The lexicon tables, the national place list and the Florida state data are compiled
 in, so there is no model or data file to download or load. The tables are
-inside the crate, so the crate package (53 files, 3.6 MiB unpacked,
-0.8 MB compressed; not remeasured for 0.4.0) and the Python source distribution (0.9 MB) carry them and
-build from a clean directory.
+inside the crate, so the crate package (0.8 MB compressed) and the Python source
+distribution (0.9 MB) carry them and build from a clean directory.
 
 Peak resident memory of a fresh Python process parsing 100,000 addresses
 (corpus inputs repeated):
@@ -97,10 +101,10 @@ Peak resident memory of a fresh Python process parsing 100,000 addresses
 |---|---|---|---|
 | Python alone | | 16 MB | |
 | doorplate, loop of `parse`, each result dropped | 1 ms | 16 MB | 19 MB |
-| usaddress, loop of `parse`, each result dropped | 10 ms | 18 MB | 20 MB |
-| doorplate, loop of `parse`, 100,000 results kept | 1 ms | 16 MB | 152 MB |
-| usaddress, loop of `parse`, 100,000 results kept | 10 ms | 18 MB | 128 MB |
-| doorplate, `parse_many`, 100,000 results kept | 1 ms | 16 MB | 243 MB |
+| usaddress, loop of `parse`, each result dropped | 14 ms | 18 MB | 20 MB |
+| doorplate, loop of `parse`, 100,000 results kept | 1 ms | 16 MB | 158 MB |
+| usaddress, loop of `parse`, 100,000 results kept | 16 ms | 18 MB | 130 MB |
+| doorplate, `parse_many`, 100,000 results kept | 2 ms | 16 MB | 253 MB |
 
 The parser itself adds about 2 MB to a process either way. A `ParsedAddress`
 holds every component and its source spans (about 1.4 KB each against about
@@ -108,9 +112,26 @@ holds every component and its source spans (about 1.4 KB each against about
 on several threads, so its peak is higher than a loop's. usaddress loads its
 model on its first call, so its memory after import understates it.
 
+## Speed by version
+
+Engine speed is instructions per parse (callgrind repeats exactly) and wall time on one pinned CPU, on the suite's `natural` mix,
+measured on `main` at `c68760e`:
+
+| | 0.4.1 | 0.5.0 | `main` (0.5.1-dev) |
+|---|---|---|---|
+| Instructions per parse | about 157,500 | about 171,600 | about 85,900 |
+| Wall time per parse, one pinned CPU | 31.1 µs | 33.3 µs | 15.6 µs |
+
+0.5.0 was 7% to 9% slower than 0.4.1 (its added rules do more lookups on the same tokens); that was accepted for the
+`k4` rules. `main` is half the time of 0.4.1 and 2.1x the parses per second. The Python and criterion figures above move less
+than the engine does, because the Python object work around a parse is not part of the parser. Wall time on this machine varies
+10% to 60% between days, so these ratios come from alternating builds in one session, best of five.
+
 ## Profile: where the time goes
 
-Issue #90, measured on `main` at the start of 0.4.0 (2026-10-23), one machine (Intel i9-9900K, 8 cores, WSL2).
+### The first profile (0.4.0)
+
+The first profile, measured on `main` at the start of 0.4.0 (an old build, kept for the method and the shape of the cost), one machine (Intel i9-9900K, 8 cores, WSL2).
 The input is the suite's `natural` mix (19,586 addresses, one text form each; `benchmarks/profile_inputs.py`),
 parsed on one pinned CPU. Tools: `crates/doorplate/examples/profile_loop.rs` (timing),
 `profile_alloc.rs` (a counting allocator), and `benchmarks/profile_fold.py` (folds a `perf record -e cpu-clock -g`
@@ -155,40 +176,62 @@ Candidates, ranked by the effect on batch throughput and memory (not by effort):
 
 | # | Candidate | Effect | Risk | Status |
 |---|---|---|---|---|
-| 0 | `longest_at` and `longest_ending` join the tokens once and slice (each shorter run is a prefix, or a suffix, of the longest) | **-30% allocations (197 to 138 per parse, 4.35 to 3.92 KB) and +6.0% throughput measured** (38,800 to 41,200 per second, best of five, three runs each, against `main`) | low: **zero key and warning differences** against 0.3.1 over 37.0M rows | prototyped on branch `perf-join-once` (commit `f096e1f`) |
-| 1 | Make the table lookups themselves cheaper. A parse makes 135 table lookups, only 56 of them distinct (59% repeats), and 83% are misses; the binary searches called `memcmp` for every step, so the first byte is now compared inline (**+10% measured**, with no change to a call site). With #3 below, **+17% in all** (43,000 to 50,300 per second, best of five, three runs each, against the branch of #148) | measured | low: a test compares the comparison with `str::cmp` | done (#147). A per-token cache of the results would remove the repeats (up to 59% of the lookups) but needs `Token` and the call sites to change; not worth its code until the lookups are the top cost again |
-| 2 | `place_key` without a `String` per candidate: the key is written into one buffer, kept per thread for `place` and `is_place` (29 allocations per parse before, the largest site after #0) | **-25% allocations (138 to 103 per parse, after #0) and +4.0% throughput measured** (41,380 to 43,030 per second, best of five, three runs each) | low: a test compares it with the old implementation on every place name and 30,000 generated strings | done (#148) |
-| 3 | One pass in `normalize_key_cow` (no substring search for two spaces, one scan of the bytes instead of four) | **+3.5% measured** (38,500 to 39,800 per second); no allocation change | low: zero key and warning differences over 37.0M rows | done with #1 (#147): +7% of the 17% (50,300 against 47,300 per second) |
+| 0 | `longest_at` and `longest_ending` join the tokens once and slice (each shorter run is a prefix, or a suffix, of the longest) | **-30% allocations (197 to 138 per parse, 4.35 to 3.92 KB) and +6.0% throughput measured** (38,800 to 41,200 per second, best of five, three runs each, against `main`) | low: **zero key and warning differences** against 0.3.1 over 37.0M rows | done |
+| 1 | Make the table lookups themselves cheaper. A parse makes 135 table lookups, only 56 of them distinct (59% repeats), and 83% are misses; the binary searches called `memcmp` for every step, so the first byte is now compared inline (**+10% measured**, with no change to a call site). With candidate 3 below, **+17% in all** (43,000 to 50,300 per second, best of five, three runs each) | measured | low: a test compares the comparison with `str::cmp` | done. A per-token cache of the results would remove the repeats (up to 59% of the lookups) but needs `Token` and the call sites to change; not worth its code until the lookups are the top cost again |
+| 2 | `place_key` without a `String` per candidate: the key is written into one buffer, kept per thread for `place` and `is_place` (29 allocations per parse before, the largest site after 0) | **-25% allocations (138 to 103 per parse, after 0) and +4.0% throughput measured** (41,380 to 43,030 per second, best of five, three runs each) | low: a test compares it with the old implementation on every place name and 30,000 generated strings | done |
+| 3 | One pass in `normalize_key_cow` (no substring search for two spaces, one scan of the bytes instead of four) | **+3.5% measured** (38,500 to 39,800 per second); no allocation change | low: zero key and warning differences over 37.0M rows | done with #1: +7% of the 17% (50,300 against 47,300 per second) |
 | 4 | `Vec::with_capacity` in `tokenize` and `assemble` | 3 fewer allocations of 197, no speed change | none | measured, **not worth doing** |
-| 5 | Token text borrowed from the cleaned input instead of a `String` per token | the token-creating sites (`Piece::sub`, `tokenize`, `Piece::emit`) make about 28 of the 197 (14%), though not all of those are token `String`s; smaller than #0 and #2 | medium: `Token.text` is read in many places | attributed; do after #0 and #2 |
-| 6 | A columnar result for pandas and Polars (#24), since `to_dict()` costs 16 µs a row | large for that path, none for the parser | API (after 0.4.0) | an existing issue |
+| 5 | Token text borrowed from the cleaned input instead of a `String` per token | the token-creating sites (`Piece::sub`, `tokenize`, `Piece::emit`) make about 28 of the 197 (14%), though not all of those are token `String`s; smaller than 0 and 2 | medium: `Token.text` is read in many places | attributed; do after 0 and 2 |
+| 6 | A columnar result for pandas and Polars, since `to_dict()` costs 16 µs a row | large for that path, none for the parser | API | done in 0.4.x (see Python above) |
 
 Not done, and why: the chunk size of `parse_many` and a different allocator were not measured (a new dependency is
 ruled out anyway). The held-results memory in Python (2.46 KB each, against 928 bytes inline) is mostly the owned
 `String` and `Vec` fields of a result; a smaller result type is an API change.
 
-### Profiling without `perf` (callgrind), and 0.4.1 to 0.5.0 (#390)
+### The 0.5.1 round
 
-When `perf` is not installed (it was not on the 2026-10-31 machine), `valgrind --tool=callgrind` gives instruction counts per function, which
-repeat exactly from run to run: build `profile_loop` with `RUSTFLAGS="-C force-frame-pointers=yes" CARGO_PROFILE_RELEASE_STRIP=false`, run
-`valgrind --tool=callgrind --callgrind-out-file=OUT target/release/examples/profile_loop FILE 1` on a few thousand inputs of
+The engine was profiled with `valgrind --tool=callgrind`, which gives instruction counts per function that repeat exactly from run to run
+(wall time on this machine varies by 10% to 60%). Build `profile_loop` with `RUSTFLAGS="-C force-frame-pointers=yes" CARGO_PROFILE_RELEASE_STRIP=false`,
+run `valgrind --tool=callgrind --callgrind-out-file=OUT target/release/examples/profile_loop FILE 1` on a few thousand inputs of
 `benchmarks/profile_inputs.py`'s `mix.txt`, and read `callgrind_annotate --inclusive=yes OUT`. Compare two builds function by function; a function
-that inlines differently in the two builds shows as new or gone, so check the callers before believing a difference.
+that inlines differently in the two builds shows as new or gone, so check the callers before believing a difference. Each change below kept every key,
+warning and unit field equal to the `k4` keys (zero differences over seven sources, 36.9M rows), and was kept only when it gained about 2% or was
+exact and cheap; the instruction figures are per parse on the `natural` mix unless a percentage is given.
 
-The 0.5.0 slowdown (9% in time, 9.0% in instructions per parse, 157,500 to 171,600, on the `natural` mix) was 57% tokenizer and 41% tagger. Most of the
-tokenizer part was `drop_unit_separators` (#308) looking up the previous and next word of every token before testing whether the token was a `-` or `/`;
-testing the token first recovers about half of the gap (22.6 to 21.8 us per parse) with the same output. The rest is mostly the tagger's added rules
-making more lookups on the same tokens (#400).
+The 0.5.0 slowdown (9% in instructions, 157,500 to 171,600) was 57% tokenizer and 41% tagger: most of the tokenizer part was
+`drop_unit_separators` looking up the previous and next word of every token before testing whether the token was a `-` or `/`, and the rest is the tagger's
+added rules making more lookups on the same tokens.
 
-**Lookups that miss (#400, 2026-10-31).** Callgrind's callers show where the lookups come from: `place_key` expands every word of every city candidate through the directional and suffix tables (about 15 calls each per parse), and `longest_at` tries up to four joined runs per start (about 25 `special` lookups per parse), and 83% of all lookups miss. A per-token cache of the results (tried first) removed none of this and changed nothing in time: the tagger asks about each token about once; the repeats are different runs. What helped is answering a miss without the binary search: each keyed table has a bit filter (two bits per key from one FNV-1a hash, 16 bits per key; about 1.4% of misses still search) that never says no to a key in the table, so no result changes. 21.8 to 18.4 us per parse (+19% parses per second), instructions per parse 165,200 to 143,600. The wall time fell more than the instruction count: a binary search over a table mispredicts its branches.
+| Change | Effect |
+|---|---|
+| A bit filter per keyed table: a lookup that cannot match is answered without the binary search (two bits per key from one hash; about 1.4% of misses still search; a custom layer adds to the table, never removes from it) | 21.8 to 18.4 µs per parse; 165,200 to 143,600 instructions. 83% of all lookups miss, and a binary search mispredicts its branches, so wall time fell more than instructions |
+| First-word test for `special` (a run of more than one token is joined only when some multi-word key starts with its first token; with a layer every run is tried) | 18.5 to 17.4 µs; 143,600 to 138,200 instructions |
+| Release profile: `lto = "fat"`, `codegen-units = 1` (table below) | -3.1% instructions |
+| First two bytes of a spelling tested against the filter before it is normalized (`state`, `unit`, `special`, `highway`, military) | -5.3% |
+| A bit filter for the place tables | -2.5% (less than the profile suggested: most `place_key` work is the per-word expansion, not the final search) |
+| `glue_place`: look for the cut before running the vetoes (a test keeps the old order as a reference and compares both on 60,000 generated words and contexts) | -11.6% |
+| `highway_in` normalizes once and fills one pre-sized `String` | -2.0% |
+| Anchors (a later state or ZIP) computed once per piece; removes a loop that grew with the square of the piece count | -1.5% |
+| `zip_agrees` in `last_line_in` evaluated lazily (only a state that is also a street suffix reads it) | -5.6% |
+| `join` reserves its length first; first-word tests for `highway_at`, the directionals and states | -4.4% together |
+| Plain tokens (ASCII letters and digits) skip the six punctuation readings in `Piece::sub` | -6.3% |
+| A level-phrase guard in `units`; filters hold the start of the run of keys for each first byte | -1.6% together |
+| The first-word filters reject a token by its first two bytes before normalizing | -2.0% |
 
-**Special words (#406).** After the filters, `longest_at` with the special-word table still joined and normalized runs of up to four tokens at every start, and `special` was 7.4% of a parse. A run longer than one token can only be a special word if some multi-word key of the table starts with its first token (a short set of words, tested with the same bit filter), so the other starts try the one token only. 18.5 to 17.4 us per parse (instructions 143,600 to 138,200); a layer may add any spelling, so with a layer every run is tried. The per-table cap on run length (the other half of #406) was not built: it would change about 45 call sites for the directional table alone, about 1%.
+Result, the `natural` mix: about 157,500 (0.4.1), 171,600 (0.5.0), 138,200 (before the round), about 85,900 instructions per parse now.
 
-**The release profile (#421, 2026-11-01).** Cargo's defaults (16 codegen units, no LTO) were the only setting; the root `Cargo.toml` now has `[profile.release]` with `lto = "fat"` and `codegen-units = 1`. Measured on `main` at `f69389f`, each variant built with `CARGO_PROFILE_RELEASE_*` variables, callgrind on the first 4,000 inputs of the `natural` mix (one pass, startup included; wall time on this machine varied 19 to 31 us for one binary, so instructions lead):
+Tried and not kept: a per-token cache of lookup results (it removed none of the lookups and changed nothing in time: the tagger asks about each
+token about once; the repeats are different runs); fusing normalizing and hashing in one pass (+1.1%: most tokens are already keys, so the borrowed path was cheap);
+a branch-free `normalize_key_cow` (+2.1%: most tokens that are not keys leave the early-exit loop at the first byte); a per-table cap on the length of a
+joined run (about 45 call sites for about 1%); `panic = "abort"` (0.05% of instructions, 2% of the stripped CLI, and the Python extension cannot use it);
+an explicit `opt-level = 3` (the release default). For WebAssembly, `opt-level = "s"` is 1.8% smaller (3.74 MB) but 25% slower (about 57 against 45 µs
+per address through `parse_batch` in Node), and fat LTO changes its speed less than the noise, so the module keeps the default level; `wasm-opt` was not tried.
+
+The release profile, measured by callgrind on the first 4,000 inputs of the `natural` mix:
 
 | Variant | Instructions per parse |
 |---|---|
-| Cargo defaults | 136,700 |
+| Cargo defaults (16 codegen units, no LTO) | 136,700 |
 | `codegen-units = 1` only | 137,000 (+0.2%) |
 | thin LTO | 134,300 (-1.7%) |
 | fat LTO, `codegen-units = 1` (kept) | 132,500 (-3.1%) |
@@ -201,29 +244,5 @@ making more lookups on the same tokens (#400).
 | WebAssembly, raw / gzip | 3.81 / 1.51 MB | 3.82 / 1.52 MB |
 | Cold build: CLI / wheel / wasm | 12 / 17 / 12 s | 37 / 39 / 21 s |
 
-Not kept: `panic = "abort"` (0.05% of instructions, 2% of the stripped CLI, and the Python extension cannot use it) and an explicit `opt-level = 3` (the release default). For WebAssembly, `opt-level = "s"` is 1.8% smaller (3.74 MB) but 25% slower (about 57 against 45 us per address through `parse_batch` in Node), and fat LTO changes its speed less than the noise, so the module keeps the default level. `wasm-opt` was not installed and was not tried.
-
-**First two bytes before normalizing (#424, 2026-11-01).** After #422 (fat LTO), `normalize_key_cow` was still 13.7% of all instructions: `state` alone calls it about 25 times per parse, and 83% of those lookups miss. Each keyed table's filter now also holds the pairs of first bytes of its keys (16,384 bits, one bit per pair of ASCII bytes); a spelling of two bytes or more whose first two bytes are plain (ASCII, not a period or whitespace) and whose upper-cased pair starts no key is rejected without being normalized or hashed. Used by `state`, `unit`, `special`, `highway` and the two military lookups. Callgrind, 4,000 `natural`-mix inputs, `main` at `fe2022f` against the branch: 132,500 to 125,500 instructions per parse (-5.3%). A first try, hashing the raw text while normalizing it in one pass, did not pay (+1.1%): most tokens are already keys, so the borrowed path was cheap and the fused pass cost as much as the two it replaced. Wall time on this machine (24 to 26 us per parse, best of five, three alternating runs) moved by less than its own noise.
-
-**A filter for the place tables (#425, 2026-11-01).** The #418 re-profile found `find_place` and `any_place` (the place index, `STATE|key`, and the any-state list) as the keyed searches without a bit filter: about 5% of instructions between them, from `place_key`, which builds a candidate for every run of words in the city part. Each now has a `Filter` (the one of #400/#405) over its keys, built on first use; a layer's places are searched as before. Callgrind, 4,000 `natural`-mix inputs, `main` at `dc87a4f` against the branch: 125,500 to 122,400 instructions per parse (-2.5%), less than the 3 to 4% the profile suggested, because most `place_key` work is the per-word expansion (`suffix_key`, `directional_key`, the upper-casing), not the final search. Wall time (pinned CPU, best of five, three alternating runs, 22.1 to 25.3 us on this noisy machine) was lower on the branch in all three rounds.
-
-**The glued-city search (#428, 2026-11-01).** The second re-profile of `main` (`011cb75`, 122,400 instructions per parse after #422, #426 and #427) put `is_place` at 9.3% inclusive, 5.8% of it from `Piece::sub`: `glue_place` ran its two vetoes (a `join` and an `is_place` per earlier word of the segment, then `city_at` of the word itself) before looking for a cut, for every unknown alphabetic word of five letters or more, though they only ever turn a found cut into no. Now the cut is searched first. Callgrind, 4,000 `natural`-mix inputs: 122,400 to 108,300 instructions per parse (-11.6%); wall time (pinned CPU, best of five, three alternating runs) 23.0 to 24.4 us against 19.0 to 19.8 us, lower in each round. A test keeps the old order as a reference and compares the two on 60,000 generated words and contexts.
-
-**The third re-profile and the highway key (#418, #430, 2026-11-01).** Callgrind on `main` at `14d18e3` (4,000 `natural`-mix inputs): about 109,200 instructions per parse. The biggest self costs: `normalize_key_cow` 9.6% (about 19 calls per parse from `find_filtered_raw`), `Parser::parse` self 8.8%, `Piece::sub` self 6.4% (19.4% inclusive), `malloc`/`free` about 17%, `fmt::format` about 4%, `Lexicons::state` about 22 lookups per parse (8.2% inclusive, and the source of most of `memcmp`, 4.3%). `highway_in` built its `STATE|key` with `format!` and a second `String` (about 3 calls per parse, 1.6% inclusive); it now normalizes once without allocating and pushes into one pre-sized `String`. Instructions 2,183.2M to 2,140.3M over five passes of 4,000 inputs (-2.0%). Keys, warnings and unit fields: 0 differences against `k4-cut` (`key_diff.py dump-all --unit`, seven sources). Wall time was not measured.
-
-**Anchors computed once per piece (#432, 2026-11-01).** `tokenize` asked, for every piece, whether any later piece (outside its segment) was a state or ZIP, calling `state` on each later piece again: about 10 `Lexicons::state` calls per parse from `Parser::parse` (3.4% inclusive). Each piece is now tested once, and the two flags (`later_seg`, `later_anchor`) read that list. Callgrind, 4,000 `natural`-mix inputs, `main` at `6d2f0cb` against the branch: 2,140.3M to 2,108.6M over five passes (-1.5%, under the 2% bar of #406; kept because it is exact and removes a loop that grew with the square of the piece count). Keys, warnings and unit fields: 0 differences against `k4-cut`. Wall time not measured.
-
-**A lazy ZIP-agreement check in `last_line_in` (#436, 2026-11-01).** `last_line_in` worked out `zip_agrees` (a state lookup, a ZIP lookup, and a `place` search for each of up to `MAX_PLACE_WORDS` word runs before the state) for every line with a ZIP and a state, but only reads it when the state is also a street suffix (`CT`, `KY`, `LA`...) written after a street on one line. It is now a closure called at that point, after the cheaper tests. Callgrind, 4,000 `natural`-mix inputs, `main` at `c335ab0` against the branch: 2,108.6M to 1,989.7M over five passes (-5.6%); `Lexicons::place` had been 3.65% inclusive, 26,285 calls. Keys, warnings and unit fields: 0 differences against `k4-cut`. Wall time not measured.
-
-**`join` sized once (#438, 2026-11-01).** The fourth re-profile (`main` at `b190ce5`, 1,989.7M instructions over five passes of 4,000 inputs) found `classify::join` called about 21 times per parse (422,855 calls over the run), 5% inclusive, two thirds of it in `String` growth: it started from an empty `String` and grew it word by word. It now reserves the summed length first. 1,989.7M to 1,936.3M (-2.7%). Keys, warnings and unit fields: 0 differences against `k4-cut`. Wall time not measured.
-
-**First-word test for `highway_at` (#438, 2026-11-01).** The same branch as the `join` change. The #406 test applied to the highway-prefix, directional and state tables: `highway_at` tried runs of up to four joined tokens at the start of each call (up to three `longest_at` scans, about 5,000 instructions per call); a run longer than one token is now tried only when some multi-word key of the table starts with the first word (`highway_run_may_start`, `directional_run_may_start`, `state_run_may_start`; with a custom layer the answer is always yes). Exact; a test checks that every multi-word key's first word says yes, in two spellings. Alone it took `highway_at` from 103M to 68M instructions and the total 1,989.7M to 1,961.7M (-1.4%, under the 2% bar of #406); with the `join` change above, 1,989.7M to 1,902.2M (-4.4%).
-
-**Plain tokens skip the punctuation readings in `Piece::sub` (#440, 2026-11-01).** The fifth profile (`main` at `715146d`, 1,902.2M instructions over five passes of 4,000 inputs) had `Piece::sub` at 21% inclusive: eight readings tried per piece, six of them (`fraction_hyphen`, `route_hyphen`, `suffix_hyphen_designator`, `suffix_slash`, `unit_punct`, `word_period`) need a hyphen, slash, period or colon in the token, and most tokens have none. A token of ASCII letters and digits now goes straight to the glue rules, and the search for the trimmed token inside its slice is skipped when nothing was trimmed. 1,902.2M to 1,781.6M (-6.3%). Keys, warnings and unit fields: 0 differences against `k4-cut`. Wall time not measured.
-
-**A level-phrase guard in `units` and first-byte runs in the binary searches (#442, 2026-11-01).** The sixth profile (`main` at `fdf0760`, 1,781.6M instructions over five passes of 4,000 inputs) had `units` at 5.8% inclusive, mostly lookups. (1) It looked for a level word on every line (a `suffix_before` call and a `join`), though only `GROUND`, `GROUND LEVEL`, `GROUND FLOOR`, `GROUND FLR`, `MEZZANINE`, `GARAGE`, `GARDEN LEVEL`, `CELLAR` and `LL` can match; the last word is tested first (`ends_level_phrase`; a test checks that the last word of every phrase says yes): 1,781.6M to 1,768.9M (-0.7%). (2) Each keyed table's filter holds the start of the run of keys for each first byte (257 `u32`, about 1 KB per table), and a lookup that passes the filter searches that run, not the whole table: 1,768.9M to 1,752.8M (-0.9%). Together -1.6%, under the 2% bar of #406; kept because both are exact and the second helps every table. Keys, warnings and unit fields: 0 differences against `k4-cut`. Wall time not measured.
-
-**Two bytes before normalizing in the first-word tests (#444, 2026-11-01).** The seventh profile (`main` at `7b2dee9`, 1,752.8M instructions over five passes of 4,000 inputs) had `normalize_key_cow` at 10.5% on its own, about 50 calls per parse, 9.5 of them from `special_hi` (the first-word test of #406). A branch-free rewrite of the function (no early exit) was worse, 1,752.8M to 1,789.8M (+2.1%): most tokens that are not keys leave the early-exit loop at the first byte. Fewer calls worked: the first-word filters (special words, highways, directionals, states) now reject a token by its first two bytes (#424's test, `rules_out_raw`) before it is normalized. 1,752.8M to 1,718.3M (-2.0%). Keys, warnings and unit fields: 0 differences against `k4-cut`. Wall time not measured.
-
-**The close of the 0.5.1 performance round (#418, 2026-11-01).** All figures are `main` at `c68760e`, after #445. Instructions per parse, `natural` mix (callgrind): about 157,500 (0.4.1), 171,600 (0.5.0), 138,200 (`main` before the round), about 85,900 now. Wall time, one pinned CPU (`profile_loop`, first 4,000 inputs of the `natural` mix, best of five passes, three alternating rounds on a quiet machine; this machine ran slower than on the earlier days, so read the ratios): 0.4.1 31.1 us per parse, 0.5.0 33.3 us (+7%), `2e5441e` (the 2026-10-31 benchmark commit) 26.1 us, `main` 15.6 us: half the time of 0.4.1, 2.1x the parses per second. The Python and criterion figures move less than the engine does, because the Python object work around a parse is not part of the parser: `speed_python.py` (pinned to 4 CPUs, usaddress rows from the 2026-10-31 cache) `parse` on the golden-corpus inputs 14.0 to 13.7 us, `parse_many` 4.7 to 5.0 us; criterion `parse_corpus/one_by_one` 13.64 to 12.40 ms, `full_one_line` 10.99 to 10.84 us (unpinned, noisy). The suite report (accuracy and the 19,586-string speed table) was retaken with the cached usaddress rows; the accuracy sections are identical to 2026-10-31. Files: `local-data/benchmarks/2026-11-01-main-c68760e/`. The docs pass (#399) should quote the pinned `profile_loop` and instruction figures as the engine speed and the Python figures as what a Python caller sees.
-
+Leads for a later round: re-take wall time, re-profile, then `malloc`/`free` (about 17% of instructions), `Parser::parse` self cost and further cuts in the number of calls
+(cut call counts before rewriting a hot function).
