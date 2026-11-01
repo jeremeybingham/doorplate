@@ -84,7 +84,7 @@ and label pair for each verdict (labels and counts only), and the shape-only exp
 usaddress's labels in order, never a token. The "usaddress right" groups become issues through the same loop as #125.
 
 **Limit.** Disagreement finds where the parsers differ, not every place doorplate is wrong: a row both read wrongly in the same
-way is not queued. The first queue (FMCSA US carriers, 2026-10-27): of 193,511 distinct sampled strings 5,057 disagree (2.6%), 2,975 silent, 1,754
+way is not queued. The first queue (FMCSA US carriers): of 193,511 distinct sampled strings 5,057 disagree (2.6%), 2,975 silent, 1,754
 give-ups and 328 control; the biggest silent groups are `OccupancyIdentifier`/`StreetName`, `PlaceName`/`StreetName` and
 `StreetName`/`OccupancyIdentifier`.
 
@@ -172,7 +172,7 @@ real-looking row; the `anon` option of the full-text export (below) uses it for 
 ## The full-text export (`export.py --full`): for the maintainer's own session
 
 A shape is often not enough to see a rule: which words were deleted, and what the note says. For the
-sources listed in `full-ok.txt` (since 2026-10-29 every ingested source: all are public records, `docs/data-policy.md`), `--full` writes `local-data/review/answers-full.md`: the original
+sources listed in `full-ok.txt` (now every ingested source: all are public records, `docs/data-policy.md`), `--full` writes `local-data/review/answers-full.md`: the original
 lines, the parse, the corrected string and its parse, the note verbatim, and a word-level description
 of the edit (`deleted leading "ACME LLC"`). It reads `local-data/review/full-ok.txt`, one source per
 line:
@@ -184,7 +184,7 @@ nc-voter-current anon keep=CPO,CPU,UNX   # private people's addresses: every wor
 ```
 
 - **Only listed sources are written;** with none listed, nothing is. The default stays shape-only. The owner has listed every
-  ingested source (2026-10-29); `mask=` and `anon` below remain available, and are no longer needed for the sources already listed.
+  ingested source; `mask=` and `anon` below remain available, and are no longer needed for the sources already listed.
 - **`mask=`** names input fields (`line1`, `line2`, `city`, `state`, `zip`, `last_line`) whose words become
   their shape everywhere in that row's entry: the lines, the parse, the correction, the note and the edit
   description. Words that also appear in an unmasked field (`SMITH` in a street name), and address

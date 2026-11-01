@@ -75,10 +75,9 @@ docs/                       the documentation (the source of the site)
 
 ## Coverage: what the tests reach, and what is left alone
 
-Coverage is a map of untested code, not a gate: the Codecov checks are informational (`codecov.yml`, #121). It is measured with
+Coverage is a map of untested code, not a gate: the Codecov checks are informational (`codecov.yml`). It is measured with
 `cargo llvm-cov --workspace --all-features` (the `custom-layer` and `corpus` features are on; `build.rs`, the benches, the
-tests folders, `corpus.rs`, `doorplate-wasm`, `doorplate-py` and `fuzz/` are left out, see `codecov.yml`). Measured locally on
-2026-10-28 (#211), before and after adding tests for what a user can reach:
+tests folders, `corpus.rs`, `doorplate-wasm`, `doorplate-py` and `fuzz/` are left out, see `codecov.yml`). Measured locally, before and after adding tests for what a user can reach:
 
 | | Before | After |
 |---|---|---|

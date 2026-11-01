@@ -135,7 +135,7 @@ python tools/compare/oneline_fl.py [--binary target/release/doorplate]          
 The geocode benchmark writes street postdirectionals abbreviated (`N`), so a compass word after a suffix is
 always part of the city there; `oneline_fl.py` renders real Florida records (private, from the DBPR files in
 `docs/data-policy.md`) as one line with no commas, where spelled-out postdirectionals occur. A rule that helps
-one and hurts the other is a rule to look at again (#29).
+one and hurts the other is a rule to look at again.
 
 ## Speed and size
 
@@ -163,7 +163,7 @@ not published as accuracy.
 | `tools/harness/nad_score.py` | Scores doorplate against the labeled columns of the National Address Database sample | `docs/tools/harness.md` |
 | `tools/compare/compare_usaddress.py` | The token-by-token comparison with usaddress that `suite.py` and `accuracy.py` use; also runs on any labeled XML or CSV | its docstring |
 | `tools/compare/oneline_fl.py`, `city_diff.py` | The one-line Florida check and the cities gained and lost (above) | above |
-| `profile_inputs.py`, `profile_fold.py`, `profile_heap.py`, `crates/doorplate/examples/profile_loop.rs`, `profile_alloc.rs` | The profiling kit of #90: plain input files from the suite, a single-thread timing loop, allocations per parse, a table of where `perf` samples land (by function and by stage) and where `heaptrack` says the allocations are made | the "Profile" section of [`docs/benchmarks.md`](benchmarks.md) |
+| `profile_inputs.py`, `profile_fold.py`, `profile_heap.py`, `crates/doorplate/examples/profile_loop.rs`, `profile_alloc.rs` | The profiling kit: plain input files from the suite, a single-thread timing loop, allocations per parse, a table of where `perf` samples land (by function and by stage) and where `heaptrack` says the allocations are made | the "Profile" section of [`docs/benchmarks.md`](benchmarks.md) |
 | `tools/compare/checkpoint.py` | The foundation checkpoint (`docs/backlog.md`): the key comparison with the released build over all the large sources in one run, keeping the current keys as the baseline for the `k3`; prints a plan and needs `--confirm` | [`docs/backlog.md`](backlog.md) |
 | `tools/compare/key_diff.py` | The row-by-row key comparison between two builds over the records files (`dump` in each environment, then `diff`; counts only; each dump records the version and the checkout's commit, and warns when the installed extension is older than the source; `dump --unit` also writes the unit-level key and the unit fields, which a rule that only moves a unit needs, since the property-level key has no unit) | [`docs/backlog.md`](backlog.md) |
 | `tools/benchsuite/` | The suite's generator, label audit and inventories; rebuilds the suite from private data | [`docs/benchmark-suite.md`](benchmark-suite.md) |
