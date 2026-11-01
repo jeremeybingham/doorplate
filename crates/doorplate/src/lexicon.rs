@@ -635,7 +635,11 @@ impl Lexicons {
     /// ROUTE elsewhere), as [`MatchKind::Variant`] or [`MatchKind::Observed`]
     /// as the state data says. Otherwise the same as [`Self::highway`].
     pub fn highway_in(&self, state: &str, s: &str) -> Option<Lookup<HighwayPrefix>> {
-        let key = format!("{state}|{}", normalize_key(s));
+        let norm = normalize_key_cow(s);
+        let mut key = String::with_capacity(state.len() + 1 + norm.len());
+        key.push_str(state);
+        key.push('|');
+        key.push_str(&norm);
         if let Some(hit) = self.layer.and_then(|l| l.state_highway.get(&key)) {
             return Some(*hit);
         }
