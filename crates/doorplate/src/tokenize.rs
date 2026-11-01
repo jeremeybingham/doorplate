@@ -535,63 +535,72 @@ impl Piece<'_> {
         if t.is_empty() {
             return;
         }
-        let s2 = s + self.cleaned.text[s..e].find(t).unwrap_or(0);
+        let s2 = if t.len() == e - s {
+            s
+        } else {
+            s + self.cleaned.text[s..e].find(t).unwrap_or(0)
+        };
         let e2 = s2 + t.len();
         let whole = self.cleaned.text[pa..pb].trim_matches(|c: char| !c.is_alphanumeric()) == t
             && !self.cleaned.text[pa..pb].contains('#');
         let (sa, sb) = if whole { (pa, pb) } else { (s2, e2) };
 
-        // A hyphenated route: `GA-25`, `US-385`, `CR-48`, `I-65` (Appendix F
-        // writes these with a space). Only after a highway prefix or a state
-        // code that is not also a directional (`NE-2` stays whole); SR is
-        // left to state data.
-        // `1174-1/2`: a hyphen before a fraction is a space (`1174 1/2`).
-        if let Some(cut) = fraction_hyphen(t) {
-            rule_hit!("sub:fraction_hyphen");
-            self.emit(t[..cut].to_string(), s2, s2 + cut, paren);
-            self.emit(t[cut + 1..].to_string(), s2 + cut + 1, e2, paren);
-            return;
-        }
-        if let Some(cut) = route_hyphen(t, lex) {
-            rule_hit!("sub:route_hyphen");
-            self.emit(t[..cut].to_string(), s2, s2 + cut, paren);
-            self.emit(t[cut + 1..].to_string(), s2 + cut + 1, e2, paren);
-            return;
-        }
-        // `STREET-SUITE 303`, `CT-UNIT 4`: a street suffix, a hyphen glued to a unit
-        // designator (#308). The pieces are words of their own.
-        if let Some(cut) = suffix_hyphen_designator(t, lex) {
-            rule_hit!("sub:suffix_hyphen_designator");
-            self.emit(t[..cut].to_string(), s2, s2 + cut, paren);
-            self.sub(s2 + cut + 1, e2, pa, pb, paren, next_numeric, lex);
-            return;
-        }
-        // `ST/ 36`, `ROAD/APT 7L`: a street suffix glued to a slash. The slash is a token of
-        // its own, dropped later when a unit follows (`drop_unit_separators`).
-        if let Some(cut) = suffix_slash(t, self.after, lex) {
-            rule_hit!("sub:suffix_slash");
-            self.emit(t[..cut].to_string(), s2, s2 + cut, paren);
-            self.emit("/".to_string(), s2 + cut, s2 + cut + 1, paren);
-            self.sub(s2 + cut + 1, e2, pa, pb, paren, next_numeric, lex);
-            return;
-        }
-        // A unit designator joined to its value by punctuation: `APT.1285`,
-        // `STE.200`, `APT:201`, `UNIT-4`.
-        if let Some(cut) = unit_punct(t, lex) {
-            rule_hit!("sub:unit_punct");
-            self.emit(t[..cut].to_string(), s2, s2 + cut, paren);
-            self.sub(s2 + cut + 1, e2, pa, pb, paren, next_numeric, lex);
-            return;
-        }
-        // `ST.CLOUD`, `FT.MYERS`: a period after two letters or more, with a
-        // letter after it, ends a word.
-        if let Some(cut) =
-            word_period(t).filter(|&c| !known_word(&format!("{}{}", &t[..c], &t[c + 1..]), lex))
-        {
-            rule_hit!("sub:word_period");
-            self.sub(s2, s2 + cut, pa, pb, paren, next_numeric, lex);
-            self.sub(s2 + cut + 1, e2, pa, pb, paren, next_numeric, lex);
-            return;
+        // Every reading below needs a hyphen, slash, period or colon in the token: a token of
+        // letters and digits only (most of them) goes straight to the glue rules (#440).
+        let plain = t.bytes().all(|c| c.is_ascii_alphanumeric());
+        if !plain {
+            // A hyphenated route: `GA-25`, `US-385`, `CR-48`, `I-65` (Appendix F
+            // writes these with a space). Only after a highway prefix or a state
+            // code that is not also a directional (`NE-2` stays whole); SR is
+            // left to state data.
+            // `1174-1/2`: a hyphen before a fraction is a space (`1174 1/2`).
+            if let Some(cut) = fraction_hyphen(t) {
+                rule_hit!("sub:fraction_hyphen");
+                self.emit(t[..cut].to_string(), s2, s2 + cut, paren);
+                self.emit(t[cut + 1..].to_string(), s2 + cut + 1, e2, paren);
+                return;
+            }
+            if let Some(cut) = route_hyphen(t, lex) {
+                rule_hit!("sub:route_hyphen");
+                self.emit(t[..cut].to_string(), s2, s2 + cut, paren);
+                self.emit(t[cut + 1..].to_string(), s2 + cut + 1, e2, paren);
+                return;
+            }
+            // `STREET-SUITE 303`, `CT-UNIT 4`: a street suffix, a hyphen glued to a unit
+            // designator (#308). The pieces are words of their own.
+            if let Some(cut) = suffix_hyphen_designator(t, lex) {
+                rule_hit!("sub:suffix_hyphen_designator");
+                self.emit(t[..cut].to_string(), s2, s2 + cut, paren);
+                self.sub(s2 + cut + 1, e2, pa, pb, paren, next_numeric, lex);
+                return;
+            }
+            // `ST/ 36`, `ROAD/APT 7L`: a street suffix glued to a slash. The slash is a token of
+            // its own, dropped later when a unit follows (`drop_unit_separators`).
+            if let Some(cut) = suffix_slash(t, self.after, lex) {
+                rule_hit!("sub:suffix_slash");
+                self.emit(t[..cut].to_string(), s2, s2 + cut, paren);
+                self.emit("/".to_string(), s2 + cut, s2 + cut + 1, paren);
+                self.sub(s2 + cut + 1, e2, pa, pb, paren, next_numeric, lex);
+                return;
+            }
+            // A unit designator joined to its value by punctuation: `APT.1285`,
+            // `STE.200`, `APT:201`, `UNIT-4`.
+            if let Some(cut) = unit_punct(t, lex) {
+                rule_hit!("sub:unit_punct");
+                self.emit(t[..cut].to_string(), s2, s2 + cut, paren);
+                self.sub(s2 + cut + 1, e2, pa, pb, paren, next_numeric, lex);
+                return;
+            }
+            // `ST.CLOUD`, `FT.MYERS`: a period after two letters or more, with a
+            // letter after it, ends a word.
+            if let Some(cut) =
+                word_period(t).filter(|&c| !known_word(&format!("{}{}", &t[..c], &t[c + 1..]), lex))
+            {
+                rule_hit!("sub:word_period");
+                self.sub(s2, s2 + cut, pa, pb, paren, next_numeric, lex);
+                self.sub(s2 + cut + 1, e2, pa, pb, paren, next_numeric, lex);
+                return;
+            }
         }
         // A value right after '#' or a unit designator is that unit's: `# 2WD`
         // is not house number 2 and a name, `APT I4` is not highway I4.
@@ -605,7 +614,7 @@ impl Piece<'_> {
             .out
             .last()
             .is_some_and(|p| p.seg == self.seg && lex.highway(&p.text).is_some());
-        if t.bytes().all(|c| c.is_ascii_alphanumeric()) {
+        if plain {
             let cut = glue_split(t, next_numeric, unit_value, after_prefix, lex).or_else(|| {
                 glue_place(
                     t,
