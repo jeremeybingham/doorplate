@@ -1256,10 +1256,6 @@ fn may_start_multi(
     first: &str,
     keys: impl FnOnce() -> Vec<&'static str>,
 ) -> bool {
-    let key = normalize_key_cow(first);
-    if key.is_empty() {
-        return true;
-    }
     let (filter, words) = cell.get_or_init(|| {
         let mut words: Vec<&'static str> = keys()
             .into_iter()
@@ -1269,6 +1265,14 @@ fn may_start_multi(
         words.dedup();
         (Filter::new(words.iter().copied()), words)
     });
+    // The first two bytes rule out most words without normalizing (#424's test, on the first words).
+    if filter.rules_out_raw(first) {
+        return false;
+    }
+    let key = normalize_key_cow(first);
+    if key.is_empty() {
+        return true;
+    }
     filter.may_contain(&key) && find_str(words, &key)
 }
 
