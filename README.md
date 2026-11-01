@@ -29,7 +29,7 @@ input, not verdicts.
 
 > **Alpha release (0.5.0).** Expect rough edges. This documentation may be outdated in places, describe features from pre-release versions, or just be overly wordy and dense. A documentation edit/update is coming soon, as of 11/1/2026. The match key is versioned (`k4:`) and
 > will probably get new versions as the parser improves, so store the version prefix
-> with your keys and plan to re-key. `k4` is new in 0.5.0 and has only been checked on the project's own data (37 million rows of public records), so a `k5` may follow. Accuracy and speed are measurements on a few
+> with your keys and plan to re-key. `k4` is new in 0.5.0 and has only been checked on the project's own data (37 million rows of public records), and a `k5` is planned for an eventual 0.6.0 release. Accuracy and speed are measurements on a few
 > datasets, not guarantees. Names in the API and the warning codes may still change
 > before 1.0.
 >
@@ -212,6 +212,8 @@ what the input said; the place found is reported beside it. Sources and licenses
 | Whole address right, [geocode benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark) dev split (60,522 one-line addresses) | 94.3% | 88.1% |
 | Addresses per second from Python, one thread (suite inputs) | about 38,300 | about 8,900 |
 
+[usaddress](https://github.com/datamade/usaddress) is DataMade's widely used Python library that labels the parts of a US address with a statistical model.
+
 The suite is 19,586 labeled addresses neither library was made from; it keeps both libraries' blind spots on purpose, so read
 its `natural` stratum as the estimate for ordinary input. Speed is on 4 CPUs, 8 GB (read the ratios). These are measurements on
 a few data sets, not promises for yours. The method, every other figure and the caveats are in
@@ -231,7 +233,7 @@ a few data sets, not promises for yours. The method, every other figure and the 
   and places is not part of this release.
 
 ## Where it is going
-0.5.0 is out (an alpha: the `k4` key is new and a `k5` may follow). 0.5.0 is the key-changing release (`k4`); 0.5.x is for speed. What is planned, what depends on what, and what is deliberately not
+0.5.0 is out (an alpha: the `k4` key is new and a `k5` is planned for an eventual 0.6.0 release). 0.5.0 is the key-changing release (`k4`); 0.5.x is for speed. What is planned, what depends on what, and what is deliberately not
 planned (validation, geocoding, international addresses) are in [`docs/roadmap.md`](docs/roadmap.md).
 
 ## Coming from usaddress
