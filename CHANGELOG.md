@@ -18,6 +18,8 @@ change to what an input produces needs a new key version.
 
 ### Changed
 
+- **Faster keyed lookups on raw spellings** (#424, no output change): `state`, `unit`, `special`, `highway` and the military lookups first test the first two bytes of the spelling against the first two bytes of the table's keys (a 2 KB bit set per table, built with the filter), so a spelling that cannot be a key is rejected before it is normalized. 132,500 to 125,500 instructions per parse (-5.3%) on the suite's `natural` mix. Keys, warnings and unit fields are identical to the `k4` cut over the seven key sources.
+
 - **Release profile: fat LTO, one codegen unit** (#421, no output change): the library, CLI, wheel and WebAssembly module build with `lto = "fat"` and `codegen-units = 1`. 136,700 to 132,500 instructions per parse (-3.1%) on the suite's `natural` mix; the unstripped CLI binary 6.49 to 5.41 MB, the wheel 2.19 to 2.15 MB; the release build takes about 2.3 times as long (wheel 17 to 39 s). The WebAssembly module is not smaller or faster. Keys, warnings and unit fields are identical to the `k4` cut over the seven key sources.
 
 - **Fourteen redundant `Unparsed` marks and a duplicate warning removed from the tagger** (#409, no output change): a token no rule claims already ends as `Unparsed`, and `SecondLineSkipped` is also raised by `second_line_notes`. Found by the rule audit (#401, `docs/tools/rule-stats.md`). Keys, warnings and unit fields are identical to the `k4` cut over the seven key sources.
