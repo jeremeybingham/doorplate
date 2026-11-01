@@ -129,9 +129,10 @@ impl Tagger<'_> {
             let after_suffix = r.start > lo && self.abbreviated_suffix(r.start - 1);
             // "69 HERITAGE WOODS WALLINGFORD CT 06492": a ZIP that belongs to
             // the state, with a place of that state right before it, makes it
-            // the state ("12 SIMON CT 06492" has no place before CT).
-            let zip_agrees = zip
-                && self.lex.state(&text).is_some_and(|s| {
+            // the state ("12 SIMON CT 06492" has no place before CT). A closure: only a state
+            // that is also a suffix needs the answer.
+            let zip_agrees = || {
+                zip && self.lex.state(&text).is_some_and(|s| {
                     let code = s.value.code();
                     zip_parts(&toks[hi - 1].text)
                         .and_then(|(z5, _)| self.lex.zip_places(z5))
@@ -143,11 +144,12 @@ impl Tagger<'_> {
                                     .place(code, &join(&toks[r.start - w..r.start]))
                                     .is_some()
                         })
-                });
+                })
+            };
             if one_line
                 && self.lex.suffix(&text).is_some()
                 && !after_suffix
-                && !zip_agrees
+                && !zip_agrees()
                 && self.city_after_street(lo, r.start).is_none()
             {
                 state = None;
