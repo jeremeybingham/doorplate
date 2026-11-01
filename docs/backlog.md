@@ -3,7 +3,7 @@
 How the open issues are sorted, what the labels and milestones mean, and how work moves from an issue to a
 release. The current plan is in [`roadmap.md`](roadmap.md); this page is the rules. It replaces the
 definitions that lived in the body of issue #103 (the backlog review), which now only holds its history.
-**Last reviewed 2026-10-31 (#201, #298, the 0.5.0 release), against the issues up to #391.**
+**Last reviewed 2026-11-01 (#402, the 0.5.1 performance round and the docs pass #399), against the issues up to #451.**
 
 ## The release plan
 
@@ -16,8 +16,10 @@ project has no users and the foundation went quickly; it saves a version and a r
 | **0.4.0** | **Phase 1, the foundation:** the architecture (state data folded into the core, an extension-ready lexicon) and the breaking API cleanup, with the key unchanged (`k2`) and no parsing changes. **Phase 2, the `k3`:** the parser rules already listed in #138, key-affecting or not (warnings and diagnostics included), cut together; the list is closed (see "Scope" below) | Phase 1 ends at the **checkpoint**: zero key differences with 0.3.1 over the large sources, and those keys frozen as the baseline. The release: the measured before and after against that baseline, in [`key-format.md`](key-format.md) ("Changing the key"). The checkpoint passed on 2026-10-23 (commit `1819acd`: zero differences over 36.9M rows) |
 | **0.4.x** | **Tooling, documentation and extensibility**, no key change, released as **0.4.1** (decided 2026-10-27): the custom layer (#3), the anonymizer (#105), `doorplate.compat` (#36), faster columns (#24), harness scorers (#112), review tool v2 (#132), per-state counts (#53), the documentation site (#107, #229) and coverage (#211): all done and released as 0.4.1 on 2026-10-28 (the site, #107 and #229, was closed 2026-10-28; what follows the release is #252). Milestone closed after #252 |  Tracker #200; the release checklist in `CONTRIBUTING.md` |
 | **0.5.0** | The key-changing release, the `k4`: the parser rules that change keys, from the reviews of real rows and the harness counts; **released 2026-10-31** (the list was closed once #247 merged; the rules and their counts are in the changelog). Milestone closed after the release | Tracker #201 (closed with the release); the measured before and after against the `k3` keys, the probes and the full Netsyms run on 0.4.1 and on the cut |
-| **Later** | Wanted or known, not planned for a release: new API surface, parse rules below the P2 line, anything waiting on demand or a decision. The list by kind is in [`roadmap.md`](roadmap.md), "Waiting" (#11, #35, #88, #92, #193, #203, #213, #233, #238, #243, #244, #253, #269, #272, #274, #277, #289 to #291, #294 to #296, #304, #307, #310 to #321, #327, #332, #335, #341, #345, #351, #357, #358, #360, #366, #367, #375, #384, #387, #388, #390, #391) | |
-| **Tooling** | Tooling that is not planned for a release (the harness, review tool, benchmarks and CI items waiting for a rule or a decision): never shipped, never closed. Now holds #215 (libpostal), #222 (the review helpers still deferred), #225 (the review tracker), #323 (MessyStreets) | |
+| **0.5.x** | **Tooling, documentation and performance point releases**, no key change (decided 2026-10-31): the performance round (about half the time per parse of 0.4.1, keys unchanged; [`speed-and-size.md`](speed-and-size.md)) is done; what is left is the docs edit pass (#399, with #277) | Tracker #402 |
+| **0.6.0** | The `k5`, the next key-changing release: every `version:K` issue not yet scheduled; nothing is planned for it yet | Tracker #416 |
+| **Later** | Wanted or known, not planned for a release: new API surface, parse rules below the P2 line, review data and trackers, anything waiting on demand or a decision. The list by kind is in [`roadmap.md`](roadmap.md), "Waiting" | |
+| **Tooling** | Tooling that is not planned for a release (the harness, review tool, benchmarks and CI items waiting for a rule or a decision): never shipped, never closed. Now holds #323 (MessyStreets) and #434 (the Try page) | |
 
 `main` is the 0.5 line. It carries the next patch version with a `-dev` suffix (`0.5.1-dev` now, decided 2026-10-31) until the release pull request sets the release version, so a build from `main` reports a version no release has used (it said the last release until 2026-10-31). There is no 0.3.2. The project has no users, so a release is not made for a minor
 fix. **A 0.3.x patch needs a very good reason:** a correctness bug in shipped output that matters (a wrong key, a panic
@@ -55,7 +57,7 @@ A rule that only reads or moves a unit changes no property-level key, so dump bo
 |---|---|
 | `research` | An issue whose first output is a measurement or a decision, not code (#131, #203, #215, #236). It says what outcome would close it |
 | `size:S` / `M` / `L` / `D` | Hours; a day or two; several pull requests or a design; a decision with no code |
-| `version:K` | Changes a key (the number, directionals, street name, suffix, state, ZIP or unit; place data that moves the street/city split). Held for the next key release (the `k4`, tracker #201); the checkpoint passed on 2026-10-23, so it can merge to `main` unreleased, measured row by row against the frozen keys |
+| `version:K` | Changes a key (the number, directionals, street name, suffix, state, ZIP or unit; place data that moves the street/city split). Held for the next key release (the `k5`, tracker #416); it can merge to `main` unreleased, measured row by row against the frozen keys |
 | `version:B` | Breaks an API: removes or renames a public thing |
 | `version:O` | Changes output without a key: a warning, a new field, a new opt-in API |
 | `version:N` | No user-visible change: docs, tooling, tests, internal |
@@ -68,7 +70,7 @@ A rule that only reads or moves a unit changes no property-level key, so dump bo
 | `tracker` | A meta issue that lists other issues |
 
 The milestone says **which release**; `version:` says **what kind of change**; `area:` says **which part of the
-project**. An issue that is `version:K` is in the 0.5.0 milestone (it was 0.4.0, phase 2, while that list of #138 was open) unless it is not wanted yet, then it is in Later.
+project**. An issue that is `version:K` is in the 0.6.0 milestone (the `k5`) once it is planned, and in Later until then.
 
 ## Where an issue comes from
 
@@ -102,7 +104,7 @@ Refresh the numbers after each batch of rules (the same probes are the before an
 - At each release, refresh the milestones: move what slipped, close the finished milestone, and update
   [`roadmap.md`](roadmap.md) from them.
 - **Also after a batch of issues closes**, not only at a release (this page and the roadmap were a week behind after the 0.4.x work merged, #237): tick the
-  boxes of the trackers (#200, #201), update the "Released" and "Next" parts of the roadmap, move what no longer fits a milestone, and change the
+  boxes of the open tracker (#402 for 0.5.x), update the "Released" and "Next" parts of the roadmap, move what no longer fits a milestone, and change the
   "Last reviewed" line at the top of both pages. The label descriptions on GitHub (`gh label list`) follow the table above. `python tools/docs/issue_states.py` (needs `gh`; run by hand) lists what
   no longer fits: a closed issue in a planned part, an issue in the wrong milestone, an open issue neither page mentions, and a tracker box that disagrees with the
   issue.
