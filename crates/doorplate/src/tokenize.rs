@@ -91,6 +91,15 @@ pub(crate) fn tokenize(
         pieces.push((s, bytes.len(), seg));
     }
 
+    // Whether each piece, trimmed to its alphanumerics, is a state or a ZIP: one lookup per piece,
+    // not one per later piece for every piece.
+    let anchors: Vec<bool> = pieces
+        .iter()
+        .map(|&(na, nb, _)| {
+            let w = text[na..nb].trim_matches(|c: char| !c.is_alphanumeric());
+            lex.state(w).is_some() || zip_parts(w).is_some()
+        })
+        .collect();
     let mut out = Vec::new();
     let mut in_paren = false;
     for (k, &(a, b, seg)) in pieces.iter().enumerate() {
@@ -108,17 +117,11 @@ pub(crate) fn tokenize(
             .take_while(|&&(_, _, s)| s == seg)
             .map(|&(na, nb, _)| text[na..nb].trim_matches(|c: char| !c.is_alphanumeric()))
             .collect();
-        let later = || {
-            pieces[k + 1..]
-                .iter()
-                .filter(|&&(_, _, s)| s > seg)
-                .map(|&(na, nb, _)| text[na..nb].trim_matches(|c: char| !c.is_alphanumeric()))
-        };
         // The next segment starts with a state or a ZIP: the glued city's end.
-        let later_seg = later()
-            .next()
-            .is_some_and(|w| lex.state(w).is_some() || zip_parts(w).is_some());
-        let later_anchor = later().any(|w| lex.state(w).is_some() || zip_parts(w).is_some());
+        let later_seg = (k + 1..pieces.len())
+            .find(|&n| pieces[n].2 > seg)
+            .is_some_and(|n| anchors[n]);
+        let later_anchor = (k + 1..pieces.len()).any(|n| pieces[n].2 > seg && anchors[n]);
         let mut p = Piece {
             cleaned,
             field,
