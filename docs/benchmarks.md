@@ -20,7 +20,7 @@ library's rules, model or tests were made from, run under a fixed 4-CPU, 8 GB pr
 libraries' blind spots on purpose. The other sets below are older and each favors one side for a reason
 given with it.
 
-**Which build.** The suite and speed figures are from `main` at `c68760e` (0.5.1-dev, 2026-11-01); since 0.5.0 `main` has had speed changes only, and the suite's
+**Which build.** The suite and speed figures are from 0.5.1 (`c68760e`, measured 2026-11-01 as `0.5.1-dev`; the parser is unchanged in the release); since 0.5.0 `main` has had speed changes only, and the suite's
 accuracy sections are identical to the 0.5.0 run. The geocode, usaddress-test-file and Florida figures are from the 0.5.0 build.
 **Machine:** Intel Core i9-9900K (14 threads), 49 GB RAM, Linux 6.18 on WSL2. The suite's runner pins 4 CPUs and
 8 GB (its reference profile), and the Python speed runs were pinned to the same 4 CPUs with `taskset -c 0-3` and
@@ -109,7 +109,7 @@ field are left out of that field's count (the count is in parentheses).
 
 The dataset's `input` string carries the markup's literal missing-value strings (`NaN`, `undefined`, `null`): the ingest keeps them out of the
 records, and `--joined` parses the cleaned fields joined with commas, the way the review queue does (no country
-word). Measured on `main` (0.5.1-dev, `2e5441e`), the same rows:
+word). Measured on the 0.5.1 round (`2e5441e`), the same rows:
 
 | Cleaned fields, joined (`--joined`) | Rows | ZIP5 | State | City | Street name |
 |---|---|---|---|---|---|
@@ -135,7 +135,7 @@ with both versions' scores kept here. Rows are anonymized National Address Datab
 city, state and ZIP; invented house and unit numbers), Census TIGER street names for the six states NAD
 lacks, templates for PO boxes, routes, military and general delivery, and 1,000 hand-labeled shapes. The
 gold labels come from the field each token was written from, never from either parser. Run on 4 CPUs and
-8 GB (Linux, the Intel i9-9900K of the machine above, pinned by the runner), doorplate `main` (0.5.1-dev, `c68760e`), usaddress 0.5.16.
+8 GB (Linux, the Intel i9-9900K of the machine above, pinned by the runner), doorplate 0.5.1 (`c68760e`), usaddress 0.5.16.
 
 **Whole address right, coarse** (street parts folded into `StreetName`; intervals are 95% Wilson):
 

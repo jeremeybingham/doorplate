@@ -15,7 +15,7 @@ parsing never panics.
 This library formats and parses; it **does not validate** that an address exists or
 can receive mail.
 
-> **Alpha release (0.5.0).** Expect rough edges. The match key is versioned (`k4:`)
+> **Alpha release (0.5.1).** Expect rough edges. The match key is versioned (`k4:`)
 > and will probably get new versions as the parser improves, so store the version
 > prefix with your keys and plan to re-key. `k4` is new in 0.5.0 and has only been checked on the project's own data (37 million rows of public records), and a `k5` is planned for an eventual 0.6.0 release. Names in the API and the warning codes may
 > still change before 1.0.
