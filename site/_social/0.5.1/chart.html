@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<title>doorplate: time per parse, 0.4.1 to 0.5.1 (blog chart, 1080 x 420)</title>
+<style>
+  /* Source of chart.png (the 0.5.1 post). Figures: docs/speed-and-size.md, "Speed by version" (0.5.1, c68760e):
+     the suite's natural mix, one pinned CPU, all three builds alternated in one session, best of five;
+     instructions counted with callgrind. Bars start at zero. Render: python render.py */
+  :root{--surface:#ffffff;--ink:#0b0b0b;--ink2:#52514e;--rule:#e3e2de;--old:#a9b8cc;--now:#2a78d6}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--surface)}
+  body{width:1080px;height:420px;font-family:"DejaVu Sans","Helvetica Neue",Arial,sans-serif;color:var(--ink);padding:36px 48px 28px;overflow:hidden}
+  h1{font-size:34px;font-weight:800;letter-spacing:-1px}
+  .sub{font-size:20px;color:var(--ink2);margin:6px 0 22px}
+  .panels{display:flex;gap:48px}
+  .panel{flex:1;min-width:0}
+  .panel h2{font-size:24px;font-weight:700}
+  .panel .u{font-size:18px;color:var(--ink2);margin:2px 0 14px}
+  .b{display:flex;align-items:center;gap:12px;height:44px;border-top:1px solid var(--rule)}
+  .b .n{flex:none;width:58px;font-size:20px;color:var(--ink2)}
+  .b i{flex:none;display:block;height:28px;border-radius:0 4px 4px 0}
+  .b.o i{background:var(--old)} .b.now i{background:var(--now)}
+  .b b{white-space:nowrap;font-size:22px;font-weight:700;font-variant-numeric:tabular-nums} .b.now b,.b.now .n{color:var(--now);font-weight:700}
+  .foot{font-size:16px;line-height:1.35;color:var(--ink2);margin-top:20px}
+</style></head>
+<body>
+  <h1>Half the time per parse</h1>
+  <div class="sub">doorplate 0.5.1 against 0.4.1 and 0.5.0, the same addresses, no key changed</div>
+  <div class="panels">
+    <section class="panel"><h2>Wall time per parse</h2><div class="u">microseconds, one pinned CPU (lower is faster)</div>
+<div class="b o"><span class="n">0.4.1</span><i style="width:267px"></i><b>31.1 &micro;s</b></div>
+<div class="b o"><span class="n">0.5.0</span><i style="width:286px"></i><b>33.3 &micro;s</b></div>
+<div class="b now"><span class="n">0.5.1</span><i style="width:133px"></i><b>15.6 &micro;s</b></div>
+    </section>
+    <section class="panel"><h2>Instructions per parse</h2><div class="u">thousands, counted with callgrind (lower is faster)</div>
+<div class="b o"><span class="n">0.4.1</span><i style="width:262px"></i><b>157.5k</b></div>
+<div class="b o"><span class="n">0.5.0</span><i style="width:286px"></i><b>171.6k</b></div>
+<div class="b now"><span class="n">0.5.1</span><i style="width:143px"></i><b>85.9k</b></div>
+    </section>
+  </div>
+  <div class="foot">The benchmark suite&rsquo;s <code>natural</code> mix, 0.5.1 at <code>c68760e</code>. The builds were alternated in one session, best of five; wall time on this machine varies from day to day, so the ratios, not the digits, carry the claim. Bars start at zero.</div>
+</body></html>
