@@ -10,7 +10,7 @@ Run `dump` once per build (or `dump-all --out DIR [--unit]` for every file in `l
 record (row number, source, role, record id, key, warning codes) and `<out>/<source>.json` with the doorplate
 version, the checkout's commit (marked `+dirty` when the tree has uncommitted changes) and whether the installed
 extension is older than the newest file under `crates/doorplate/src`, since the version string alone names a build
-only between releases (on `main`, after 0.5.0, it says 0.5.1-dev). Rows with a `last_line` are left out (the harness joins those into one string; none of the key sources
+only between releases (on `main`, after 0.5.1, it says 0.5.2-dev). Rows with a `last_line` are left out (the harness joins those into one string; none of the key sources
 use it). `diff` compares two such directories row by row and prints counts only, by source and role: the rows
 with a different key, with different warnings, and the shapes of the keys that changed. It never prints
 names or street text; the files stay in the git-ignored `local-data/`.

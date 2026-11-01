@@ -1,7 +1,7 @@
 # Roadmap
 
 What is planned, what depends on what, and what is deliberately not planned.
-`doorplate` 0.5.0 is an alpha. Priorities follow the data people bring: the more real,
+`doorplate` 0.5.1 is an alpha. Priorities follow the data people bring: the more real,
 messy addresses it sees, the sooner the items below that need them can happen. To send
 some, see [Sharing messy data](../CONTRIBUTING.md#sharing-messy-data).
 
@@ -58,11 +58,11 @@ been checked on the project's own data, so a `k4` is likely.
 
 0.5.x has no key changes (`key_diff.py` against `local-data/keycompare/k4-cut` must show 0 differences) and is ordered by tracker #402.
 
-- **Performance (done on `main`, 0.5.1-dev):** the engine takes about half the time per parse of 0.4.1 (31.1 to 15.6 µs on one pinned CPU;
+- **Performance (done, released in 0.5.1):** the engine takes about half the time per parse of 0.4.1 (31.1 to 15.6 µs on one pinned CPU;
   85,900 instructions per parse against 157,500), with every key, warning and unit field unchanged. The figures, what was done and the leads
   for a later round are on [`speed-and-size.md`](speed-and-size.md); #418 holds the leads in Later.
 - **Docs (done):** the edit pass (#399: current figures, no build history in the user pages) and the wheel-size correction (#277).
-- **Release:** the 0.5.1 checklist is #453.
+- **Release:** the 0.5.1 checklist is #453 (released with the references PR).
 - **Tooling:** MessyStreets findings (#323) and the Try page (#434) are in the Tooling milestone.
 - **Parse rules** found since the list closed are in **Later** (each is measured, none reached the P2 line). The next key version is `k5`, planned
   for an eventual 0.6.0 release (#416); nothing is scheduled for it.

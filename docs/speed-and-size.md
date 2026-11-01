@@ -1,6 +1,6 @@
 # Speed, size and memory
 
-Speed, installed size, memory and where the time goes, measured on `main` (0.5.1-dev, `c68760e`; the engine changes since 0.5.0
+Speed, installed size, memory and where the time goes, measured on 0.5.1 (`c68760e`, taken as `0.5.1-dev`; the engine changes since 0.5.0
 are speed only, and keys, warnings and unit fields are equal to 0.5.0's). The accuracy figures, the benchmark suite and the
 caveats that apply to every number are on [Accuracy](benchmarks.md); how to rerun these scripts is in
 [Running the benchmarks](running-benchmarks.md). Speed figures belong to one machine (Intel Core i9-9900K, Linux on WSL2): read the ratios.
@@ -115,15 +115,15 @@ model on its first call, so its memory after import understates it.
 ## Speed by version
 
 Engine speed is instructions per parse (callgrind repeats exactly) and wall time on one pinned CPU, on the suite's `natural` mix,
-measured on `main` at `c68760e`:
+measured on 0.5.1 (`c68760e`):
 
-| | 0.4.1 | 0.5.0 | `main` (0.5.1-dev) |
+| | 0.4.1 | 0.5.0 | 0.5.1 |
 |---|---|---|---|
 | Instructions per parse | about 157,500 | about 171,600 | about 85,900 |
 | Wall time per parse, one pinned CPU | 31.1 µs | 33.3 µs | 15.6 µs |
 
 0.5.0 was 7% to 9% slower than 0.4.1 (its added rules do more lookups on the same tokens); that was accepted for the
-`k4` rules. `main` is half the time of 0.4.1 and 2.1x the parses per second. The Python and criterion figures above move less
+`k4` rules. 0.5.1 is half the time of 0.4.1 and 2.1x the parses per second. The Python and criterion figures above move less
 than the engine does, because the Python object work around a parse is not part of the parser. Wall time on this machine varies
 10% to 60% between days, so these ratios come from alternating builds in one session, best of five.
 
