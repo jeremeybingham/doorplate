@@ -5,8 +5,8 @@ What is planned, what depends on what, and what is deliberately not planned.
 messy addresses it sees, the sooner the items below that need them can happen. To send
 some, see [Sharing messy data](../CONTRIBUTING.md#sharing-messy-data).
 
-**Last reviewed 2026-10-31, against the issues up to #391.** The rules for the labels, the milestones and the order are in
-[`backlog.md`](backlog.md); the two trackers are #200 (0.4.x) and #201 (0.5.0, the `k4`).
+**Last reviewed 2026-11-01, against the issues up to #451.** The rules for the labels, the milestones and the order are in
+[`backlog.md`](backlog.md); the open trackers are #402 (0.5.x, in order), #416 (0.6.0, the `k5`) and #417 (decided against).
 
 ## Stability while it is an alpha
 
@@ -29,7 +29,7 @@ are in [`CHANGELOG.md`](../CHANGELOG.md); the `k4` against the frozen `k3` keys 
 
 The release was proved with probes and a full run: one probe per open issue (35 of 35 open rule issues have a probe or a written reason), counted on 0.4.1 and
 on the cut over 146.6 million Netsyms rows and the seven large sources; the suite's whole-address score rises from 92.3% to 93.4%, the Florida one-line
-check and the geocode `city_diff` do not move, and `parse` is 8 to 12% slower ([`benchmarks.md`](benchmarks.md), "0.4.1 to 0.5.0").
+check and the geocode `city_diff` do not move, and `parse` was 8 to 12% slower ([`benchmarks.md`](benchmarks.md), "0.4.1 to 0.5.0"); the 0.5.1 round below won that back.
 
 **0.4.1 (2026-10-28)**, decided 2026-10-27: everything done in 0.4.x, with **no key change and no parse-rule change** (a custom layer changes parsing only when one is loaded): tooling, documentation and extensibility (tracker #200).
 
@@ -54,13 +54,17 @@ the first review of real rows, #125 and its issues #126 to #130, #114, #143 to #
 changed, is in [`CHANGELOG.md`](../CHANGELOG.md) and [`key-format.md`](key-format.md). It stays an alpha: the `k3` is new and has only
 been checked on the project's own data, so a `k4` is likely.
 
-## Next: 0.5.x, performance
+## Next: 0.5.x, tooling, docs and performance
 
-Decided 2026-10-31: 0.5.x is performance-focused again. #390 holds the baseline (the 8 to 12% that 0.5.0 gave up) and the plan: profile each tokenizer and
-tagger pass, guard the cheap ones, and keep every key (`key_diff.py` against `local-data/keycompare/k4-cut` must show 0 differences). Parse rules found
-since the list closed are in **Later** (each is measured, none reached the P2 line): #384 (a campus box with two plain words), #387 (a lost fraction
-before a lone letter), #388 (`EAST TR 56` read with a suffix), #375, #294 and the rest; #391 proposes a review queue for the letter after a house
-number. The next key version is `k5`; nothing is scheduled for it.
+0.5.x has no key changes (`key_diff.py` against `local-data/keycompare/k4-cut` must show 0 differences) and is ordered by tracker #402.
+
+- **Performance (done on `main`, 0.5.1-dev):** the engine takes about half the time per parse of 0.4.1 (31.1 to 15.6 µs on one pinned CPU;
+  85,900 instructions per parse against 157,500), with every key, warning and unit field unchanged. The figures, what was done and the leads
+  for a later round are on [`speed-and-size.md`](speed-and-size.md); #418 holds the leads in Later.
+- **Docs:** the edit pass (#399: current figures, no build history in the user pages) and the wheel-size correction (#277).
+- **Tooling:** MessyStreets findings (#323) and the Try page (#434) are in the Tooling milestone.
+- **Parse rules** found since the list closed are in **Later** (each is measured, none reached the P2 line). The next key version is `k5`, planned
+  for an eventual 0.6.0 release (#416); nothing is scheduled for it.
 
 ## Waiting, on data or demand
 
@@ -75,10 +79,11 @@ number. The next key version is `k5`; nothing is scheduled for it.
     a compass word with `KY` or `TR` (#388), and the letter after a house number (#391, a review queue).
   - *State and road forms:* Texas `PR` roads (#314), Alabama `<NAME> ROAD <number>` (#315), the FM number before the road type (#316), `AND` between two highways (#317); Puerto Rico (#318, #319, the epic #332, #92).
   - *City field and line 2:* a unit or a box in the city field (#244), the city field holds the state (#357), a `CO` prefix with a fuller name on line 2 (#367).
+  - *Review data and tooling:* the review tool's deferred sharing helpers (#222, item 4), the tracker of what has been hand-reviewed and the queues to come (#225), comparing with libpostal (#215), the Web Data Commons answer on research use (#395), larger MessyStreets tiers (#403).
+  - *Parsing ideas:* the tagger's known-word chains (#410), a street line that already ends in the city, state and ZIP (#397), missing-value strings in the city, state or ZIP (#419), repeated state, a county-only segment and `USA` after the ZIP (#435).
   - *Data, API, docs and speed:* Florida pack gaps (#11), more state data (#213), the address-structure labels usaddress has (#35), Canadian addresses (#203), the usaddress comparison post (#88), the examples notebook as a page (#253),
-    the docs site move off Material for MkDocs (#233), the 0.4.1 size figures (#277), a browser page for CSV files (#335), and the performance work of 0.5.x (#390).
-- **Tooling** (never shipped, never closed): the review tool's deferred sharing helpers (#222, item 4); the tracker of what has been hand-reviewed and the
-  queues to come (#225; the queues so far are reviewed and filed); comparing with libpostal (#215); evaluating MessyStreets (#323).
+    the docs site move off Material for MkDocs (#233), and further performance leads (#418).
+- **Tooling** (never shipped, never closed): evaluating MessyStreets (#323) and the Try page (#434).
 - **More shapes and rules** not tied to a state, known and not yet an issue: named buildings without a building word (`THE GARRETT`, `UPTOWN SQUARE`);
   highway modifiers before a city on one line
   (`NORTH HIGHWAY 71 BUSINESS LOWELL`); a comma after a directional (`3324 N, ANDREWS AVE`); a PO box on line 2 beside a street with no number; a unit
@@ -87,8 +92,7 @@ number. The next key version is `k5`; nothing is scheduled for it.
 - **usaddress compatibility** (#9, decided): the drop-in module is done (#36); the labels in #35 proceed when someone needs them. Recipient and name
   lines, landmarks and street corners stay out of scope; that text goes to `unparsed`.
 - **Data and benchmarks:** a benchmark built from a national address source rendered in several styles and compared per state and per shape; a
-  hand-labeled sample of real messy data in the shapes people actually have; and more of the `parse` slowdown (about 8% of an earlier build's
-  speed is still spread across allocation in the place keys and `Vec` growth).
+  hand-labeled sample of real messy data in the shapes people actually have.
 
 ## Researched, but not supported
 

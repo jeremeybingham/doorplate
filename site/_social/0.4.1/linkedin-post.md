@@ -12,7 +12,7 @@ I just released doorplate 0.4.1, an open-source US address parser written in Rus
 Against usaddress, on the same benchmarks:
 - 4.3x faster per thread (38,305 vs 8,937 addresses a second), 17x in batch on 4 threads
 - more accurate on 3 of the 4 sets I tested (98.3% vs 96.1% on everyday addresses). usaddress still wins on its own test files, 100% vs 99.2%, and the graphic says so.
-- 1.8 MB installed instead of 4.8 MB
+- 2.0 MB installed instead of 4.8 MB
 
 New in 0.4.1: `doorplate anonymize`. It changes the digits and names in an address and keeps its shape, so you can share a sample of a private dataset without sharing the data. On nine real sources, 97 to 99.9% of street lines still parse the same afterwards.
 
@@ -29,7 +29,7 @@ Try it in your browser: jeremeybingham.github.io/doorplate/demo/
 
 doorplate 0.4.1 is out: an open-source US address parser in Rust (Python package and CLI).
 
-4.3x faster than usaddress per thread, more accurate on 3 of 4 benchmarks (usaddress wins on its own test files), 1.8 MB installed.
+4.3x faster than usaddress per thread, more accurate on 3 of 4 benchmarks (usaddress wins on its own test files), 2.0 MB installed.
 
 New: `doorplate anonymize` keeps the shape of an address and changes the digits and names, so you can send me a sample of your messy private data safely.
 
