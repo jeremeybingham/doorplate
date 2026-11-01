@@ -61,7 +61,8 @@ been checked on the project's own data, so a `k4` is likely.
 - **Performance (done on `main`, 0.5.1-dev):** the engine takes about half the time per parse of 0.4.1 (31.1 to 15.6 µs on one pinned CPU;
   85,900 instructions per parse against 157,500), with every key, warning and unit field unchanged. The figures, what was done and the leads
   for a later round are on [`speed-and-size.md`](speed-and-size.md); #418 holds the leads in Later.
-- **Docs:** the edit pass (#399: current figures, no build history in the user pages) and the wheel-size correction (#277).
+- **Docs (done):** the edit pass (#399: current figures, no build history in the user pages) and the wheel-size correction (#277).
+- **Release:** the 0.5.1 checklist is #453.
 - **Tooling:** MessyStreets findings (#323) and the Try page (#434) are in the Tooling milestone.
 - **Parse rules** found since the list closed are in **Later** (each is measured, none reached the P2 line). The next key version is `k5`, planned
   for an eventual 0.6.0 release (#416); nothing is scheduled for it.
