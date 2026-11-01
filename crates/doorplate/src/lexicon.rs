@@ -181,8 +181,41 @@ fn search(n: usize, cmp: impl Fn(usize) -> Option<std::cmp::Ordering>) -> Option
     None
 }
 
-/// The row and spelling kind for a `STATE|key` place key.
+/// The `STATE|key` keys of the place index, in order.
+fn place_keys() -> impl Iterator<Item = &'static str> + Clone {
+    (0..tables::PLACE_INDEX.len() / KEY_LEN).filter_map(|n| {
+        let r = record(tables::PLACE_INDEX, KEY_LEN, n)?;
+        pool_str(tables::PLACE_KEYS, le32(r, 0)?, *r.get(4)?)
+    })
+}
+
+/// The keys (without `STATE|`) that [`any_place`] searches.
+fn any_place_keys() -> impl Iterator<Item = &'static str> + Clone {
+    (0..tables::PLACE_ANY.len() / 4).filter_map(|n| {
+        let r = record(
+            tables::PLACE_INDEX,
+            KEY_LEN,
+            usize::try_from(le32(tables::PLACE_ANY, n * 4)?).ok()?,
+        )?;
+        pool_str(tables::PLACE_KEYS, le32(r, 0)?, *r.get(4)?)?.get(3..)
+    })
+}
+
+/// The row and spelling kind for a `STATE|key` place key. Most keys asked for are not places
+/// (a city candidate is built for every run of words), so a bit filter over the keys answers
+/// those without the search (#425).
 fn find_place(key: &str) -> Option<(u32, MatchKind)> {
+    static FILTER: OnceLock<Filter> = OnceLock::new();
+    if !FILTER
+        .get_or_init(|| Filter::new(place_keys()))
+        .may_contain(key)
+    {
+        return None;
+    }
+    find_place_search(key)
+}
+
+fn find_place_search(key: &str) -> Option<(u32, MatchKind)> {
     let index = tables::PLACE_INDEX;
     let at = search(index.len() / KEY_LEN, |n| {
         let r = record(index, KEY_LEN, n)?;
@@ -199,8 +232,16 @@ fn find_place(key: &str) -> Option<(u32, MatchKind)> {
 }
 
 /// Whether a key (without its `STATE|`) is the standard name of a place in
-/// any state.
+/// any state (behind a bit filter like [`find_place`], #425).
 fn any_place(key: &str) -> bool {
+    static FILTER: OnceLock<Filter> = OnceLock::new();
+    FILTER
+        .get_or_init(|| Filter::new(any_place_keys()))
+        .may_contain(key)
+        && any_place_search(key)
+}
+
+fn any_place_search(key: &str) -> bool {
     let at = |n: usize| {
         let r = record(
             tables::PLACE_INDEX,
@@ -1582,6 +1623,52 @@ mod tests {
         check(tables::HIGHWAY_INDEX, &probes);
         check(tables::MILITARY_INDEX, &probes);
         check(tables::MILITARY_PO_INDEX, &probes);
+    }
+
+    /// The filter in front of the place searches never changes an answer (#425): every key is
+    /// found, and keys cut, grown and changed by a letter, and generated ones, give what the search
+    /// alone gives.
+    #[test]
+    fn the_filter_in_front_of_the_place_searches_changes_no_lookup() {
+        let mut x: u64 = 0x2545_F491_4F6C_DD1D;
+        let mut next = move || {
+            x ^= x << 13;
+            x ^= x >> 7;
+            x ^= x << 17;
+            x
+        };
+        let mut probes: Vec<String> = Vec::new();
+        for k in place_keys() {
+            probes.push(k.to_string());
+            probes.push(k[..k.len() - 1].to_string());
+            probes.push(format!("{k}S"));
+            let mut b = k.to_string().into_bytes();
+            let i = (next() % b.len() as u64) as usize;
+            b[i] = b'A' + (next() % 26) as u8;
+            probes.push(String::from_utf8_lossy(&b).into_owned());
+        }
+        for k in any_place_keys() {
+            probes.push(k.to_string());
+            probes.push(format!("{k}X"));
+        }
+        for _ in 0..30_000 {
+            let n = 1 + (next() % 12) as usize;
+            probes.push(
+                (0..n)
+                    .map(|_| match next() % 30 {
+                        26 => '|',
+                        27 => '1',
+                        _ => (b'A' + (next() % 26) as u8) as char,
+                    })
+                    .collect(),
+            );
+        }
+        probes.extend(["", "|", "FL|", "é"].map(String::from));
+        assert!(place_keys().count() > 1000 && any_place_keys().count() > 1000);
+        for p in &probes {
+            assert_eq!(find_place(p), find_place_search(p), "{p:?}");
+            assert_eq!(any_place(p), any_place_search(p), "{p:?}");
+        }
     }
 
     /// `special_run_may_start` never says no to a word that starts a special word of two words or
