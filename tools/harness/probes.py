@@ -438,6 +438,92 @@ PROBES = [
         "S",
         2,
     ),
+    (
+        "campus-box-two-words",
+        "384",
+        "a campus box with two plain words before BOX (ELM HALL BOX 3310)",
+        r"^[A-Z]{2,} [A-Z]{2,} BOX [0-9]+",
+        "S",
+        2,
+    ),
+    (
+        "half-before-lone-letter",
+        "387",
+        "a half written without its slash before a lone letter (10 1 2 N MAIN ST)",
+        r"^[0-9]+ (?:[0-9]+ )?(?:1 2|1 4|3 4) [A-Z] ",
+        "S",
+        2,
+    ),
+    (
+        "compass-ky-tr-number",
+        "388",
+        "a compass word, KY or TR and a number (1234 EAST TR 56)",
+        r"^[0-9]+ (?:NORTH|SOUTH|EAST|WEST) (?:KY|TR) [0-9]+",
+        "S",
+        3,
+    ),
+    # Needs a repeat of the state and ZIP (a back-reference), so no pattern: see csz_twice().
+    ("city-state-zip-twice", "397", "the state and ZIP written twice in the text (12 OAK ST SPRINGFIELD IL 62704 SPRINGFIELD IL 62704)", None, "M", 2),
+    # Fields and last-line words (hits(): zip, city and state), so no single pattern.
+    ("null-word-field", "419", "NaN, null, none or undefined as the city, state or ZIP, or as a word of the text", None, "M", 2),
+    ("repeated-state-or-county", "435", "a state written twice, USA before the ZIP, or a county segment", None, "M", 2),
+    (
+        "letter-and-initials",
+        "466",
+        "a lone letter A to D followed by AND (120 A AND M LN)",
+        r"^[0-9]+ [A-D] AND ",
+        "S",
+        3,
+    ),
+    (
+        "letter-then-direction",
+        "467",
+        "a lone letter A to D followed by a direction word (301 A S MAIN ST)",
+        r"^[0-9]+ [A-D] (?:N|S|E|W|NE|NW|SE|SW|NORTH|SOUTH|EAST|WEST) ",
+        "S",
+        1,
+    ),
+    ("city-placeholder", "468", "a placeholder in the city field (NOT STATED, UNKNOWN)", None, "S", 1),
+    (
+        "non-latin-text",
+        "469",
+        "a run of non-Latin script (Cyrillic, Greek, Arabic, Hebrew, Indic, Kana, Han or Hangul) in the address",
+        r"[\u0370-\u03ff\u0400-\u052f\u0590-\u06ff\u0900-\u097f\u3040-\u30ff\u4e00-\u9fff\uac00-\ud7af]",
+        "M",
+        2,
+    ),
+    (
+        "no-for-north",
+        "470",
+        "NO for north before a street name (464 NO MAPLE AVE)",
+        r"^[0-9]+(?: [0-9]/[0-9])? NO (?![0-9])[A-Z]",
+        "S",
+        3,
+    ),
+    (
+        "unit-marker-after-suffix",
+        "471",
+        "BX, SP, SPC, FL or ST and a number after a street suffix, or a SUITE with a letter-hyphen-number",
+        rf"^[0-9]+ [A-Z0-9 ]+ {SUF} (?:(?:BX|SPC?|FL|ST) [A-Z]?[0-9]+[A-Z]?|(?:SUITE|STE) [A-Z]-[0-9]+[A-Z]?)(?: \||$)",
+        "M",
+        3,
+    ),
+    (
+        "name-or-business-line2",
+        "472",
+        "a street on line 1 and DBA, C O, ATTN or a name ending in DDS, MD, ESQ, LLC or INC on line 2",
+        rf"^[0-9]+ [A-Z0-9 ]+ {SUF}\b[^|]*\| (?:(?:DBA|C O|C/O|ATTN:?) |[A-Z .'-]+ (?:DDS|DMD|DVM|MD|ESQ|CPA|LLC|INC)\b)",
+        "M",
+        2,
+    ),
+    (
+        "co-name-street-one-line",
+        "473",
+        "C/O, a name and then a house number and street on line 1 (C/O JANE DOE 1504 EAST M)",
+        r"^(?:C/O|C O) [^|0-9]+ [0-9]+ [A-Z0-9 ]+(?: \||$)",
+        "S",
+        3,
+    ),
     # Needs the city field (hits(): city and state), so no pattern.
     ("city-is-state", "357", "the city field holds the state and the real city is on line 2", None, "S", 3),
     ("unit-or-box-in-city", "244", "a unit or a box in the city field", None, "S", 2),
@@ -450,6 +536,7 @@ NO_PROBE = {
     213: "research: whether more state data is needed; measured by the label comparisons, not a text shape",
     238: "a family of unit misses in NAD, split into #320 and #321, which have probes",
     345: "research: a bare number after a street is a unit in some sources and a name in others; no text shape tells them apart",
+    410: "research: naming the known-word chains and where the tokenizer and tagger differ; a reading task, not a shape",
 }
 NOT_A_SHAPE_LABELS = ("tracker", "area:docs", "area:tooling", "area:api", "area:architecture")
 
@@ -507,6 +594,40 @@ def regexes():
 CITY_UNIT = re.compile(rf"^(?:{UN}|BOX|{BOX}|#)\b")
 
 
+STATE_ABBR = dict(
+    zip(
+        ["ALABAMA", "ALASKA", "ARIZONA", "ARKANSAS", "CALIFORNIA", "COLORADO", "CONNECTICUT", "DELAWARE", "FLORIDA", "GEORGIA", "HAWAII", "IDAHO", "ILLINOIS", "INDIANA", "IOWA", "KANSAS", "KENTUCKY", "LOUISIANA", "MAINE", "MARYLAND", "MASSACHUSETTS", "MICHIGAN", "MINNESOTA", "MISSISSIPPI", "MISSOURI", "MONTANA", "NEBRASKA", "NEVADA", "NEW HAMPSHIRE", "NEW JERSEY", "NEW MEXICO", "NEW YORK", "NORTH CAROLINA", "NORTH DAKOTA", "OHIO", "OKLAHOMA", "OREGON", "PENNSYLVANIA", "RHODE ISLAND", "SOUTH CAROLINA", "SOUTH DAKOTA", "TENNESSEE", "TEXAS", "UTAH", "VERMONT", "VIRGINIA", "WASHINGTON", "WEST VIRGINIA", "WISCONSIN", "WYOMING"],
+        ["AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA", "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD", "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ", "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"],
+    )
+)
+STATE_NAMES = "|".join(sorted(STATE_ABBR, key=len, reverse=True))
+NAME_AND_ABBR = re.compile(rf"\b({STATE_NAMES}),? ([A-Z]{{2}}),? [0-9]{{5}}\b|\b([A-Z]{{2}}),? ({STATE_NAMES}),? [0-9]{{5}}\b")
+NULL_WORDS = {"NAN", "NULL", "NONE", "UNDEFINED", "N/A"}
+NULL_TEXT = re.compile(r"\b(?:NAN|NULL|UNDEFINED)\b")
+CSZ = re.compile(r"\b([A-Z]{2}),? ([0-9]{5})\b")
+REPEATED_STATE = re.compile(
+    r"\b([A-Z]{2}),? \1,? [0-9]{5}\b"
+    r"|\b[A-Z]{2},? (?:USA|US|UNITED STATES(?: OF AMERICA)?),? [0-9]{5}\b"
+    r"|, [A-Z .'-]+ COUNTY(?:,| \||$)"
+)
+CITY_PLACEHOLDER = {"NOT STATED", "UNKNOWN"}
+
+
+def state_name_repeated(t):
+    """A state name next to its own abbreviation before the ZIP (`ILLINOIS IL 62704`, #435). `NEW YORK NY` is a city and its state."""
+    for m in NAME_AND_ABBR.finditer(t):
+        name, ab = (m.group(1), m.group(2)) if m.group(1) else (m.group(4), m.group(3))
+        if STATE_ABBR[name] == ab and name != "NEW YORK":
+            return True
+    return False
+
+
+def csz_twice(t):
+    """The same state and ZIP written twice in the text (`SPRINGFIELD IL 62704 SPRINGFIELD IL 62704`, #397)."""
+    found = CSZ.findall(t)
+    return len(found) != len(set(found))
+
+
 def repeated_line(line1):
     """Line 1 is the same words twice (`812 ASHGROVE ST 812 ASHGROVE ST`): four or more words, the halves equal."""
     w = re.sub(r"[^A-Z0-9 ]", " ", (line1 or "").upper()).split()
@@ -525,6 +646,17 @@ def hits(line1, line2, zip_code=None, city=None, state=None):
     # A unit designator or a box in the city field (#244).
     if c and CITY_UNIT.match(c):
         out.append("unit-or-box-in-city")
+    if csz_twice(t):
+        out.append("city-state-zip-twice")
+    # A null-like word as the city, state or ZIP field, or as a word of the text (#419).
+    fields = {c, (str(state) if state else "").upper().strip(), (str(zip_code) if zip_code else "").upper().strip()}
+    if (fields & NULL_WORDS) or NULL_TEXT.search(t):
+        out.append("null-word-field")
+    if REPEATED_STATE.search(t) or state_name_repeated(t):
+        out.append("repeated-state-or-county")
+    # A placeholder city (#468).
+    if c in CITY_PLACEHOLDER:
+        out.append("city-placeholder")
     # The street line written twice (#236).
     if repeated_line(line1):
         out.append("repeated-line")
