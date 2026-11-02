@@ -158,6 +158,40 @@ A pattern is an upper bound: it also matches correct rows. Two things turn "has 
 (a shape both parsers read alike is probably fine) and the review queue, where a person marks 50 matches per probe (`tools/review/server.py`
 on the queue, then the verdicts give a precision). The score that orders the issues is in `docs/backlog.md`, "Ordering by how common". The same
 registry is counted by `run.py` into `agg_probes/` (schema version 9), so a full Netsyms run counts every probe over all its rows without keeping text.
+
+### The unsampled scan (`probe_scan.py`, #465)
+
+`probes.py` samples one row in ten of the records files; a shape that occurs a few hundred times is then counted in steps of ten.
+`tools/harness/probe_scan.py` counts every probe over every row of whole sources, with no sampling, and keeps the identity of each
+match. It does the cheap part only: the regexes over all rows, and one parser call for the rows that match some probe (to say whether
+the parse is flagged). It does not parse the other rows.
+
+```sh
+python tools/harness/probe_scan.py local-data/probe-scan-inputs.txt --limit-chunks 1 --confirm     # smoke test: one chunk per input, for the ETA
+python tools/harness/probe_scan.py local-data/probe-scan-inputs.txt --run-id NAME --confirm          # the run (setsid nohup, as run.py)
+python tools/harness/probe_scan.py --summary local-data/probe-scan/NAME                               # rebuild and print summary.json
+```
+
+The list file has one input per line (`#` starts a comment): a records file, the raw NAD file (mapped as in `tools/ingest/specs/nad.toml`),
+or the Netsyms SQLite database (`table=addresses country=US`). A smoke test on one chunk of 11 inputs (9.0M rows) took 52 seconds on 11 workers.
+Without `--confirm` it prints the plan, including whether `probes.py --coverage` passes; a run refuses to start when it does not, because the
+manifest hashes `probes.py` and a probe added later would need a second pass. A run directory `local-data/probe-scan/<run-id>/` holds:
+
+| File | Content |
+|---|---|
+| `manifest.json` | the commit, the sha256 of `probes.py`, the doorplate version, the inputs (size, mtime, row range), the options, the times |
+| `counts/*.parquet` | one file per chunk: `source, role, state, probe, kind, n`; `kind` is `rows`, `flagged` or `partial_key`; the probe `__rows__` counts all rows. Sum `n` across chunks |
+| `hits/*.parquet` | one file per chunk: `source, role, record_id, state, probe, flagged, text_hash, rk`. No address text; read the text back from the input by `record_id` to build a review queue |
+| `chunk_status/*.json`, `progress.log`, `status.json` | one status per chunk; a log line per chunk with rows, rate, elapsed time and ETA, a heartbeat every minute (free disk, worker memory); `status.json` is rewritten after each chunk for `watch cat` |
+| `summary.json`, `DONE` | totals per probe and source, the probes below 20 rows; written on success |
+
+Per probe and chunk at most `--hit-cap` (1000) matches are kept in `hits/`, the ones with the lowest `rk` (a seeded hash in [0, 1)), so a capped
+probe is still a random sample; the exact count is in `counts/`. `record_id` is the record id of a records file, the file row number of the
+raw NAD file, or the SQLite rowid. `record_id` of different inputs can repeat: key on `source` and `record_id` and the input. A run resumes
+with the same `--run-id` (chunks with a status file are skipped), stops cleanly after the chunks in progress on SIGINT or SIGTERM, and
+refuses to resume when `probes.py` has changed. Reader errors print the exception type only. The NC snapshot overlaps the current NC file:
+scan it in a run of its own and report it apart, never added to the total. Workers are spawned, not forked, because DuckDB does not
+survive a fork.
 Add a probe when an issue is opened, with its pattern, size and harm; remove it when the issue closes.
 
 ## MessyStreets (`messy_score.py`, #323)
