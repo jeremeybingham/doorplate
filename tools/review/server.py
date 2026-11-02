@@ -21,7 +21,9 @@ For each row the page shows the parse and the warnings, and you choose a verdict
 - `noise`: the source cut it off or mangled it;
 - `skip`: not now;
 - `labeled`: the parts of the one-line string, marked by the person (`labels`: `[{start, end, component}]` over
-  `labeled_text`), a more exact answer than a rewrite when the parse is wrong in a few places.
+  `labeled_text`), a more exact answer than a rewrite when the parse is wrong in a few places. On a comparison row it can also say
+  `usaddress_right: "full"` (usaddress's whole reading equals the labels) or `"mostly"` (basically right, one part differs): the
+  labels are kept and the row counts as `usaddress_right` in the comparison tables (#461).
 
 Whatever the verdict, text left in the correction box that differs from the original is kept as `draft` (with
 `draft_parse`): an attempt at a fix on a row you could not fix ("I can't tell"), or on a row where you judged
@@ -74,6 +76,7 @@ COMPONENTS = ("StreetNumber", "StreetDirPrefix", "StreetName", "StreetSuffix", "
               "UnitNumber", "SecondUnitType", "SecondUnitNumber", "PoBox", "RuralRoute", "GeneralDelivery", "Military",
               "MilitaryPostOffice", "Attention", "Building", "City", "State", "Zip5", "Zip4", "Unparsed")  # the page's names
 MAX_LABELS = 200
+USADDRESS_GRADES = ("full", "mostly")  # how right usaddress was on a labeled comparison answer (#461)
 COMPARE_VERDICTS = ("doorplate_right", "usaddress_right", "both_right", "both_wrong")  # for a comparison row
 WARNING_VERDICTS = ("fair", "noise")  # for a `right` parse: was the warning justified?
 MAX_BODY = 64 * 1024
@@ -175,6 +178,12 @@ class Review:
         labels = None
         if verdict == "labeled":
             labels = self._labels(body)
+        grade = body.get("usaddress_right")
+        if grade is not None:
+            if verdict != "labeled" or "compare" not in item:
+                raise ValueError("usaddress_right goes only with labels on a comparison row")
+            if grade not in USADDRESS_GRADES:
+                raise ValueError("usaddress_right is 'full' or 'mostly'")
         rec = {"ts": datetime.now(timezone.utc).isoformat(timespec="seconds"), "id": item["id"],
                "seq": item["seq"], "source": item["source"], "role": item["role"],
                "input": {k: item[k] for k in INPUT_KEYS if k in item}, "cluster": item.get("cluster"),
@@ -187,6 +196,8 @@ class Review:
             rec["corrected"] = corrected[:1000]
         if labels is not None:
             rec["labeled_text"], rec["labels"] = labels
+        if grade is not None:
+            rec["usaddress_right"] = grade
         draft = body.get("draft")
         draft = draft.strip() if isinstance(draft, str) else ""
         if verdict not in ("corrected", "both_wrong") and not with_corr and draft and \

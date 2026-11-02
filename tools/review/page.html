@@ -107,6 +107,14 @@
       <button id="labelassign" type="button">Assign to the selected words</button>
       <button id="labelsave" type="button" data-nosend="1">Save labels<kbd>Enter here</kbd></button>
     </div>
+    <div class="row" id="labelua" hidden>
+      <span class="muted">usaddress read it:</span>
+      <select id="labelgrade" title="How right usaddress was against the labels above">
+        <option value="mostly">basically right (one part differs)</option>
+        <option value="full">fully right (its reading equals the labels)</option>
+      </select>
+      <button id="labelsaveua" type="button" data-nosend="1" title="Saves the labels and records that usaddress was right too, for a row the correction box cannot fix">Save labels, usaddress right too<kbd>y</kbd></button>
+    </div>
   </details>
 
   <div class="row" id="cmpbuttons" hidden>
@@ -241,7 +249,7 @@
     $("done").hidden = true; $("app").hidden = false;
     item = it;
     var cmp = it.compare;
-    $("theirs").hidden = !cmp; $("cmpbuttons").hidden = !cmp; $("vbuttons").hidden = !!cmp;
+    $("theirs").hidden = !cmp; $("labelua").hidden = !cmp; $("cmpbuttons").hidden = !cmp; $("vbuttons").hidden = !!cmp;
     if (cmp) {
       $("theirshead").textContent = "usaddress read it like this (" + cmp.class + "):";
       theirsChips($("theirsview"), cmp.usaddress || []);
@@ -361,14 +369,18 @@
   var part = $("labelpart");
   Object.keys(KINDS).forEach(function (c) { var o = el("option", null, KINDS[c][0] + " (" + c + ")"); o.value = c; part.appendChild(o); });
   $("labelassign").addEventListener("click", function () { sel.forEach(function (i) { labels[i].component = part.value; }); sel = []; drawLabels(); });
-  $("labelsave").addEventListener("click", function () {
+  $("labelsave").addEventListener("click", function () { saveLabels(null); });
+  $("labelsaveua").addEventListener("click", function () { saveLabels($("labelgrade").value); });
+  // `grade` is null, "mostly" or "full": whether usaddress was right too (a comparison row only, #461).
+  function saveLabels(grade) {
     if (!item) return;
     var body = { id: item.id, verdict: "labeled", note: $("note").value, parse: summary(origParse),
                  labeled_text: oneLine(item), labels: H.runs(labels) };
+    if (grade && item.compare) body.usaddress_right = grade;
     addDraft(body);
     api("/api/answer", body).then(function () { rememberNote(body.note); return api("/api/next"); }).then(function (j) { show(j.item, j.stats); })
       .catch(function (e) { alert("not saved: " + e.message); });
-  });
+  }
 
   document.querySelectorAll("button[data-v]").forEach(function (b) { b.addEventListener("click", function () { send(b.dataset.v, b.dataset.w, false, !!b.dataset.c); }); });
   $("undo").addEventListener("click", undo);
@@ -388,6 +400,11 @@
     else if (e.key === "u") undo();
     else if (e.key === "]") { e.preventDefault(); move(1); }
     else if (e.key === "[") { e.preventDefault(); move(-1); }
+    else if (e.key === "y" && item && item.compare) {
+      // The first press opens the parts panel (so the labels can be checked); the next one saves them with "usaddress right too".
+      e.preventDefault();
+      if (!$("labeldet").open) { $("labeldet").open = true; $("labeldet").scrollIntoView(); } else saveLabels($("labelgrade").value);
+    }
     else if (e.key === "l") { e.preventDefault(); $("labeldet").open = true; $("labeldet").scrollIntoView(); }
     else if (e.key === "f") { e.preventDefault(); $("fix").focus(); $("fix").select(); }
   });

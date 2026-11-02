@@ -192,6 +192,8 @@ def entry(n, a, mask, anonymizer=None):
     mk = lambda v: mask_value(v, words)  # noqa: E731
     cl = a.get("cluster") or {}
     head = f"## {n}. {a['verdict']}"
+    if a["verdict"] == "labeled" and a.get("usaddress_right"):
+        head += f" (usaddress right: {a['usaddress_right']})"
     if a["verdict"] == "right":
         head += f" (warning {a.get('warning') or 'not recorded'})"
     lines = [head, f"- group: {cl.get('size')} row(s), shape `{cl.get('shape')}`, warnings {cl.get('warnings') or '-'}  ·  {a.get('source')} / {a.get('role')}  ·  {(a.get('ts') or '')[:10]}"]

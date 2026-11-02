@@ -210,3 +210,36 @@ def test_the_status_endpoint_reports_a_fresh_build(http):
 def test_not_enough_for_a_door_is_its_own_verdict(review):
     rec = review.answer({"id": "inv|site|1", "verdict": "insufficient", "note": "map shows a different street"})
     assert rec["verdict"] == "insufficient" and rec["note"] == "map shows a different street"
+
+
+LABELS = [{"start": 0, "end": 3, "component": "StreetNumber"}, {"start": 4, "end": 14, "component": "StreetName"}]
+
+
+def comparison_review(tmp_path):
+    q = tmp_path / "q.jsonl"
+    cmp = {"class": "silent", "differs": [["StreetName", "OccupancyIdentifier", 1]], "usaddress": []}
+    q.write_text(json.dumps(dict(QUEUE[0], compare=cmp)) + "\n" + json.dumps(QUEUE[1]) + "\n")
+    return server.Review(q, tmp_path / "a.jsonl")
+
+
+def test_labels_can_say_usaddress_was_right_too(tmp_path):
+    r = comparison_review(tmp_path)
+    body = {"id": "inv|site|1", "verdict": "labeled", "labeled_text": "123 QUINCEWOOD ST", "labels": LABELS}
+    for grade in ("mostly", "full"):
+        rec = r.answer(dict(body, usaddress_right=grade))
+        assert rec["verdict"] == "labeled" and rec["usaddress_right"] == grade and rec["labels"] == LABELS
+        r.undo()
+    # plain labels make no claim about usaddress, and old answers have no such field
+    assert "usaddress_right" not in r.answer(body)
+
+
+def test_usaddress_right_is_refused_where_it_means_nothing(tmp_path):
+    r = comparison_review(tmp_path)
+    body = {"id": "inv|site|1", "verdict": "labeled", "labeled_text": "123 QUINCEWOOD ST", "labels": LABELS}
+    with pytest.raises(ValueError):  # a grade the page does not offer
+        r.answer(dict(body, usaddress_right="yes"))
+    with pytest.raises(ValueError):  # not with another verdict (verdict 2 is its own answer)
+        r.answer({"id": "inv|site|1", "verdict": "usaddress_right", "usaddress_right": "full"})
+    with pytest.raises(ValueError):  # not on a flagged-queue row, which has no usaddress parse
+        r.answer(dict(body, id="inv|site|2", usaddress_right="full"))
+    assert not r.answers_path.exists() or not r.answers_path.read_text().strip()

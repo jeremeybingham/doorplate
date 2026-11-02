@@ -97,3 +97,22 @@ def test_source_only_with_the_flag_and_undone_answers_are_dropped(tmp_path):
     assert len(rows) == 1 and "source" not in rows[0]
     export.main([str(answers), "--out", str(out), "--with-source"])
     assert json.loads(out.read_text().splitlines()[0])["source"] == "privatesource"
+
+
+def test_a_labeled_answer_that_says_usaddress_was_right_is_counted_as_both():
+    cmp = {"class": "silent", "differs": [["StreetName", "OccupancyIdentifier", 1]], "usaddress": [["123", "AddressNumber"]]}
+    labeled = dict(ANSWER, verdict="labeled", compare=cmp, labeled_text="123 QUINCEWOOD ST",
+                   labels=[{"start": 0, "end": 3, "component": "StreetNumber"}, {"start": 4, "end": 14, "component": "StreetName"}])
+    labeled.pop("corrected"); labeled.pop("corrected_parse")
+    plain = dict(labeled)
+    both = dict(labeled, usaddress_right="mostly")
+    out = export.safe(both)
+    assert out["verdict"] == "labeled" and out["usaddress_right"] == "mostly" and out["labels"]
+    assert "usaddress_right" not in export.safe(plain)
+    assert export.safe(dict(labeled, usaddress_right="JOHN SMITH")).get("usaddress_right") is None
+    assert "QUINCEWOOD" not in json.dumps(out)
+    # the comparison table counts it under "usaddress right", the plain one under "other"
+    table = export.compare_table([both, plain])
+    row = [r for r in table.splitlines() if r.startswith("| silent")][0].split("|")
+    cells = [c.strip() for c in row[3:-1]]  # rows, doorplate right, usaddress right, both right, both wrong, other
+    assert cells == ["2", "0", "1", "0", "0", "1"], cells
