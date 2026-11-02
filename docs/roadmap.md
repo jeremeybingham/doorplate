@@ -63,7 +63,7 @@ been checked on the project's own data, so a `k4` is likely.
   for a later round are on [`speed-and-size.md`](speed-and-size.md); #418 holds the leads in Later.
 - **Docs (done):** the edit pass (#399: current figures, no build history in the user pages) and the wheel-size correction (#277).
 - **Release:** the 0.5.1 checklist is #453 (released with the references PR).
-- **Tooling:** MessyStreets findings (#323) and the Try page (#434) are in the Tooling milestone.
+- **Tooling:** MessyStreets findings (#323) are in the Tooling milestone. The Try page work (#434: a guided path, a sample CSV, an anonymize mode) is in review and ships with the site, not a crate release.
 - **Parse rules** found since the list closed are in **Later** (each is measured, none reached the P2 line). The next key version is `k5`, planned
   for an eventual 0.6.0 release (#416); nothing is scheduled for it.
 
@@ -84,7 +84,7 @@ been checked on the project's own data, so a `k4` is likely.
   - *Parsing ideas:* the tagger's known-word chains (#410), a street line that already ends in the city, state and ZIP (#397), missing-value strings in the city, state or ZIP (#419), repeated state, a county-only segment and `USA` after the ZIP (#435).
   - *Data, API, docs and speed:* Florida pack gaps (#11), more state data (#213), the address-structure labels usaddress has (#35), Canadian addresses (#203), the usaddress comparison post (#88), the examples notebook as a page (#253),
     the docs site move off Material for MkDocs (#233), and further performance leads (#418).
-- **Tooling** (never shipped, never closed): evaluating MessyStreets (#323) and the Try page (#434).
+- **Tooling** (never shipped, never closed): evaluating MessyStreets (#323); the Try page (#434) is in review.
 - **More shapes and rules** not tied to a state, known and not yet an issue: named buildings without a building word (`THE GARRETT`, `UPTOWN SQUARE`);
   highway modifiers before a city on one line
   (`NORTH HIGHWAY 71 BUSINESS LOWELL`); a comma after a directional (`3324 N, ANDREWS AVE`); a PO box on line 2 beside a street with no number; a unit
