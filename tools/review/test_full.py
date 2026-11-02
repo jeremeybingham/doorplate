@@ -153,3 +153,12 @@ def test_anon_without_the_package_is_an_error():
     rule.anon = True
     with pytest.raises(ValueError):
         full.entry(1, NC, rule)
+
+
+def test_a_labeled_answer_says_usaddress_was_right_too():
+    a = dict(ANSWER, verdict="labeled", usaddress_right="full", labeled_text="123 SMITH ST",
+             labels=[{"start": 0, "end": 3, "component": "StreetNumber"}], compare={"class": "silent", "differs": [], "usaddress": []})
+    a.pop("corrected"); a.pop("corrected_parse")
+    text = full.entry(1, a, full.Rule())
+    assert "## 1. labeled (usaddress right: full)" in text
+    assert "usaddress right" not in full.entry(1, dict(a, usaddress_right=None), full.Rule())

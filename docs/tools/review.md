@@ -117,6 +117,7 @@ banner on the page with the build command; `--strict` refuses to start instead. 
 | `8` (`9` in a comparison queue) | `dual` | The row holds a dual or multiple address (a street and a PO Box, or several): a different signal from `junk` |
 | `i` | `insufficient` | Some valid address parts, but wrong, extra or odd text around them, and not enough to put together one door (checked, for example, on a map: the real address could not be reached from what the row says). Not `junk` (no address at all), not `noise` (cut off by the source), not `unclear` (the reviewer can't tell the fix) |
 | `l` | `labeled` | Mark the parts yourself instead of rewriting the string (below) |
+| `y` (comparison queue) | `labeled`, `usaddress_right` set | The labels are saved and usaddress was right too (below). The first press opens the parts panel, the second saves |
 
 A correct parse and a fair warning are separate judgments, so a right parse always says which: a
 true range of house numbers is `right` with a `fair` warning; a fine parse with a spurious warning
@@ -150,6 +151,16 @@ extend), choose a part, press Assign, and Save labels. The answer is `labeled` w
 component}]`, offsets into `labeled_text`, in order and not overlapping; the components are the page's names (`StreetNumber`,
 `StreetName`, `Attention`, ...). The shape-only export keeps the parts and the shape of each (`["StreetNumber", "9"]`), the
 full-text export the words. A labeled answer is a labeled string and can later feed `label_score.py` (deferred, see #222).
+
+**Labels, and usaddress was right too (`y`, #461).** On a comparison card, some rows cannot be fixed in the correction box: usaddress puts a
+missed unit designator or a building name in the right slot and doorplate does not, and no one-line string says so. The panel then has a
+second button, **Save labels, usaddress right too**, with a choice of how right: *basically right* (`"mostly"`, one part differs) or *fully
+right* (`"full"`, its whole reading equals your labels). The answer is the same `labeled` answer with `usaddress_right: "mostly"` or `"full"`; the
+server accepts the field only on a `labeled` answer to a comparison row, and an old answer or a plain **Save labels** has no field and claims
+nothing about usaddress. The comparison table (`export.py`) counts such a row under *usaddress right* (so the shape group shows that usaddress
+won there) and the answer is still a labeled string for everything else; the shape-only export keeps the grade and the shapes of the labels,
+never a word, and the full-text export heads the entry `labeled (usaddress right: mostly)`. Press `y` once to open the panel (check the labels),
+again to save with the grade chosen in the list.
 
 Answers go to `local-data/review/answers.jsonl`, one object per line: the time, the id, the input, the
 shape group, the verdict, the correction and your note, and the parse of the original and of the

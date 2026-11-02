@@ -80,6 +80,8 @@ def compare_table(answers, top=15):
         safe_c = compare_safe(c)
         pair = safe_c["differs"][0][:2] if safe_c["differs"] else ["?", "?"]
         v = a["verdict"] if a["verdict"] in verdicts else "other"
+        if a["verdict"] == "labeled" and a.get("usaddress_right") in ("full", "mostly"):
+            v = "usaddress_right"  # labels and "usaddress was right too" (#461): counted here, and as labeled elsewhere
         key = (safe_c["class"] or "?", f"{pair[0]} / {pair[1]}")
         rows.setdefault(key, dict.fromkeys(verdicts, 0))[v] += 1
     if not rows:
@@ -119,6 +121,8 @@ def safe(a, with_source=False):
         out["warning"] = a.get("warning") if a.get("warning") in ("fair", "noise") else None
     if a.get("labels"):
         out["labels"] = labels_safe(a.get("labeled_text") or "", a["labels"])
+    if a.get("usaddress_right") in ("full", "mostly") and a.get("labels"):
+        out["usaddress_right"] = a["usaddress_right"]
     if a.get("compare"):
         out["compare"] = compare_safe(a["compare"])
     if a["verdict"] in ("corrected", "both_wrong") or (a["verdict"] == "usaddress_right" and a.get("corrected")):
