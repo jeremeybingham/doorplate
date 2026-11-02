@@ -168,7 +168,7 @@ the parse is flagged). It does not parse the other rows.
 
 ```sh
 python tools/harness/probe_scan.py local-data/probe-scan-inputs.txt --limit-chunks 1 --confirm     # smoke test: one chunk per input, for the ETA
-python tools/harness/probe_scan.py local-data/probe-scan-inputs.txt --run-id NAME --confirm          # the run (setsid nohup, as run.py)
+tools/harness/run_probe_scan.sh local-data/probe-scan-inputs.txt NAME                                 # the run, in a terminal you can leave (tmux): a banner and a bell say DONE, STOPPED or FAILED
 python tools/harness/probe_scan.py --summary local-data/probe-scan/NAME                               # rebuild and print summary.json
 ```
 
@@ -188,7 +188,7 @@ manifest hashes `probes.py` and a probe added later would need a second pass. A 
 Per probe and chunk at most `--hit-cap` (1000) matches are kept in `hits/`, the ones with the lowest `rk` (a seeded hash in [0, 1)), so a capped
 probe is still a random sample; the exact count is in `counts/`. `record_id` is the record id of a records file, the file row number of the
 raw NAD file, or the SQLite rowid. `record_id` of different inputs can repeat: key on `source` and `record_id` and the input. A run resumes
-with the same `--run-id` (chunks with a status file are skipped), stops cleanly after the chunks in progress on SIGINT or SIGTERM, and
+with the same `--run-id` (chunks with a status file are skipped; exit status 3 means stopped or some chunks failed), stops cleanly after the chunks in progress on SIGINT or SIGTERM, and
 refuses to resume when `probes.py` has changed. Reader errors print the exception type only. The NC snapshot overlaps the current NC file:
 scan it in a run of its own and report it apart, never added to the total. Workers are spawned, not forked, because DuckDB does not
 survive a fork.

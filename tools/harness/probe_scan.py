@@ -57,6 +57,7 @@ GB = 1 << 30
 ROW_COLS = ["record_id", "source", "role", "line1", "line2", "city", "state", "zip", "last_line"]
 RARE = 20
 ALL_ROWS = "__rows__"
+EXIT_STOPPED = 3  # stopped by a signal or the disk floor, or some chunks failed: start again with the same --run-id
 
 
 def parse_args(argv=None):
@@ -481,10 +482,10 @@ def main(argv=None):
             top_up()
     if stop["now"]:
         say("stopped; start again with the same --run-id to continue")
-        return 1
+        return EXIT_STOPPED
     if errors:
         say(f"finished with errors {dict(errors)}; run again with the same --run-id to retry those chunks")
-        return 1
+        return EXIT_STOPPED
     summary = summarize(run)
     manifest["finished"] = now().isoformat()
     manifest_path.write_text(json.dumps(manifest, indent=1))
