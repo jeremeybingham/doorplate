@@ -260,3 +260,60 @@ def test_the_box_then_line2_probe_wants_a_street_on_line_2_not_any_words():
     assert "box-line1-street-line2" in probes.hits("PO BOX 123", "OAK ST")
     assert "box-line1-street-line2" not in probes.hits("PO BOX 123", "SPRINGFIELD VALLEY")
     assert "box-line1-street-line2" not in probes.hits("PO BOX 123", "ACME HOLDINGS")
+
+
+@pytest.mark.parametrize(
+    "line1, line2, zip_code, city, state, expect",
+    [
+        ("ELM HALL BOX 3310", None, None, None, None, "campus-box-two-words"),
+        ("10 1 2 N MAIN ST", None, None, None, None, "half-before-lone-letter"),
+        ("1234 EAST TR 56", None, None, None, None, "compass-ky-tr-number"),
+        ("12 OAK ST SPRINGFIELD IL 62704 SPRINGFIELD IL 62704", None, None, None, None, "city-state-zip-twice"),
+        ("12 ELM ST", None, "NaN", "SPRINGFIELD", "IL", "null-word-field"),
+        ("12 ELM ST", None, "62704", "NULL", "IL", "null-word-field"),
+        ("12 ELM ST, SPRINGFIELD, IL NAN", None, None, None, None, "null-word-field"),
+        ("12 ELM ST, SPRINGFIELD, ILLINOIS IL 62704", None, None, None, None, "repeated-state-or-county"),
+        ("12 ELM ST, SPRINGFIELD, IL IL 62704", None, None, None, None, "repeated-state-or-county"),
+        ("12 ELM ST, SPRINGFIELD, IL USA 62704", None, None, None, None, "repeated-state-or-county"),
+        ("12 ELM ST, ORANGE COUNTY, SPRINGFIELD, IL 62704", None, None, None, None, "repeated-state-or-county"),
+        ("120 A AND M LN", None, None, None, None, "letter-and-initials"),
+        ("301 A S MAIN ST", None, None, None, None, "letter-then-direction"),
+        ("12 ELM ST", None, "62704", "NOT STATED", "MA", "city-placeholder"),
+        ("3450 NW 91ST AVE, DORAL, Майами, FL 33172", None, None, None, None, "non-latin-text"),
+        ("464 NO MAPLE AVE", None, None, None, None, "no-for-north"),
+        ("233 OAK AVE BX 5649", None, None, None, None, "unit-marker-after-suffix"),
+        ("1725 4TH AVE SUITE I-5B", None, None, None, None, "unit-marker-after-suffix"),
+        ("12 ELM ST", "DBA OAKWOOD APTS", None, None, None, "name-or-business-line2"),
+        ("12 ELM ST", "JOHN SMITH DDS", None, None, None, "name-or-business-line2"),
+        ("C/O JANE DOE 1504 EAST M", None, None, None, None, "co-name-street-one-line"),
+    ],
+)
+def test_the_coverage_probes_match_invented_rows(line1, line2, zip_code, city, state, expect):
+    assert expect in probes.hits(line1, line2, zip_code, city, state)
+
+
+@pytest.mark.parametrize(
+    "line1, line2, zip_code, city, state",
+    [
+        ("PO BOX 3310", None, None, None, None),
+        ("12 1/2 N MAIN ST", None, None, None, None),
+        ("10 1 2 NORTH MAIN ST", None, None, None, None),
+        ("1234 EAST ST 56", None, None, None, None),
+        ("12 ELM ST, SPRINGFIELD, IL 62704", None, "62704", "SPRINGFIELD", "IL"),
+        ("50 OAK ST, NEW YORK, NY 10001", None, "10001", "NEW YORK", "NY"),
+        ("12 ELM ST, SPRINGFIELD, IL 62704 USA", None, None, None, None),
+        ("45 NO 2 RD", None, None, None, None),
+        ("120 A ST", None, None, None, None),
+        ("12 ELM ST", "SMITH AND SON REALTY", None, None, None),
+        ("12 ELM ST", "SUITE 4", None, None, None),
+        ("12 ELM ST", None, "62704", "SPRINGFIELD", "IL"),
+        ("5 MUNOZ ST", None, None, None, None),
+    ],
+)
+def test_the_coverage_probes_pass_near_misses(line1, line2, zip_code, city, state):
+    new = {
+        "campus-box-two-words", "half-before-lone-letter", "compass-ky-tr-number", "city-state-zip-twice", "null-word-field",
+        "repeated-state-or-county", "letter-and-initials", "letter-then-direction", "city-placeholder", "non-latin-text",
+        "no-for-north", "unit-marker-after-suffix", "name-or-business-line2", "co-name-street-one-line",
+    }
+    assert not set(probes.hits(line1, line2, zip_code, city, state)) & new
