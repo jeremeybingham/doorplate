@@ -88,6 +88,17 @@ way is not queued. The first queue (FMCSA US carriers): of 193,511 distinct samp
 give-ups and 328 control; the biggest silent groups are `OccupancyIdentifier`/`StreetName`, `PlaceName`/`StreetName` and
 `StreetName`/`OccupancyIdentifier`.
 
+## The precision queue (`probe_queue.py`): how many of a probe's matches are wrong?
+
+A probe counts a text shape, which is an upper bound; the unsampled scan (`probe_scan.py`, [harness](harness.md)) counts it exactly and keeps the identity of each match.
+`tools/review/probe_queue.py SCAN_DIR INPUTS.txt --probe NAME [--probe NAME ...] [--n 50] --confirm` turns those matches into one comparison queue per probe
+(`local-data/review/probe-queues/queue-NAME.jsonl`), reading the text back from the input by `record_id`. The sample is the matches with the lowest `rk`, a random
+draw, taken in turns across the sources with no source above 40% of the queue, so a large source cannot fill it; every card names its source, so a precision
+is weighted back by the probe's matches per source (the scan's `counts/`). Rows where usaddress agrees stay in (a precision needs them); rows that look like
+Puerto Rico and rows whose id is in an earlier review (`--exclude-answers`) are left out. Review it like any comparison queue, with its own answers file:
+`server.py local-data/review/probe-queues/queue-NAME.jsonl --answers local-data/review/answers-probe-NAME.jsonl`. `rows x precision` is the number that
+orders the issues ([backlog](../backlog.md)).
+
 ## The page (`server.py`)
 
 Binds to `127.0.0.1` only (and refuses requests for another host name), logs no requests, and uses
