@@ -80,7 +80,7 @@ been checked on the project's own data, so a `k4` is likely.
     a compass word with `KY` or `TR` (#388), and the letter after a house number (#391, a review queue).
   - *State and road forms:* Texas `PR` roads (#314), Alabama `<NAME> ROAD <number>` (#315), the FM number before the road type (#316), `AND` between two highways (#317); Puerto Rico (#318, #319, the epic #332, #92).
   - *City field and line 2:* a unit or a box in the city field (#244), the city field holds the state (#357), a `CO` prefix with a fuller name on line 2 (#367).
-  - *Review data and tooling:* the review tool's deferred sharing helpers (#222, item 4), the tracker of what has been hand-reviewed and the queues to come (#225), comparing with libpostal (#215), the Web Data Commons answer on research use (#395), larger MessyStreets tiers (#403).
+  - *Review data and tooling:* the review tool's deferred sharing helpers (#222, item 4) and a "usaddress right too" button in its labeled section (#461), the tracker of what has been hand-reviewed and the queues to come (#225), comparing with libpostal (#215), the Web Data Commons answer on research use (#395), larger MessyStreets tiers (#403).
   - *Parsing ideas:* the tagger's known-word chains (#410), a street line that already ends in the city, state and ZIP (#397), missing-value strings in the city, state or ZIP (#419), repeated state, a county-only segment and `USA` after the ZIP (#435).
   - *Data, API, docs and speed:* Florida pack gaps (#11), more state data (#213), the address-structure labels usaddress has (#35), Canadian addresses (#203), the usaddress comparison post (#88), the examples notebook as a page (#253),
     the docs site move off Material for MkDocs (#233), and further performance leads (#418).
