@@ -8,8 +8,9 @@ permalink: /demo/
 <p>
   Type or paste a US address. doorplate reads it as you type, colors each part by what it decided
   the part is, and shows what it writes: the components, the USPS and RESO output, a match key and
-  warnings. One line, any style; there are examples below the box. A whole spreadsheet of
-  addresses can be parsed further down: <a href="#csv">Parse a CSV file</a>.
+  warnings. One line, any style; there are examples below the box. Three steps, each optional:
+  <strong>1.</strong> try an address, <strong>2.</strong> try a whole file (<a href="#csv">a sample is provided</a>),
+  <strong>3.</strong> hide the addresses in a file so it is safe to share.
 </p>
 <p class="dp-note">
   The parser runs in your browser as WebAssembly. Nothing you type is sent anywhere.
@@ -18,15 +19,29 @@ permalink: /demo/
 </p>
 
 <div id="dp-app" hidden>
-  <label for="dp-q" class="dp-label">Address</label>
-  <input id="dp-q" type="text" autocomplete="off" autocapitalize="off" spellcheck="false"
-         placeholder="123 north main street apt 4, Miami FL 33101">
+  <label for="dp-q" class="dp-label">1. Enter any address</label>
+  <p class="dp-note dp-hint" id="dp-hint">Your own, your friends&rsquo;&hellip; or your enemies&rsquo;! It all stays local to your machine.</p>
+  <div class="dp-inputrow">
+    <input id="dp-q" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="go"
+           aria-describedby="dp-hint" placeholder="123 north main street apt 4, Miami FL 33101">
+    <button type="button" id="dp-clear" class="dp-csv-btn" title="Clear the box" aria-label="Clear the box">Clear</button>
+  </div>
+  <div id="dp-step2" class="dp-step" hidden>
+    <strong>2. Try a whole file.</strong> Optional: 300 invented addresses in a CSV file.
+    <label class="dp-csv-check"><input type="checkbox" id="dp-s2-add" checked> Add my address (<span id="dp-s2-mine"></span>) as the last row</label>
+    <span class="dp-step-buttons">
+      <button type="button" id="dp-s2-load" class="dp-csv-btn dp-csv-main" disabled>Try it here</button>
+      <a id="dp-s2-download" class="dp-csv-btn" href="sample-addresses.csv" download="sample-addresses.csv">Download the sample</a>
+      <button type="button" id="dp-s2-skip" class="dp-csv-btn">Skip</button>
+    </span>
+  </div>
   <p class="dp-examples">
     Try:
     <span id="dp-ex"></span>
   </p>
 
-  <h2>How doorplate reads it</h2>
+  <h2 id="dp-result-h">How doorplate reads it</h2>
+  <p id="dp-empty" class="dp-note" hidden>Type an address above, or pick one of the examples.</p>
   <div id="dp-view" class="dp-view" aria-live="polite"></div>
   <div id="dp-legend" class="dp-legend"></div>
 
@@ -42,14 +57,18 @@ permalink: /demo/
     <table class="dp-table"><tbody id="dp-reso"></tbody></table>
   </details>
 </div>
-<p id="dp-status" class="dp-note">Loading the parser (about 1.4 MB)…</p>
+<p id="dp-status" class="dp-note">Loading the parser (about 1.5 MB)…</p>
 
 
-<h2 id="csv">Parse a CSV file</h2>
+<h2 id="csv">Parse or anonymize a CSV file</h2>
 <p>
   Have a spreadsheet of addresses? Pick the file, say which column holds the address (or which hold
-  line 1, line 2, city, state and ZIP), and download the same file with the parsed parts added.
-  The columns are the ones <code>doorplate parse-file</code> writes, with the prefix <code>addr_</code>.
+  line 1, line 2, city, state and ZIP), and either download the same file with the parsed parts added
+  (the columns <code>doorplate parse-file</code> writes, with the prefix <code>addr_</code>) or
+  <strong>anonymize</strong> it: the digits and names of the columns you choose are replaced and the
+  shape stays, which is what <code>doorplate anonymize</code> does
+  (<a href="https://github.com/jeremeybingham/doorplate/blob/main/docs/anonymizing.md">what it keeps and what it can leak</a>).
+  No file handy? <a href="sample-addresses.csv" download>Download the sample</a>, or use the button in step 2 above.
 </p>
 <p class="dp-note">
   <strong>The file stays on your computer.</strong> This page reads it in your browser, the parser
@@ -72,7 +91,13 @@ permalink: /demo/
     <label class="dp-csv-check"><input type="checkbox" id="dp-csv-header" checked> The first row is a header</label>
     <div class="dp-csv-scroll"><table class="dp-table" id="dp-csv-preview"></table></div>
 
-    <h3>Where is the address?</h3>
+    <h3>What do you want to do?</h3>
+    <p>
+      <label class="dp-csv-check"><input type="radio" name="dp-csv-op" id="dp-csv-op-parse" checked> Parse it (add the parts as columns)</label>
+      <label class="dp-csv-check"><input type="radio" name="dp-csv-op" id="dp-csv-op-anon"> Anonymize it (mask digits and names)</label>
+    </p>
+
+    <h3 id="dp-csv-addr-h">Where is the address?</h3>
     <p>
       <label class="dp-csv-check"><input type="radio" name="dp-csv-mode" id="dp-csv-mode-line" checked> One column with the whole address</label>
       <label class="dp-csv-check"><input type="radio" name="dp-csv-mode" id="dp-csv-mode-fields"> Separate columns (line 1, line 2, city, state, ZIP)</label>
@@ -86,16 +111,29 @@ permalink: /demo/
       <div><label for="dp-csv-zip">ZIP</label> <select id="dp-csv-zip"></select></div>
     </div>
 
-    <h3>Columns to add</h3>
-    <p class="dp-note">
-      <button type="button" id="dp-csv-default" class="dp-csv-btn">Default set</button>
-      <button type="button" id="dp-csv-all" class="dp-csv-btn">Everything</button>
-      Your own columns are copied unchanged.
-    </p>
-    <div id="dp-csv-cols" class="dp-csv-cols"></div>
+    <div id="dp-csv-parse-opts">
+      <h3>Columns to add</h3>
+      <p class="dp-note">
+        <button type="button" id="dp-csv-default" class="dp-csv-btn">Default set</button>
+        <button type="button" id="dp-csv-all" class="dp-csv-btn">Everything</button>
+        Your own columns are copied unchanged.
+      </p>
+      <div id="dp-csv-cols" class="dp-csv-cols"></div>
+    </div>
+    <div id="dp-csv-anon-opts" hidden>
+      <h3>Columns to mask</h3>
+      <p class="dp-note">
+        The address columns you chose above are ticked. Tick any other column that holds a name or other private text.
+        A separate city column is replaced too (without a state beside it, it cannot be told from a street name), and a
+        state column stays as it is.
+      </p>
+      <div id="dp-csv-mask" class="dp-csv-cols"></div>
+      <p><label class="dp-csv-check"><input type="checkbox" id="dp-csv-keep"> Also keep the columns I did not tick, exactly as they are</label></p>
+      <p id="dp-csv-unmasked" class="dp-note" hidden></p>
+    </div>
     <p>
       <label class="dp-csv-check"><input type="checkbox" id="dp-csv-guard" checked>
-        Write a leading apostrophe before an added cell that starts with =, +, - or @, so a
+        Write a leading apostrophe before an added or masked cell that starts with =, +, - or @, so a
         spreadsheet reads it as text and never runs it as a formula</label>
     </p>
     <p>
@@ -108,6 +146,11 @@ permalink: /demo/
     <h3>Done</h3>
     <div id="dp-csv-summary"></div>
     <p><a id="dp-csv-download" href="#" class="dp-csv-main-link"></a></p>
+    <div id="dp-csv-step3" class="dp-step" hidden>
+      <strong>3. Hide the addresses.</strong> Optional: anonymize the file you just made, with its address and
+      <code>addr_</code> columns masked, to see what you could safely share.
+      <span class="dp-step-buttons"><button type="button" id="dp-csv-step3-go" class="dp-csv-btn dp-csv-main">Anonymize this file</button></span>
+    </div>
   </div>
 </div>
 
@@ -137,6 +180,15 @@ permalink: /demo/
   .dp-csv-bad { color: #c02020; }
   @media (prefers-color-scheme: dark) { .dp-csv-warn { color: #e6a000; } .dp-csv-bad { color: #ff7b7b; } }
   .dp-label { font-weight: 600; display: block; margin-bottom: .25rem; }
+  .dp-hint { margin: 0 0 .5rem; }
+  .dp-inputrow { display: flex; gap: .5rem; align-items: stretch; }
+  .dp-inputrow #dp-q { flex: 1; min-width: 0; }
+  #dp-q:focus-visible, .dp-csv-btn:focus-visible, #dp-csv select:focus-visible { outline: 3px solid #2a78d6; outline-offset: 2px; }
+  .dp-step { margin: .75rem 0; padding: .6rem .8rem; border-left: 4px solid #2a78d6; border-radius: 3px; background: rgba(42, 120, 214, .09); font-size: .9rem; }
+  .dp-step-buttons { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .5rem; }
+  a.dp-csv-btn { text-decoration: none; display: inline-block; }
+  .dp-csv-btn:disabled { opacity: .5; cursor: default; }
+  @media (max-width: 520px) { #dp-csv div > label { display: block; min-width: 0; } #dp-csv select { width: 100%; margin-left: 0; } .dp-step-buttons .dp-csv-btn { flex: 1 1 100%; text-align: center; } }
   #dp-q { width: 100%; box-sizing: border-box; font: inherit; padding: .6rem .75rem; border: 1px solid #888; border-radius: 4px; }
   .dp-examples { font-size: .85rem; margin: .5rem 0 0; }
   .dp-examples button { font: inherit; font-size: .85rem; margin: 0 .25rem .25rem 0; padding: .1rem .5rem; border: 1px solid #aaa; border-radius: 1rem; background: transparent; color: inherit; cursor: pointer; }
@@ -286,8 +338,21 @@ permalink: /demo/
     });
   }
 
+  var interacted = false, step2Skipped = false;
+  function showEmpty(on) {
+    document.getElementById("dp-empty").hidden = !on;
+    ["dp-view", "dp-legend", "dp-problems"].forEach(function (id) { document.getElementById(id).hidden = on; });
+  }
   function render() {
-    var s = q.value, r = parse(s);
+    var s = q.value;
+    if (!s.trim()) {
+      showEmpty(true);
+      ["dp-comps", "dp-out", "dp-reso"].forEach(function (id) { document.getElementById(id).textContent = ""; });
+      updateStep2(false);
+      return;
+    }
+    showEmpty(false);
+    var r = parse(s);
     renderView(s, r);
     renderProblems(r);
     var comps = [];
@@ -309,7 +374,45 @@ permalink: /demo/
     var reso = [];
     Object.keys(r.reso || {}).forEach(function (k) { reso.push([k, String(r.reso[k])]); });
     rows(document.getElementById("dp-reso"), reso);
+    updateStep2(interacted && !r.error);
   }
+
+  // Step 2 of the guided path: the sample file, with the visitor's own address as an optional last row.
+  var sampleText = null, step2 = document.getElementById("dp-s2-add");
+  function csvCell(t) { return '"' + t.replace(/"/g, '""') + '"'; }
+  function sampleBlob() {
+    var mine = q.value.trim().replace(/\s+/g, " ");
+    var extra = step2.checked && mine ? "YOU," + csvCell(mine) + "\n" : "";
+    return new Blob([sampleText + extra], { type: "text/csv;charset=utf-8" });
+  }
+  var sampleUrl = null;
+  function updateStep2(show) {
+    var box = document.getElementById("dp-step2");
+    box.hidden = !show || step2Skipped;
+    if (box.hidden) return;
+    var mine = q.value.trim().replace(/\s+/g, " ");
+    document.getElementById("dp-s2-mine").textContent = mine.length > 40 ? mine.slice(0, 38) + "…" : mine;
+    if (sampleText !== null) {
+      if (sampleUrl) URL.revokeObjectURL(sampleUrl);
+      sampleUrl = URL.createObjectURL(sampleBlob());
+      document.getElementById("dp-s2-download").href = sampleUrl;
+    }
+    var go = document.getElementById("dp-s2-load");
+    go.disabled = !(sampleText !== null && window.DoorplateTry && window.DoorplateTry.ready());
+  }
+  fetch("sample-addresses.csv").then(function (r) { return r.text(); }).then(function (t) {
+    sampleText = t;
+    updateStep2(!document.getElementById("dp-step2").hidden);
+  }).catch(function () { /* the plain download link still works */ });
+  var readyTimer = setInterval(function () {
+    if (window.DoorplateTry && window.DoorplateTry.ready()) { clearInterval(readyTimer); updateStep2(!document.getElementById("dp-step2").hidden); }
+  }, 300);
+  document.getElementById("dp-s2-add").addEventListener("change", function () { updateStep2(true); });
+  document.getElementById("dp-s2-skip").addEventListener("click", function () { step2Skipped = true; updateStep2(false); q.focus(); });
+  document.getElementById("dp-s2-load").addEventListener("click", function () {
+    if (sampleText === null) return;
+    window.DoorplateTry.loadFile(new File([sampleBlob()], "sample-addresses.csv", { type: "text/csv" }));
+  });
 
   var legend = document.getElementById("dp-legend");
   LEGEND.forEach(function (l) { legend.appendChild(el("span", "dp-g-" + l[0], l[1])); });
@@ -317,7 +420,7 @@ permalink: /demo/
   EXAMPLES.forEach(function (t) {
     var b = el("button", null, t.length > 34 ? t.slice(0, 32) + "…" : t);
     b.type = "button"; b.title = t;
-    b.addEventListener("click", function () { q.value = t; render(); q.focus(); });
+    b.addEventListener("click", function () { q.value = t; interacted = true; render(); q.focus(); });
     ex.appendChild(b);
   });
 
@@ -329,7 +432,15 @@ permalink: /demo/
   }).then(function (m) {
     wasm = m.instance.exports;
     q.value = EXAMPLES[0];
-    q.addEventListener("input", render);
+    q.addEventListener("input", function () { interacted = true; render(); });
+    // Enter parses (it already does on every keystroke): close the phone keyboard and bring the result into view.
+    q.addEventListener("keydown", function (e) {
+      if (e.key !== "Enter") return;
+      e.preventDefault();
+      interacted = true; render(); q.blur();
+      document.getElementById("dp-result-h").scrollIntoView({ block: "start" });
+    });
+    document.getElementById("dp-clear").addEventListener("click", function () { q.value = ""; render(); q.focus(); });
     document.getElementById("dp-app").hidden = false;
     status.hidden = true;
     render();

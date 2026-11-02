@@ -12,7 +12,7 @@ a.to_usps()["line1"]   # "123 N MAIN ST APT 4"
 a.key()                # "k4:S|123|N|MAIN|ST||FL|33101"
 ```
 
-[Try it in your browser](https://jeremeybingham.github.io/doorplate/demo/): the parser runs on your machine, nothing is sent. The same page parses a whole CSV file in the browser ([Parse a CSV file](https://jeremeybingham.github.io/doorplate/demo/#csv)): the columns are the ones `doorplate parse-file` writes, and the file stays on your computer.
+[Try it in your browser](https://jeremeybingham.github.io/doorplate/demo/): the parser runs on your machine, nothing is sent. The same page parses a whole CSV file in the browser ([Parse a CSV file](https://jeremeybingham.github.io/doorplate/demo/#csv)): the columns are the ones `doorplate parse-file` writes, and the file stays on your computer. A sample file of invented addresses is on the page, and the same section can anonymize a file (the digits and names change, the shape stays).
 
 ## Where to go
 

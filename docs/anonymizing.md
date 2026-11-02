@@ -60,6 +60,20 @@ no longer reads as it read `LLC`, so that value is reported as not faithful.
 
 ## Using it
 
+### In the browser
+
+The [Try doorplate page](https://jeremeybingham.github.io/doorplate/demo/#csv) anonymizes a CSV file with the same library compiled to
+WebAssembly (the export `anonymize_batch`): pick the file, choose **Anonymize it**, say which columns hold the address (the same choice as
+parsing), tick any other column to mask, and download the result. The file is read in the tab and nothing is uploaded. Differences from the
+command line, all decided for a page a stranger will use:
+
+- **One random seed for each file**, drawn from the browser's randomness and never shown: the same value gets the same replacement in every
+  row and column, and nobody can recompute it from a guess. There is no `--seed` on the page.
+- **Columns you did not tick are left out of the new file** unless you tick "Also keep the columns I did not tick", and the page then lists
+  the columns it copies as they are, because a name or id column kept as it is defeats the purpose.
+- The summary gives the share of values the parser reads the same as before (`faithful`), and says that this is not anonymity.
+- The page's sample file (300 invented addresses) and a "parse, then anonymize the output" step exist so you can try it without your own data.
+
 ### Command line
 
 ```sh

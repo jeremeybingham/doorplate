@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""A headless-browser check of the CSV section of the demo page (#335), with an invented file.
+"""A headless-browser check of the CSV section of the demo page (#335, #434), with an invented file.
 
     cargo build -p doorplate-wasm --target wasm32-unknown-unknown --release
     cargo build -p doorplate-cli
@@ -11,7 +11,10 @@ do not run `playwright install`, pass the browser with --chrome, for example
 (front matter and Liquid tags removed) on 127.0.0.1, loads an invented CSV, parses it in the page and
 checks: every request went to that server; a request to another host is blocked; the downloaded CSV has
 the added columns and equals `doorplate parse-file` on the same file; quoted fields with newlines and
-commas survive; cells that look like formulas are guarded; a cancel stops the run.
+commas survive; cells that look like formulas are guarded; a cancel stops the run. Then the guided path (#434):
+a typed address brings up step 2, the sample file loads with the visitor's address as its last row and parses,
+step 3 anonymizes the parsed output, and the masked file keeps its shape (row count, columns, ids) and none of
+the invented street names of the original.
 Not part of `pytest` (it needs a browser).
 """
 
@@ -87,7 +90,7 @@ def main():
             .replace("{% endraw %}", "")
         )
         (tmp / "index.html").write_text(page_src)
-        for name in ("csv-core.js", "csv.js", "csv-worker.js"):
+        for name in ("csv-core.js", "csv.js", "csv-worker.js", "sample-addresses.csv"):
             shutil.copy(DEMO / name, tmp / name)
         shutil.copy(WASM, tmp / "doorplate.wasm")
         src = tmp / "input.csv"
@@ -142,6 +145,43 @@ def main():
                 "#dp-csv-status:has-text('Cancelled')", timeout=30000
             )
             assert page.is_hidden("#dp-csv-result")
+
+            # The guided path: step 1 (type), step 2 (the sample plus my own row), step 3 (anonymize the output).
+            mine = "77 Quillmere Ave Apt 9, Springfield IL 62701"
+            page.reload()
+            page.wait_for_selector("#dp-app:not([hidden])", timeout=30000)
+            assert page.is_hidden("#dp-step2"), "step 2 should wait for the visitor"
+            page.fill("#dp-q", "")
+            assert page.is_visible("#dp-empty"), "an empty box should say what to do"
+            page.fill("#dp-q", mine)
+            page.wait_for_selector("#dp-step2:not([hidden])", timeout=10000)
+            page.wait_for_selector("#dp-s2-load:not([disabled])", timeout=30000)
+            page.click("#dp-s2-load")
+            page.wait_for_selector("#dp-csv-config:not([hidden])")
+            assert page.input_value("#dp-csv-addr") == "1", "the address column of the sample"
+            page.click("#dp-csv-go")
+            page.wait_for_selector("#dp-csv-result:not([hidden])", timeout=60000)
+            assert page.is_visible("#dp-csv-step3")
+            with page.expect_download() as d2:
+                page.click("#dp-csv-download")
+            parsed = tmp / "sample-parsed.csv"
+            d2.value.save_as(str(parsed))
+            prows = list(csv.reader(io.StringIO(parsed.read_text(encoding="utf-8"))))
+            assert len(prows) == 302 and prows[-1][:2] == ["YOU", mine], (len(prows), prows[-1][:2])
+            assert prows[-1][prows[0].index("addr_street_name")] .upper() == "QUILLMERE"
+            # Step 3: the parsed file, anonymized.
+            page.click("#dp-csv-step3-go")
+            page.wait_for_selector("#dp-csv-config:not([hidden])")
+            assert page.is_checked("#dp-csv-op-anon")
+            assert page.is_visible("#dp-csv-mask")
+            page.click("#dp-csv-go")
+            page.wait_for_selector("#dp-csv-result:not([hidden])", timeout=60000)
+            assert page.is_hidden("#dp-csv-step3")
+            with page.expect_download() as d3:
+                page.click("#dp-csv-download")
+            masked = tmp / "sample-anonymized.csv"
+            d3.value.save_as(str(masked))
+            anon_summary = page.inner_text("#dp-csv-summary")
             browser.close()
         srv.shutdown()
 
@@ -178,6 +218,21 @@ def main():
                 assert x == y or x == "'" + y, (i, c, x, y)
         formula_rows = [r for r in rows if r[2].startswith("=")]
         assert formula_rows and all("'" in "".join(r[4:]) or True for r in formula_rows)
+        # The masked file: same shape, ids kept, none of the original street names, the address column changed.
+        arows = list(csv.reader(io.StringIO(masked.read_text(encoding="utf-8"))))
+        assert arows[0] == prows[0], (arows[0], prows[0])
+        assert len(arows) == len(prows)
+        assert [r[0] for r in arows] == [r[0] for r in prows], "ids must stay"
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        import make_sample_csv as gen
+
+        names = re.compile(r"\b(?:%s)(?:%s)\b" % ("|".join(gen.SYL_A), "|".join(gen.SYL_B)), re.IGNORECASE)
+        original_names = {m.group(0) for r in prows[1:] for m in names.finditer(r[1])}
+        out_text = masked.read_text(encoding="utf-8")
+        leaked = sorted(n for n in original_names if re.search(r"\b" + n + r"\b", out_text, re.IGNORECASE))
+        assert len(original_names) > 50 and not leaked, ("a street name survived", leaked[:5])
+        assert all(a[1] != b[1] and len(a[1]) == len(b[1]) for a, b in zip(arows[1:], prows[1:], strict=True))
+        assert "same as before" in anon_summary, anon_summary
         print(
             "ok:",
             summary.replace("\n", " | "),

@@ -8,6 +8,9 @@
 //! `parse_batch` parses many rows in one call for the page's CSV section, and writes the same columns
 //! as `doorplate parse-file` (`json::COLUMNS`).
 //!
+//! `anonymize_batch` is the page's "Anonymize" mode for a CSV file: it rewrites many values with
+//! `doorplate::Anonymizer`, the same shape-keeping obfuscation as `doorplate anonymize`.
+//!
 //! The JSON is the command-line tool's record (`json::record`, so the demo
 //! cannot disagree with `doorplate parse`) plus `spans`: each component's
 //! range in the input, in UTF-16 units, which is how JavaScript indexes a
@@ -15,7 +18,7 @@
 
 use std::cell::RefCell;
 
-use doorplate::{FieldName, Fields, ParseError, ParsedAddress, Parser};
+use doorplate::{Anonymizer, FieldName, Fields, ParseError, ParsedAddress, Parser};
 use serde_json::{json, Value};
 
 // The command-line tool's JSON builder, compiled in as is (it needs only
@@ -145,6 +148,32 @@ fn run_batch(json_text: &str) -> String {
     json!({ "columns": json::COLUMNS, "rows": out }).to_string()
 }
 
+/// Many values obfuscated in one call (the CSV section's "Anonymize" mode): `{"seed": 123, "rows": ["..", ..]}`,
+/// the seed a whole number the page draws from the browser's randomness (a wasm module has no clock or
+/// operating-system randomness of its own, so a missing seed is an error, never a quiet default). The
+/// answer is `{"rows": [["text", true], ..]}`: the new text and whether the parser reads it like the original
+/// (`Anonymized::faithful`). One seed per file, so the same value gets the same replacement in every row.
+fn run_anonymize(json_text: &str) -> String {
+    let Ok(Value::Object(m)) = serde_json::from_str::<Value>(json_text) else {
+        return json!({ "error": "the batch must be a JSON object" }).to_string();
+    };
+    let Some(seed) = m.get("seed").and_then(Value::as_u64) else {
+        return json!({ "error": "the batch needs a whole-number `seed`" }).to_string();
+    };
+    let Some(Value::Array(rows)) = m.get("rows") else {
+        return json!({ "error": "the batch needs a `rows` array" }).to_string();
+    };
+    let a = Anonymizer::with_seed(seed);
+    let out: Vec<Value> = rows
+        .iter()
+        .map(|v| {
+            let r = a.anonymize(v.as_str().unwrap_or(""));
+            json!([r.text, r.faithful])
+        })
+        .collect();
+    json!({ "rows": out }).to_string()
+}
+
 fn store(out: String) -> usize {
     RESULT.with(|r| {
         let mut r = r.borrow_mut();
@@ -202,6 +231,16 @@ pub unsafe extern "C" fn parse_batch(ptr: *const u8, len: usize) -> usize {
     store(run_batch(&String::from_utf8_lossy(bytes)))
 }
 
+/// Like [`parse`], for obfuscating many values at once (see `run_anonymize`).
+///
+/// # Safety
+/// `ptr` must point to `len` initialized bytes.
+#[no_mangle]
+pub unsafe extern "C" fn anonymize_batch(ptr: *const u8, len: usize) -> usize {
+    let bytes = std::slice::from_raw_parts(ptr, len);
+    store(run_anonymize(&String::from_utf8_lossy(bytes)))
+}
+
 #[no_mangle]
 pub extern "C" fn result_ptr() -> *const u8 {
     RESULT.with(|r| r.borrow().as_ptr())
@@ -232,6 +271,49 @@ mod tests {
                 )
             })
             .collect()
+    }
+
+    #[test]
+    fn anonymize_batch_matches_the_library() {
+        let out: Value = serde_json::from_str(&run_anonymize(
+            r#"{"seed": 7, "rows": ["123 N Bayview Ave Apt 4, Miami FL 33101", "55 Bayview Dr", ""]}"#,
+        ))
+        .unwrap();
+        let a = Anonymizer::with_seed(7);
+        let rows = out["rows"].as_array().unwrap();
+        assert_eq!(rows.len(), 3);
+        for (row, input) in rows.iter().zip([
+            "123 N Bayview Ave Apt 4, Miami FL 33101",
+            "55 Bayview Dr",
+            "",
+        ]) {
+            let want = a.anonymize(input);
+            assert_eq!(row[0], want.text);
+            assert_eq!(row[1], want.faithful);
+        }
+        // One seed for the file: the same street name gets the same replacement in two rows.
+        let two: Value = serde_json::from_str(&run_anonymize(
+            r#"{"seed": 7, "rows": ["55 Bayview Dr", "77 Bayview Dr"]}"#,
+        ))
+        .unwrap();
+        let name = |i: usize| {
+            two["rows"][i][0]
+                .as_str()
+                .unwrap()
+                .split(' ')
+                .nth(1)
+                .unwrap()
+                .to_string()
+        };
+        assert_eq!(name(0), name(1));
+    }
+
+    #[test]
+    fn anonymize_batch_needs_a_seed_and_rows() {
+        let e = |s: &str| serde_json::from_str::<Value>(&run_anonymize(s)).unwrap();
+        assert!(e(r#"{"rows": ["1 Main St"]}"#)["error"].is_string());
+        assert!(e(r#"{"seed": 1}"#)["error"].is_string());
+        assert!(e("[]")["error"].is_string());
     }
 
     #[test]

@@ -55,7 +55,8 @@ doorplate parse-file addresses.csv --column address --default-state FL -o parsed
 The [demo page](https://jeremeybingham.github.io/doorplate/demo/#csv) does the same in the browser, with no install: pick the file, choose the
 address column (or the line 1, line 2, city, state and ZIP columns), tick the columns to add, and download the result. The file is read and parsed
 in the tab (WebAssembly in a worker), nothing is uploaded, and the columns and their `addr_` prefix are `parse-file`'s. It holds the whole result
-in memory, so for files of several hundred megabytes use `parse-file`.
+in memory, so for files of several hundred megabytes use `parse-file`. The same section can **anonymize** a file (below, "In the browser" in
+[`anonymizing.md`](anonymizing.md)), and offers a sample file of invented addresses to try both.
 
 Every input column is kept, and the new `addr_` columns are the components (`street_number`, `street_name`,
 `unit_number`, `city`, `state`, `zip5`, ...), the shapes (`po_box`, `rural_route`, `military`, `general_delivery`),

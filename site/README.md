@@ -9,9 +9,13 @@ GitHub Actions, which the repository already uses) on every push to `main` that 
   `crates/doorplate-wasm` (`cargo build -p doorplate-wasm --target wasm32-unknown-unknown --release`).
   To try the page locally, build it, copy it to `site/demo/doorplate.wasm` and serve the folder (a
   `file:` URL cannot load it). The page sends nothing anywhere; keep it so.
-- The demo page's "Parse a CSV file" section (#335) is `demo/csv.js` (the page), `demo/csv-worker.js` (the parser in a Web
-  Worker, through the wasm export `parse_batch`) and `demo/csv-core.js` (the CSV reader and writer, tested under Node by
-  `tools/docs/test_demo_csv.py`). The result is built in memory and offered as a download; nothing is uploaded and the page has no
+- The demo page's "Parse or anonymize a CSV file" section (#335, #434) is `demo/csv.js` (the page), `demo/csv-worker.js` (the parser and
+  the anonymizer in a Web Worker, through the wasm exports `parse_batch` and `anonymize_batch`) and `demo/csv-core.js` (the CSV reader and writer, tested under Node by
+  `tools/docs/test_demo_csv.py`). The page walks a visitor through three optional steps: an address in the box, then a sample file
+  (`demo/sample-addresses.csv`, 300 invented rows from the seeded `tools/docs/make_sample_csv.py`, with the visitor's own address as an
+  optional last row), then the anonymized output. The sample is generated, never edited by hand (`test_sample_csv.py` rebuilds it and
+  checks that no row is in the repository's corpora or a private source). The anonymize mode takes a seed from the browser's own randomness
+  for each file, so nobody can recompute the replacements. The result is built in memory and offered as a download; nothing is uploaded and the page has no
   third-party scripts. After a change run the browser check by hand (it needs Playwright; the file's docstring says how):
   `python tools/docs/smoke_demo_csv.py --chrome PATH [--rows N]`. It serves the page from a temporary folder, runs an invented CSV
   through it, and checks that every request is local, that a request to another host is blocked, and that the output equals
