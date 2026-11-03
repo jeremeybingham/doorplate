@@ -79,6 +79,7 @@ def test_keys_are_unique_and_every_pattern_compiles():
         ("31 1 2 ELM PLACE", None, None, "half-without-slash"),
         ("123 ELM CIR, ELM CREEK CONDOMINIUMS", None, None, "building-name-after-street"),
         ("4704 APT CLARK LN", "1 100", None, "stray-designator-before-name"),
+        ("4390 PATTERSON DR SPC 249", "# 249", None, "unit-repeated-as-hash"),
         ("123 OAK ST", "OAK VALLEY VI CONDOMINIUMS", None, "building-name-after-street"),
     ],
 )
@@ -107,11 +108,12 @@ def test_the_new_probes_leave_ordinary_addresses_alone():
         ("146 VEGA LOOP APT 4", None),
         ("123 ELM CIR", "UNIT 4"),
         ("CONDOMINIUMS OF ELM CREEK", None),
+        ("4390 PATTERSON DR SPC 249", "# 250"),
     ]:
         got = set(probes.hits(line1, line2, None)) & {
             "single-letter-name-initial", "unit-copies-street-word", "po-box-placeholder-line2",
             "box-then-street-words", "word-number-after-suffix", "half-without-slash", "name-and-floor-line1",
-            "building-name-after-street", "stray-designator-before-name",
+            "building-name-after-street", "stray-designator-before-name", "unit-repeated-as-hash",
         }
         assert not got, (line1, line2, got)
 
