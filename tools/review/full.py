@@ -200,6 +200,9 @@ def entry(n, a, mask, anonymizer=None):
     shown = [f"{k}={mk(inp[k])!r}" for k in FIELDS if inp.get(k)]
     lines.append("- input: " + "; ".join(shown))
     lines.append(f"- parse: {parse_line(mk(a.get('parse')))}")
+    ol = a.get("oneline_parse")
+    if ol and (a.get("parse") or {}).get("key") != ol.get("key"):  # the row read as one line differs from the fields parse
+        lines.append(f"- one-line parse (differs from the fields parse): {parse_line(mk(ol))}")
     if a.get("labels"):
         text = a.get("labeled_text") or ""
         lines.append("- labeled: " + "; ".join(
@@ -221,6 +224,8 @@ def entry(n, a, mask, anonymizer=None):
         d = a.get("draft_parse") or {}
         lines.append(f"- draft (an attempt, not saved as a correction): {mk(a['draft'])!r}")
         lines.append(f"- draft parse: {parse_line(mk(d))}")
+    for t in a.get("attempts") or []:  # strings the reviewer tried in the box before answering
+        lines.append(f"- tried: {mk(t.get('text'))!r} -> {'clean' if t.get('clean') else 'warnings ' + ','.join(t.get('warnings') or [])}")
     if a.get("note"):
         lines.append(f"- note: {mk(a['note'])}")
     return "\n".join(lines)

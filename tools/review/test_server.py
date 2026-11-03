@@ -243,3 +243,26 @@ def test_usaddress_right_is_refused_where_it_means_nothing(tmp_path):
     with pytest.raises(ValueError):  # not on a flagged-queue row, which has no usaddress parse
         r.answer(dict(body, id="inv|site|2", usaddress_right="full"))
     assert not r.answers_path.exists() or not r.answers_path.read_text().strip()
+
+
+def test_foreign_and_puerto_rico_verdicts(review, tmp_path):
+    assert review.answer({"id": "inv|site|1", "verdict": "foreign"})["verdict"] == "foreign"
+    review.answer({"id": "inv|site|2", "verdict": "puerto_rico"})
+    pr = server.read_jsonl(tmp_path / "puerto-rico-queue.jsonl")
+    assert [e["id"] for e in pr] == ["inv|site|2"] and pr[0]["line1"] == "5 OAK AVE"
+    review.undo()  # takes the row out of the Puerto Rico queue again
+    assert server.read_jsonl(tmp_path / "puerto-rico-queue.jsonl") == []
+    review.answer({"id": "inv|site|2", "verdict": "puerto_rico"})
+    review.answer({"id": "inv|site|2", "verdict": "puerto_rico"})  # an answer replaces itself; the queue keeps one copy
+    assert len(server.read_jsonl(tmp_path / "puerto-rico-queue.jsonl")) == 1
+
+
+def test_context_fields_are_kept_and_bad_ones_dropped(review):
+    rec = review.answer({"id": "inv|site|1", "verdict": "unclear", "elapsed_ms": 4200, "oneline_parse": {"key": "k4:x"},
+                         "attempts": [{"text": "123 QUINCEWOOD ST", "key": "k4:y", "warnings": ["a", 3], "clean": True},
+                                      {"text": "  "}, "junk"]})
+    assert rec["original_line"] == "123 456 QUINCEWOOD ST, MIAMI, FL 33101"
+    assert rec["elapsed_ms"] == 4200 and rec["oneline_parse"] == {"key": "k4:x"}
+    assert rec["attempts"] == [{"text": "123 QUINCEWOOD ST", "key": "k4:y", "warnings": ["a"], "clean": True}]
+    rec = review.answer({"id": "inv|site|2", "verdict": "unclear", "elapsed_ms": -5, "attempts": "x"})
+    assert "elapsed_ms" not in rec and "attempts" not in rec

@@ -79,7 +79,7 @@ and `--out` must be under `local-data/`.
 
 On the page a comparison row shows doorplate's parse, usaddress's as chips, and the label pairs that differ. The verdicts are `1`
 doorplate right, `2` usaddress right, `3` both right (another convention; one verdict, by decision on #132), `4` both wrong (type the
-correct string, Enter saves it), `5` can't tell, `6` not an address, `7` source noise, `8` skip. `export.py --table` prints counts by class
+correct string, Enter saves it), `5` can't tell, `6` not an address, `9` dual, `o` foreign address, `p` Puerto Rico (the full list is in the table below). `export.py --table` prints counts by class
 and label pair for each verdict (labels and counts only), and the shape-only export keeps the class, the differing label pairs and
 usaddress's labels in order, never a token. The "usaddress right" groups become issues through the same loop as #125.
 
@@ -103,8 +103,11 @@ orders the issues ([backlog](../backlog.md)).
 
 Binds to `127.0.0.1` only (and refuses requests for another host name), logs no requests, and uses
 the doorplate WebAssembly build for parsing, so it needs no network and no Python package. Each card
-shows the row as the harness parsed it (colored by component, field by field), the warnings, the key,
-and a box that starts as the original joined into one line. Edit the box: it is re-parsed as you
+shows the original row as one line that never changes (with a Copy button), then how doorplate read it as a horizontal line of chips like
+usaddress's below it (colored by component; for a row of separate fields a bar separates the fields), the warnings, the key,
+and a box that starts as the original joined into one line (**Reset**, key `r`, puts the original back).
+A row of separate fields is parsed as fields at the top but as one line in the box and in the usaddress comparison, and the two can
+differ (#294); when the keys differ the card shows the one-line reading too. Edit the box: it is re-parsed as you
 type, and says whether the string parses cleanly and whether it keys the same as the original parse.
 
 **Is the parser current? (#246).** The page parses with the WebAssembly build, which `maturin develop` does not rebuild, so it can fall
@@ -122,27 +125,20 @@ banner on the page with the build command; `--strict` refuses to start instead. 
 | `3` or Enter in the box | `corrected` | It is wrong, and the string in the box is a better one |
 | `4` | `unclear` | It is wrong, and I can't tell what it should be |
 | `5` | `junk` | Not an address (a name, a placeholder, a number) |
-| `6` | `noise` | The source cut it off or mangled it |
-| `7` | `skip` | Not now |
 | `0` (comparison queue) | `usaddress_right` with a correction | usaddress's reading was right, and there is also a better string for doorplate: both are kept, and it is scored as `usaddress_right` |
+| `o` | `foreign` | Not a US address (another country) |
+| `p` | `puerto_rico` | A Puerto Rico address. The row is also copied, in queue format, to `puerto-rico-queue.jsonl` beside the answers (`--pr-queue` to change it), the queue for the Puerto Rico epic (#332); an undo takes it out again, and a row is copied once |
 | `8` (`9` in a comparison queue) | `dual` | The row holds a dual or multiple address (a street and a PO Box, or several): a different signal from `junk` |
 | `i` | `insufficient` | Some valid address parts, but wrong, extra or odd text around them, and not enough to put together one door (checked, for example, on a map: the real address could not be reached from what the row says). Not `junk` (no address at all), not `noise` (cut off by the source), not `unclear` (the reviewer can't tell the fix) |
-| `l` | `labeled` | Mark the parts yourself instead of rewriting the string (below) |
-| `y` (comparison queue) | `labeled`, `usaddress_right` set | The labels are saved and usaddress was right too (below). The first press opens the parts panel, the second saves |
+| `l` | `labeled` | Jump to "Mark the parts instead" (always on the page), to mark the parts yourself instead of rewriting the string (below) |
+| `y` (comparison queue) | `labeled`, `usaddress_right` set | Save the labels as they stand and record that usaddress was right too (below) |
 
 A correct parse and a fair warning are separate judgments, so a right parse always says which: a
 true range of house numbers is `right` with a `fair` warning; a fine parse with a spurious warning
 is `right` with a `noise` warning (a candidate for a warning rule to change, #102).
-| `]` and `[` | move words | Move the next word of line 1 to the care-of line, or back one (below) |
 | `f` | edit | Jump to the correction box (it is not focused, so the number keys choose a verdict); Escape leaves it |
+| `r` | reset | Put the original one-line string back in the correction box |
 | `u` | undo | Take back the last answer |
-
-**Move words to the care-of line (`]`, `[`, #222).** About 40 of the 92 corrections in the first review were a retype of the
-whole string to move welded leading words (`ZEPHYR HOLDINGS LLC 20 OAK ST` is a name and a street, #127). `]` moves the next word
-of line 1 to the care-of line and re-parses the box live; `[` takes one back. If line 2 is a care-of line (it starts with `%`,
-`C/O`, `ATTN`) the words are appended to it (`% PAT QUINCE ZEPHYR HOLDINGS LLC`), if there is no line 2 a new `% WORDS` line follows
-line 1, and if line 2 is something else (a unit) the care-of part goes between them. Line 1 always keeps at least one word. Edit the
-box afterwards as usual, then Enter.
 
 **Nothing you type is dropped.** The note is saved with every verdict. Text left in the correction box under a verdict that is not a correction
 (for example "I can't tell" on a row you could not fix, or "usaddress right" after you had typed a better string) is saved as `draft`, with
@@ -156,7 +152,7 @@ is right". Saving a correction whose text is the unchanged original now asks fir
 the warning noise (or, on a comparison row, doorplate right or both right), or "save it as a correction anyway". The server refuses an
 unchanged correction unless the request says `unchanged_ok`.
 
-**Marking the parts (`l`, #222).** For a parse that is wrong in a few places, open "Mark the parts instead". The one-line string is
+**Marking the parts (`l`, #222).** For a parse that is wrong in a few places, use the "Mark the parts instead" section (always shown). The one-line string is
 shown as words, each in the part the parser gave it (anything it did not place is `Not placed`). Click a word (Shift-click to
 extend), choose a part, press Assign, and Save labels. The answer is `labeled` with `labeled_text` and `labels`: `[{start, end,
 component}]`, offsets into `labeled_text`, in order and not overlapping; the components are the page's names (`StreetNumber`,
@@ -170,12 +166,15 @@ right* (`"full"`, its whole reading equals your labels). The answer is the same 
 server accepts the field only on a `labeled` answer to a comparison row, and an old answer or a plain **Save labels** has no field and claims
 nothing about usaddress. The comparison table (`export.py`) counts such a row under *usaddress right* (so the shape group shows that usaddress
 won there) and the answer is still a labeled string for everything else; the shape-only export keeps the grade and the shapes of the labels,
-never a word, and the full-text export heads the entry `labeled (usaddress right: mostly)`. Press `y` once to open the panel (check the labels),
-again to save with the grade chosen in the list.
+never a word, and the full-text export heads the entry `labeled (usaddress right: mostly)`. Press `y` to save with the grade chosen in the list.
 
 Answers go to `local-data/review/answers.jsonl`, one object per line: the time, the id, the input, the
 shape group, the verdict, the correction and your note, and the parse of the original and of the
-correction (key, warnings, components, the doorplate version). The file is append-only (an undo adds
+correction (key, warnings, components, spans, the doorplate version). For the later machine read each answer also keeps: `original_line`
+(the row as one line), `oneline_parse` (the parse of that line, beside `parse`, the parse as the harness read the row), `attempts` (up to
+ten strings tried in the box, each with its key, warnings and whether it parsed cleanly, so abandoned attempts are not lost), `elapsed_ms` on
+the card and, on a `labeled` answer, `parser_labels` (what the parser gave before you changed it). The full-text export prints the
+one-line parse when it differs and each attempt. `noise` and `skip` are no longer offered; older answers keep them. The notes row keeps the last 20 notes. The file is append-only (an undo adds
 a marker), answered rows are not shown again, and a session can stop and resume.
 
 ## The export (`export.py`): what may leave `local-data/`

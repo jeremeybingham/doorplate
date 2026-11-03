@@ -19,7 +19,9 @@ For each row the page shows the parse and the warnings, and you choose a verdict
   (checked, for example, by looking the row up on a map: the real address is not one you could reach from what the row says). Different from
   `junk` (no address at all), `noise` (cut off or mangled by the source) and `unclear` (wrong, and the reviewer can't tell the fix);
 - `noise`: the source cut it off or mangled it;
-- `skip`: not now;
+- `foreign`: not a US address (another country);
+- `puerto_rico`: a Puerto Rico address; the row is also copied, in queue format, to `puerto-rico-queue.jsonl` beside the answers
+  (`--pr-queue` to change it), the queue for the Puerto Rico epic (#332). An undo takes it out again;
 - `labeled`: the parts of the one-line string, marked by the person (`labels`: `[{start, end, component}]` over
   `labeled_text`), a more exact answer than a rewrite when the parse is wrong in a few places. On a comparison row it can also say
   `usaddress_right: "full"` (usaddress's whole reading equals the labels) or `"mostly"` (basically right, one part differs): the
@@ -39,6 +41,11 @@ convention, both fine), `both_wrong` (with a corrected string, as for `corrected
 `unclear`, `junk`, `dual`, `insufficient`, `noise` and `skip` above. `usaddress_right` can also carry a corrected string (the button
 "usaddress right + save correction", key `0`): usaddress's reading was right and there is a better string for doorplate; it is kept as
 `corrected` and the verdict is still scored as `usaddress_right`.
+
+(`noise` and `skip` are no longer offered on the page; older answers keep them.) Besides the verdict, an answer records context
+for the later machine read: `original_line` (the row as one line), `oneline_parse` (the parse of that line, next to `parse`, which is
+the parse as the harness read the row), `attempts` (the strings tried in the box, with key and warnings), `elapsed_ms` on the card and,
+for `labeled`, `parser_labels` (what the parser gave before the person changed it).
 
 Every answer is appended to the answers file, one JSON object per line; an undo appends a
 marker, so the file is never rewritten. Answers already given are not shown again, so a session
@@ -71,7 +78,8 @@ BUILD_WASM = "cargo build -p doorplate-wasm --target wasm32-unknown-unknown --re
 # What the WebAssembly build is made from: a file here newer than the build means the page parses with an older parser (#246).
 SOURCES = (ROOT / "crates" / "doorplate" / "src", ROOT / "crates" / "doorplate" / "data", ROOT / "crates" / "doorplate-wasm" / "src",
            ROOT / "crates" / "doorplate" / "Cargo.toml", ROOT / "crates" / "doorplate-wasm" / "Cargo.toml")
-VERDICTS = ("right", "corrected", "unclear", "junk", "dual", "insufficient", "noise", "skip", "labeled")
+# `noise` and `skip` are no longer on the page but stay valid: older answers files hold them.
+VERDICTS = ("right", "corrected", "unclear", "junk", "dual", "insufficient", "noise", "skip", "labeled", "foreign", "puerto_rico")
 COMPONENTS = ("StreetNumber", "StreetDirPrefix", "StreetName", "StreetSuffix", "StreetDirSuffix", "Highway", "UnitType",
               "UnitNumber", "SecondUnitType", "SecondUnitNumber", "PoBox", "RuralRoute", "GeneralDelivery", "Military",
               "MilitaryPostOffice", "Attention", "Building", "City", "State", "Zip5", "Zip4", "Unparsed")  # the page's names
@@ -79,7 +87,8 @@ MAX_LABELS = 200
 USADDRESS_GRADES = ("full", "mostly")  # how right usaddress was on a labeled comparison answer (#461)
 COMPARE_VERDICTS = ("doorplate_right", "usaddress_right", "both_right", "both_wrong")  # for a comparison row
 WARNING_VERDICTS = ("fair", "noise")  # for a `right` parse: was the warning justified?
-MAX_BODY = 64 * 1024
+MAX_BODY = 128 * 1024
+MAX_ATTEMPTS = 10
 INPUT_KEYS = ("line1", "line2", "city", "state", "zip", "last_line", "provider")
 
 
@@ -129,9 +138,11 @@ def wasm_status(wasm_path, sources=SOURCES):
 class Review:
     """The queue, the answers file and the rules for one answer. No HTTP in here, so it is testable."""
 
-    def __init__(self, queue, answers_path):
+    def __init__(self, queue, answers_path, pr_queue=None):
         self.queue = read_jsonl(queue)
         self.answers_path = Path(answers_path)
+        # Rows answered `puerto_rico` are copied here in queue format, for the Puerto Rico epic (#332).
+        self.pr_queue = Path(pr_queue) if pr_queue else self.answers_path.parent / "puerto-rico-queue.jsonl"
         self.lock = threading.Lock()
 
     def stats(self):
@@ -185,6 +196,7 @@ class Review:
             if grade not in USADDRESS_GRADES:
                 raise ValueError("usaddress_right is 'full' or 'mostly'")
         rec = {"ts": datetime.now(timezone.utc).isoformat(timespec="seconds"), "id": item["id"],
+               "original_line": one_line(item),
                "seq": item["seq"], "source": item["source"], "role": item["role"],
                "input": {k: item[k] for k in INPUT_KEYS if k in item}, "cluster": item.get("cluster"),
                "verdict": verdict, "note": (body.get("note") or "").strip()[:2000]}
@@ -203,12 +215,53 @@ class Review:
         if verdict not in ("corrected", "both_wrong") and not with_corr and draft and \
                 " ".join(draft.split()) != " ".join(one_line(item).split()):
             rec["draft"] = draft[:1000]  # an attempted fix under a verdict that is not a correction
-        for k in ("parse", "corrected_parse", "draft_parse"):  # summaries the page computed with the same parser
+        for k in ("parse", "corrected_parse", "draft_parse", "oneline_parse"):  # summaries the page computed with the same parser
             v = body.get(k)
             if isinstance(v, dict) and len(json.dumps(v)) <= 20000 and (k != "draft_parse" or "draft" in rec):
                 rec[k] = v
+        attempts = self._attempts(body.get("attempts"))
+        if attempts:
+            rec["attempts"] = attempts
+        ms = body.get("elapsed_ms")
+        if isinstance(ms, int) and not isinstance(ms, bool) and 0 <= ms < 86_400_000:
+            rec["elapsed_ms"] = ms
+        if verdict == "labeled" and body.get("parser_labels"):
+            try:
+                rec["parser_labels"] = self._labels({"labeled_text": labels[0], "labels": body["parser_labels"]})[1]
+            except ValueError:
+                pass  # context only: a bad one is dropped, not an error
         self._append(rec)
+        if verdict == "puerto_rico":
+            self._add_pr(item)
         return rec
+
+    @staticmethod
+    def _attempts(raw):
+        """The strings the reviewer tried before answering, each with how it parsed. Context only: bad entries are dropped."""
+        out = []
+        for a in raw[:MAX_ATTEMPTS] if isinstance(raw, list) else []:
+            if not isinstance(a, dict) or not isinstance(a.get("text"), str) or not a["text"].strip() or len(a["text"]) > 1000:
+                continue
+            w = a.get("warnings")
+            out.append({"text": a["text"], "key": a["key"] if isinstance(a.get("key"), str) else None,
+                        "warnings": [x for x in w if isinstance(x, str)][:30] if isinstance(w, list) else [],
+                        "clean": a.get("clean") is True})
+        return out
+
+    def _add_pr(self, item):
+        with self.lock:
+            if any(e.get("id") == item["id"] for e in read_jsonl(self.pr_queue)):
+                return
+            self.pr_queue.parent.mkdir(parents=True, exist_ok=True)
+            with self.pr_queue.open("a", encoding="utf-8") as f:
+                f.write(json.dumps(item, ensure_ascii=False) + "\n")
+
+    def _drop_pr(self, item_id):
+        with self.lock:
+            rows = read_jsonl(self.pr_queue)
+            if any(e.get("id") == item_id for e in rows):
+                self.pr_queue.write_text("".join(json.dumps(e, ensure_ascii=False) + "\n" for e in rows if e.get("id") != item_id),
+                                         encoding="utf-8")
 
     @staticmethod
     def _labels(body):
@@ -241,8 +294,11 @@ class Review:
             if not answered:
                 return None
             last = list(answered)[-1]
+            was_pr = answered[last].get("verdict") == "puerto_rico"
             self._write({"undo": last, "ts": datetime.now(timezone.utc).isoformat(timespec="seconds")})
-            return last
+        if was_pr:
+            self._drop_pr(last)
+        return last
 
     def _append(self, rec):
         with self.lock:
@@ -333,6 +389,7 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("queue", nargs="?", type=Path, default=DEFAULT_QUEUE)
     ap.add_argument("--answers", type=Path, default=DEFAULT_ANSWERS)
+    ap.add_argument("--pr-queue", type=Path, help="where `puerto_rico` rows are copied (default: puerto-rico-queue.jsonl beside the answers)")
     ap.add_argument("--wasm", type=Path, default=DEFAULT_WASM)
     ap.add_argument("--port", type=int, default=8765)
     ap.add_argument("--open", action="store_true", help="open the page in the default browser")
@@ -347,7 +404,7 @@ def main(argv=None):
         print(f"WARNING: {status['message']}", file=sys.stderr)
         if args.strict:
             sys.exit("refusing to start with --strict")
-    review = Review(args.queue, args.answers)
+    review = Review(args.queue, args.answers, args.pr_queue)
     s = review.stats()
     httpd = serve(review, args.wasm, args.port)
     url = f"http://127.0.0.1:{args.port}/"

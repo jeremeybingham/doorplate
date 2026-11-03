@@ -43,21 +43,6 @@ def test_one_line_matches_the_python_one():
 
 
 @node
-def test_moving_words_to_the_care_of_line():
-    r0, r1, r2 = ROWS[0], ROWS[1], ROWS[2]
-    # a care-of line exists: the words are appended to it
-    assert js(f"H.moveWords({json.dumps(r0)}, 3)") == "20 OAK ST, % PAT QUINCE ZEPHYR HOLDINGS LLC, MIAMI, FL 33101"
-    # none: a new `% WORDS` line after line 1
-    assert js(f"H.moveWords({json.dumps(r1)}, 3)") == "20 OAK ST, % ZEPHYR HOLDINGS LLC, MIAMI, FL 33101"
-    # line 2 is a unit: the care-of part goes between line 1 and it
-    assert js(f"H.moveWords({json.dumps(r2)}, 3)") == "20 OAK ST, % ZEPHYR HOLDINGS LLC, STE 4, MIAMI, FL 33101"
-    # zero words changes nothing; too many keeps one word on line 1; a one-word line has nothing to move
-    assert js(f"H.moveWords({json.dumps(r1)}, 0)") == one_line(r1)
-    assert js(f"H.moveWords({json.dumps(r1)}, 99)") == "ST, % ZEPHYR HOLDINGS LLC 20 OAK, MIAMI, FL 33101"
-    assert js(f"H.moveWords({json.dumps(ROWS[4])}, 2)") == "ONLY, MIAMI"
-
-
-@node
 def test_unchanged_ignores_spacing_only():
     r = ROWS[0]
     assert js(f"H.unchanged({json.dumps(r)}, {json.dumps(one_line(r) + '  ')})") is True
@@ -150,7 +135,7 @@ def test_the_server_serves_the_helpers(tmp_path):
     t.start()
     try:
         body = urllib.request.urlopen(f"http://127.0.0.1:{port}/helpers.js").read().decode()
-        assert "moveWords" in body
+        assert "oneLine" in body
         page = urllib.request.urlopen(f"http://127.0.0.1:{port}/").read().decode()
         assert '<script src="/helpers.js">' in page
     finally:

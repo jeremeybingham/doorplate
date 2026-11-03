@@ -69,9 +69,21 @@
 <div id="app" hidden>
   <div class="card">
     <div class="muted" id="cluster"></div>
-    <div id="orig"></div>
+    <div class="field">
+      <div class="fname">Original</div>
+      <div class="line" id="origline" title="The row as one line; it never changes. Click to select it all." style="user-select:all;cursor:text"></div>
+      <button type="button" id="origcopy" style="flex:none">Copy</button>
+    </div>
+    <div class="muted" id="doorhead" style="margin-top:.5rem">doorplate read it like this:</div>
+    <div class="line" id="orig"></div>
     <div id="origwarn"></div>
     <div class="kv" id="origkv"></div>
+    <div id="onelinebox" hidden style="margin-top:.5rem">
+      <div class="muted" id="onelinehead"></div>
+      <div class="line" id="onelineview"></div>
+      <div id="onelinewarn"></div>
+      <div class="kv" id="onelinekv"></div>
+    </div>
   </div>
 
   <div class="card" id="theirs" hidden>
@@ -81,13 +93,9 @@
   </div>
 
   <div class="card" id="fixcard">
-    <label for="fix"><b>A string that should parse to the same door</b> <span class="muted">(starts as the original in one line; press <kbd>f</kbd> to edit it, Enter saves it as a correction)</span></label>
+    <label for="fix"><b>A string that should parse to the same door</b> <span class="muted">(starts as the original in one line; press <kbd>f</kbd> to edit it, <kbd>r</kbd> resets it, Enter saves it as a correction)</span></label>
     <input type="text" id="fix" autocomplete="off" spellcheck="false">
-    <div class="row">
-      <button id="mvless" type="button">Back one word<kbd>[</kbd></button>
-      <button id="mvmore" type="button">Move the next word of line 1 to the care-of line<kbd>]</kbd></button>
-      <span class="muted" id="mvinfo"></span>
-    </div>
+    <div class="row"><button id="fixreset" type="button">Reset to the original<kbd>r</kbd></button></div>
     <div class="line" id="fixview" style="margin-top:.5rem"></div>
     <div id="fixwarn"></div>
     <div class="kv" id="fixkv"></div>
@@ -98,8 +106,8 @@
     <div class="row" id="hintbtns"></div>
   </div>
 
-  <details class="card" id="labeldet">
-    <summary><b>Mark the parts instead</b> <span class="muted">(press <kbd>l</kbd>; for a parse that is wrong in a few places)</span></summary>
+  <div class="card" id="labeldet">
+    <b>Mark the parts instead</b> <span class="muted">(press <kbd>l</kbd> to jump here; for a parse that is wrong in a few places)</span>
     <p class="muted">Starts from what the parser did. Click a word (Shift-click to extend), choose the part it is, press Assign; then Save labels.</p>
     <div class="line" id="labeltoks"></div>
     <div class="row">
@@ -115,7 +123,7 @@
       </select>
       <button id="labelsaveua" type="button" data-nosend="1" title="Saves the labels and records that usaddress was right too, for a row the correction box cannot fix">Save labels, usaddress right too<kbd>y</kbd></button>
     </div>
-  </details>
+  </div>
 
   <div class="row" id="cmpbuttons" hidden>
     <button data-v="doorplate_right">doorplate right<kbd>1</kbd></button>
@@ -127,8 +135,8 @@
     <button data-v="junk">Not an address<kbd>6</kbd></button>
     <button data-v="dual">Dual or multiple address<kbd>9</kbd></button>
     <button data-v="insufficient" title="Some valid parts, but too much wrong or extra text to put together one door">Not enough for a door<kbd>i</kbd></button>
-    <button data-v="noise">Source noise<kbd>7</kbd></button>
-    <button data-v="skip">Skip<kbd>8</kbd></button>
+    <button data-v="foreign" title="Not a US address (another country)">Foreign address<kbd>o</kbd></button>
+    <button data-v="puerto_rico" title="A Puerto Rico address: the row is also copied to the Puerto Rico queue">Puerto Rico<kbd>p</kbd></button>
   </div>
   <div class="row" id="vbuttons">
     <button data-v="right" data-w="fair">Parse right, warning fair<kbd>1</kbd></button>
@@ -138,23 +146,23 @@
     <button data-v="junk">Not an address<kbd>5</kbd></button>
     <button data-v="dual">Dual or multiple address<kbd>8</kbd></button>
     <button data-v="insufficient" title="Some valid parts, but too much wrong or extra text to put together one door">Not enough for a door<kbd>i</kbd></button>
-    <button data-v="noise">Source noise<kbd>6</kbd></button>
-    <button data-v="skip">Skip<kbd>7</kbd></button>
+    <button data-v="foreign" title="Not a US address (another country)">Foreign address<kbd>o</kbd></button>
+    <button data-v="puerto_rico" title="A Puerto Rico address: the row is also copied to the Puerto Rico queue">Puerto Rico<kbd>p</kbd></button>
   </div>
   <div class="row"><button id="undo">Undo last<kbd>u</kbd></button></div>
   <label for="note" class="muted">Note (optional)</label>
   <input type="text" id="note" autocomplete="off">
-  <div id="recent" title="The last five notes of this run: click to use one again"></div>
+  <div id="recent" title="The last twenty notes of this run: click to use one again"></div>
   <p class="muted"><b>Parse right, warning fair</b>: the components are correct and the warning rightly flags something doubtful (a true range of numbers, a cut-off line).
   <b>Parse right, warning is noise</b>: the components are correct and there is nothing to flag. <b>Save correction</b>: it is wrong, and the string above is a better one.
   <b>I can't tell</b>: wrong, and I don't know what it should be. <b>Not an address</b>: a name, a placeholder, a number.
-  <b>Source noise</b>: the source cut it off or mangled it. <b>Dual or multiple address</b>: the row holds two addresses (a street and a PO Box, or several), which is not the same as not being an address. <b>Not enough for a door</b>: some valid address parts, but too much wrong or extra text to put together one coherent door (for example, a map lookup shows an address you could not reach from what the row says).</p>
+  <b>Foreign address</b>: not a US address. <b>Puerto Rico</b>: a Puerto Rico address; the row is also copied to the Puerto Rico queue (<code>puerto-rico-queue.jsonl</code> beside the answers) for the Puerto Rico epic. <b>Dual or multiple address</b>: the row holds two addresses (a street and a PO Box, or several), which is not the same as not being an address. <b>Not enough for a door</b>: some valid address parts, but too much wrong or extra text to put together one coherent door (for example, a map lookup shows an address you could not reach from what the row says).</p>
 </div>
 
 <script src="/helpers.js"></script>
 <script>
 (function () {
-  var H = window.ReviewHelpers, moveN = 0, sel = [], labels = [], lastTok = -1;
+  var H = window.ReviewHelpers, sel = [], labels = [], parserLabels = [], lastTok = -1, attempts = [], shownAt = 0, attemptTimer = null;
   var KINDS = {
     StreetNumber: ["Number", "number"], StreetDirPrefix: ["Direction", "dir"], StreetName: ["Street", "street"],
     StreetSuffix: ["Suffix", "suffix"], StreetDirSuffix: ["Direction", "dir"], Highway: ["Highway", "street"],
@@ -165,7 +173,7 @@
     Building: ["Building", "note"], City: ["City", "city"], State: ["State", "state"], Zip5: ["ZIP", "zip"],
     Zip4: ["ZIP+4", "zip"], Unparsed: ["Not placed", "unparsed"]
   };
-  var enc = new TextEncoder(), dec = new TextDecoder(), wasm, item, origParse;
+  var enc = new TextEncoder(), dec = new TextDecoder(), wasm, item, origParse, oneParse;
   var $ = function (id) { return document.getElementById(id); };
 
   function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; }
@@ -195,6 +203,9 @@
 
   function chips(box, text, spans) {
     box.textContent = "";
+    addChips(box, text, spans);
+  }
+  function addChips(box, text, spans) {
     var at = 0;
     spans.slice().sort(function (a, b) { return a.start - b.start || b.end - a.end; }).forEach(function (c) {
       if (c.start < at) return;
@@ -223,7 +234,7 @@
   }
   function summary(r) {
     if (r.error) return { error: r.error };
-    return { key: r.key, warnings: r.warnings, unparsed: r.unparsed, components: r.components, usps: r.usps,
+    return { key: r.key, warnings: r.warnings, unparsed: r.unparsed, components: r.components, usps: r.usps, spans: r.spans,
              library_version: r.provenance && r.provenance.library_version };
   }
 
@@ -260,16 +271,26 @@
     var p = parseItem(it); origParse = p.parse;
     var pr = p.parse.provenance || {}, kp = String(p.parse.key || "").split(":")[0];
     $("pv").textContent = "parser " + (pr.library_version || "?") + (kp ? ", key " + kp : "");
+    // One horizontal line, like usaddress's: the fields in order, a bar between them (hover a bar for the next field's name).
     var orig = $("orig"); orig.textContent = "";
-    p.fields.forEach(function (f) {
-      var row = el("div", "field"), box = el("div", "line");
-      row.appendChild(el("div", "fname", f[0] || "input")); row.appendChild(box); orig.appendChild(row);
-      var spans = (p.parse.spans || []).filter(function (s) { return s.field === f[0]; });
-      chips(box, f[1], spans);
+    $("origline").textContent = oneLine(it);
+    p.fields.forEach(function (f, i) {
+      if (i) { var bar = el("span", "gap", " | "); bar.title = f[0] || ""; orig.appendChild(bar); }
+      addChips(orig, f[1], (p.parse.spans || []).filter(function (s) { return s.field === f[0]; }));
     });
+    $("doorhead").textContent = it.last_line ? "doorplate read it like this (one line):" : "doorplate read it like this (as separate fields, as the harness parsed the row):";
     warnings($("origwarn"), p.parse); kv($("origkv"), p.parse);
-    $("fix").value = oneLine(it); $("note").value = ""; moveN = 0; $("mvinfo").textContent = ""; $("hint").hidden = true;
-    $("labeldet").open = false; startLabels();
+    // A row of separate fields is parsed again as one line in the box below and in the comparison with usaddress;
+    // when that reading differs from the one above, show it here too.
+    oneParse = it.last_line ? p.parse : call("parse", oneLine(it));
+    var differ = !it.last_line && !oneParse.error && oneParse.key !== p.parse.key;
+    $("onelinebox").hidden = !differ;
+    if (differ) {
+      $("onelinehead").textContent = "The same row as one line (what the box below starts from, and what usaddress is compared with) keys differently:";
+      chips($("onelineview"), oneLine(it), oneParse.spans || []); warnings($("onelinewarn"), oneParse); kv($("onelinekv"), oneParse);
+    }
+    $("fix").value = oneLine(it); $("note").value = ""; $("hint").hidden = true;
+    attempts = []; shownAt = Date.now(); startLabels();
     // No autofocus: the number keys choose a verdict. `f` (or a click) edits the correction.
     renderFix(); if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
   }
@@ -303,11 +324,27 @@
     var d = $("fix").value;
     if (d.trim() && !H.unchanged(item, d)) { body.draft = d; body.draft_parse = summary(call("parse", d)); }
   }
+  // Everything the reviewer tried: each distinct string left in the box (after a pause, a reset or a save) with how it parsed.
+  function noteAttempt() {
+    var t = $("fix").value.trim();
+    if (!t || H.unchanged(item, t) || attempts.some(function (a) { return a.text === t; })) return;
+    var r = call("parse", t);
+    attempts.push({ text: t, key: r.key, warnings: r.warnings || [], clean: !r.error && !(r.warnings || []).length && !r.unparsed });
+    if (attempts.length > 10) attempts.shift();
+  }
+  // Context for the machine reader: the other parse of the row, the strings tried, the time on the card.
+  function addContext(body) {
+    noteAttempt();
+    body.oneline_parse = summary(oneParse);
+    if (attempts.length) body.attempts = attempts;
+    body.elapsed_ms = Date.now() - shownAt;
+  }
   function send(verdict, warning, unchangedOk, withCorr) {
     if (!item) return;
     var corr = verdict === "corrected" || verdict === "both_wrong" || !!withCorr;
     if (corr && !unchangedOk && H.unchanged(item, $("fix").value)) { askUnchanged(verdict, withCorr); return; }
     var body = { id: item.id, verdict: verdict, note: $("note").value, parse: summary(origParse) };
+    addContext(body);
     if (!corr) addDraft(body);
     if (unchangedOk) body.unchanged_ok = true;
     if (verdict === "right") body.warning = warning;
@@ -319,12 +356,12 @@
       .then(function (j) { show(j.item, j.stats); })
       .catch(function (e) { alert("not saved: " + e.message); });
   }
-  // The last five distinct notes of this run (kept for the browser session): a click puts one back in the note box.
+  // The last twenty distinct notes of this run (kept for the browser session): a click puts one back in the note box.
   var recent = [];
   try { recent = JSON.parse(sessionStorage.getItem("recentNotes") || "[]"); } catch (e) { recent = []; }
   function rememberNote(n) {
     n = String(n || "").trim(); if (!n) return;
-    recent = [n].concat(recent.filter(function (x) { return x !== n; })).slice(0, 5);
+    recent = [n].concat(recent.filter(function (x) { return x !== n; })).slice(0, 20);
     try { sessionStorage.setItem("recentNotes", JSON.stringify(recent)); } catch (e) { /* not kept */ }
     drawRecent();
   }
@@ -338,20 +375,17 @@
   }
   drawRecent();
 
-  // Move the leading words of line 1 to the care-of line; each key press re-parses the box.
-  function move(by) {
-    var n = Math.max(0, moveN + by), room = Math.max(0, String(item.line1 || "").trim().split(/\s+/).length - 1);
-    if (n > room) n = room;
-    moveN = n; $("fix").value = H.moveWords(item, n); renderFix();
-    $("mvinfo").textContent = n ? n + " word(s) moved" : "";
-  }
-  $("mvmore").addEventListener("click", function () { move(1); });
-  $("mvless").addEventListener("click", function () { move(-1); });
+  // Back to the original one-line string (what was tried is kept as an attempt first).
+  function resetFix() { noteAttempt(); $("fix").value = oneLine(item); renderFix(); }
+  $("fixreset").addEventListener("click", resetFix);
+  $("origcopy").addEventListener("click", function () {
+    try { navigator.clipboard.writeText(oneLine(item)); } catch (e) { /* select the line by hand */ }
+  });
 
   // Span labeling: the words of the one-line string, each with a part; start from the parser's.
   function startLabels() {
     var text = oneLine(item), r = text.trim() ? call("parse", text) : { spans: [] };
-    labels = H.labelsFromSpans(text, r.spans || []); sel = []; lastTok = -1; drawLabels();
+    labels = H.labelsFromSpans(text, r.spans || []); parserLabels = H.runs(labels); sel = []; lastTok = -1; drawLabels();
   }
   function drawLabels() {
     var box = $("labeltoks"), text = oneLine(item); box.textContent = "";
@@ -375,7 +409,8 @@
   function saveLabels(grade) {
     if (!item) return;
     var body = { id: item.id, verdict: "labeled", note: $("note").value, parse: summary(origParse),
-                 labeled_text: oneLine(item), labels: H.runs(labels) };
+                 labeled_text: oneLine(item), labels: H.runs(labels), parser_labels: parserLabels };
+    addContext(body);
     if (grade && item.compare) body.usaddress_right = grade;
     addDraft(body);
     api("/api/answer", body).then(function () { rememberNote(body.note); return api("/api/next"); }).then(function (j) { show(j.item, j.stats); })
@@ -385,27 +420,24 @@
   document.querySelectorAll("button[data-v]").forEach(function (b) { b.addEventListener("click", function () { send(b.dataset.v, b.dataset.w, false, !!b.dataset.c); }); });
   $("undo").addEventListener("click", undo);
   function undo() { api("/api/undo", {}).then(function () { return api("/api/next"); }).then(function (j) { show(j.item, j.stats); }); }
-  $("fix").addEventListener("input", renderFix);
+  $("fix").addEventListener("input", function () { renderFix(); clearTimeout(attemptTimer); attemptTimer = setTimeout(function () { if (item) noteAttempt(); }, 1200); });
   $("fix").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); send(item && item.compare ? "both_wrong" : "corrected"); } if (e.key === "Escape") e.target.blur(); });
   $("note").addEventListener("keydown", function (e) { if (e.key === "Escape") e.target.blur(); });
   document.addEventListener("keydown", function (e) {
     if (/^(INPUT|TEXTAREA)$/.test(document.activeElement.tagName) || e.ctrlKey || e.metaKey || e.altKey) return;
     var v = (item && item.compare
       ? { "1": ["doorplate_right"], "2": ["usaddress_right"], "3": ["both_right"], "4": ["both_wrong"], "5": ["unclear"],
-          "6": ["junk"], "7": ["noise"], "8": ["skip"], "9": ["dual"], "0": ["usaddress_right", undefined, false, true] }
+          "6": ["junk"], "9": ["dual"], "0": ["usaddress_right", undefined, false, true] }
       : { "1": ["right", "fair"], "2": ["right", "noise"], "3": ["corrected"], "4": ["unclear"], "5": ["junk"],
-          "6": ["noise"], "7": ["skip"], "8": ["dual"] })[e.key];
+          "8": ["dual"] })[e.key];
     if (v) { e.preventDefault(); send(v[0], v[1], v[2], v[3]); }
     else if (e.key === "i") send("insufficient");
     else if (e.key === "u") undo();
-    else if (e.key === "]") { e.preventDefault(); move(1); }
-    else if (e.key === "[") { e.preventDefault(); move(-1); }
-    else if (e.key === "y" && item && item.compare) {
-      // The first press opens the parts panel (so the labels can be checked); the next one saves them with "usaddress right too".
-      e.preventDefault();
-      if (!$("labeldet").open) { $("labeldet").open = true; $("labeldet").scrollIntoView(); } else saveLabels($("labelgrade").value);
-    }
-    else if (e.key === "l") { e.preventDefault(); $("labeldet").open = true; $("labeldet").scrollIntoView(); }
+    else if (e.key === "o") send("foreign");
+    else if (e.key === "p") send("puerto_rico");
+    else if (e.key === "r") { e.preventDefault(); resetFix(); }
+    else if (e.key === "y" && item && item.compare) { e.preventDefault(); saveLabels($("labelgrade").value); }
+    else if (e.key === "l") { e.preventDefault(); $("labeldet").scrollIntoView(); }
     else if (e.key === "f") { e.preventDefault(); $("fix").focus(); $("fix").select(); }
   });
 
