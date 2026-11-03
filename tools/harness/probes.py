@@ -536,6 +536,22 @@ PROBES = [
         "S",
         3,
     ),
+    (
+        "region-phrase-as-state",
+        "482",
+        "a compass word and a state's name, no state code, then a ZIP (TRENT, WEST TEXAS 79561)",
+        rf"(?:^|[ ,|])(?:WEST|EAST|NORTH|SOUTH|CENTRAL|NORTHEAST|NORTHWEST|SOUTHEAST|SOUTHWEST) (?!VIRGINIA\b){STATE_FIRST},? [0-9]{{5}}(?:-[0-9]{{4}})?(?: \||$)",
+        "S",
+        2,
+    ),
+    (
+        "successors-assigns-line1",
+        "483",
+        "SUCCESSORS AND/OR ASSIGNS written in the address (ITS SUCCESSORS ANDOR ASSIGNS before the street)",
+        r"\bSUCCESSORS (?:AND/OR |ANDOR |AND |OR )?ASS",
+        "S",
+        2,
+    ),
     # Needs the city field (hits(): city and state), so no pattern.
     ("city-is-state", "357", "the city field holds the state and the real city is on line 2", None, "S", 3),
     ("unit-or-box-in-city", "244", "a unit or a box in the city field", None, "S", 2),
