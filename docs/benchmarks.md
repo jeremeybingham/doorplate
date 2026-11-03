@@ -250,6 +250,20 @@ production geocoder's logs, written uppercase as `4394 MAIN ST PORT HENRY NY 129
 The splits share no street. The benchmark states no license, so it stays in the
 gitignored `local-data/` and only aggregate numbers are published.
 
+Cite it as: Zhengcong Yin, Diya Li and Daniel W. Goldberg, *Is ChatGPT a game changer for geocoding -- a benchmark for
+geocoding address parsing techniques*, 2023, [arXiv:2310.14360](https://arxiv.org/abs/2310.14360):
+
+```bibtex
+@misc{yin2023chatgpt,
+  title={Is ChatGPT a game changer for geocoding -- a benchmark for geocoding address parsing techniques},
+  author={Zhengcong Yin and Diya Li and Daniel W. Goldberg},
+  year={2023},
+  eprint={2310.14360},
+  archivePrefix={arXiv},
+  primaryClass={cs.CL}
+}
+```
+
 | Whole address (coarse) | Addresses | doorplate | usaddress |
 |---|---|---|---|
 | **dev** | 60,522 | **94.3%** | 88.1% |
