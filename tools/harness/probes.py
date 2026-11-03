@@ -572,6 +572,7 @@ NO_PROBE = {
     213: "research: whether more state data is needed; measured by the label comparisons, not a text shape",
     238: "a family of unit misses in NAD, split into #320 and #321, which have probes",
     345: "research: a bare number after a street is a unit in some sources and a name in others; no text shape tells them apart",
+    486: "a curated list of neighborhood city names: counted by city values in the sources (#485), not a text shape",
     410: "research: naming the known-word chains and where the tokenizer and tagger differ; a reading task, not a shape",
 }
 NOT_A_SHAPE_LABELS = ("tracker", "area:docs", "area:tooling", "area:api", "area:architecture")
