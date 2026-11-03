@@ -286,6 +286,8 @@ def test_the_box_then_line2_probe_wants_a_street_on_line_2_not_any_words():
         ("12 ELM ST", "DBA OAKWOOD APTS", None, None, None, "name-or-business-line2"),
         ("12 ELM ST", "JOHN SMITH DDS", None, None, None, "name-or-business-line2"),
         ("C/O JANE DOE 1504 EAST M", None, None, None, None, "co-name-street-one-line"),
+        ("12 HARBOR WAY, VIRGINIA BEACH 99999", None, None, None, None, "state-word-city-no-state"),
+        ("12 HARBOR WAY, LA MESA 99999-0001", None, None, None, None, "state-word-city-no-state"),
     ],
 )
 def test_the_coverage_probes_match_invented_rows(line1, line2, zip_code, city, state, expect):
@@ -308,12 +310,15 @@ def test_the_coverage_probes_match_invented_rows(line1, line2, zip_code, city, s
         ("12 ELM ST", "SUITE 4", None, None, None),
         ("12 ELM ST", None, "62704", "SPRINGFIELD", "IL"),
         ("5 MUNOZ ST", None, None, None, None),
+        ("12 HARBOR WAY, VIRGINIA BEACH, VA 99999", None, None, None, None),
+        ("12 HARBOR WAY, SPRINGFIELD, VIRGINIA 99999", None, None, None, None),
+        ("12 HARBOR WAY, VIRGINIA BEACH", None, None, None, None),
     ],
 )
 def test_the_coverage_probes_pass_near_misses(line1, line2, zip_code, city, state):
     new = {
         "campus-box-two-words", "half-before-lone-letter", "compass-ky-tr-number", "city-state-zip-twice", "null-word-field",
         "repeated-state-or-county", "letter-and-initials", "letter-then-direction", "city-placeholder", "non-latin-text",
-        "no-for-north", "unit-marker-after-suffix", "name-or-business-line2", "co-name-street-one-line",
+        "no-for-north", "unit-marker-after-suffix", "name-or-business-line2", "co-name-street-one-line", "state-word-city-no-state",
     }
     assert not set(probes.hits(line1, line2, zip_code, city, state)) & new

@@ -35,6 +35,10 @@ ROOT = HERE.parents[1]
 SUF = r"(?:ST|STREET|AVE|AVENUE|RD|ROAD|DR|DRIVE|LN|LANE|BLVD|HWY|PKWY|WAY|CT|PL|CIR|TRL)"
 UN = r"(?:SUITE|STE|APT|UNIT|FL|FLOOR|RM|ROOM|BLDG)"
 BOX = r"(?:P ?O\.? ?)?BOX"
+# A state's name, or LA (La Mesa), as the first word of a city written with no state (#480).
+STATE_FIRST = (r"(?:ALABAMA|ALASKA|ARIZONA|ARKANSAS|CALIFORNIA|COLORADO|CONNECTICUT|DELAWARE|FLORIDA|GEORGIA|HAWAII|IDAHO|ILLINOIS|INDIANA|IOWA|"
+               r"KANSAS|KENTUCKY|LOUISIANA|MAINE|MARYLAND|MASSACHUSETTS|MICHIGAN|MINNESOTA|MISSISSIPPI|MISSOURI|MONTANA|NEBRASKA|NEVADA|"
+               r"OHIO|OKLAHOMA|OREGON|PENNSYLVANIA|TENNESSEE|TEXAS|UTAH|VERMONT|VIRGINIA|WASHINGTON|WISCONSIN|WYOMING|LA)")
 
 # key, issue, name, pattern over T = upper(line1 | line2) ("|" separates the lines), size (S/M/L/D), harm (1 a component or
 # warning only, 2 a wrong key with a warning, 3 a wrong key with no warning).
@@ -521,6 +525,14 @@ PROBES = [
         "473",
         "C/O, a name and then a house number and street on line 1 (C/O JANE DOE 1504 EAST M)",
         r"^(?:C/O|C O) [^|0-9]+ [0-9]+ [A-Z0-9 ]+(?: \||$)",
+        "S",
+        3,
+    ),
+    (
+        "state-word-city-no-state",
+        "480",
+        "a city that starts with a state name or LA, with no state, and a ZIP (VIRGINIA BEACH 23451, LA MESA 91941)",
+        rf"(?:^|[ ,|]){STATE_FIRST} [A-Z]{{3,}}(?: [A-Z]+)?,? [0-9]{{5}}(?:-[0-9]{{4}})?(?: \||$)",
         "S",
         3,
     ),

@@ -296,6 +296,18 @@ record, kept private, true city known) as one line with no commas
 5,735 whose line 1 ends in a spelled-out compass word (`5TH AVE NORTH`) and 47.2% of
 the 8,702 whose true city starts with one (`NORTH MIAMI`). The sample is fixed, so runs are comparable: 0.4.1 and 0.5.0 give the same city for every one of the 300,000 records.
 
+### Senzing's libpostal test set (a secondary check)
+
+[Senzing/libpostal-data](https://github.com/Senzing/libpostal-data) publishes the test set it scores its retrained libpostal models on
+(`files/tests/v1.2.0/test_data.csv`: 12,868 rows in the file, 2,233 of them US). Nearly all of it (98%) is OpenStreetMap address tags written out as one
+line, so it is clean and uniform (175 distinct input shapes in the US rows, units on 5.5%), not messy input. We use it as a sanity check, not as a
+headline benchmark: on the 2,233 US rows, the house number, road, city, state and ZIP all right (coarse token labels, our own scoring) is 97.2% for
+doorplate and 89.5% for usaddress; with the state missing from the row (554 rows) it is 94.2% and 70.0%. The 17 rows we miss that way share one cause
+(a city that begins with a state name, such as `Virginia Beach`, with no state given: #480). **This is not comparable to Senzing's own US figure (4.58% failing in v1.2.0)**:
+they do not say what a failure is, their table counts a slightly different set (2,270 US rows), and libpostal was not run here. The set has no license
+statement and mixed sources, so it stays in `local-data/` and only these aggregates are published (`docs/data-policy.md`). It was read for the check
+and the rule above, so treat any later score on it as optimistic.
+
 ### usaddress's own test files
 
 Addresses that are not in usaddress's training files (2,248 of 9,088): doorplate gets the whole address right on 99.1% and usaddress on 100.0%.
