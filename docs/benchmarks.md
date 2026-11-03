@@ -308,6 +308,40 @@ they do not say what a failure is, their table counts a slightly different set (
 statement and mixed sources, so it stays in `local-data/` and only these aggregates are published (`docs/data-policy.md`). It was read for the check
 and the rule above, so treat any later score on it as optimistic.
 
+#### Next to the models in the benchmark's paper
+
+The paper (Yin, Li and Goldberg, [arXiv:2310.14360](https://arxiv.org/abs/2310.14360), cited above) tests five models on the `test` split
+(30,622 addresses): a BiLSTM-CRF, BERT, roBERTa and DistilBERT, each trained on the `train` split, and GPT-3.5 with three examples in the prompt. It reports
+F1 per label (its Table 4) and a *Parsing Score*, the sum of each label's F1 times the weight Texas A&M's geocoder gives it (house number 20,
+predirectional 7, street base name 45, road type 10, postdirectional 4, city 17, state 1, ZIP 45; the best possible is 149). It does not test
+usaddress or a rule-based parser. Scored the same way (`benchmarks/geocode_paper_compare.py`; entity level, an exact span with its tags; a leading road word
+such as `COUNTY ROAD` counts as street, as the benchmark labels it):
+
+| `test` split | BiLSTM-CRF | BERT | roBERTa | DistilBERT | GPT-3.5 | **doorplate** | usaddress |
+|---|---|---|---|---|---|---|---|
+| House number | .99977 | .99963 | .99976 | .99970 | .98810 | .99772 | .99282 |
+| Predirectional | .99719 | .99378 | .98996 | .99579 | .70077 | .98778 | .98307 |
+| Street base name | .99241 | .98963 | .98022 | .99061 | .83853 | .92389 | .91605 |
+| Road type | .99705 | .99345 | .98543 | .99427 | .88328 | .93507 | .91820 |
+| Postdirectional | .96739 | .96680 | .94003 | .96771 | .42917 | .92122 | .87065 |
+| City | .99399 | .99293 | .98539 | .99341 | .90404 | .97940 | .93420 |
+| State | .99993 | .99986 | .99894 | .99991 | .97505 | .99854 | .97611 |
+| Postal code | 1.00000 | 1.00000 | .99987 | 1.00000 | .97851 | 1.00000 | .99989 |
+| **Overall F1** | .99677 | .99545 | .99084 | .99590 | .90875 | **.97228** | .95598 |
+| **Parsing Score** | 148.37 | 148.16 | 147.39 | 148.24 | 133.33 | **144.13** | 142.48 |
+
+The first five columns are the paper's Table 4. Read it with these in mind:
+
+- **Different kinds of model.** The four trained models learned this benchmark's own injected errors (street typos, a dropped road type or city, `Los Angeles` written `LA`) from 148,173 training addresses.
+  doorplate is rules and was not trained on any of it, so the gap is expected. It is ahead of GPT-3.5 (F1 .972 against .909) and of usaddress (.956), and 1.9 to 2.5 F1 points
+  behind the trained models.
+- **The gap is mostly one label.** Against the BiLSTM-CRF, 73% of the 4.24 Parsing Score points are the street base name (neighborhood and area words read as street words, spelled-out
+  compass words, county roads: the classes above), 15% the road type, 6% the city.
+- **The `test` split is optimistic for doorplate** (it was read while the rules were written, see above). On `dev` and `train`, which never were, doorplate has F1 .963 and Parsing Score 142.6 on both
+  (usaddress: .955 and 142.3 on `dev`, .955 and 142.4 on `train`), so about 3 F1 points and 5.8 Parsing Score points behind the best model's `test` score.
+- The paper does not say whether its F1 counts entities or tokens. At token level doorplate's `test` overall F1 is .983 (usaddress .970); the table uses the stricter entity level.
+- The paper's models are tuned to this benchmark's one-line, error-injected addresses. For ordinary input see the benchmark suite above (doorplate 98.5% against usaddress 96.1% on its `natural` stratum).
+
 ### usaddress's own test files
 
 Addresses that are not in usaddress's training files (2,248 of 9,088): doorplate gets the whole address right on 99.1% and usaddress on 100.0%.
