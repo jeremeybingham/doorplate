@@ -1,5 +1,34 @@
 //! Tagging rules. The source of each rule (a Pub 28 section, or an address
 //! shape observed in Florida address data) is in `docs/usps-pub28-notes.md`.
+//!
+//! # Word sets (#410)
+//!
+//! Many rules ask "is this word one of the lexicon's words?" and each asks
+//! about its own subset of the tables. The subsets differ because the rules
+//! guard different mistakes; a rule that needs another subset adds its own
+//! chain, and the chains are not meant to be one shared predicate. The
+//! lexicon tables are suffix (`sfx`), unit (`unit`), directional (`dir`),
+//! highway (`hwy`), special (`spc`), state (`st`) and the placeholders
+//! (`ph`). The chains, by function:
+//!
+//! | function | tables | purpose (as read from the code) |
+//! |---|---|---|
+//! | `state_alone` | `dir`, `unit`; then `sfx`, `hwy` | a state word that is really a direction or a unit; a street word only after an abbreviated suffix |
+//! | `completes_street` (name words) | `sfx`, `unit`, `dir`, `hwy`, `spc`, `ph` | a second-line word that is any kind of lexicon word, so only plain text becomes `Attention` |
+//! | `completes_street` (line 2) | `unit`, `hwy`, `spc`, `ph`, line-2 non-names | a street word is allowed here, since line 2 may repeat the street |
+//! | `care_of_after_street` | `sfx`, `dir`, `unit` | a repeated line that is an address, not a name |
+//! | `campus_box` | `spc`, `unit`, `hwy`, `dir` | a box word, unit, route or direction read as a school code |
+//! | `spelled_house_number` | `unit`, `hwy`, `sfx` (not a name), digits | a spelled number that is part of a street name |
+//! | `guessed_number_letter` | `sfx`, `unit`, `spc`, `dir` | a letter after a number whose next word starts a street or a unit |
+//! | `text_after_suffix` | `dir`, `unit`, `spc`, `hwy`, `st`, `ph` | trailing text read as a place when it is a lexicon word |
+//! | `digit_letter_after_bare_name` | `hwy`, `spc`, `unit` | a route, special line or unit read as a name |
+//! | `words_after_unit` | `unit`, `sfx`, `dir`, `st` | unit remarks that start a street or a state |
+//! | `recipient_words` | `spc`, `unit` (except `DEPT`), `hwy`, `dir` | lexicon words read as a recipient's name |
+//!
+//! Where two chains name the same tables they are the same on purpose; the
+//! rest differ on purpose, as above. The tokenizer's own chain is
+//! `tokenize::known_word` (suffix, unit, directional, state, special,
+//! highway). A change to a chain changes keys: measure it as a rule.
 
 use std::ops::Range;
 
@@ -432,6 +461,15 @@ impl Tagger<'_> {
 
     /// Whether `lo..hi` starts with a unit designator or `#` (a second
     /// address line such as `STE 200` or `REAR`).
+    ///
+    /// This is the tagger's test, and it accepts every unit spelling, observed
+    /// ones included. The tokenizer's `unit_like` (#308) refuses observed
+    /// spellings on purpose, because it decides whether a dash or slash
+    /// after a suffix is a separator, where a street word that is also an
+    /// observed unit spelling must stay a street (`ST/1ST AVE`). The two also
+    /// differ on box words and on values: `unit_like` takes a bare box word
+    /// and a value with a digit that is not an ordinal; here a bare value is
+    /// read by [`Self::unit_tail`].
     fn starts_unit(&self, lo: usize, hi: usize) -> bool {
         self.toks[lo].is_hash() || longest_at(self.toks, lo, hi, |s| self.lex.unit(s)).is_some()
     }
