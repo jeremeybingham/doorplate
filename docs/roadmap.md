@@ -73,6 +73,7 @@ rules below, each measured row by row against the frozen `k4` keys with `key_dif
 of 41 are analyzed; the rest and the final rescore may move issues in or out) and the re-probes of 2026-11-03. Planned order, with the measured rows:
 
 1. A compass word with `KY` or `TR` and a number (#388): 28 of 30 wrong, about 5,650 rows.
+   A half written without its slash before a direction letter (#387): 29 of 30 wrong, about 4,330 rows.
 2. A campus box with two plain words, a route word with no route number and a misspelled post office, one rule (#384, widening the earlier campus-box rule): about 5,560 rows.
 3. Missing-value strings in the city, state or ZIP (#419), with a small city-only placeholder list (the words that only ever stand in for a city).
 4. A care-of line that ends mid-street gets a warning, and `C O` without a slash (#473, narrowed; about 1,000 rows).
@@ -92,7 +93,7 @@ Puerto Rico street-first forms wait for the Puerto Rico research issue. Nothing 
     the street name (#498), a unit repeated as `# N` on line 2 (#499), a bare number between the house number and an ordinal street (#502).
   - *Boxes and routes:* glued box and route words (#304), a route after a street (#307), `PO BOX` with a placeholder on line 2 (#358), a box followed by street words (#366).
   - *House numbers and street names:* `SO` for `SOUTH` (#269), two house numbers joined by `&` (#274), a spaced hyphen between a building and a street (#310) or after a suffix (#341), grid numbers (#311),
-    a letter before the house number (#312), Queens and Hawaii numbers written with a space (#313), a letter then a direction then a name (#360), a lost fraction before a lone letter (#387),
+    a letter before the house number (#312), Queens and Hawaii numbers written with a space (#313), a letter then a direction then a name (#360),
     a lone letter followed by `AND` (#466), the missing `ambiguous_number_letter` warning after a lone letter (#467), `NO` for north (#470), a five-digit number written as two parts (#501).
   - *State and road forms:* Texas `PR` roads (#314), the FM number before the road type (#316), `AND` between two highways (#317); Puerto Rico (#318, #319, the epic #332, #92).
   - *City field and line 2:* a unit or a box in the city field (#244), the city field holds the state (#357), a `CO` prefix with a fuller name on line 2 (#367),
