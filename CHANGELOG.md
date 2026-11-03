@@ -28,6 +28,7 @@ change to what an input produces needs a new key version.
 
 ### Changed
 
+- **`KY` and `TR` after a compass word and before a number are the road, not a suffix** (#388, key change, held for the `k5`): `88 NORTH KY 8` is the predirectional `N` and the street `KY 8`, and `1234 EAST TR 56` is `E` and `TR 56`; since #325 the compass word became the street's name with `KY` or `TRL` as its suffix and the number a unit. The key comparison against `main` over the seven sources (36.9M rows) changes 124 keys (FCC 7, FMCSA 43, NAD sample 74; none in the other four), every one a line with a compass word, `KY` or `TR` and a number, and each gains the predirectional; the unit fields change on the same 124 rows (the number is no longer a unit), and 56 rows lose `non_standard_abbreviation` (`TR` was read as `TRL`). Corpus `cn-011` to `cn-015`.
 - **A placeholder city (`Not stated`, `Unknown`) is no city** (#468, no key change): a city value that is a whole `[placeholder]` phrase is left out, so `city` is empty, `place` comes from the ZIP when it can, and `missing_city` is raised; before, the stand-in was kept as the city with no warning. The key never held a city, so keys and unit fields are equal to the build before over 36,920,703 rows of the seven sources (0 changed); warnings changed on 195,224 rows, each only by the added `missing_city` (NAD 194,045, 19.4% of its 1M rows; NY corporations 748; FMCSA 395; IRS 30; NC voter 4; FCC 2; Netsyms 0). The slug of those rows no longer carries the stand-in. Corpus `pcity-001` to `pcity-005`.
 
 ## [0.5.1] - 2026-11-01

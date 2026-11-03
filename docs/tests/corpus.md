@@ -359,7 +359,7 @@ New Jersey, one digit after the hyphen).
 
 ### `compass-street.jsonl`
 
-Ids `cn-001` to `cn-010` (#325). A spelled-out compass word and a street suffix (`44 WEST AVE 2B`) are the street's name and suffix, and the digit value after them is a unit, on one line and on line 2; and the near misses that must not change (an abbreviated direction before a name, a postdirectional, a letter after the suffix, no unit).
+Ids `cn-001` to `cn-015` (#325, #388). A spelled-out compass word and a street suffix (`44 WEST AVE 2B`) are the street's name and suffix, and the digit value after them is a unit, on one line and on line 2; and the near misses that must not change (an abbreviated direction before a name, a postdirectional, a letter after the suffix, no unit). `cn-011` to `cn-015` (#388): `KY` or `TR` and a number after a compass word are the road (`88 NORTH KY 8`, `1234 EAST TR 56`), not a suffix with a unit.
 
 ### `pobox-zip.jsonl`
 
