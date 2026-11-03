@@ -552,6 +552,14 @@ PROBES = [
         "S",
         2,
     ),
+    (
+        "letter-after-number",
+        "487",
+        "a letter A to D after a plain house number and before a name (123 B MAIN ST), read as the number's suffix",
+        rf"^[0-9]+ [A-D] (?![A-Z]\b)[A-Z]{{3,}}[A-Z ]* {SUF}\b",
+        "M",
+        2,
+    ),
     # Needs the city field (hits(): city and state), so no pattern.
     ("city-is-state", "357", "the city field holds the state and the real city is on line 2", None, "S", 3),
     ("unit-or-box-in-city", "244", "a unit or a box in the city field", None, "S", 2),
