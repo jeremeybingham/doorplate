@@ -19,6 +19,7 @@ There are three kinds of measure here, and they answer different questions.
 | Speed and memory under a fixed profile (4 CPUs, 8 GB) | `python benchmarks/suite.py speed` | the extension; `usaddress` |
 | All three of the above (about 20 seconds) | `python benchmarks/suite.py all` | the extension; `usaddress` |
 | Accuracy on one-line street addresses from an outside data set | `python benchmarks/accuracy.py` | the CLI; `usaddress`; the geocode benchmark (not in the repository) |
+| The geocode benchmark scored as its paper does (F1 per label, Parsing Score), next to the paper's models | `python benchmarks/geocode_paper_compare.py [test] [dev] [train]` | the extension; `usaddress`; the geocode benchmark |
 | Whether a parse-rule fix generalizes instead of overfitting | `split_geocode_train.py`, then `tools/compare/city_diff.py` | the geocode benchmark |
 | Python speed of `parse`, `parse_many`, `parse_fields` against usaddress | `python benchmarks/speed_python.py [N]` | the extension; `usaddress` |
 | Speed of batches and of pandas, Polars and DuckDB frames | `python crates/doorplate-py/benchmarks/bench_batch.py [N]` | the extension; the frame libraries |
