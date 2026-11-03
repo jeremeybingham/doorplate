@@ -77,6 +77,9 @@ def test_keys_are_unique_and_every_pattern_compiles():
         ("1900 OAK AVE MSC 518", None, None, "word-number-after-suffix"),
         ("5500 WABASH AVE RHIT BOX 507", None, None, "word-number-after-suffix"),
         ("31 1 2 ELM PLACE", None, None, "half-without-slash"),
+        ("123 ELM CIR, ELM CREEK CONDOMINIUMS", None, None, "building-name-after-street"),
+        ("4704 APT CLARK LN", "1 100", None, "stray-designator-before-name"),
+        ("123 OAK ST", "OAK VALLEY VI CONDOMINIUMS", None, "building-name-after-street"),
     ],
 )
 def test_each_shape_is_found(line1, line2, zip_code, expect):
@@ -102,10 +105,13 @@ def test_the_new_probes_leave_ordinary_addresses_alone():
         ("PO BOX 2856", None),
         ("12 1/2 ELM ST", None),
         ("146 VEGA LOOP APT 4", None),
+        ("123 ELM CIR", "UNIT 4"),
+        ("CONDOMINIUMS OF ELM CREEK", None),
     ]:
         got = set(probes.hits(line1, line2, None)) & {
             "single-letter-name-initial", "unit-copies-street-word", "po-box-placeholder-line2",
             "box-then-street-words", "word-number-after-suffix", "half-without-slash", "name-and-floor-line1",
+            "building-name-after-street", "stray-designator-before-name",
         }
         assert not got, (line1, line2, got)
 
