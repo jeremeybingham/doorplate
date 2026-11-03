@@ -166,6 +166,22 @@ PROBES = [
         3,
     ),
     (
+        "space-split-long-number",
+        "501",
+        "a five-digit house number written as two parts (2 + 3 digits)",
+        r"^[0-9]{2} [0-9]{3} (?:[0-9]+(?:ST|ND|RD|TH)|[A-Z]+) ",
+        "S",
+        3,
+    ),
+    (
+        "bare-unit-number-after-house-number",
+        "502",
+        "a bare number between the house number and an ordinal street",
+        r"^([0-9]+) (?!\1 )[0-9]{1,4} [0-9]+(?:ST|ND|RD|TH) ",
+        "S",
+        1,
+    ),
+    (
         "tx-pr-fm",
         "314",
         "Texas PR / FM / RM / RR + number",
