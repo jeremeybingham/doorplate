@@ -59,6 +59,8 @@ This library formats and parses; it does not validate that an address exists or 
 """
 import argparse
 import json
+import shutil
+import subprocess
 import sys
 import threading
 import webbrowser
@@ -381,6 +383,19 @@ def make_handler(review, wasm_path):
     return Handler
 
 
+def open_page(url):
+    """Open `url` in the default browser; on failure print one line, not the opener's error list (WSL has no browser)."""
+    try:
+        if sys.platform.startswith("linux") and shutil.which("xdg-open"):
+            ok = subprocess.run(["xdg-open", url], capture_output=True, timeout=10).returncode == 0
+        else:
+            ok = webbrowser.open(url)
+    except (OSError, subprocess.TimeoutExpired):
+        ok = False
+    if not ok:
+        print("could not open a browser; open the URL above")
+
+
 def serve(review, wasm_path, port):
     return ThreadingHTTPServer(("127.0.0.1", port), make_handler(review, wasm_path))
 
@@ -411,7 +426,7 @@ def main(argv=None):
     print(f"{s['answered']} of {s['total']} answered; answers go to {args.answers}")
     print(f"open {url}   (Ctrl-C to stop)")
     if args.open:
-        webbrowser.open(url)
+        open_page(url)
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
