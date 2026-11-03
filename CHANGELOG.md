@@ -9,6 +9,7 @@ change to what an input produces needs a new key version.
 
 ### Added
 
+- **The roadmap names the 0.6.0 plan and every open issue** (docs and tooling only): a "Next: 0.6.0" section with the planned order, the open issues found since 2026-11-01 listed in "Waiting", the closed ones removed, and `tools/docs/issue_states.py` now checks the 0.6.0 section, the 0.6.0 backlog row and tracker #416.
 - **Probes for a split five-digit house number and a bare unit number after the house number** (tooling only, #501, #502): `space-split-long-number` (`12 345 ELM ST`) and `bare-unit-number-after-house-number` (`123 104 11TH STREET`) in `tools/harness/probes.py`, with matching and near-miss cases; both came out of the `queens-space` precision queue (#313).
 - **A probe for a unit repeated as `# N` on line 2** (tooling only, #499): `unit-repeated-as-hash` in `tools/harness/probes.py` (`SPC 249, # 249`), with a matching case and a near miss; #499 came out of the `unit-marker-after-suffix` precision queue (#471).
 - **Review tool: `--open` fails quietly** (tooling only): when no browser can be opened (WSL has none), the server prints `could not open a browser; open the URL above` instead of the `xdg-open` list of missing browsers.
