@@ -305,6 +305,14 @@ PROBES = [
     ),
     ("bare-bay", "193", "a bare BAY", r"(?: |\| )BAY(?: \||$)", "S", 1),
     (
+        "unit-repeated-as-hash",
+        "499",
+        "a unit repeated as # N on line 2",
+        r"\b(?:SPC|SP|LOT|TRLR|APT|UNIT|STE|SUITE) ([A-Z0-9-]+)(?:,| \|) ?# ?\1\b",
+        "S",
+        1,
+    ),
+    (
         "stray-designator-before-name",
         "498",
         "a unit designator with no value between the house number and the street name",

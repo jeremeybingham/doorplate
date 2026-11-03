@@ -9,6 +9,7 @@ change to what an input produces needs a new key version.
 
 ### Added
 
+- **A probe for a unit repeated as `# N` on line 2** (tooling only, #499): `unit-repeated-as-hash` in `tools/harness/probes.py` (`SPC 249, # 249`), with a matching case and a near miss; #499 came out of the `unit-marker-after-suffix` precision queue (#471).
 - **Review tool: `--open` fails quietly** (tooling only): when no browser can be opened (WSL has none), the server prints `could not open a browser; open the URL above` instead of the `xdg-open` list of missing browsers.
 - **Probes for a building name after the street and a stray designator** (tooling only, #495, #498): `building-name-after-street` (`123 ELM CIR, ELM CREEK CONDOMINIUMS`) and `stray-designator-before-name` (`4704 APT CLARK LN`) in `tools/harness/probes.py`, with matching and near-miss cases; both issues came out of precision queues (#321, #296).
 - **The geocode benchmark scored as its paper does** (tooling and docs only): `benchmarks/geocode_paper_compare.py` prints F1 per label, the overall F1 and the paper's weighted Parsing Score for doorplate and usaddress, and `docs/benchmarks.md` sets the `test` result beside the five models of Yin, Li and Goldberg (arXiv:2310.14360): doorplate F1 .972 and Parsing Score 144.1, against .909 and 133.3 for GPT-3.5 and .991 to .997 and 147.4 to 148.4 for the trained models; on `dev` .963 and 142.6.
