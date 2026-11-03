@@ -142,7 +142,7 @@ notebook, so they cannot go stale silently.
 
 ## Releasing
 
-Maintainers only. The release issue for a version is the checklist; the steps, in order:
+Maintainers only. The release issue for a version is the checklist. A 0.5.x patch is cut from the `release/0.5.x` branch (started from `v0.5.1`), not from `main`, which carries `0.6.0-dev` and the unreleased key changes: cherry-pick the fix there, run the steps below on that branch, and port the CHANGELOG entry back to `main`. The steps, in order:
 
 1. **Figures.** If the parser or the tables changed since the figures were taken, rerun `benchmarks/suite.py all` (and `benchmarks/suite.py compare --suite local-data/benchsuite/twin` for the private twin), `benchmarks/accuracy.py` and the speed and size scripts, and update the figures in `docs/benchmarks.md` and in the package READMEs that quote them (`CLAUDE.md` lists the four READMEs). The suite's `v1` files are never edited; a rebuilt suite is `v2`.
 2. **Checks on private data.** One full Netsyms run on the release commit, compared with the previous one (`docs/tools/harness.md`), and `tools/compare/oneline_fl.py` and `tools/harness/nad_score.py` as regression checks. Ask before extracting the database or starting the run.
