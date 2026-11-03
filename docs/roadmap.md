@@ -5,7 +5,7 @@ What is planned, what depends on what, and what is deliberately not planned.
 messy addresses it sees, the sooner the items below that need them can happen. To send
 some, see [Sharing messy data](../CONTRIBUTING.md#sharing-messy-data).
 
-**Last reviewed 2026-11-01, against the issues up to #451.** The rules for the labels, the milestones and the order are in
+**Last reviewed 2026-11-03, against the issues up to #502.** The rules for the labels, the milestones and the order are in
 [`backlog.md`](backlog.md); the open trackers are #402 (0.5.x, in order), #416 (0.6.0, the `k5`) and #417 (decided against).
 
 ## Stability while it is an alpha
@@ -64,26 +64,44 @@ been checked on the project's own data, so a `k4` is likely.
 - **Docs (done):** the edit pass (#399: current figures, no build history in the user pages) and the wheel-size correction (#277).
 - **Release:** the 0.5.1 checklist is #453 (released with the references PR).
 - **Tooling:** MessyStreets findings (#323) are in the Tooling milestone. The Try page work (#434: a guided path, a sample CSV, an anonymize mode) is in review and ships with the site, not a crate release.
-- **Parse rules** found since the list closed are in **Later** (each is measured, none reached the P2 line). The next key version is `k5`, planned
-  for an eventual 0.6.0 release (#416); nothing is scheduled for it.
+- **Parse rules** found since the list closed are in **Later** unless they are measured at P2 or above: those are in 0.6.0 below.
+
+## Next: 0.6.0, the `k5`
+
+The next key-changing release (tracker #416). It opens with the rerank of every probed issue by rows affected (new cut-offs, recorded on #416), then the
+rules below, each measured row by row against the frozen `k4` keys with `key_diff.py`. The list comes from the probe precision queues (about half
+of 41 are analyzed; the rest and the final rescore may move issues in or out) and the re-probes of 2026-11-03. Planned order, with the measured rows:
+
+1. A compass word with `KY` or `TR` and a number (#388): 28 of 30 wrong, about 5,650 rows.
+2. A campus box with two plain words, a route word with no route number and a misspelled post office, one rule (#384, widening the earlier campus-box rule): about 5,560 rows.
+3. Missing-value strings in the city, state or ZIP (#419), with a small city-only placeholder list (the words that only ever stand in for a city).
+4. A care-of line that ends mid-street gets a warning, and `C O` without a slash (#473, narrowed; about 1,000 rows).
+5. A letter A to D after the house number is usually a unit (#487, reverses an earlier rule).
+6. Unit forms: unit text with no designator on line 2 (#320), words Pub 28 does not list as designators (#321), a unit between the house number and the street (#296).
+7. The short curated place list of neighborhood mail names (#486): about a dozen names, about 0.01% of rows; held out if it is deferred.
+
+Also in the milestone, not rules: the exact counts for the rare shapes over the largest combined dataset (#465) and the post on how rule and performance changes are tested (#491, on hold).
+Puerto Rico street-first forms wait for the Puerto Rico research issue. Nothing here changes a key before the release is cut.
 
 ## Waiting, on data or demand
 
 - **Later** (the milestone): wanted or known, none at the P2 line, none scheduled. By kind:
   - *Units:* two suffix words then a unit (#243), a unit value that is a suffix code (#272), `SUT` and `STU` (#289), two units joined by `&` (#290), a floor in parentheses (#291), a
-    unit of more than one part (#294), a building word after a route (#295), a unit between the house number and the street name (#296), unit text with no designator on line 2 (#320),
-    words Pub 28 does not list as designators (#321), `PIER` as a last word (#327), a bare number or letter after a street with no suffix (#345), a name and a floor on line 1 (#351),
-    a word and a number after a suffix (#375), a campus box with two plain words (#384), NAD unit misses (#238), a bare `BAY` (#193).
+    unit of more than one part (#294), a building word after a route (#295), a `PIER` as a last word (#327), a bare number or letter after a street with no suffix (#345), a name and a floor on line 1 (#351),
+    a word and a number after a suffix (#375), NAD unit misses (#238), a unit marker after the street (#471), a building name after the street (#495), a designator with no value before
+    the street name (#498), a unit repeated as `# N` on line 2 (#499), a bare number between the house number and an ordinal street (#502).
   - *Boxes and routes:* glued box and route words (#304), a route after a street (#307), `PO BOX` with a placeholder on line 2 (#358), a box followed by street words (#366).
   - *House numbers and street names:* `SO` for `SOUTH` (#269), two house numbers joined by `&` (#274), a spaced hyphen between a building and a street (#310) or after a suffix (#341), grid numbers (#311),
     a letter before the house number (#312), Queens and Hawaii numbers written with a space (#313), a letter then a direction then a name (#360), a lost fraction before a lone letter (#387),
-    a compass word with `KY` or `TR` (#388), and the letter after a house number (#391, a review queue).
-  - *State and road forms:* Texas `PR` roads (#314), Alabama `<NAME> ROAD <number>` (#315), the FM number before the road type (#316), `AND` between two highways (#317); Puerto Rico (#318, #319, the epic #332, #92).
-  - *City field and line 2:* a unit or a box in the city field (#244), the city field holds the state (#357), a `CO` prefix with a fuller name on line 2 (#367).
+    a lone letter followed by `AND` (#466), the missing `ambiguous_number_letter` warning after a lone letter (#467), `NO` for north (#470), a five-digit number written as two parts (#501).
+  - *State and road forms:* Texas `PR` roads (#314), the FM number before the road type (#316), `AND` between two highways (#317); Puerto Rico (#318, #319, the epic #332, #92).
+  - *City field and line 2:* a unit or a box in the city field (#244), the city field holds the state (#357), a `CO` prefix with a fuller name on line 2 (#367),
+    a person or business on line 2 after a real street (#472), a care-of line (#473), a non-Latin city or country (#469), a city that starts with a state name (#480), a region phrase written as the state (#482),
+    boilerplate before the street (#483).
   - *Review data and tooling:* the review tool's deferred sharing helpers (#222, item 4), the tracker of what has been hand-reviewed and the queues to come (#225), comparing with libpostal (#215), the Web Data Commons answer on research use (#395), larger MessyStreets tiers (#403).
-  - *Parsing ideas:* the tagger's known-word chains (#410), a street line that already ends in the city, state and ZIP (#397), missing-value strings in the city, state or ZIP (#419), repeated state, a county-only segment and `USA` after the ZIP (#435).
+  - *Parsing ideas:* a street line that already ends in the city, state and ZIP (#397), repeated state, a county-only segment and `USA` after the ZIP (#435).
   - *Data, API, docs and speed:* Florida pack gaps (#11), more state data (#213), the address-structure labels usaddress has (#35), Canadian addresses (#203), the usaddress comparison post (#88), the examples notebook as a page (#253),
-    the docs site move off Material for MkDocs (#233), and further performance leads (#418).
+    the docs site move off Material for MkDocs (#233), further performance leads (#418), and an architecture idea, shape-first parsing (#490).
 - **Tooling** (never shipped, never closed): evaluating MessyStreets (#323); the Try page (#434) is in review.
 - **More shapes and rules** not tied to a state, known and not yet an issue: named buildings without a building word (`THE GARRETT`, `UPTOWN SQUARE`);
   highway modifiers before a city on one line
