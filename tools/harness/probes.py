@@ -305,6 +305,14 @@ PROBES = [
     ),
     ("bare-bay", "193", "a bare BAY", r"(?: |\| )BAY(?: \||$)", "S", 1),
     (
+        "stray-designator-before-name",
+        "498",
+        "a unit designator with no value between the house number and the street name",
+        rf"^[0-9]+(?:-[0-9]+)? {UN} [A-Z]{{3,}}(?: [A-Z]+)* {SUF}\b",
+        "S",
+        3,
+    ),
+    (
         "building-name-after-street",
         "495",
         "a building or complex name (CONDOMINIUMS) after the street",
