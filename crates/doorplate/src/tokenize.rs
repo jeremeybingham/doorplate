@@ -218,6 +218,9 @@ fn suffix_slash(t: &str, after: &[&str], lex: &Lexicons) -> Option<usize> {
 
 /// A word that can start a unit after a separator: a unit designator, a box word, or a value
 /// with a digit that is not an ordinal (`36`, `3A`, `2624`; not `1ST`) (#308).
+/// A unit designator here must not be an observed spelling, unlike the tagger's `starts_unit`,
+/// which takes every spelling: after a separator an observed spelling is more likely a street
+/// word (#308, #410).
 fn unit_like(w: &str, lex: &Lexicons) -> bool {
     lex.unit(w).is_some_and(|l| l.kind != MatchKind::Observed)
         || lex.is_bare_box_word(w)
@@ -891,6 +894,9 @@ fn suffix_state_confirmed(w: &str, zip: Option<&str>, lex: &Lexicons) -> bool {
         .is_some_and(|z| Some(z.main().state()) == state)
 }
 
+/// Whether a word is in the suffix, unit, directional, state, special or highway table: the
+/// tokenizer leaves such a word alone when it would split or repair a token. The tagger asks the same question with a different
+/// subset in each rule (see "Word sets" in `tagger/rules.rs`, #410).
 fn known_word(t: &str, lex: &Lexicons) -> bool {
     lex.suffix(t).is_some()
         || lex.unit(t).is_some()
