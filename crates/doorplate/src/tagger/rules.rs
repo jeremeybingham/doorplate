@@ -2722,6 +2722,10 @@ impl Tagger<'_> {
         let lex = self.lex;
         k == name_lo + 2
             && matches!(self.text(name_lo), "NORTH" | "SOUTH" | "EAST" | "WEST")
+            // `KY` and `TR` are Pub 28 suffix variants (KEY, TRL), but before a number they
+            // are the road's name (Kentucky route 8, township road 56): `WEST KY 8`, `EAST TR 56`
+            // keep the compass word as the predirectional (#388).
+            && !matches!(self.text(name_lo + 1), "KY" | "TR")
             && lex.directional(self.text(name_lo)).is_some()
             && lex.suffix(self.text(name_lo + 1)).is_some_and(|_| {
                 lex.highway(self.text(name_lo + 1))
