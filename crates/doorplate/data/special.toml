@@ -42,6 +42,9 @@ forms = [
   "PO BOX", "P O BOX", "POBOX", "PO BX", "POB", "P O B", "POST OFFICE BOX", "POST BOX",
   "P O BX", "P BOX", "POX", "PO BOX BOX", "P OBOX", "PO OX", "PO POX", "POX BOX", "PO OBX",
   "POP BOX", "P O OX",
+  # `POST OFFICE` misspelled, lines exactly `<spelling> BOX n` on the same 36.9M rows (#384):
+  # POST OFC 21, POST OFICE 14, POST OFFIC 11 (spellings at 10 rows or more).
+  "POST OFC BOX", "POST OFICE BOX", "POST OFFIC BOX",
 ]
 synonyms = ["DRAWER", "PO DRAWER", "CALLER", "FIRM CALLER", "BIN", "LOCKBOX", "LOCK BOX"]
 

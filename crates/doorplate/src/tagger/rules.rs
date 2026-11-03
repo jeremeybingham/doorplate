@@ -1712,9 +1712,10 @@ impl Tagger<'_> {
     /// `NORTHFIELD CPO #1234`, `HARTWELL STATION CB #2200`. It is a box, like
     /// `NORTHFIELD PO BOX 3310`: the box words and the number are the box, the
     /// school or station words before them and one code after the number are the
-    /// attention line. `BOX` needs exactly one plain word before it (or `CAMPUS`),
-    /// so `MAIN BOX 12` and `RR 2 BOX 15` are not read this way; the codes `CPO`,
-    /// `UPO`, `CPU`, `UNX`, `UNY`, `CMB` and `CB` take up to three plain words.
+    /// attention line. `BOX` needs one or two plain words before it that are not
+    /// street suffixes (or `CAMPUS`; two words since #384), so `MAIN ST BOX 12` and
+    /// `RR 2 BOX 15` are not read this way; the codes `CPO`, `UPO`, `CPU`, `UNX`,
+    /// `UNY`, `CMB` and `CB` take up to three plain words.
     fn campus_box(&self, k: usize, hi: usize) -> Option<SpecialMatch> {
         let lex = self.lex;
         if k >= hi || (k > 0 && self.toks[k].seg == self.toks[k - 1].seg) {
@@ -1745,10 +1746,23 @@ impl Tagger<'_> {
             return None;
         }
         let lead = b - k;
+        // `NORTHFIELD PO BOX 3310`: the usual box words after a first word are the box already.
+        if lead >= 2
+            && longest_at(self.toks, k + 1, self.special_hi(k + 1, e), |s| {
+                lex.special(s)
+            })
+            .is_some_and(|(_, w)| k + 1 + w > b)
+        {
+            return None;
+        }
         let box_word = matches!(self.text(b), "BOX" | "BX");
         let campus = lead == 1 && self.text(k) == "CAMPUS" && box_word;
         let ok = if box_word {
-            campus || (lead == 1 && plain(k) && lex.suffix(self.text(k)).is_none())
+            // One or two plain words before `BOX`, none a street suffix (`ELM HALL BOX 3310`, `DUKE
+            // CAMPUS BOX 93674`, #384); with a suffix among them the box belongs to a street.
+            campus
+                || ((1..=2).contains(&lead)
+                    && (k..b).all(|i| plain(i) && lex.suffix(self.text(i)).is_none()))
         } else {
             lead <= 3 && (k..b).all(plain)
         };
@@ -2798,6 +2812,27 @@ impl Tagger<'_> {
             && (name_lo..k).all(|i| lex.highway(self.text(i)).is_none())
     }
 
+    /// Whether `BOX` at `k` follows a route word with no route number and a plain
+    /// word, at the start of the line (`STAR RT BOX 71E1`, `STAR ROUTE BOX 309`, #384):
+    /// the words are the street and the box value a unit, as the reviewers read it. A
+    /// route number (`RT 2 BOX 15`) never reaches here: the word before `BOX` is a number.
+    fn route_word_before_box(&self, name_lo: usize, k: usize) -> bool {
+        let lex = self.lex;
+        name_lo == 0
+            && k >= 2
+            && self.text(k) == "BOX"
+            && matches!(self.text(k - 1), "RT" | "RTE" | "ROUTE")
+            && (name_lo..k - 1).all(|i| {
+                let t = self.text(i);
+                t.len() >= 2
+                    && t.bytes().all(|c| c.is_ascii_alphabetic())
+                    && lex.special(t).is_none()
+                    && lex.unit(t).is_none()
+                    && lex.highway(t).is_none()
+                    && lex.directional(t).is_none()
+            })
+    }
+
     /// Whether `BAY` at `k` ends the street's name rather than naming a unit
     /// (`HERON BAY # 2B`, `OYSTER BAY 4`): a name word (no digit) comes before it
     /// in the street's own segment and no street suffix does. `BAY` is a unit (an
@@ -3177,7 +3212,8 @@ impl Tagger<'_> {
                 && lex.is_unit_marker(self.text(last - 1))
                 && self.toks[last - 1].seg == self.toks[last].seg
                 && (self.suffix_before(name_lo, last - 1)
-                    || self.box_after_bare_name(name_lo, last - 1))
+                    || self.box_after_bare_name(name_lo, last - 1)
+                    || self.route_word_before_box(name_lo, last - 1))
             {
                 self.set(last - 1..last, Tag::Skip);
                 found.push((last..last, last..j));
