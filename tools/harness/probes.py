@@ -304,6 +304,14 @@ PROBES = [
         3,
     ),
     ("bare-bay", "193", "a bare BAY", r"(?: |\| )BAY(?: \||$)", "S", 1),
+    (
+        "building-name-after-street",
+        "495",
+        "a building or complex name (CONDOMINIUMS) after the street",
+        r"^[0-9]+ [A-Z0-9 ]+?(?:,| \|) ?(?:[A-Z]+ ){1,4}CONDOMINIUMS?(?:,| \||$)",
+        "S",
+        1,
+    ),
     ("po-box-equals-zip", "260", "PO BOX on line 2 equal to the ZIP", None, "S", 2),
     (
         "placeholder",
