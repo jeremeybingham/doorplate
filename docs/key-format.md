@@ -48,7 +48,7 @@ k4:G|<state>|<zip5>
 - **Queens house numbers:** when the resolved place is in Queens, NY, the hyphen of a house number of one to three
   digits, a hyphen, two digits and an optional letter is dropped, so `37-12 82ND ST` and `3712 82ND ST` (and `37-12A` and
   `3712A`) share a key. Elsewhere the hyphen stays (`20-22 W 45TH ST` in Manhattan is two numbers). The parsed
-  `street_number` keeps what was written.
+  `street_number` keeps what was written. A pair read with a space (`41 12 80TH AVE` in a New York City ZIP, Massachusetts or Hawaii, #313) keys like its hyphenated twin.
 - `M`: `<kind>` is CPR, OPC, PSC, UPR or UNIT; `<post office>` is APO, FPO or
   DPO (empty when absent).
 - `<state>` is the USPS code. `<zip5>` is five digits.

@@ -2242,6 +2242,106 @@ impl Tagger<'_> {
         Some((start, freed))
     }
 
+    /// The state code written on the address, from the tokens tagged as the state.
+    fn state_code(&self) -> Option<&'static str> {
+        let toks: Vec<&Token> = (0..self.toks.len())
+            .filter(|&k| self.tags[k] == Tag::State)
+            .map(|k| &self.toks[k])
+            .collect();
+        let text = toks
+            .iter()
+            .map(|t| t.text.as_str())
+            .collect::<Vec<_>>()
+            .join(" ");
+        self.lex.state(&text).map(|l| l.value.code())
+    }
+
+    /// Whether the ZIP on the address is a New York City one (100 to 104, 110 to 114, 116):
+    /// outside the city a pair of numbers is not Queens style.
+    fn nyc_zip(&self) -> bool {
+        (0..self.toks.len())
+            .find(|&k| self.tags[k] == Tag::Zip)
+            .is_some_and(|k| {
+                matches!(
+                    self.text(k).get(..3),
+                    Some(
+                        "100"
+                            | "101"
+                            | "102"
+                            | "103"
+                            | "104"
+                            | "110"
+                            | "111"
+                            | "112"
+                            | "113"
+                            | "114"
+                            | "116"
+                    )
+                )
+            })
+    }
+
+    /// A number between the house number (at `i - 1`) and a street (a name or an ordinal
+    /// and a suffix): `41 12 80TH AVE`. By state (the 90 cards of #313, #501 and #502):
+    /// in New York City (by ZIP) and Massachusetts a pair of one to three digits and two is the house
+    /// number (Queens style), in Hawaii two digits and three or four (`91 410 HALEKI ST`);
+    /// elsewhere two digits and three are one five-digit number (`12 345 ELM ST` is
+    /// 12345) and a different number of up to four digits before an ordinal street is a
+    /// unit (`123 104 11TH ST`). Returns where the street starts.
+    fn house_number_pair(&mut self, i: usize, hi: usize) -> usize {
+        let lex = self.lex;
+        if i < 1 || i + 2 >= hi || self.tags[i - 1] != Tag::StreetNumber {
+            return i;
+        }
+        let (a, b) = (self.text(i - 1), self.text(i));
+        let digits = |t: &str| !t.is_empty() && all_digits(t);
+        if !digits(a) || !digits(b) || b.len() > 4 || b.bytes().all(|c| c == b'0') {
+            return i;
+        }
+        let r = i + 1;
+        let one_seg = (i - 1..hi).all(|k| self.toks[k].seg == self.toks[i].seg);
+        let suffix_after = (r + 1..hi).any(|k| lex.suffix(self.text(k)).is_some());
+        if !one_seg || !suffix_after || self.highway_at(r, hi).is_some() {
+            return i;
+        }
+        let Some(state) = self.state_code() else {
+            return i;
+        };
+        let (la, lb) = (a.len(), b.len());
+        let pair = match state {
+            "NY" => (1..=3).contains(&la) && lb == 2 && self.nyc_zip(),
+            "MA" => (1..=3).contains(&la) && lb == 2,
+            "HI" => la == 2 && (3..=4).contains(&lb),
+            _ => false,
+        };
+        if pair {
+            self.set(i..i + 1, Tag::StreetNumber);
+            return i + 1;
+        }
+        if matches!(state, "NY" | "MA" | "HI") {
+            return i;
+        }
+        if la == 2 && lb == 3 {
+            self.set(i..i + 1, Tag::StreetNumberTail);
+            return i + 1;
+        }
+        let designator = (r..hi).any(|k| {
+            lex.unit(self.text(k))
+                .is_some_and(|l| l.kind != MatchKind::Observed)
+        });
+        // Nothing but a direction after the last suffix: a later unit would take the slot.
+        let tail_free = (r..hi)
+            .rev()
+            .find(|&k| lex.suffix(self.text(k)).is_some())
+            .is_some_and(|s| (s + 1..hi).all(|k| lex.directional(self.text(k)).is_some()));
+        if is_ordinal(self.text(r)) && a != b && !designator && tail_free {
+            self.set(i..i + 1, Tag::UnitNumber(0));
+            self.decide(Decision::BareUnit);
+            return i + 1;
+        }
+        i
+    }
+
     /// A unit written between the house number and the street (`123 SUITE A OAK ST`,
     /// `331-337 APT 2 N MAIN AVE`, `123 UNIT 1 ROUTE 112`): a plain designator at `i`, a
     /// value that is not an ordinal, then a street, that is a name and a suffix or a highway,
@@ -2414,6 +2514,8 @@ impl Tagger<'_> {
                 self.decide(Decision::NumberLetter);
                 i += 1;
             }
+            // "41 12 80TH AVE": a second number before the street (#313, #501, #502).
+            i = self.house_number_pair(i, hi);
             // "1309 1329 E VINE ST": more house numbers. The first is the
             // address's; the rest are left unparsed.
             while self.second_house_number(i, hi) {

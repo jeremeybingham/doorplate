@@ -38,6 +38,8 @@ def queens_number(e):
     building keys like its unhyphenated twin. Queens is decided here from the labeled state and
     ZIP prefix (111, 113, 114, 116), a second implementation of the library's place-county test."""
     n=e.get("street_number","")
+    # A pair written with a space keys like its hyphenated twin (#313).
+    n=re.sub(r"^(\d+) (\d+)$",r"\1-\2",n)
     if e.get("state")=="NY" and (e.get("zip5") or "")[:3] in ("111","113","114","116") and re.fullmatch(r"\d{1,3}-\d{2}[A-Za-z]?",n):
         return n.replace("-","")
     return n

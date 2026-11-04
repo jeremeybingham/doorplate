@@ -31,6 +31,8 @@ pub(crate) enum Tag {
     Skip,
     Unparsed,
     StreetNumber,
+    /// The second part of a house number written in two (`12 345` for `12345`), joined to the first.
+    StreetNumberTail,
     PreDir,
     Name,
     Suffix,
