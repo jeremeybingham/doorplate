@@ -59,6 +59,7 @@ Every parsing bug fixed gets a case here (`CONTRIBUTING.md`).
   `gf-` (a floor written as a plain number and the floor word, `glued-floor.jsonl`),
   `nlt-` (a letter after the house number, `number-letter.jsonl`),
   `cn-` (a compass word naming the street, `compass-street.jsonl`),
+  `nw-` (null words: a bracketed `<NULL>`, and `NaN` or `undefined` as a city, state or ZIP field, `null-words.jsonl`),
   `pz-` (a PO Box or unit number equal to the ZIP, `pobox-zip.jsonl`),
   `bx-` (BOX and a number after a name with no suffix, `box-bare-name.jsonl`),
   `ub-` (a bare BOX after a unit, `unit-then-box.jsonl`),

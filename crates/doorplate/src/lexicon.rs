@@ -784,6 +784,12 @@ impl Lexicons {
         self.in_words(tables::PLACEHOLDERS, key, |l| &l.words.placeholder)
     }
 
+    /// Whether `key` is a stand-in for a missing city (`data/special.toml` `[city_placeholder]`),
+    /// or a placeholder phrase of the layer's (#468, #419).
+    pub(crate) fn is_city_placeholder_phrase(&self, key: &str) -> bool {
+        self.in_words(tables::CITY_PLACEHOLDERS, key, |l| &l.words.placeholder)
+    }
+
     /// Whether `key` is a word of a word list: the shipped list, or the layer's.
     fn in_words(&self, base: &[&str], key: &str, pick: fn(&Layer) -> &HashSet<String>) -> bool {
         find_str(base, key) || self.layer.is_some_and(|l| pick(l).contains(key))
@@ -1320,6 +1326,7 @@ mod tests {
             .collect();
         assert!(zips.windows(2).all(|w| w[0] < w[1]), "zip index order");
         assert!(tables::PLACEHOLDERS.windows(2).all(|w| w[0] < w[1]));
+        assert!(tables::CITY_PLACEHOLDERS.windows(2).all(|w| w[0] < w[1]));
         assert!(tables::COUNTRIES.windows(2).all(|w| w[0] < w[1]));
     }
 

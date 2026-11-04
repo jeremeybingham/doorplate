@@ -364,6 +364,30 @@ phrases = [
   "SAME AS ABOVE",
 ]
 
+[city_placeholder]
+# Stand-ins for a missing city in the city field (`Not stated` in NAD, `Unknown`, `None`):
+# the phrases that are a city value in the sources, not the street-line list above, which
+# holds phrases that only mean "no street" (#468, #419). A whole city field that is one of
+# these is no city. Row counts as a city value over the large sources: NOT STATED 19,260,462
+# (NAD), UNKNOWN 55,003, NONE 922, NULL 314, SAME 274, NA 159, N/A 94, NO ADDRESS 37,
+# NO PHYSICAL ADDRESS 30, SAME AS ABOVE 12, ADDRESS UNKNOWN 9, NOT KNOWN 1; UNDEFINED is the
+# JavaScript spelling of the same (#419). None of them is in the place list.
+phrases = [
+  "NOT STATED",
+  "UNKNOWN",
+  "NONE",
+  "N/A",
+  "NA",
+  "NULL",
+  "UNDEFINED",
+  "SAME",
+  "SAME AS ABOVE",
+  "NOT KNOWN",
+  "ADDRESS UNKNOWN",
+  "NO ADDRESS",
+  "NO PHYSICAL ADDRESS",
+]
+
 [area]
 # Words that open a neighborhood or district name written before a city:
 # `DOWNTOWN MIAMI`, `UPTOWN CHARLOTTE`. Not a USPS rule (Pub 28 has no such
