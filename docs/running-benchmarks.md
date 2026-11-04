@@ -21,7 +21,7 @@ There are three kinds of measure here, and they answer different questions.
 | Accuracy on one-line street addresses from an outside data set | `python benchmarks/accuracy.py` | the CLI; `usaddress`; the geocode benchmark (not in the repository) |
 | The geocode benchmark scored as its paper does (F1 per label, Parsing Score), next to the paper's models | `python benchmarks/geocode_paper_compare.py [test] [dev] [train]` | the extension; `usaddress`; the geocode benchmark |
 | Whether a parse-rule fix generalizes instead of overfitting | `split_geocode_train.py`, then `tools/compare/city_diff.py` | the geocode benchmark |
-| Python speed of `parse`, `parse_many`, `parse_fields` against usaddress | `python benchmarks/speed_python.py [N]` | the extension; `usaddress` |
+| Python speed of `parse`, `parse_many`, `parse_fields` against usaddress (and `fastaddress` when it is installed) | `python benchmarks/speed_python.py [N]` | the extension; `usaddress`; optionally `fastaddress` |
 | Speed of batches and of pandas, Polars and DuckDB frames | `python crates/doorplate-py/benchmarks/bench_batch.py [N]` | the extension; the frame libraries |
 | Rust speed (criterion) and a CSV file run | `python benchmarks/speed_rust.py [--csv FILE --column NAME]` | Rust |
 | Package size, import time, resident memory | `python benchmarks/size_memory.py` | the CLI; the extension; `maturin`; `uv` |
@@ -142,7 +142,7 @@ one and hurts the other is a rule to look at again.
 
 | Script | Measures | Needs |
 |---|---|---|
-| `speed_python.py [N]` | Addresses per second from Python: `parse`, `parse_many`, `parse_fields`, against `usaddress.parse` and `usaddress.tag` on the same inputs | the extension; `usaddress` |
+| `speed_python.py [N]` | Addresses per second from Python: `parse`, `parse_many`, `parse_fields`, against `usaddress.parse` and `usaddress.tag` on the same inputs (and `fastaddress.parse` and `.tag` when `fastaddress` can be imported) | the extension; `usaddress` |
 | `crates/doorplate-py/benchmarks/bench_batch.py [N]` | `parse_many` against a loop of `parse`, and the cost of building pandas and Polars frames and of the DuckDB functions | the extension; pandas, Polars, DuckDB |
 | `speed_rust.py [--csv FILE --column NAME]` | Rust speed: runs `cargo bench` (criterion, `crates/doorplate/benches/parse.rs`) and, with `--csv`, a CLI file run | Rust; optional CSV |
 | `size_memory.py` | Binary, wheel and installed size; import time; resident memory after import and after a batch; usaddress for comparison | the CLI; the extension; `usaddress`; `maturin`; `uv` |

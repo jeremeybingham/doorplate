@@ -42,6 +42,12 @@ try:
 except ImportError:
     usaddress = None
 
+try:
+    # Optional: a Rust port of the same usaddress model (https://github.com/vinvomero/fastaddress, MIT).
+    import fastaddress
+except ImportError:
+    fastaddress = None
+
 
 def rate(n, seconds):
     return f"{n / seconds:,.0f}"
@@ -60,6 +66,11 @@ def table(name, texts):
         rows += [
             ("usaddress `parse`", lambda: [usaddress.parse(t) for t in texts]),
             ("usaddress `tag`", lambda: [_tag(t) for t in texts]),
+        ]
+    if fastaddress is not None:
+        rows += [
+            ("fastaddress `parse`", lambda: [fastaddress.parse(t) for t in texts]),
+            ("fastaddress `tag`", lambda: [_fa_tag(t) for t in texts]),
         ]
     results = []
     cached_from = set()
@@ -86,6 +97,10 @@ def table(name, texts):
     if usaddress is not None:
         ours = base["doorplate `parse_tokens`"]
         theirs = base["usaddress `parse`"]
+        if fastaddress is not None:
+            fa = base["fastaddress `parse`"]
+            print(f"\n`fastaddress.parse` takes {fa / ours:.2f}x the time of doorplate `parse_tokens` (the same output as `usaddress.parse`, a CRF in Rust); "
+                  f"{theirs / fa:.1f}x faster than `usaddress.parse`.")
         print(f"\nOne thread, call by call: `parse_tokens` is {theirs / ours:.1f}x `usaddress.parse`. "
               f"`parse_many` parses on all {usable_cpus()} threads with the GIL released, "
               f"{theirs / base['doorplate `parse_many`']:.1f}x `usaddress.parse` (which is single-threaded).\n")
@@ -100,6 +115,13 @@ def _tag(t):
         return None
 
 
+def _fa_tag(t):
+    try:
+        return fastaddress.tag(t)
+    except fastaddress.RepeatedLabelError:
+        return None
+
+
 CACHE = False
 
 
@@ -109,12 +131,22 @@ def main():
     CACHE = len(args) != len(sys.argv) - 1
     n = int(args[0]) if args else 100_000
     print(f"# Python speed\n\nMachine: {machine()}")
-    print(f"doorplate {dp.__version__}" + (f"; usaddress {_usaddress_version()}" if usaddress else "; usaddress not installed") + "\n")
+    print(f"doorplate {dp.__version__}" + (f"; usaddress {_usaddress_version()}" if usaddress else "; usaddress not installed")
+          + (f"; fastaddress {_fastaddress_version()}" if fastaddress else "") + "\n")
     base = corpus_inputs()
     table("Golden corpus inputs", (base * (n // len(base) + 1))[:n])
     geo = geocode_inputs()
     if geo:
         table("Geocode benchmark addresses", (geo * (n // len(geo) + 1))[:n])
+
+
+def _fastaddress_version():
+    from importlib.metadata import PackageNotFoundError, version
+
+    try:
+        return version("fastaddress")
+    except PackageNotFoundError:
+        return "(no metadata)"
 
 
 def _usaddress_version():
