@@ -78,7 +78,7 @@ of 41 are analyzed; the rest and the final rescore may move issues in or out) an
 3. Missing-value strings in the city, state or ZIP (#419), with a small city-only placeholder list (the words that only ever stand in for a city). Merged.
 4. A care-of line that ends mid-street gets a warning, and `C O` without a slash (#473, narrowed; about 1,000 rows). Merged.
 5. A letter A to D after the house number is usually a unit (#487, reverses an earlier rule).
-6. Unit forms: unit text with no designator on line 2 (#320, first part: a number before a designator word and a directional street name), words Pub 28 does not list as designators (#321), a unit between the house number and the street (#296).
+6. Unit forms: unit text with no designator on line 2 (#320, first part: a number before a designator word and a directional street name), words Pub 28 does not list as designators (#321, first part: condo and site words on line 2), a unit between the house number and the street (#296).
 7. The short curated place list of neighborhood mail names (#486): about a dozen names, about 0.01% of rows; held out if it is deferred.
 
 Also in the milestone, not rules: the exact counts for the rare shapes over the largest combined dataset (#465) and the post on how rule and performance changes are tested (#491, on hold).
