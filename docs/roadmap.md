@@ -72,10 +72,10 @@ The next key-changing release (tracker #416). It opens with the rerank of every 
 rules below, each measured row by row against the frozen `k4` keys with `key_diff.py`. The list comes from the probe precision queues (about half
 of 41 are analyzed; the rest and the final rescore may move issues in or out) and the re-probes of 2026-11-03. Planned order, with the measured rows:
 
-1. A compass word with `KY` or `TR` and a number (#388): 28 of 30 wrong, about 5,650 rows. Merged (#505).
+1. A compass word with `KY` or `TR` and a number (#388): 28 of 30 wrong, about 5,650 rows. Merged.
    A half written without its slash before a direction letter (#387): 29 of 30 wrong, about 4,330 rows.
-2. A campus box with two plain words, a route word with no route number and a misspelled post office, one rule (#384, widening the earlier campus-box rule): about 5,560 rows. Merged (#506).
-3. Missing-value strings in the city, state or ZIP (#419), with a small city-only placeholder list (the words that only ever stand in for a city). Merged (#507).
+2. A campus box with two plain words, a route word with no route number and a misspelled post office, one rule (#384, widening the earlier campus-box rule): about 5,560 rows. Merged.
+3. Missing-value strings in the city, state or ZIP (#419), with a small city-only placeholder list (the words that only ever stand in for a city). Merged.
 4. A care-of line that ends mid-street gets a warning, and `C O` without a slash (#473, narrowed; about 1,000 rows).
 5. A letter A to D after the house number is usually a unit (#487, reverses an earlier rule).
 6. Unit forms: unit text with no designator on line 2 (#320), words Pub 28 does not list as designators (#321), a unit between the house number and the street (#296).
