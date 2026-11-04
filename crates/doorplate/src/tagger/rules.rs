@@ -1341,6 +1341,20 @@ impl Tagger<'_> {
                 return (stop, hi);
             }
         }
+        // "C/O JANE DOE 123 SAN J", "C/O ACME TIRE 7978 BALBO": a name, a house number and
+        // up to three more words with no street suffix, alone on its line and long enough
+        // to have been cut off at a field limit (30 characters, as `possibly_truncated`).
+        // The street is the words after the number, and the line gets the warning, not
+        // all attention text with no street (#473). A shorter line stays as it was:
+        // `C/O DANA QUILL 22 FERNHILL` cannot be told from a name (#259).
+        let seg_len = self.lens.seg.get(self.toks[k].seg).copied().unwrap_or(0);
+        if k == lo && end == hi && seg_len >= super::TRUNCATION_MIN_LEN {
+            if let Some(j) = self.partial_address_start(k + w, end) {
+                self.set(k..j, Tag::Attention);
+                self.incomplete = Some(end - 1);
+                return (j, hi);
+            }
+        }
         if end == hi {
             // "PO BOX 23181 C/O YMF", or line 2 "ATTN: RYAN ADAIR".
             self.set(k..hi, Tag::Attention);
@@ -1419,6 +1433,19 @@ impl Tagger<'_> {
         self.toks[j + 1..last - 1]
             .iter()
             .all(|t| (!has_digit(&t.text) || is_ordinal(&t.text)) && !t.is_hash() && !t.is_dash())
+    }
+
+    /// Where a street with no suffix starts in `from..e`, after a care-of name: the last
+    /// house number with one to three plain words after it and one to eight plain words
+    /// (the name) before it, nothing else in the range (`JANE DOE 123 SAN J`, #473).
+    fn partial_address_start(&self, from: usize, e: usize) -> Option<usize> {
+        (from + 1..e).rev().find(|&j| {
+            house_number(self.text(j)).is_some()
+                && (1..=3).contains(&(e - j - 1))
+                && (j + 1..e).all(|i| self.text(i).bytes().all(|b| b.is_ascii_alphabetic()))
+                && j - from <= 8
+                && (from..j).all(|i| !has_digit(self.text(i)) && !self.toks[i].is_hash())
+        })
     }
 
     /// Where the address starts in `from..e`: the last house number that
