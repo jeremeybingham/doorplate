@@ -3,7 +3,7 @@
 How the open issues are sorted, what the labels and milestones mean, and how work moves from an issue to a
 release. The current plan is in [`roadmap.md`](roadmap.md); this page is the rules. It replaces the
 definitions that lived in the body of issue #103 (the backlog review), which now only holds its history.
-**Last reviewed 2026-11-01 (#402, the 0.5.1 performance round and the docs pass #399), against the issues up to #451.**
+**Last reviewed 2026-11-04 (the `k5` rerank, #416, after the probe queue round), against the issues up to #516.**
 
 ## The release plan
 
@@ -94,8 +94,7 @@ The issues of a release are ordered by a score, not by feel (#298): `rows affect
   `agg_probes` over all 146.6M rows.
 - **Harm**: 3 for a wrong key with no warning, 2 for a wrong key with a warning, 1 for a warning or a component only.
 - **Effort**: the size label, S 1, M 2, L 4, D (a decision) 2.
-- **Priority from the score**, with the rows share as the floor: P1 above 0.1% of the rows or 5% of a review queue; P2 above 0.01%; P3 below. A review queue's share
-  is larger than the rows share (a comparison queue holds only the rows the two parsers disagree on), so both are looked at.
+- **Priority from the rows affected** (since the `k5` rerank, #416, 2026-11-04): the measured rows over the unsampled probe scan (289M rows, the scan's matches times the review precision, weighted by source), not a share of the pooled sources. **P1 from 25,000 rows (about 0.01% of the scan); P2 from 2,000 rows; P3 below.** The old cut-offs (P1 above 0.1%, P2 above 0.01%, set for the k4 against the 36.9M-row pool of seven sources) put the whole measured tail at P3. A new finding above 25,000 rows is P1 by definition. The promotion rule is unchanged: only an issue measured P2 or above leaves `Later`. A review queue's share is larger than the rows share (a comparison queue holds only the rows the two parsers disagree on), so both are looked at; the stay conditions of #298 (about 50% wrong on reviewed cards) no longer decide a promotion, because a broad probe has a low precision and a large count (#320: 6% of 1.5M matches).
 
 Refresh the numbers after each batch of rules (the same probes are the before and after of a rule PR, next to `key_diff.py`) and when a source is added.
 
