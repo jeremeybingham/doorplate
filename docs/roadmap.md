@@ -72,10 +72,10 @@ The next key-changing release (tracker #416). It opens with the rerank of every 
 rules below, each measured row by row against the frozen `k4` keys with `key_diff.py`. The list comes from the probe precision queues (about half
 of 41 are analyzed; the rest and the final rescore may move issues in or out) and the re-probes of 2026-11-03. Planned order, with the measured rows:
 
-1. A compass word with `KY` or `TR` and a number (#388): 28 of 30 wrong, about 5,650 rows.
+1. A compass word with `KY` or `TR` and a number (#388): 28 of 30 wrong, about 5,650 rows. Merged.
    A half written without its slash before a direction letter (#387): 29 of 30 wrong, about 4,330 rows.
-2. A campus box with two plain words, a route word with no route number and a misspelled post office, one rule (#384, widening the earlier campus-box rule): about 5,560 rows.
-3. Missing-value strings in the city, state or ZIP (#419), with a small city-only placeholder list (the words that only ever stand in for a city).
+2. A campus box with two plain words, a route word with no route number and a misspelled post office, one rule (#384, widening the earlier campus-box rule): about 5,560 rows. Merged.
+3. Missing-value strings in the city, state or ZIP (#419), with a small city-only placeholder list (the words that only ever stand in for a city). Merged.
 4. A care-of line that ends mid-street gets a warning, and `C O` without a slash (#473, narrowed; about 1,000 rows).
 5. A letter A to D after the house number is usually a unit (#487, reverses an earlier rule).
 6. Unit forms: unit text with no designator on line 2 (#320), words Pub 28 does not list as designators (#321), a unit between the house number and the street (#296).
@@ -97,13 +97,13 @@ Puerto Rico street-first forms wait for the Puerto Rico research issue. Nothing 
     a lone letter followed by `AND` (#466), the missing `ambiguous_number_letter` warning after a lone letter (#467), `NO` for north (#470), a five-digit number written as two parts (#501).
   - *State and road forms:* Texas `PR` roads (#314), the FM number before the road type (#316), `AND` between two highways (#317); Puerto Rico (#318, #319, the epic #332, #92).
   - *City field and line 2:* a unit or a box in the city field (#244), the city field holds the state (#357), a `CO` prefix with a fuller name on line 2 (#367),
-    a person or business on line 2 after a real street (#472), a care-of line (#473), a non-Latin city or country (#469), a city that starts with a state name (#480), a region phrase written as the state (#482),
+    a person or business on line 2 after a real street (#472), a care-of or attention line with a name and no street (#509), a non-Latin city or country (#469), a city that starts with a state name (#480), a region phrase written as the state (#482),
     boilerplate before the street (#483).
   - *Review data and tooling:* the review tool's deferred sharing helpers (#222, item 4), the tracker of what has been hand-reviewed and the queues to come (#225), comparing with libpostal (#215), the Web Data Commons answer on research use (#395), larger MessyStreets tiers (#403).
   - *Parsing ideas:* a street line that already ends in the city, state and ZIP (#397), repeated state, a county-only segment and `USA` after the ZIP (#435).
   - *Data, API, docs and speed:* Florida pack gaps (#11), more state data (#213), the address-structure labels usaddress has (#35), Canadian addresses (#203), the usaddress comparison post (#88), the examples notebook as a page (#253),
     the docs site move off Material for MkDocs (#233), further performance leads (#418), and an architecture idea, shape-first parsing (#490).
-- **Tooling** (never shipped, never closed): evaluating MessyStreets (#323); the Try page (#434) is in review.
+- **Tooling** (never shipped, never closed): evaluating MessyStreets (#323); the Try page (#434) is in review; benchmarks from a look at fastaddress (#511: a warning-versus-error AUC, a speed column, about 540 labeled messy rows).
 - **More shapes and rules** not tied to a state, known and not yet an issue: named buildings without a building word (`THE GARRETT`, `UPTOWN SQUARE`);
   highway modifiers before a city on one line
   (`NORTH HIGHWAY 71 BUSINESS LOWELL`); a comma after a directional (`3324 N, ANDREWS AVE`); a PO box on line 2 beside a street with no number; a unit
