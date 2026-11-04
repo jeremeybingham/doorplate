@@ -2242,6 +2242,39 @@ impl Tagger<'_> {
         Some((start, freed))
     }
 
+    /// A unit written between the house number and the street (`123 SUITE A OAK ST`,
+    /// `331-337 APT 2 N MAIN AVE`, `123 UNIT 1 ROUTE 112`): a plain designator at `i`, a
+    /// value that is not an ordinal, then a street, that is a name and a suffix or a highway,
+    /// with no other designator. Returns where the street starts (#296).
+    fn unit_after_number(&self, i: usize, hi: usize) -> Option<usize> {
+        let lex = self.lex;
+        lex.unit(self.text(i)).filter(|l| {
+            l.kind != MatchKind::Observed
+                && l.value.range_required()
+                && matches!(l.value.abbr(), "APT" | "BLDG" | "RM" | "STE" | "UNIT")
+        })?;
+        let v = i + 1;
+        let start = v + 1;
+        let one_seg = (i..hi).all(|k| self.toks[k].seg == self.toks[i].seg);
+        let value = self.text(v);
+        if start + 1 >= hi
+            || !one_seg
+            || !is_unit_value(value)
+            || !(has_digit(value) || is_letter(value))
+            || is_ordinal(value)
+            || house_number(value).is_some_and(|_| all_digits(value) && value.len() > 4)
+            || (start..hi).any(|k| {
+                lex.unit(self.text(k))
+                    .is_some_and(|l| l.kind != MatchKind::Observed)
+            })
+        {
+            return None;
+        }
+        let street = self.highway_at(start, hi).is_some()
+            || (start + 1..hi).any(|k| lex.suffix(self.text(k)).is_some());
+        street.then_some(start)
+    }
+
     /// Whether the number word at `lo` (`ONE` to `TWENTY`) is the house number:
     /// a name and a street suffix follow in its segment, with at most five
     /// words after the suffix (a postdirectional, a unit). Not when the first
@@ -2386,6 +2419,13 @@ impl Tagger<'_> {
             while self.second_house_number(i, hi) {
                 self.warn(Warning::MultipleAddresses);
                 i += 1;
+            }
+            // "123 SUITE A OAK ST": a unit between the house number and the street (#296).
+            if let Some(next) = self.unit_after_number(i, hi) {
+                self.set(i..i + 1, Tag::UnitType(0));
+                self.set(i + 1..i + 2, Tag::UnitNumber(0));
+                self.decide(Decision::BareUnit);
+                i = next;
             }
         }
         if i >= hi {
