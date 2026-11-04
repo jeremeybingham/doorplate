@@ -76,7 +76,7 @@ of 41 are analyzed; the rest and the final rescore may move issues in or out) an
    A half written without its slash before a direction letter (#387): 29 of 30 wrong, about 4,330 rows.
 2. A campus box with two plain words, a route word with no route number and a misspelled post office, one rule (#384, widening the earlier campus-box rule): about 5,560 rows. Merged.
 3. Missing-value strings in the city, state or ZIP (#419), with a small city-only placeholder list (the words that only ever stand in for a city). Merged.
-4. A care-of line that ends mid-street gets a warning, and `C O` without a slash (#473, narrowed; about 1,000 rows).
+4. A care-of line that ends mid-street gets a warning, and `C O` without a slash (#473, narrowed; about 1,000 rows). Merged.
 5. A letter A to D after the house number is usually a unit (#487, reverses an earlier rule).
 6. Unit forms: unit text with no designator on line 2 (#320), words Pub 28 does not list as designators (#321), a unit between the house number and the street (#296).
 7. The short curated place list of neighborhood mail names (#486): about a dozen names, about 0.01% of rows; held out if it is deferred.
