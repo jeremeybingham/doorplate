@@ -342,6 +342,38 @@ The first five columns are the paper's Table 4. Read it with these in mind:
 - The paper does not say whether its F1 counts entities or tokens. At token level doorplate's `test` overall F1 is .983 (usaddress .970); the table uses the stricter entity level.
 - The paper's models are tuned to this benchmark's one-line, error-injected addresses. For ordinary input see the benchmark suite above (doorplate 98.5% against usaddress 96.1% on its `natural` stratum).
 
+### fastaddress's hand-labeled messy addresses (a secondary check)
+
+[fastaddress](https://github.com/vinvomero/fastaddress) (a Rust port of the `usaddress` model, timed on the [speed page](speed-and-size.md)) ships 489 distinct hand-labeled
+address strings in `usaddress`'s label scheme: owner and taxpayer mailing addresses as county assessors wrote them, from about 40 county and city open-data
+layers, with recipient, care-of, trustee, box and spelled-out forms, which is the messy input this page otherwise lacks. We use them as a secondary check.
+The strings are public records that can contain personal names and the upstream authors did not review the individual terms, so they stay in `local-data/` and only these aggregates
+are published (`docs/data-policy.md`).
+
+Scored with `tools/compare/compare_usaddress.py gold` on the held-out part, the `gold2c` and verdict sets (337 distinct strings, 272 of them in scope; the others hold a
+recipient, a landmark or a similar label this parser does not model and are scored apart):
+
+| 272 addresses | doorplate | usaddress |
+|---|---|---|
+| Tokens right (coarse labels) | 95.0% | 93.1% |
+| Whole address right (coarse) | 73.5% (95% 68.0 to 78.4) | 59.6% (53.6 to 65.2) |
+| Tokens right (fine labels) | 92.2% | 90.0% |
+| Whole address right (fine) | 61.0% | 48.2% |
+
+Of the 84 addresses where exactly one parser is right (coarse), doorplate is the one on 61 and usaddress on 23 (exact sign test p = 0.00004). By label, the street name is right on
+99.4% of its tokens against 94.0%, the city 86.8% against 84.2%, the unit value 82.1% against 69.2%. The labels doorplate does not produce are scored as misses: `BuildingName` (10 tokens, 0% for
+doorplate; building names after the street are read as street words, #495) and `StreetNamePostModifier` (7 tokens, 0%; `EXT` and the like stay in the street name). The commonest error of both parsers is a
+city word read as street (56 tokens for doorplate, 65 for usaddress, of 423 city tokens).
+
+Read it with these in mind:
+
+- **The sets are selected, not sampled.** The verdict sets (258 strings) are cases where the original `usaddress` model and a retrained candidate disagreed, which a person then adjudicated; they over-represent the
+  original model's mistakes. The `gold2c` set (126) over-samples the shapes that decided their exams. The whole-address gap is therefore larger than it would be on an ordinary roll; the token scores are steadier.
+- **A fifth set is left out.** Their `clean` set (159 strings) is the original model's own output (their accuracy report scores the original at 100% on it), so it favors `usaddress` by construction: it scores doorplate
+  87.3% and usaddress 100.0% on whole addresses (134 in scope) and says nothing else.
+- **Small, and the `gold2c` set was spent as an exam by its authors.** The interval above is for the 272 addresses alone, and the two parsers' intervals are not independent (the sign test is the paired comparison).
+- It was read once for this check and no rule was changed for it; treat any later score on it as optimistic. Not comparable to anything in the tables above: other labels, other selection.
+
 ### usaddress's own test files
 
 Addresses that are not in usaddress's training files (2,248 of 9,088): doorplate gets the whole address right on 99.1% and usaddress on 100.0%.
