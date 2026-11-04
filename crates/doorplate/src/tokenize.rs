@@ -374,7 +374,15 @@ fn join_lost_fraction(out: &mut Vec<Token>, lex: &Lexicons) {
         && lex
             .suffix(&word.text)
             .is_some_and(|l| l.kind != MatchKind::Observed);
-    let plain = word.text.len() >= 2
+    // A lone direction letter (`10 1 2 N MAIN ST`) counts too when a street word follows in the
+    // same segment; the other single letters stay apart (#387).
+    let lone_direction = matches!(word.text.as_str(), "N" | "S" | "E" | "W")
+        && out.get(k + 3).is_some_and(|t| {
+            t.seg == word.seg
+                && t.text.len() >= 2
+                && t.text.bytes().all(|c| c.is_ascii_alphabetic())
+        });
+    let plain = (word.text.len() >= 2 || lone_direction)
         && !bare_suffix
         && word.text.bytes().all(|c| c.is_ascii_alphabetic())
         && lex
