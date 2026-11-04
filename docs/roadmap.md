@@ -103,7 +103,7 @@ Puerto Rico street-first forms wait for the Puerto Rico research issue. Nothing 
   - *Parsing ideas:* a street line that already ends in the city, state and ZIP (#397), repeated state, a county-only segment and `USA` after the ZIP (#435).
   - *Data, API, docs and speed:* Florida pack gaps (#11), more state data (#213), the address-structure labels usaddress has (#35), Canadian addresses (#203), the usaddress comparison post (#88), the examples notebook as a page (#253),
     the docs site move off Material for MkDocs (#233), further performance leads (#418), and an architecture idea, shape-first parsing (#490).
-- **Tooling** (never shipped, never closed): evaluating MessyStreets (#323); the Try page (#434) is in review.
+- **Tooling** (never shipped, never closed): evaluating MessyStreets (#323); the Try page (#434) is in review; benchmarks from a look at fastaddress (#511: a warning-versus-error AUC, a speed column, about 540 labeled messy rows).
 - **More shapes and rules** not tied to a state, known and not yet an issue: named buildings without a building word (`THE GARRETT`, `UPTOWN SQUARE`);
   highway modifiers before a city on one line
   (`NORTH HIGHWAY 71 BUSINESS LOWELL`); a comma after a directional (`3324 N, ANDREWS AVE`); a PO box on line 2 beside a street with no number; a unit
