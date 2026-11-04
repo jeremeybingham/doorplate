@@ -574,6 +574,23 @@ impl Lexicons {
             .or_else(|| self.layer?.unit.get(&*normalize_key_cow(s)).copied())
     }
 
+    /// Words Pub 28 does not list that name a unit only on a second line, where the
+    /// tagger reads them (`CONDO 4`, `SITE F9`): a condominium unit is a `UNIT` and a
+    /// campsite or park site a `SPC`. They are not in [`Self::unit`] because on the
+    /// street line they are often part of a name (`TRASH SITE SERVICES`, #321).
+    pub(crate) fn soft_unit(&self, s: &str) -> Option<Lookup<UnitType>> {
+        let base = match s {
+            "CND" | "COND" | "CONDO" => "UNIT",
+            "SITE" | "CAMPSITE" => "SPC",
+            _ => return None,
+        };
+        let l = self.unit_base(base)?;
+        Some(Lookup {
+            value: l.value,
+            kind: MatchKind::Observed,
+        })
+    }
+
     fn unit_base(&self, s: &str) -> Option<Lookup<UnitType>> {
         let (i, kind) = *find_raw_in!(tables::UNIT_INDEX, s)?;
         let row = tables::UNITS.get(usize::from(i))?;

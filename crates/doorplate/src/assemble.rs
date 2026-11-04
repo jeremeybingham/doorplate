@@ -187,7 +187,7 @@ pub(crate) fn assemble(
                 }
             }
             Tag::UnitType(n) => {
-                if let Some(l) = lex.unit(&text) {
+                if let Some(l) = lex.unit(&text).or_else(|| lex.soft_unit(&text)) {
                     observed(addr, l.kind);
                     if n == 0 {
                         addr.unit_type.get_or_insert(l.value);

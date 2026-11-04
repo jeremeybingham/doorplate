@@ -945,6 +945,40 @@ impl Tagger<'_> {
         self.decide(Decision::BareUnit);
     }
 
+    /// `CONDO 4`, `SITE F9`, `CAMPSITE 2400` alone on line 2 (words Pub 28 does not list, see
+    /// [`Lexicons::soft_unit`]): the word is the unit's type and the value its number. The word
+    /// alone is a type with no number. Only on line 2, under a named street (#321).
+    pub(super) fn claim_soft_unit(&mut self, r: Range<usize>) {
+        let lex = self.lex;
+        if !(1..=2).contains(&r.len())
+            || self.tags.contains(&Tag::UnitNumber(0))
+            || self.tags.contains(&Tag::UnitType(0))
+        {
+            return;
+        }
+        let free = r
+            .clone()
+            .all(|k| matches!(self.tags[k], Tag::Untagged | Tag::Unparsed) && !self.toks[k].paren)
+            && r.clone()
+                .all(|k| self.toks[k].seg == self.toks[r.start].seg);
+        let named = self.tags.contains(&Tag::Name) && self.tags.contains(&Tag::Suffix);
+        if !free || !named || lex.soft_unit(self.text(r.start)).is_none() {
+            return;
+        }
+        if r.len() == 1 {
+            self.set(r.clone(), Tag::UnitType(0));
+            self.warn(Warning::MissingUnitNumber);
+        } else {
+            let v = self.text(r.start + 1);
+            if !(is_unit_value(v) && (has_digit(v) || is_letter(v))) {
+                return;
+            }
+            self.set(r.start..r.start + 1, Tag::UnitType(0));
+            self.set(r.start + 1..r.end, Tag::UnitNumber(0));
+        }
+        self.decide(Decision::BareUnit);
+    }
+
     /// Words only on line 2 under a PO Box line that has no street (`PO BOX 12` /
     /// `JANE ROE`) are the care-of or name line (#303), not a street left unplaced:
     /// one to four tokens with no digit, no street suffix, unit designator,
