@@ -101,10 +101,10 @@ A designator that needs a number has none (`APT`, `#`).
 
 ### ambiguous_number_letter
 
-One letter after the house number may be the number's suffix or the first word of the street (`123 A MAIN ST`). The parser reads the letters `A` to `D` as the number's suffix (`123A MAIN ST`) unless the next word is a single letter (an initial: `100 J K DAVIS RD`), a street suffix (`123 A ST` is the street `A`), a direction, or a unit or box word; every other letter stays in the street name (`12 F OAK ST`). The warning is raised for both readings, because the text cannot decide it. A letter before a direction (`428 B SOUTH MAIN ST`) is the number's and carries no warning.
+One letter after the house number may be a unit, the number's suffix or the first word of the street (`123 B MAIN ST`). The parser reads the letters `A` to `D` as a **unit** (house number 123, unit B; the owner's decision of 2026-11-03, #487, which reversed the earlier reading as the number's suffix, `123B`) unless the next word is a single letter (an initial: `100 J K DAVIS RD`), a street suffix (`123 A ST` is the street `A`) or a unit or box word, or the number is a grid or lettered number (`N165`); every other letter stays in the street name (`12 F OAK ST`, a person's first initial). A letter before a direction is the unit too when it is `A` to `D` (`428 B SOUTH MAIN ST`: number 428, unit B, street SOUTH MAIN ST), and any other letter before a direction still joins the number (`9311 J W CLAY BLVD`). A unit written with a designator keeps the first unit slot and the letter is the second (`123 B MAIN ST APT 4`). The warning is raised for the unit reading and for the street-name reading, because the text cannot decide it: sometimes an `A` to `D` is the initial of a street named for a person (`820 A PHILIP RANDOLPH BLVD`), an exception that is accepted.
 
 - **Rows in NAD (of 1M):** 4,694
-- **Measured:** NAD labels the letter the number's suffix in 80% of the flagged rows. Against the labels, on non-direction letters with no direction or bare suffix after them: NAD 5,469 rows, NC voter snapshot 65,147 rows (county-entered parts). `A` and `B` are the number's suffix in 89% to 96% of rows in both sources, `C` and `D` in 73% to 82%, `J` to `T` mostly the street, and a single letter after the letter (an initial) is the street in 99%. The rule above matches the labels in 84.9% (NAD) and 88.4% (NC) of those rows; always "street name" 33.6% and 48.2%, always "number suffix" 66.4% and 51.8%.
+- **Measured:** the reviewers' reading: on the precision queue for the single letter before a name (#360, 50 cards), 23 of the 26 `A` to `D` cards were labeled a unit (88%, 95% interval 70% to 96%) and 3 an initial; of the 24 cards with a letter from `E` to `Z` 21 stayed an initial or part of the name. The provider labels say otherwise: NAD labels the letter the number's suffix in 80% of the flagged rows. Against the labels, on non-direction letters with no direction or bare suffix after them: NAD 5,469 rows, NC voter snapshot 65,147 rows (county-entered parts). `A` and `B` are the number's suffix in 89% to 96% of rows in both sources, `C` and `D` in 73% to 82%, `J` to `T` mostly the street, and a single letter after the letter (an initial) is the street in 99%. The rule above matches the labels in 84.9% (NAD) and 88.4% (NC) of those rows; always "street name" 33.6% and 48.2%, always "number suffix" 66.4% and 51.8%.
 
 ---
 
@@ -144,8 +144,8 @@ where the number differs on 92.1%.
 
 `ambiguous_number_letter` is the one where **the providers disagree**: by state the NAD labels range from 98% number suffix
 (MA, NY, MD) to 40% (TX, KY), and the NC county-entered parts are 46% number suffix and 54% street name. The text alone
-cannot say, which is what the warning reports; the default for the letters `A` to `D` follows the
-labels (see the section above).
+cannot say, which is what the warning reports; the default for the letters `A` to `D` is a unit, the reviewers' reading
+(see the section above), not the providers' labels.
 
 ## Informational
 

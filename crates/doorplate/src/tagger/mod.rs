@@ -131,6 +131,10 @@ pub(crate) struct Tagger<'a> {
     /// A lone letter after the house number was read as its suffix on the strength of the letter
     /// alone (`46 A LINDEN AVE`, #270): the text cannot say, so `ambiguous_number_letter` stays.
     number_letter_guess: bool,
+    /// The token of an `A` to `D` read as a unit after a plain house number (`123 B MAIN ST`,
+    /// #487): placed in `finish` in the first free unit slot, so a unit written with a
+    /// designator keeps the first one.
+    letter_unit: Option<usize>,
     /// Pre-split input with a city, state or ZIP field: a street field that is
     /// only a country is dropped (#130).
     country_street: bool,
@@ -169,6 +173,7 @@ impl<'a> Tagger<'a> {
             incomplete: None,
             zero_number: false,
             number_letter_guess: false,
+            letter_unit: None,
             country_street: false,
             lens,
             places: None,
@@ -277,6 +282,16 @@ impl<'a> Tagger<'a> {
     }
 
     fn finish(mut self) -> Tagged {
+        if let Some(k) = self.letter_unit {
+            let used = |tags: &[Tag], n: u8| tags.contains(&Tag::UnitNumber(n));
+            self.tags[k] = if !used(&self.tags, 0) {
+                Tag::UnitNumber(0)
+            } else if !used(&self.tags, 1) {
+                Tag::UnitNumber(1)
+            } else {
+                Tag::Unparsed
+            };
+        }
         // A repeated line 2 already says so (`second_line_skipped`).
         if self.warnings.contains(&Warning::SecondLineSkipped) {
             self.warnings.retain(|w| *w != Warning::RepeatedText);

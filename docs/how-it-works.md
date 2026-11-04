@@ -147,10 +147,10 @@ often rows that carry it disagree with labeled data: [`warnings.md`](warnings.md
   building name, which no emitter prints). A unit, an attention line, the city, state and ZIP,
   or a street that is on line 2 alone get no warning: they are components of their own. These
   are warnings, like `country_ignored`, not a separate list; none changes a component or a key.
-- **A letter after the house number is reported**: `123 A MAIN ST` raises
-  `ambiguous_number_letter` because the letter may be the number's suffix (`123A`) or the first word of the
-  street. The letters `A` to `D` are read as the number's suffix (`123A MAIN ST`; decided from the NAD and NC
-  voter labels, `warnings.md`), the others stay in the street name (`12 F OAK ST`). It is not raised when the
+- **A letter after the house number is reported**: `123 B MAIN ST` raises
+  `ambiguous_number_letter` because the letter may be a unit, the number's suffix (`123B`) or the first word of the
+  street. The letters `A` to `D` are read as a unit (house number 123, unit B; the reviewers' reading, `warnings.md`),
+  the others stay in the street name (`12 F OAK ST`). It is not raised when the
   letter is stuck to the number, is a directional, is the whole street name (`123 A ST`) or is the `U` of
   `U S ROUTE`.
 - **Intersections have no key.** `MAIN ST & 1ST AVE` raises

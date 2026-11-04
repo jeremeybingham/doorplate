@@ -2298,11 +2298,19 @@ impl Tagger<'_> {
                 self.set(i..i + 1, Tag::StreetNumber);
                 i += 1;
             } else if i + 1 < hi && (self.number_letter(i) || self.guessed_number_letter(i, hi)) {
-                // "428 B SOUTH MAIN ST": the letter belongs to the number.
-                if !self.number_letter(i) {
+                // "428 B SOUTH MAIN ST": the letter belongs to the number, unless it is
+                // an A to D after a plain number: that is a unit (`123 B MAIN ST` is house
+                // number 123, unit B), by default: the text cannot say (#487, #270).
+                if self.letter_is_unit(i) {
                     self.number_letter_guess = true;
+                    self.set(i..i + 1, Tag::Skip);
+                    self.letter_unit = Some(i);
+                } else {
+                    if !self.number_letter(i) {
+                        self.number_letter_guess = true;
+                    }
+                    self.set(i..i + 1, Tag::StreetNumber);
                 }
-                self.set(i..i + 1, Tag::StreetNumber);
                 self.decide(Decision::NumberLetter);
                 i += 1;
             }
@@ -2417,6 +2425,20 @@ impl Tagger<'_> {
             && self.lex.directional(self.text(k + 1)).is_some()
             // "U S ROUTE 40" is the US highway, not number 20192U.
             && !(t == "U" && self.text(k + 1) == "S")
+    }
+
+    /// Whether the letter `A` to `D` at `k`, right after a plain house number (digits, with or
+    /// without a hyphen), is a unit and not the number's suffix: `123 B MAIN ST` is house number
+    /// 123 and unit B (#487, owner decision of 2026-11-03, reversing #297). Any other letter is the
+    /// first initial of a person's name that is the street name, and stays where it was; so does a
+    /// letter after a grid or lettered number.
+    fn letter_is_unit(&self, k: usize) -> bool {
+        k > 0
+            && matches!(self.text(k), "A" | "B" | "C" | "D")
+            && self
+                .text(k - 1)
+                .bytes()
+                .all(|c| c.is_ascii_digit() || c == b'-')
     }
 
     /// `46 A LINDEN AVE` (#270): the letter `A` to `D` right after the house number is the number's
