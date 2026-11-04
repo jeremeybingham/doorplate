@@ -125,6 +125,11 @@ pub(crate) fn assemble(
                 }
                 record(addr, Component::StreetNumber);
             }
+            Tag::StreetNumberTail => {
+                if let Some(n) = &mut addr.street_number {
+                    n.push_str(&text);
+                }
+            }
             Tag::PreDir => {
                 if let Some(l) = lex.directional(&text) {
                     addr.street_dir_prefix.get_or_insert(l.value);

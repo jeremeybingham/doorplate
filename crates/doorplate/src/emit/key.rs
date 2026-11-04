@@ -36,6 +36,19 @@ impl ParsedAddress {
     /// Manhattan is two numbers).
     fn key_number(&self) -> Option<String> {
         let n = self.street_number.as_deref()?;
+        // A pair written with a space (`41 12`, #313) keys like its hyphenated twin.
+        let spaced;
+        let n = match n.split_once(' ') {
+            Some((a, b))
+                if !a.is_empty()
+                    && !b.is_empty()
+                    && a.bytes().chain(b.bytes()).all(|c| c.is_ascii_digit()) =>
+            {
+                spaced = format!("{a}-{b}");
+                spaced.as_str()
+            }
+            _ => n,
+        };
         let queens_form = n.split_once('-').is_some_and(|(a, b)| {
             let digits = |s: &str| !s.is_empty() && s.bytes().all(|c| c.is_ascii_digit());
             let end = b
