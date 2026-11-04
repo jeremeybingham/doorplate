@@ -897,8 +897,10 @@ impl Tagger<'_> {
             .all(|k| self.toks[k].seg == self.toks[r.start].seg);
         // The street needs a name of its own: `1921 NW` / `46` is a street cut
         // across lines, and a highway or PO Box line takes no bare unit.
+        // A directional word that has a suffix of its own is a name (`SOUTHWEST PKWY`).
         let named = (0..self.toks.len())
-            .any(|k| self.tags[k] == Tag::Name && lex.directional(self.text(k)).is_none());
+            .any(|k| self.tags[k] == Tag::Name && lex.directional(self.text(k)).is_none())
+            || (self.tags.contains(&Tag::Name) && self.tags.contains(&Tag::Suffix));
         if r.is_empty() || !free || !one_seg || !named || self.tags.contains(&Tag::UnitNumber(0)) {
             return;
         }
@@ -909,6 +911,37 @@ impl Tagger<'_> {
             return;
         }
         self.set(r, Tag::UnitNumber(0));
+        self.decide(Decision::BareUnit);
+    }
+
+    /// A number and a designator word after it on line 2 (`4 REAR`, `4 APARTMENT`): the
+    /// number is the unit and the word its designator, which the unit pass read as a
+    /// designator still waiting for its number. Other words (`640 SOMERSET`) may be a
+    /// street cut across lines and stay unparsed; a compass word (`408 SOUTH`) is left
+    /// too, since its USPS line (`# 408 SOUTH`) does not read back to the same key (#320).
+    pub(super) fn claim_number_before_designator(&mut self, r: Range<usize>) {
+        if r.len() != 2 || self.tags.contains(&Tag::UnitNumber(0)) {
+            return;
+        }
+        let (a, b) = (r.start, r.start + 1);
+        let free = matches!(self.tags[a], Tag::Untagged | Tag::Unparsed)
+            && !self.toks[a].paren
+            && !self.toks[b].paren
+            && self.toks[a].seg == self.toks[b].seg;
+        let named = self.tags.contains(&Tag::Name) && self.tags.contains(&Tag::Suffix);
+        if !all_digits(self.text(a))
+            || self.text(a).len() > 4
+            || !free
+            || !named
+            || self.tags[b] != Tag::UnitType(0)
+        {
+            return;
+        }
+        self.set(a..a + 1, Tag::UnitNumber(0));
+        self.warnings.retain(|w| *w != Warning::MissingUnitNumber);
+        if self.incomplete == Some(b) {
+            self.incomplete = None;
+        }
         self.decide(Decision::BareUnit);
     }
 
