@@ -569,6 +569,14 @@ PROBES = [
         3,
     ),
     (
+        "careof-name-only",
+        "509",
+        "a care-of or attention line with a name and no street (C/O ACME TIRE)",
+        r"^(?:C/O|C O|ATTN:?) [A-Z &.'-]+ \| ?$",
+        "D",
+        1,
+    ),
+    (
         "state-word-city-no-state",
         "480",
         "a city that starts with a state name or LA, with no state, and a ZIP (VIRGINIA BEACH 23451, LA MESA 91941)",
