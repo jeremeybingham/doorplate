@@ -218,7 +218,7 @@ impl Parser {
         let mut country = false;
         for f in order {
             let start = toks.len();
-            if let Some(v) = fields.get(f) {
+            if let Some(v) = fields.get(f).filter(|v| !null_field(f, v)) {
                 let mut t = tokenize(&clean(v), Some(f), seg, &self.lex);
                 seg = t.last().map_or(seg, |t| t.seg) + 1;
                 // A field that is only a country goes, unless it is all
@@ -344,6 +344,23 @@ fn seg_lengths<'a>(toks: &[Token], text: impl Fn(&Span) -> Option<&'a str>) -> V
         k = e + 1;
     }
     lens
+}
+
+/// Whether a city, state or ZIP field is only a null word a data pipeline wrote for a missing
+/// value (`NaN` from a DataFrame, `null`, `None`, `undefined`), so the field is left out (#419).
+/// The state and ZIP fields take any case. In the city field `NaN`, `nan` and `NAN` count, and
+/// `Nan` (a name) does not; `NULL`, `NONE` and `UNDEFINED` in a city are placeholders already
+/// (`[city_placeholder]`).
+fn null_field(f: FieldName, v: &str) -> bool {
+    let v = v.trim();
+    match f {
+        FieldName::City => matches!(v, "NaN" | "nan" | "NAN"),
+        FieldName::State | FieldName::Zip => matches!(
+            v.to_ascii_uppercase().as_str(),
+            "NAN" | "NULL" | "NONE" | "UNDEFINED" | "N/A"
+        ),
+        _ => false,
+    }
 }
 
 #[cfg(test)]

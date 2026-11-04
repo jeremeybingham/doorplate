@@ -91,6 +91,9 @@ pub(crate) fn tokenize(
         pieces.push((s, bytes.len(), seg));
     }
 
+    // A bracketed `<NULL>` (a database export's missing value) is not part of the address (#419).
+    pieces.retain(|&(a, b, _)| &text[a..b] != "<NULL>");
+
     // Whether each piece, trimmed to its alphanumerics, is a state or a ZIP: one lookup per piece,
     // not one per later piece for every piece.
     let anchors: Vec<bool> = pieces

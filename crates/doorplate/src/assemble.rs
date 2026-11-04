@@ -300,7 +300,7 @@ pub(crate) fn assemble(
             }
             // A stand-in for the city (`Not stated`, `Unknown`, NAD's convention) is no city:
             // `missing_city` follows, and the key never held a city (#468).
-            Tag::City if lex.is_placeholder_phrase(&normalize_key(&text)) => {}
+            Tag::City if lex.is_city_placeholder_phrase(&normalize_key(&text)) => {}
             Tag::City => {
                 set_once(&mut addr.city, text);
                 record(addr, Component::City);

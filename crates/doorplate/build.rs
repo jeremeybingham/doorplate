@@ -518,6 +518,15 @@ fn gen_special(t: &Table, out: &mut String, mw: &mut usize) -> Result<HighwayRow
     )
     .ok();
 
+    let cctx = format!("{ctx} [city_placeholder]");
+    let mut city_phrases = key_list(table(t, "city_placeholder", ctx)?, "phrases", &cctx, true)?;
+    city_phrases.sort();
+    writeln!(
+        out,
+        "pub(crate) static CITY_PLACEHOLDERS: &[&str] = &{city_phrases:?};\n"
+    )
+    .ok();
+
     let actx = format!("{ctx} [area]");
     let mut area = key_list(table(t, "area", ctx)?, "words", &actx, true)?;
     area.sort();
