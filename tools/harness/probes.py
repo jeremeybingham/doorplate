@@ -280,6 +280,22 @@ PROBES = [
         2,
     ),
     (
+        "paren-group-at-edge",
+        "291",
+        "a parenthesized group that ends a line or stands alone, not a floor (9 OAK RD (J SMITH), (BOX 14))",
+        r"\([^()|]*\)\s*(?:\||$)|^\([^()|]*\)",
+        "M",
+        1,
+    ),
+    (
+        "unclosed-paren",
+        "516",
+        "an opening parenthesis with no closing one before the end of the line",
+        r"\([^)|]*(?:\||$)",
+        "S",
+        2,
+    ),
+    (
         "level-words",
         "292",
         "level and floor words (LL, LOWER LEVEL, GROUND, ATC, GARAGE)",

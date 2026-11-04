@@ -100,7 +100,7 @@ Puerto Rico street-first forms wait for the Puerto Rico research issue. Nothing 
     a person or business on line 2 after a real street (#472), a care-of or attention line with a name and no street (#509), a non-Latin city or country (#469), a city that starts with a state name (#480), a region phrase written as the state (#482),
     boilerplate before the street (#483).
   - *Review data and tooling:* the review tool's deferred sharing helpers (#222, item 4), the tracker of what has been hand-reviewed and the queues to come (#225), comparing with libpostal (#215), the Web Data Commons answer on research use (#395), larger MessyStreets tiers (#403).
-  - *Parsing ideas:* a street line that already ends in the city, state and ZIP (#397), repeated state, a county-only segment and `USA` after the ZIP (#435).
+  - *Parsing ideas:* a street line that already ends in the city, state and ZIP (#397), repeated state, a county-only segment and `USA` after the ZIP (#435). An opening parenthesis with no closing one that loses the ZIP in the one-line parse (#516); parentheses as the edge of a segment (#291).
   - *Data, API, docs and speed:* Florida pack gaps (#11), more state data (#213), the address-structure labels usaddress has (#35), Canadian addresses (#203), the usaddress comparison post (#88), the examples notebook as a page (#253),
     the docs site move off Material for MkDocs (#233), further performance leads (#418), and an architecture idea, shape-first parsing (#490).
 - **Tooling** (never shipped, never closed): evaluating MessyStreets (#323); the Try page (#434) is in review; benchmarks from a look at fastaddress (#511: a warning-versus-error AUC, a speed column, about 540 labeled messy rows).
