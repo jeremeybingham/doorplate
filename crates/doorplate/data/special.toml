@@ -91,7 +91,7 @@ forms = ["GENERAL DELIVERY", "GEN DELIVERY", "GENERAL DEL", "GEN DEL"]
 # (EO BMF, January 2026 layout: ICO is the "In Care of Name") writes
 # "% NAME" in about 64% of its rows.
 standard = "ATTN"
-forms = ["ATTN", "ATTENTION", "C/O", "IN CARE OF", "CARE OF", "%"]
+forms = ["ATTN", "ATTENTION", "C/O", "C O", "IN CARE OF", "CARE OF", "%"]
 
 # Highway prefixes: a prefix followed by a route number is the street name
 # ("COUNTY ROAD 23", "HWY 2301"). The number after it is the road's, not a
