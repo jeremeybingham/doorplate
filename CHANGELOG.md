@@ -9,6 +9,7 @@ change to what an input produces needs a new key version.
 
 ### Added
 
+- **`speed_python.py` times fastaddress when it is installed, and the speed page compares** (tooling and docs only, #511): `fastaddress` is the `usaddress` model in Rust; `docs/speed-and-size.md` has a section with one run (like for like it takes 0.75x the time of `parse_tokens`, 9.5x faster than `usaddress.parse` on the corpus inputs) and the check that its output equals `usaddress`'s on 59,000 inputs.
 - **A probe for a care-of or attention line with a name and no street** (tooling only, #509): `careof-name-only` in `tools/harness/probes.py` (`C/O ACME TIRE`), with matching and near-miss cases; #509 asks what the output of such a line should be.
 - **The roadmap names the 0.6.0 plan and every open issue** (docs and tooling only): a "Next: 0.6.0" section with the planned order, the open issues found since 2026-11-01 listed in "Waiting", the closed ones removed, and `tools/docs/issue_states.py` now checks the 0.6.0 section, the 0.6.0 backlog row and tracker #416.
 - **Probes for a split five-digit house number and a bare unit number after the house number** (tooling only, #501, #502): `space-split-long-number` (`12 345 ELM ST`) and `bare-unit-number-after-house-number` (`123 104 11TH STREET`) in `tools/harness/probes.py`, with matching and near-miss cases; both came out of the `queens-space` precision queue (#313).

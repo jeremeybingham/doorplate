@@ -61,6 +61,42 @@ different comparison). A Python call costs about what the Rust parse does;
 the boundary is not the bottleneck. The usaddress rows come from a cache of
 one run on this machine (same usaddress version and inputs).
 
+#### Against fastaddress
+
+[`fastaddress`](https://github.com/vinvomero/fastaddress) (MIT, 0.1.0 of 2026-08-18, a different project) runs the same
+trained model as `usaddress` in Rust, with the same Python API. It is a fairer baseline for speed than `usaddress` itself.
+`benchmarks/speed_python.py` times it when it is importable. One run on 2026-11-04 (0.6.0-dev at `48206ef`,
+pinned to 4 CPUs, 100,000 addresses, best of five; the `usaddress` rows come from the cache of 2026-10-31 on this machine):
+
+| | Corpus inputs | Geocode addresses |
+|---|---|---|
+| doorplate `parse` (a `ParsedAddress`) | 9.9 µs | 11.9 µs |
+| doorplate `parse_tokens` (labels, the shape of `usaddress.parse`) | 12.5 µs | 14.7 µs |
+| doorplate `parse_many` (4 threads) | 3.5 µs | 4.0 µs |
+| fastaddress `parse` (labels) | 9.3 µs | 11.0 µs |
+| fastaddress `tag` (a dict) | 9.7 µs | 11.2 µs |
+| usaddress `parse` | 88.0 µs | 93.4 µs |
+| usaddress `tag` | 96.4 µs | 97.8 µs |
+
+Read it this way:
+
+- **Like for like** (a list of token labels), `fastaddress.parse` takes 0.75x the time of doorplate `parse_tokens` on both inputs:
+  about a quarter faster. doorplate `parse` returns the whole `ParsedAddress` (components, warnings, key on demand) in
+  about the time `fastaddress` takes for the labels alone.
+- **Against `usaddress`** `fastaddress` is 9.5x (corpus) and 8.5x (geocode) faster on this machine; its README reports 11.3x on its
+  own machine and corpus. doorplate `parse_tokens` is 7.0x and 6.3x.
+- **Many addresses at once:** `parse_many` is the only batch call of the three (the GIL released, 4 threads here), 3.5 µs
+  and 4.0 µs each. `fastaddress` has no batch call in Python (its README's 8-thread figure is a Rust benchmark).
+- **Same output as `usaddress`:** on this machine `fastaddress.parse` and `.tag` gave exactly `usaddress`'s result on
+  all 384 distinct corpus inputs, all 30,622 distinct geocode addresses and a random 28,000 lines of seven messy sources
+  (21 with non-ASCII text): no difference. So its accuracy equals `usaddress`'s, which the
+  [accuracy](benchmarks.md) tables already cover. It returns no normalized fields, key, warnings or
+  place data; it does add the CRF's token confidence.
+
+One run on one machine; the doorplate figures here are lower than the table above (a different build and run), so compare
+ratios within one table. The wheel was installed in a throwaway virtual environment (its hash matched PyPI's) and given public
+benchmark data and aggregate counts of private files only.
+
 Building DataFrames (`crates/doorplate-py/benchmarks/bench_batch.py`, 100,000
 corpus addresses, 4 CPUs, 0.4.0): a loop of `parse` 1.58 s, `parse_many` 0.54 s (2.9x),
 `parse_many` into a pandas frame of seven columns 0.71 s (2.2x), into a Polars
