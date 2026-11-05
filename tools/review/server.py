@@ -22,6 +22,9 @@ For each row the page shows the parse and the warnings, and you choose a verdict
 - `foreign`: not a US address (another country);
 - `puerto_rico`: a Puerto Rico address; the row is also copied, in queue format, to `puerto-rico-queue.jsonl` beside the answers
   (`--pr-queue` to change it), the queue for the Puerto Rico epic (#332). An undo takes it out again;
+- on a rule queue (`tools/review/rule_queue.py`, #524) the card also shows the reading with one rule switched off, and the verdicts are
+  `rule_right` (doorplate as it is), `rule_off_right` (the reading without the rule), `both_right` and `both_wrong` (with a corrected
+  string), plus the others above;
 - `map_checked`: looked up on a real map and judged understandable but not fixable by a rule: a misspelled street name that collides with
   a street suffix, or numbers out of order that no logic can parse (you have to see the map). Labels are kept as for `labeled` (to the
   best of the reviewer's ability; optional) and `map_reason` says which kind (`name_suffix`, `numbers_out_of_order`, `other`);
@@ -93,6 +96,8 @@ COMPONENTS = ("StreetNumber", "StreetDirPrefix", "StreetName", "StreetSuffix", "
 MAX_LABELS = 200
 USADDRESS_GRADES = ("full", "mostly")  # how right usaddress was on a labeled comparison answer (#461)
 COMPARE_VERDICTS = ("doorplate_right", "usaddress_right", "both_right", "both_wrong")  # for a comparison row
+# A rule queue (tools/review/rule_queue.py) shows doorplate and doorplate with one rule off: `rule_right`, `rule_off_right`.
+ALT_VERDICTS = ("rule_right", "rule_off_right", "both_right", "both_wrong")
 WARNING_VERDICTS = ("fair", "noise")  # for a `right` parse: was the warning justified?
 MAX_BODY = 128 * 1024
 MAX_ATTEMPTS = 10
@@ -175,10 +180,17 @@ class Review:
         if item is None:
             raise ValueError("unknown id")
         verdict = body.get("verdict")
-        if verdict in COMPARE_VERDICTS:
+        two = "compare" in item or "alt" in item  # a row with a second reading to choose between
+        if verdict in ("rule_right", "rule_off_right"):
+            if "alt" not in item:
+                raise ValueError("that verdict is for a rule-queue row")
+        elif verdict in ("doorplate_right", "usaddress_right"):
             if "compare" not in item:
                 raise ValueError("that verdict is for a comparison row")
-        elif verdict not in VERDICTS or (verdict in ("right", "corrected") and "compare" in item):
+        elif verdict in ("both_right", "both_wrong"):
+            if not two:
+                raise ValueError("that verdict is for a comparison row")
+        elif verdict not in VERDICTS or (verdict in ("right", "corrected") and two):
             raise ValueError("unknown verdict")
         warning = body.get("warning")
         if verdict == "right" and warning not in WARNING_VERDICTS:
@@ -214,6 +226,8 @@ class Review:
             rec["warning"] = warning
         if "compare" in item:
             rec["compare"] = item["compare"]
+        if "alt" in item:
+            rec["alt"] = {k: v for k, v in item["alt"].items() if k != "changed_by_source"}
         if verdict in ("corrected", "both_wrong") or with_corr:
             rec["corrected"] = corrected[:1000]
         if labels is not None:

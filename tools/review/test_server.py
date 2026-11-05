@@ -295,3 +295,31 @@ def test_map_checked_is_exported_with_its_reason_and_label_shapes(review, tmp_pa
     row = export.safe(server.load_answers(review.answers_path)["inv|site|1"])
     assert row["verdict"] == "map_checked" and row["map_reason"] == "numbers_out_of_order"
     assert [c for c, _ in row["labels"]] == ["StreetNumber", "StreetName"]  # shapes of the words, never the words
+
+
+ALT = {"label": "attention lines", "sites": ["rules.rs:1"], "key": "k4:S|123||OAK|ST||FL|33101", "warnings": [], "unparsed": "",
+       "changed_by_source": {"inv": 10}}
+
+
+def rule_review(tmp_path):
+    q = tmp_path / "q.jsonl"
+    q.write_text(json.dumps(dict(QUEUE[0], alt=ALT)) + "\n" + json.dumps(QUEUE[1]) + "\n")
+    return server.Review(q, tmp_path / "a.jsonl")
+
+
+def test_rule_queue_verdicts(tmp_path):
+    r = rule_review(tmp_path)
+    for v in ("rule_right", "rule_off_right", "both_right"):
+        rec = r.answer({"id": "inv|site|1", "verdict": v})
+        assert rec["verdict"] == v and rec["alt"]["label"] == "attention lines" and "changed_by_source" not in rec["alt"]
+        r.undo()
+    rec = r.answer({"id": "inv|site|1", "verdict": "both_wrong", "corrected": "123 QUINCEWOOD ST, MIAMI, FL 33101"})
+    assert rec["verdict"] == "both_wrong" and rec["corrected"]
+    with pytest.raises(ValueError):  # a plain flagged-queue row has no second reading
+        r.answer({"id": "inv|site|2", "verdict": "rule_off_right"})
+    with pytest.raises(ValueError):
+        r.answer({"id": "inv|site|2", "verdict": "both_right"})
+    with pytest.raises(ValueError):  # not a comparison row
+        r.answer({"id": "inv|site|1", "verdict": "usaddress_right"})
+    with pytest.raises(ValueError):  # the right/corrected verdicts are for rows with one reading
+        r.answer({"id": "inv|site|1", "verdict": "right", "warning": "fair"})

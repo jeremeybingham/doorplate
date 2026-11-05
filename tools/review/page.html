@@ -100,6 +100,11 @@
     <div class="kv" id="differs"></div>
   </div>
 
+  <div class="card" id="altcard" hidden>
+    <div class="muted" id="althead"></div>
+    <div class="kv" id="altkv" style="margin-top:.35rem"></div>
+  </div>
+
   <div class="card" id="fixcard">
     <label for="fix"><b>A string that should parse to the same door</b> <span class="muted">(starts as the original in one line; press <kbd>f</kbd> to edit it, <kbd>r</kbd> resets it, Enter saves it as a correction)</span></label>
     <input type="text" id="fix" autocomplete="off" spellcheck="false">
@@ -166,6 +171,18 @@
     <button data-v="foreign" title="Not a US address (another country)">Foreign address<kbd>o</kbd></button>
     <button data-v="puerto_rico" title="A Puerto Rico address: the row is also copied to the Puerto Rico queue">Puerto Rico<kbd>p</kbd></button>
   </div>
+  <div class="row" id="altbuttons" hidden>
+    <button data-v="rule_right" title="doorplate as it reads it now is right">Right with the rule<kbd>1</kbd></button>
+    <button data-v="rule_off_right" title="the reading without the rule is right">Right without the rule<kbd>2</kbd></button>
+    <button data-v="both_right">Both right (another convention)<kbd>3</kbd></button>
+    <button data-v="both_wrong" id="baltwrong">Both wrong: save correction<kbd>4 / Enter</kbd></button>
+    <button data-v="unclear">I can't tell<kbd>5</kbd></button>
+    <button data-v="junk">Not an address<kbd>6</kbd></button>
+    <button data-v="dual">Dual or multiple address<kbd>9</kbd></button>
+    <button data-v="insufficient" title="Some valid parts, but too much wrong or extra text to put together one door">Not enough for a door<kbd>i</kbd></button>
+    <button data-v="foreign" title="Not a US address (another country)">Foreign address<kbd>o</kbd></button>
+    <button data-v="puerto_rico" title="A Puerto Rico address: the row is also copied to the Puerto Rico queue">Puerto Rico<kbd>p</kbd></button>
+  </div>
   <div class="row" id="vbuttons">
     <button data-v="right" data-w="fair">Parse right, warning fair<kbd>1</kbd></button>
     <button data-v="right" data-w="noise">Parse right, warning is noise<kbd>2</kbd></button>
@@ -184,7 +201,7 @@
   <p class="muted"><b>Parse right, warning fair</b>: the components are correct and the warning rightly flags something doubtful (a true range of numbers, a cut-off line).
   <b>Parse right, warning is noise</b>: the components are correct and there is nothing to flag. <b>Save correction</b>: it is wrong, and the string above is a better one.
   <b>I can't tell</b>: wrong, and I don't know what it should be. <b>Not an address</b>: a name, a placeholder, a number.
-  <b>Foreign address</b>: not a US address. <b>Puerto Rico</b>: a Puerto Rico address; the row is also copied to the Puerto Rico queue (<code>puerto-rico-queue.jsonl</code> beside the answers) for the Puerto Rico epic. <b>Dual or multiple address</b>: the row holds two addresses (a street and a PO Box, or several), which is not the same as not being an address. <b>Checked on a map</b> (in the labeling panel, key <kbd>m</kbd>): you looked the row up on a real map and it is understandable but no rule can fix it (a misspelled street name that collides with a suffix, numbers out of order); your labels are saved with the reason. <b>Try these labels</b> (<kbd>t</kbd>) shows what the library makes of the current labels, with its key and the Pub 28 lines. <b>Not enough for a door</b>: some valid address parts, but too much wrong or extra text to put together one coherent door (for example, a map lookup shows an address you could not reach from what the row says).</p>
+  <b>Foreign address</b>: not a US address. <b>Puerto Rico</b>: a Puerto Rico address; the row is also copied to the Puerto Rico queue (<code>puerto-rico-queue.jsonl</code> beside the answers) for the Puerto Rico epic. <b>Dual or multiple address</b>: the row holds two addresses (a street and a PO Box, or several), which is not the same as not being an address. <b>On a rule queue</b> a second card shows the reading with one rule switched off: <b>Right with the rule</b> (<kbd>1</kbd>) or <b>Right without the rule</b> (<kbd>2</kbd>); the others work as in a comparison queue. <b>Checked on a map</b> (in the labeling panel, key <kbd>m</kbd>): you looked the row up on a real map and it is understandable but no rule can fix it (a misspelled street name that collides with a suffix, numbers out of order); your labels are saved with the reason. <b>Try these labels</b> (<kbd>t</kbd>) shows what the library makes of the current labels, with its key and the Pub 28 lines. <b>Not enough for a door</b>: some valid address parts, but too much wrong or extra text to put together one coherent door (for example, a map lookup shows an address you could not reach from what the row says).</p>
 </div>
 
 <script src="/helpers.js"></script>
@@ -310,7 +327,19 @@
     $("done").hidden = true; $("app").hidden = false;
     item = it;
     var cmp = it.compare;
-    $("theirs").hidden = !cmp; $("labelua").hidden = !cmp; $("cmpbuttons").hidden = !cmp; $("vbuttons").hidden = !!cmp;
+    var alt = it.alt;
+    $("theirs").hidden = !cmp; $("labelua").hidden = !cmp; $("cmpbuttons").hidden = !cmp; $("vbuttons").hidden = !!(cmp || alt);
+    $("altcard").hidden = !alt; $("altbuttons").hidden = !alt;
+    if (alt) {
+      $("althead").textContent = "Without this rule (" + alt.label + "), doorplate reads it like this:";
+      var kvb = $("altkv"); kvb.textContent = "";
+      [["key", alt.key], ["not placed", alt.unparsed]].forEach(function (b) {
+        if (!b[1]) return;
+        kvb.appendChild(el("span", "muted", b[0] + " ")); kvb.appendChild(el("code", null, b[1])); kvb.appendChild(document.createTextNode("   "));
+      });
+      (alt.warnings || []).forEach(function (w) { kvb.appendChild(el("span", "warn", w)); });
+      if (!alt.key && !(alt.warnings || []).length) kvb.appendChild(el("span", "muted", "(no key)"));
+    }
     if (cmp) {
       $("theirshead").textContent = "usaddress read it like this (" + cmp.class + "):";
       theirsChips($("theirsview"), cmp.usaddress || []);
@@ -359,11 +388,11 @@
   }
 
   function askUnchanged(verdict, withCorr) {
-    var cmp = !!item.compare, box = $("hintbtns");
+    var cmp = !!(item.compare || item.alt), box = $("hintbtns");
     $("hinttext").textContent = cmp ? "That is not a correction. Did you mean one of these?" :
       "That usually means the parse is right and the warning is fair. Did you mean one of these?";
     box.textContent = "";
-    (cmp ? [["doorplate right", "doorplate_right"], ["Both right", "both_right"]] :
+    (item.alt ? [["Right with the rule", "rule_right"], ["Both right", "both_right"]] : cmp ? [["doorplate right", "doorplate_right"], ["Both right", "both_right"]] :
            [["Parse right, warning fair", "right", "fair"], ["Parse right, warning is noise", "right", "noise"]]).forEach(function (o) {
       var b = el("button", null, o[0]); b.type = "button"; b.addEventListener("click", function () { $("hint").hidden = true; send(o[1], o[2]); }); box.appendChild(b);
     });
@@ -505,11 +534,13 @@
   $("undo").addEventListener("click", undo);
   function undo() { api("/api/undo", {}).then(function () { return api("/api/next"); }).then(function (j) { show(j.item, j.stats); }); }
   $("fix").addEventListener("input", function () { renderFix(); clearTimeout(attemptTimer); attemptTimer = setTimeout(function () { if (item) noteAttempt(); }, 1200); });
-  $("fix").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); send(item && item.compare ? "both_wrong" : "corrected"); } if (e.key === "Escape") e.target.blur(); });
+  $("fix").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); send(item && (item.compare || item.alt) ? "both_wrong" : "corrected"); } if (e.key === "Escape") e.target.blur(); });
   $("note").addEventListener("keydown", function (e) { if (e.key === "Escape") e.target.blur(); });
   document.addEventListener("keydown", function (e) {
     if (/^(INPUT|TEXTAREA)$/.test(document.activeElement.tagName) || e.ctrlKey || e.metaKey || e.altKey) return;
-    var v = (item && item.compare
+    var v = (item && item.alt
+      ? { "1": ["rule_right"], "2": ["rule_off_right"], "3": ["both_right"], "4": ["both_wrong"], "5": ["unclear"], "6": ["junk"], "9": ["dual"] }
+      : item && item.compare
       ? { "1": ["doorplate_right"], "2": ["usaddress_right"], "3": ["both_right"], "4": ["both_wrong"], "5": ["unclear"],
           "6": ["junk"], "9": ["dual"], "0": ["usaddress_right", undefined, false, true] }
       : { "1": ["right", "fair"], "2": ["right", "noise"], "3": ["corrected"], "4": ["unclear"], "5": ["junk"],
