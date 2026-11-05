@@ -22,6 +22,12 @@ For each row the page shows the parse and the warnings, and you choose a verdict
 - `foreign`: not a US address (another country);
 - `puerto_rico`: a Puerto Rico address; the row is also copied, in queue format, to `puerto-rico-queue.jsonl` beside the answers
   (`--pr-queue` to change it), the queue for the Puerto Rico epic (#332). An undo takes it out again;
+- on a rule queue (`tools/review/rule_queue.py`, #524) the card also shows the reading with one rule switched off, and the verdicts are
+  `rule_right` (doorplate as it is), `rule_off_right` (the reading without the rule), `both_right` and `both_wrong` (with a corrected
+  string), plus the others above;
+- `map_checked`: looked up on a real map and judged understandable but not fixable by a rule: a misspelled street name that collides with
+  a street suffix, or numbers out of order that no logic can parse (you have to see the map). Labels are kept as for `labeled` (to the
+  best of the reviewer's ability; optional) and `map_reason` says which kind (`name_suffix`, `numbers_out_of_order`, `other`);
 - `labeled`: the parts of the one-line string, marked by the person (`labels`: `[{start, end, component}]` over
   `labeled_text`), a more exact answer than a rewrite when the parse is wrong in a few places. On a comparison row it can also say
   `usaddress_right: "full"` (usaddress's whole reading equals the labels) or `"mostly"` (basically right, one part differs): the
@@ -81,13 +87,17 @@ BUILD_WASM = "cargo build -p doorplate-wasm --target wasm32-unknown-unknown --re
 SOURCES = (ROOT / "crates" / "doorplate" / "src", ROOT / "crates" / "doorplate" / "data", ROOT / "crates" / "doorplate-wasm" / "src",
            ROOT / "crates" / "doorplate" / "Cargo.toml", ROOT / "crates" / "doorplate-wasm" / "Cargo.toml")
 # `noise` and `skip` are no longer on the page but stay valid: older answers files hold them.
-VERDICTS = ("right", "corrected", "unclear", "junk", "dual", "insufficient", "noise", "skip", "labeled", "foreign", "puerto_rico")
+VERDICTS = ("right", "corrected", "unclear", "junk", "dual", "insufficient", "noise", "skip", "labeled", "foreign", "puerto_rico",
+            "map_checked")
+MAP_REASONS = ("name_suffix", "numbers_out_of_order", "other")  # why a map-checked row cannot be fixed by a rule
 COMPONENTS = ("StreetNumber", "StreetDirPrefix", "StreetName", "StreetSuffix", "StreetDirSuffix", "Highway", "UnitType",
               "UnitNumber", "SecondUnitType", "SecondUnitNumber", "PoBox", "RuralRoute", "GeneralDelivery", "Military",
               "MilitaryPostOffice", "Attention", "Building", "City", "State", "Zip5", "Zip4", "Unparsed")  # the page's names
 MAX_LABELS = 200
 USADDRESS_GRADES = ("full", "mostly")  # how right usaddress was on a labeled comparison answer (#461)
 COMPARE_VERDICTS = ("doorplate_right", "usaddress_right", "both_right", "both_wrong")  # for a comparison row
+# A rule queue (tools/review/rule_queue.py) shows doorplate and doorplate with one rule off: `rule_right`, `rule_off_right`.
+ALT_VERDICTS = ("rule_right", "rule_off_right", "both_right", "both_wrong")
 WARNING_VERDICTS = ("fair", "noise")  # for a `right` parse: was the warning justified?
 MAX_BODY = 128 * 1024
 MAX_ATTEMPTS = 10
@@ -170,10 +180,17 @@ class Review:
         if item is None:
             raise ValueError("unknown id")
         verdict = body.get("verdict")
-        if verdict in COMPARE_VERDICTS:
+        two = "compare" in item or "alt" in item  # a row with a second reading to choose between
+        if verdict in ("rule_right", "rule_off_right"):
+            if "alt" not in item:
+                raise ValueError("that verdict is for a rule-queue row")
+        elif verdict in ("doorplate_right", "usaddress_right"):
             if "compare" not in item:
                 raise ValueError("that verdict is for a comparison row")
-        elif verdict not in VERDICTS or (verdict in ("right", "corrected") and "compare" in item):
+        elif verdict in ("both_right", "both_wrong"):
+            if not two:
+                raise ValueError("that verdict is for a comparison row")
+        elif verdict not in VERDICTS or (verdict in ("right", "corrected") and two):
             raise ValueError("unknown verdict")
         warning = body.get("warning")
         if verdict == "right" and warning not in WARNING_VERDICTS:
@@ -189,8 +206,11 @@ class Review:
             raise ValueError("the correction is the unchanged original: if the parse is right, answer that; "
                              "otherwise confirm with unchanged_ok")
         labels = None
-        if verdict == "labeled":
+        if verdict == "labeled" or (verdict == "map_checked" and body.get("labels")):
             labels = self._labels(body)
+        reason = body.get("map_reason") if verdict == "map_checked" else None
+        if verdict == "map_checked" and reason is not None and reason not in MAP_REASONS:
+            raise ValueError("map_reason is name_suffix, numbers_out_of_order or other")
         grade = body.get("usaddress_right")
         if grade is not None:
             if verdict != "labeled" or "compare" not in item:
@@ -206,10 +226,14 @@ class Review:
             rec["warning"] = warning
         if "compare" in item:
             rec["compare"] = item["compare"]
+        if "alt" in item:
+            rec["alt"] = {k: v for k, v in item["alt"].items() if k != "changed_by_source"}
         if verdict in ("corrected", "both_wrong") or with_corr:
             rec["corrected"] = corrected[:1000]
         if labels is not None:
             rec["labeled_text"], rec["labels"] = labels
+        if verdict == "map_checked":
+            rec["map_reason"] = reason or "other"
         if grade is not None:
             rec["usaddress_right"] = grade
         draft = body.get("draft")
@@ -227,7 +251,7 @@ class Review:
         ms = body.get("elapsed_ms")
         if isinstance(ms, int) and not isinstance(ms, bool) and 0 <= ms < 86_400_000:
             rec["elapsed_ms"] = ms
-        if verdict == "labeled" and body.get("parser_labels"):
+        if labels is not None and body.get("parser_labels"):
             try:
                 rec["parser_labels"] = self._labels({"labeled_text": labels[0], "labels": body["parser_labels"]})[1]
             except ValueError:
