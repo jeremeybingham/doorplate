@@ -47,7 +47,7 @@ Some text could not be placed; it is in `unparsed`.
 
 ### missing_street_number
 
-A street with no house number.
+A street with no house number, or a care-of or attention line with no street, box or unit at all (`C/O ACME TIRE`): the row has no key and says so (#509).
 
 - **Rows in NAD (of 1M):** 207
 - **Measured:** number 100% (the labels have one)
