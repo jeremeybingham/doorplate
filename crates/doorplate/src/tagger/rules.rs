@@ -2652,7 +2652,8 @@ impl Tagger<'_> {
 
     /// `46 A LINDEN AVE` (#270): the letter `A` to `D` right after the house number is the number's
     /// suffix (`46A`) unless the next word is itself a single letter (an initial: `100 J K DAVIS RD`),
-    /// a street suffix (`123 A ST` is the street `A`), a unit or box word, or not a word at all. In the
+    /// a street suffix (`123 A ST` is the street `A`; not when the street's own suffix comes later: `1797 A STATION DR`), AND,
+    /// a unit or box word, or not a word at all. In the
     /// labeled data (NAD and the NC voter snapshot) `A` and `B` are the number's suffix in 89% to 96%
     /// of rows and `C` and `D` in 73% to 82%; the other letters split or disagree and stay in the name.
     /// The text cannot decide it, so the warning stays.
@@ -2667,10 +2668,24 @@ impl Tagger<'_> {
             && self.toks[k].seg == self.toks[k + 1].seg
             && next.bytes().any(|c| c.is_ascii_alphanumeric())
             && !is_letter(next)
-            && self.lex.suffix(next).is_none()
-            && self.lex.unit(next).is_none()
+            // `120 A AND M LN`: a letter before AND is the street's own (#466).
+            && next != "AND"
+            // A street suffix word is the name's (`123 A ST` is the street `A`) unless the street's own
+            // suffix comes later in the line (`1797 A STATION DR`: `STATION` is a name word, #487).
+            && (self.lex.suffix(next).is_none() || self.suffix_later(k + 2, hi, self.toks[k].seg))
+            // ... and an observed unit spelling such as `BAY` is a name word then too (`66 A BAY STATE RD`).
+            && (self.lex.unit(next).is_none()
+                || (self.lex.unit(next).is_some_and(|l| l.kind == MatchKind::Observed)
+                    && self.suffix_later(k + 2, hi, self.toks[k].seg)))
             && self.lex.special(next).is_none()
             && self.lex.directional(next).is_none()
+    }
+
+    /// Whether a street suffix word stands in `from..hi` within segment `seg`.
+    fn suffix_later(&self, from: usize, hi: usize, seg: usize) -> bool {
+        (from..hi.min(self.toks.len()))
+            .take_while(|&j| self.toks[j].seg == seg)
+            .any(|j| self.lex.suffix(self.text(j)).is_some())
     }
 
     /// Whether the tokens in `r` are the penthouse designator.
