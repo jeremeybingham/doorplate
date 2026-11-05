@@ -59,7 +59,8 @@ def main():
         sites = list(all_sites())
     else:
         sites = [f"?\t{s}" for s in args.sites.split(",")]
-    for entry in sites:
+    for i, entry in enumerate(sites, 1):
+        print(f"##progress sub={i}/{len(sites)} label=sites", flush=True)
         kind, site = entry.split("\t")
         reg, out = run(args.inputs, site)
         changed = sum(1 for a, b in zip(base, out, strict=True) if a != b)

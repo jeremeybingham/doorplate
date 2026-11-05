@@ -109,3 +109,26 @@ def test_dump_all_runs_dump_for_each_listed_file(tmp_path, monkeypatch):
     monkeypatch.setattr(sys, "argv", ["key_diff.py", "dump-all", "--out", "o", "--sources", str(sources), "--unit"])
     key_diff.main()
     assert seen == [("a/records.parquet", "o", True), ("b/records.parquet", "o", True)]
+
+
+def records(path):
+    duckdb.sql(
+        "copy (select 'demo' as source, 'a' as role, i::varchar as record_id, (100 + i)::varchar || ' ELM ST' as line1, "
+        "NULL as line2, 'MIAMI' as city, 'FL' as state, '33101' as zip from range(1, 4) t(i)) "
+        f"to '{path}' (format parquet)"
+    )
+
+
+def test_a_dump_prints_progress_lines_for_jobstat(tmp_path):
+    pytest.importorskip("doorplate")
+    rec = tmp_path / "records.parquet"
+    records(rec)
+    r = subprocess.run([sys.executable, "-I", str(SCRIPT), "dump", str(rec), "--out", str(tmp_path / "o")], capture_output=True, text=True)
+    assert r.returncode == 0, r.stderr
+    assert "##progress sub=3/3 label=demo" in r.stderr
+    srcs = tmp_path / "sources.txt"
+    srcs.write_text(f"{rec}\n")
+    r = subprocess.run([sys.executable, "-I", str(SCRIPT), "dump-all", "--out", str(tmp_path / "o2"), "--sources", str(srcs)],
+                       capture_output=True, text=True)
+    assert r.returncode == 0, r.stderr
+    assert f"##progress step=1/1 label={tmp_path.name}" in r.stdout

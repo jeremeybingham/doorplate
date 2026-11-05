@@ -469,6 +469,7 @@ def main(argv=None):
                 say(f"input {st['input']:02d} chunk {st['chunk']} {st['rows']:,} rows {st['seconds']}s"
                     f"{' ERROR ' + st['error'] if st['error'] else ''} | {finished}/{len(todo)} ({pct:.1f}%) "
                     f"{rate:,.0f} rows/s elapsed {clock(el)} ETA {clock(eta)}")
+                print(f"##progress pct={pct:.1f} msg=\"{finished}/{len(todo)} chunks\"", flush=True)
                 (run / "status.json").write_text(json.dumps({
                     "chunks_done": finished, "chunks_todo": len(todo), "rows": rows_done, "elapsed_s": int(el),
                     "eta_s": int(eta), "errors": dict(errors), "updated": now().isoformat()}))

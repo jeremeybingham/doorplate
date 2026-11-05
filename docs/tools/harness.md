@@ -194,6 +194,10 @@ scan it in a run of its own and report it apart, never added to the total. Worke
 survive a fork.
 Add a probe when an issue is opened, with its pattern, size and harm; remove it when the issue closes.
 
+## Progress lines in the long-running tools (#524)
+
+The tools that run for minutes print `##progress` lines (the one-line protocol of [tqdm-claude](https://github.com/ExtReMLapin/tqdm-claude/blob/main/PROTOCOL.md): `##progress step=3/7 label=NAME sub=1840/2400`, `pct=45`, `eta=`, `msg=`), flushed, next to their usual output, so a wrapper can say how far along a run is without reading its log by eye: `key_diff.py dump` (rows of the source, `sub`), `key_diff.py dump-all` (the source, `step`), `probe_scan.py` (`pct` per finished chunk) and `disable_check.py` (call site `sub`). The lines go to stderr in `dump` (its own progress is there) and stdout elsewhere. A tool that does not know the format ignores them.
+
 ## MessyStreets (`messy_score.py`, #323)
 
 [MessyStreets](https://github.com/EdGaere/MessyStreets) (Gaere and von Wangenheim, ACM SIGSPATIAL '26, DOI 10.1145/3841645.3843362; cite it with any
