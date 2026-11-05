@@ -945,6 +945,42 @@ impl Tagger<'_> {
         self.decide(Decision::BareUnit);
     }
 
+    /// A number and a plain word after it on line 2 (`3 RIGHT`, `12 STORY`, `40 SECONDARY`,
+    /// `2 EAST`): the number is the unit. The word stays unparsed and keeps the
+    /// `unparsed_remainder` warning, so nothing is invented for the USPS line (the word
+    /// would not read back as a designator) and a second address or junk word
+    /// (`900 ABERDEEN`) is still flagged. Like [`Self::claim_number_before_designator`], it needs a
+    /// named street, a number of one to four digits and no unit found yet; the word is
+    /// letters only, not a designator, street suffix or placeholder (#320).
+    pub(super) fn claim_number_before_word(&mut self, r: Range<usize>) {
+        let lex = self.lex;
+        if r.len() != 2 || self.tags.contains(&Tag::UnitNumber(0)) {
+            return;
+        }
+        let (a, b) = (r.start, r.start + 1);
+        let free = r
+            .clone()
+            .all(|k| matches!(self.tags[k], Tag::Untagged | Tag::Unparsed) && !self.toks[k].paren)
+            && self.toks[a].seg == self.toks[b].seg;
+        let named = self.tags.contains(&Tag::Name) && self.tags.contains(&Tag::Suffix);
+        let (na, word) = (self.text(a), self.text(b));
+        if !free
+            || !named
+            || !all_digits(na)
+            || na.len() > 4
+            || !(3..=12).contains(&word.len())
+            || !word.bytes().all(|c| c.is_ascii_alphabetic())
+            || lex.unit(word).is_some()
+            || lex.soft_unit(word).is_some()
+            || lex.suffix(word).is_some()
+            || lex.is_placeholder(word)
+        {
+            return;
+        }
+        self.set(a..a + 1, Tag::UnitNumber(0));
+        self.decide(Decision::BareUnit);
+    }
+
     /// `CONDO 4`, `SITE F9`, `CAMPSITE 2400` alone on line 2 (words Pub 28 does not list, see
     /// [`Lexicons::soft_unit`]): the word is the unit's type and the value its number. The word
     /// alone is a type with no number. Only on line 2, under a named street (#321).
