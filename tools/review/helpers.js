@@ -45,7 +45,32 @@
     return out;
   }
 
-  var api = { oneLine: oneLine, unchanged: unchanged, tokens: tokens,
+  // Pre-split fields from labels, to try what the library makes of a labeling: the street parts in the order
+  // they were labeled go to line 1, the units to line 2, and the city, state and ZIP to their own fields.
+  // `skipped` lists the labels that are not part of the delivery address (attention, building, not placed).
+  var STREET = { StreetNumber: 1, StreetDirPrefix: 1, StreetName: 1, Highway: 1, StreetSuffix: 1, StreetDirSuffix: 1,
+                 PoBox: 1, RuralRoute: 1, GeneralDelivery: 1, Military: 1, MilitaryPostOffice: 1 };
+  var UNIT = { UnitType: 1, UnitNumber: 1, SecondUnitType: 1, SecondUnitNumber: 1 };
+  function fieldsFromLabels(text, labels) {
+    var line1 = [], line2 = [], city = [], state = [], zip5 = [], zip4 = [], skipped = [];
+    (labels || []).forEach(function (l) {
+      var w = text.slice(l.start, l.end).replace(/^[,\s]+|[,\s]+$/g, "");
+      if (!w) return;
+      if (STREET[l.component]) line1.push(w);
+      else if (UNIT[l.component]) line2.push(w);
+      else if (l.component === "City") city.push(w);
+      else if (l.component === "State") state.push(w);
+      else if (l.component === "Zip5") zip5.push(w);
+      else if (l.component === "Zip4") zip4.push(w);
+      else skipped.push(l.component);
+    });
+    var zip = zip5.join(" ") + (zip4.length ? "-" + zip4.join(" ") : "");
+    var f = { line1: line1.join(" "), line2: line2.join(" "), city: city.join(" "), state: state.join(" "), zip: zip };
+    Object.keys(f).forEach(function (k) { if (!f[k]) delete f[k]; });
+    return { fields: f, skipped: skipped };
+  }
+
+  var api = { fieldsFromLabels: fieldsFromLabels, oneLine: oneLine, unchanged: unchanged, tokens: tokens,
               labelsFromSpans: labelsFromSpans, runs: runs };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.ReviewHelpers = api;

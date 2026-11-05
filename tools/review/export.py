@@ -121,6 +121,8 @@ def safe(a, with_source=False):
         out["warning"] = a.get("warning") if a.get("warning") in ("fair", "noise") else None
     if a.get("labels"):
         out["labels"] = labels_safe(a.get("labeled_text") or "", a["labels"])
+    if a.get("map_reason") in ("name_suffix", "numbers_out_of_order", "other"):
+        out["map_reason"] = a["map_reason"]
     if a.get("usaddress_right") in ("full", "mostly") and a.get("labels"):
         out["usaddress_right"] = a["usaddress_right"]
     if a.get("compare"):

@@ -130,6 +130,8 @@ banner on the page with the build command; `--strict` refuses to start instead. 
 | `p` | `puerto_rico` | A Puerto Rico address. The row is also copied, in queue format, to `puerto-rico-queue.jsonl` beside the answers (`--pr-queue` to change it), the queue for the Puerto Rico epic (#332); an undo takes it out again, and a row is copied once |
 | `8` (`9` in a comparison queue) | `dual` | The row holds a dual or multiple address (a street and a PO Box, or several): a different signal from `junk` |
 | `i` | `insufficient` | Some valid address parts, but wrong, extra or odd text around them, and not enough to put together one door (checked, for example, on a map: the real address could not be reached from what the row says). Not `junk` (no address at all), not `noise` (cut off by the source), not `unclear` (the reviewer can't tell the fix) |
+| `m` | `map_checked` | You looked the row up on a real map and it is understandable but no rule can fix it (a misspelled street name that collides with a suffix, numbers out of order that no logic can parse). Saves the current labels (the button is in "Mark the parts instead", with a reason: `name_suffix`, `numbers_out_of_order` or `other`; labels are optional in the data) and your note. Scored as neither right nor wrong: these rows are evidence for what **cannot** be a rule |
+| `t` | (no answer) | "Try these labels": builds fields from the current labels (street parts to line 1, units to line 2, city, state, ZIP), parses them and shows the chips, warnings, key and the Pub 28 lines, with whether the key equals the original parse's |
 | `l` | `labeled` | Jump to "Mark the parts instead" (always on the page), to mark the parts yourself instead of rewriting the string (below) |
 | `y` (comparison queue) | `labeled`, `usaddress_right` set | Save the labels as they stand and record that usaddress was right too (below) |
 
@@ -139,6 +141,8 @@ is `right` with a `noise` warning (a candidate for a warning rule to change, #10
 | `f` | edit | Jump to the correction box (it is not focused, so the number keys choose a verdict); Escape leaves it |
 | `r` | reset | Put the original one-line string back in the correction box |
 | `u` | undo | Take back the last answer |
+
+**On a letter.** Under the correction box an "On a letter" card draws an envelope for each reading, with the Pub 28 delivery lines (`usps.line1`, `line2`, last line) where they would be printed and a placeholder name line: doorplate's reading of the row, the string in the correction box (when its key differs from the original's) and the current labels (after "Try these labels"). The lines are the library's output; the card does not check that the address exists.
 
 **Nothing you type is dropped.** The note is saved with every verdict. Text left in the correction box under a verdict that is not a correction
 (for example "I can't tell" on a row you could not fix, or "usaddress right" after you had typed a better string) is saved as `draft`, with

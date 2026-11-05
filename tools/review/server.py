@@ -22,6 +22,9 @@ For each row the page shows the parse and the warnings, and you choose a verdict
 - `foreign`: not a US address (another country);
 - `puerto_rico`: a Puerto Rico address; the row is also copied, in queue format, to `puerto-rico-queue.jsonl` beside the answers
   (`--pr-queue` to change it), the queue for the Puerto Rico epic (#332). An undo takes it out again;
+- `map_checked`: looked up on a real map and judged understandable but not fixable by a rule: a misspelled street name that collides with
+  a street suffix, or numbers out of order that no logic can parse (you have to see the map). Labels are kept as for `labeled` (to the
+  best of the reviewer's ability; optional) and `map_reason` says which kind (`name_suffix`, `numbers_out_of_order`, `other`);
 - `labeled`: the parts of the one-line string, marked by the person (`labels`: `[{start, end, component}]` over
   `labeled_text`), a more exact answer than a rewrite when the parse is wrong in a few places. On a comparison row it can also say
   `usaddress_right: "full"` (usaddress's whole reading equals the labels) or `"mostly"` (basically right, one part differs): the
@@ -81,7 +84,9 @@ BUILD_WASM = "cargo build -p doorplate-wasm --target wasm32-unknown-unknown --re
 SOURCES = (ROOT / "crates" / "doorplate" / "src", ROOT / "crates" / "doorplate" / "data", ROOT / "crates" / "doorplate-wasm" / "src",
            ROOT / "crates" / "doorplate" / "Cargo.toml", ROOT / "crates" / "doorplate-wasm" / "Cargo.toml")
 # `noise` and `skip` are no longer on the page but stay valid: older answers files hold them.
-VERDICTS = ("right", "corrected", "unclear", "junk", "dual", "insufficient", "noise", "skip", "labeled", "foreign", "puerto_rico")
+VERDICTS = ("right", "corrected", "unclear", "junk", "dual", "insufficient", "noise", "skip", "labeled", "foreign", "puerto_rico",
+            "map_checked")
+MAP_REASONS = ("name_suffix", "numbers_out_of_order", "other")  # why a map-checked row cannot be fixed by a rule
 COMPONENTS = ("StreetNumber", "StreetDirPrefix", "StreetName", "StreetSuffix", "StreetDirSuffix", "Highway", "UnitType",
               "UnitNumber", "SecondUnitType", "SecondUnitNumber", "PoBox", "RuralRoute", "GeneralDelivery", "Military",
               "MilitaryPostOffice", "Attention", "Building", "City", "State", "Zip5", "Zip4", "Unparsed")  # the page's names
@@ -189,8 +194,11 @@ class Review:
             raise ValueError("the correction is the unchanged original: if the parse is right, answer that; "
                              "otherwise confirm with unchanged_ok")
         labels = None
-        if verdict == "labeled":
+        if verdict == "labeled" or (verdict == "map_checked" and body.get("labels")):
             labels = self._labels(body)
+        reason = body.get("map_reason") if verdict == "map_checked" else None
+        if verdict == "map_checked" and reason is not None and reason not in MAP_REASONS:
+            raise ValueError("map_reason is name_suffix, numbers_out_of_order or other")
         grade = body.get("usaddress_right")
         if grade is not None:
             if verdict != "labeled" or "compare" not in item:
@@ -210,6 +218,8 @@ class Review:
             rec["corrected"] = corrected[:1000]
         if labels is not None:
             rec["labeled_text"], rec["labels"] = labels
+        if verdict == "map_checked":
+            rec["map_reason"] = reason or "other"
         if grade is not None:
             rec["usaddress_right"] = grade
         draft = body.get("draft")
@@ -227,7 +237,7 @@ class Review:
         ms = body.get("elapsed_ms")
         if isinstance(ms, int) and not isinstance(ms, bool) and 0 <= ms < 86_400_000:
             rec["elapsed_ms"] = ms
-        if verdict == "labeled" and body.get("parser_labels"):
+        if labels is not None and body.get("parser_labels"):
             try:
                 rec["parser_labels"] = self._labels({"labeled_text": labels[0], "labels": body["parser_labels"]})[1]
             except ValueError:

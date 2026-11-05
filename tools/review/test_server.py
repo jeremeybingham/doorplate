@@ -266,3 +266,32 @@ def test_context_fields_are_kept_and_bad_ones_dropped(review):
     assert rec["attempts"] == [{"text": "123 QUINCEWOOD ST", "key": "k4:y", "warnings": ["a"], "clean": True}]
     rec = review.answer({"id": "inv|site|2", "verdict": "unclear", "elapsed_ms": -5, "attempts": "x"})
     assert "elapsed_ms" not in rec and "attempts" not in rec
+
+
+def test_map_checked_keeps_labels_and_a_reason(review):
+    body = {"id": "inv|site|1", "verdict": "map_checked", "labeled_text": "123 QUINCEWOOD ST", "labels": LABELS,
+            "map_reason": "name_suffix", "note": "the map shows Quincy Wood Street"}
+    rec = review.answer(body)
+    assert rec["verdict"] == "map_checked" and rec["labels"] == LABELS and rec["map_reason"] == "name_suffix"
+    assert rec["note"] == "the map shows Quincy Wood Street"
+    # labels are optional, the reason defaults to other
+    rec = review.answer({"id": "inv|site|2", "verdict": "map_checked"})
+    assert rec["map_reason"] == "other" and "labels" not in rec
+
+
+def test_map_checked_refuses_a_bad_reason_or_bad_labels(review):
+    with pytest.raises(ValueError):
+        review.answer({"id": "inv|site|1", "verdict": "map_checked", "map_reason": "because"})
+    with pytest.raises(ValueError):  # labels that overlap or fall outside the text are refused as for `labeled`
+        review.answer({"id": "inv|site|1", "verdict": "map_checked", "labeled_text": "123", "labels": LABELS})
+    assert not review.answers_path.exists() or not review.answers_path.read_text().strip()
+
+
+def test_map_checked_is_exported_with_its_reason_and_label_shapes(review, tmp_path):
+    review.answer({"id": "inv|site|1", "verdict": "map_checked", "labeled_text": "123 QUINCEWOOD ST", "labels": LABELS,
+                   "map_reason": "numbers_out_of_order"})
+    import export
+
+    row = export.safe(server.load_answers(review.answers_path)["inv|site|1"])
+    assert row["verdict"] == "map_checked" and row["map_reason"] == "numbers_out_of_order"
+    assert [c for c, _ in row["labels"]] == ["StreetNumber", "StreetName"]  # shapes of the words, never the words

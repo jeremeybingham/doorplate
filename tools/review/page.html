@@ -32,6 +32,14 @@
   #recent { display: flex; flex-wrap: wrap; gap: .4rem; margin: .35rem 0 .5rem; }
   #recent button { font-size: .85rem; padding: .2rem .55rem; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   [hidden] { display: none !important; }
+  .mail { display: flex; flex-wrap: wrap; gap: 1.6rem .75rem; margin: 1.3rem 0 .5rem; }
+  .env { position: relative; flex: 1 1 19rem; max-width: 26rem; min-height: 9.5rem; background: #fbfaf5; color: #1b1b1b; border: 1px solid #b9b6a8; border-radius: 3px; box-shadow: 0 1px 3px #0003; padding: .6rem .8rem; }
+  .env .cap { position: absolute; top: -.1rem; left: .1rem; transform: translateY(-100%); font: .7rem system-ui, sans-serif; color: inherit; opacity: .7; white-space: nowrap; }
+  .env .ret { white-space: pre-line; font: .65rem/1.3 ui-monospace, monospace; color: #6a675b; max-width: 9rem; }
+  .env .stamp { position: absolute; top: .6rem; right: .8rem; width: 2.4rem; height: 2.8rem; border: 2px dashed #a39f8c; border-radius: 2px; font: .55rem/1.1 system-ui, sans-serif; color: #8f8b78; text-align: center; padding-top: 1rem; box-sizing: border-box; }
+  .env .dest { margin: 2.2rem 0 0 4.5rem; font: .95rem/1.25 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; text-transform: uppercase; white-space: pre-wrap; letter-spacing: .02em; }
+  .env .dest .nm { color: #8f8b78; }
+  .env.bad .dest { color: #a33; }
   .tok { cursor: pointer; border: 2px solid transparent; font: inherit; color: inherit; }
   .tok.sel { border-color: currentColor; }
   .hint { border: 2px solid #e6a000; border-radius: 6px; padding: .5rem .75rem; margin: .5rem 0; }
@@ -101,6 +109,11 @@
     <div class="kv" id="fixkv"></div>
   </div>
 
+  <details class="card" id="mailcard" open>
+    <summary><b>On a letter</b> <span class="muted">(the Pub 28 delivery lines for each reading; the name line is a placeholder)</span></summary>
+    <div class="mail" id="mail"></div>
+  </details>
+
   <div class="hint" id="hint" hidden>
     <b>The box is unchanged.</b> <span id="hinttext"></span>
     <div class="row" id="hintbtns"></div>
@@ -114,6 +127,21 @@
       <select id="labelpart"></select>
       <button id="labelassign" type="button">Assign to the selected words</button>
       <button id="labelsave" type="button" data-nosend="1">Save labels<kbd>Enter here</kbd></button>
+    </div>
+    <div class="row">
+      <button id="labeltry" type="button" data-nosend="1" title="Builds the fields from these labels and parses them: what the library makes of this labeling, with its key and the Pub 28 lines">Try these labels<kbd>t</kbd></button>
+      <select id="mapreason" title="Why a rule cannot fix this row">
+        <option value="name_suffix">misspelled name that collides with a suffix</option>
+        <option value="numbers_out_of_order">numbers out of order</option>
+        <option value="other">other (say in the note)</option>
+      </select>
+      <button id="labelmap" type="button" data-nosend="1" title="Looked up on a real map: understandable, but no rule can fix it. Saves these labels">Checked on a map: unfixable, save labels<kbd>m</kbd></button>
+    </div>
+    <div id="trybox" hidden style="margin-top:.5rem">
+      <div class="muted" id="tryhead"></div>
+      <div class="line" id="tryview"></div>
+      <div id="trywarn"></div>
+      <div class="kv" id="trykv"></div>
     </div>
     <div class="row" id="labelua" hidden>
       <span class="muted">usaddress read it:</span>
@@ -156,7 +184,7 @@
   <p class="muted"><b>Parse right, warning fair</b>: the components are correct and the warning rightly flags something doubtful (a true range of numbers, a cut-off line).
   <b>Parse right, warning is noise</b>: the components are correct and there is nothing to flag. <b>Save correction</b>: it is wrong, and the string above is a better one.
   <b>I can't tell</b>: wrong, and I don't know what it should be. <b>Not an address</b>: a name, a placeholder, a number.
-  <b>Foreign address</b>: not a US address. <b>Puerto Rico</b>: a Puerto Rico address; the row is also copied to the Puerto Rico queue (<code>puerto-rico-queue.jsonl</code> beside the answers) for the Puerto Rico epic. <b>Dual or multiple address</b>: the row holds two addresses (a street and a PO Box, or several), which is not the same as not being an address. <b>Not enough for a door</b>: some valid address parts, but too much wrong or extra text to put together one coherent door (for example, a map lookup shows an address you could not reach from what the row says).</p>
+  <b>Foreign address</b>: not a US address. <b>Puerto Rico</b>: a Puerto Rico address; the row is also copied to the Puerto Rico queue (<code>puerto-rico-queue.jsonl</code> beside the answers) for the Puerto Rico epic. <b>Dual or multiple address</b>: the row holds two addresses (a street and a PO Box, or several), which is not the same as not being an address. <b>Checked on a map</b> (in the labeling panel, key <kbd>m</kbd>): you looked the row up on a real map and it is understandable but no rule can fix it (a misspelled street name that collides with a suffix, numbers out of order); your labels are saved with the reason. <b>Try these labels</b> (<kbd>t</kbd>) shows what the library makes of the current labels, with its key and the Pub 28 lines. <b>Not enough for a door</b>: some valid address parts, but too much wrong or extra text to put together one coherent door (for example, a map lookup shows an address you could not reach from what the row says).</p>
 </div>
 
 <script src="/helpers.js"></script>
@@ -232,6 +260,28 @@
       box.appendChild(el("span", "muted", b[0] + " ")); box.appendChild(el("code", null, b[1])); box.appendChild(document.createTextNode("   "));
     });
   }
+  // A letter showing the Pub 28 delivery lines of a parse (usps.line1, line2, last_line).
+  function envelope(title, r, note) {
+    var e = el("div", "env" + (r.error ? " bad" : ""));
+    e.appendChild(el("div", "cap", title));
+    e.appendChild(el("div", "ret", "SENDER\nRETURN ADDRESS"));
+    e.appendChild(el("div", "stamp", "STAMP"));
+    var u = r.usps || {}, lines = [u.line1, u.line2, u.last_line].filter(Boolean);
+    var d = el("div", "dest");
+    d.appendChild(el("span", "nm", "RECIPIENT NAME\n"));
+    d.appendChild(document.createTextNode(r.error ? r.error : lines.length ? lines.join("\n") : "(no delivery line: " + ((r.warnings || []).join(", ") || "nothing to print") + ")"));
+    e.appendChild(d);
+    if (note) e.appendChild(el("div", "muted", note));
+    return e;
+  }
+  var mailFix = null, mailTry = null;
+  function drawMail() {
+    var box = $("mail"); box.textContent = "";
+    if (!origParse) return;
+    box.appendChild(envelope("doorplate's reading of the row", origParse));
+    if (mailFix) box.appendChild(envelope("the string in the correction box", mailFix));
+    if (mailTry) box.appendChild(envelope("the current labels", mailTry));
+  }
   function summary(r) {
     if (r.error) return { error: r.error };
     return { key: r.key, warnings: r.warnings, unparsed: r.unparsed, components: r.components, usps: r.usps, spans: r.spans,
@@ -289,7 +339,7 @@
       $("onelinehead").textContent = "The same row as one line (what the box below starts from, and what usaddress is compared with) keys differently:";
       chips($("onelineview"), oneLine(it), oneParse.spans || []); warnings($("onelinewarn"), oneParse); kv($("onelinekv"), oneParse);
     }
-    $("fix").value = oneLine(it); $("note").value = ""; $("hint").hidden = true;
+    $("fix").value = oneLine(it); $("note").value = ""; $("hint").hidden = true; $("trybox").hidden = true; mailTry = null;
     attempts = []; shownAt = Date.now(); startLabels();
     // No autofocus: the number keys choose a verdict. `f` (or a click) edits the correction.
     renderFix(); if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
@@ -297,6 +347,8 @@
   function renderFix() {
     var t = $("fix").value, r = t.trim() ? call("parse", t) : { error: "empty" };
     chips($("fixview"), t, r.spans || []); warnings($("fixwarn"), r); kv($("fixkv"), r);
+    // The letter for the box only when it reads differently from the original.
+    mailFix = !r.error && origParse && origParse.key !== r.key ? r : null; drawMail();
     if (!r.error) {
       var clean = !(r.warnings || []).length && !r.unparsed, same = origParse && origParse.key === r.key;
       var m = el("span", clean ? "ok" : "bad", clean ? "parses cleanly" : "still has warnings");
@@ -406,6 +458,38 @@
   $("labelsave").addEventListener("click", function () { saveLabels(null); });
   $("labelsaveua").addEventListener("click", function () { saveLabels($("labelgrade").value); });
   // `grade` is null, "mostly" or "full": whether usaddress was right too (a comparison row only, #461).
+  // What the library makes of the current labels: fields built from them, parsed, with the key and the letter.
+  function tryLabels() {
+    if (!item) return;
+    var text = oneLine(item), built = H.fieldsFromLabels(text, H.runs(labels)), r = call("parse_fields", JSON.stringify(built.fields));
+    var f = built.fields, rows = ["line1", "line2", "city", "state", "zip"].filter(function (k) { return f[k]; });
+    $("trybox").hidden = false;
+    $("tryhead").textContent = "Parsed from your labels as " + rows.map(function (k) { return k + " = " + f[k]; }).join(" | ") +
+      (built.skipped.length ? "   (left out: " + built.skipped.join(", ") + ")" : "");
+    var v = $("tryview"); v.textContent = "";
+    rows.forEach(function (k, i) {
+      if (i) { var bar = el("span", "gap", " | "); bar.title = k; v.appendChild(bar); }
+      addChips(v, f[k], (r.spans || []).filter(function (x) { return x.field === k; }));
+    });
+    warnings($("trywarn"), r); kv($("trykv"), r);
+    if (!r.error) {
+      var clean = !(r.warnings || []).length && !r.unparsed, same = origParse && origParse.key === r.key;
+      $("trykv").appendChild(el("span", clean ? "ok" : "bad", clean ? "parses cleanly" : "still has warnings"));
+      $("trykv").appendChild(document.createTextNode("   " + (same ? "same key as the original parse" : "different key from the original parse")));
+    }
+    mailTry = r; drawMail();
+  }
+  $("labeltry").addEventListener("click", tryLabels);
+  // Checked on a map: the labels (optional in the data, but normally given) and why no rule can fix the row.
+  function saveMap() {
+    if (!item) return;
+    var body = { id: item.id, verdict: "map_checked", note: $("note").value, parse: summary(origParse), map_reason: $("mapreason").value,
+                 labeled_text: oneLine(item), labels: H.runs(labels), parser_labels: parserLabels };
+    addContext(body); addDraft(body);
+    api("/api/answer", body).then(function () { rememberNote(body.note); return api("/api/next"); }).then(function (j) { show(j.item, j.stats); })
+      .catch(function (e) { alert("not saved: " + e.message); });
+  }
+  $("labelmap").addEventListener("click", saveMap);
   function saveLabels(grade) {
     if (!item) return;
     var body = { id: item.id, verdict: "labeled", note: $("note").value, parse: summary(origParse),
@@ -432,6 +516,8 @@
           "8": ["dual"] })[e.key];
     if (v) { e.preventDefault(); send(v[0], v[1], v[2], v[3]); }
     else if (e.key === "i") send("insufficient");
+    else if (e.key === "m") saveMap();
+    else if (e.key === "t") tryLabels();
     else if (e.key === "u") undo();
     else if (e.key === "o") send("foreign");
     else if (e.key === "p") send("puerto_rico");
