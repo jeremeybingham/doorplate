@@ -310,6 +310,27 @@ impl<'a> Tagger<'a> {
         if street_like && !has(&self.tags, Tag::StreetNumber) && !self.zero_number {
             self.warn(Warning::MissingStreetNumber);
         }
+        // A care-of or attention line and nothing that could be a door (`C/O ACME TIRE`): no
+        // street, box or unit was found, so the row has no key. It says so, like a bare name
+        // does, instead of looking as complete as a parsed row (#509).
+        let door = self.tags.iter().any(|t| {
+            !matches!(
+                t,
+                Tag::Untagged
+                    | Tag::Skip
+                    | Tag::Unparsed
+                    | Tag::Attention
+                    | Tag::City
+                    | Tag::State
+                    | Tag::Zip
+            )
+        });
+        if has(&self.tags, Tag::Attention)
+            && !door
+            && !self.warnings.contains(&Warning::MissingStreetName)
+        {
+            self.warn(Warning::MissingStreetNumber);
+        }
         // "123 UNIT 1": a house number and a unit, no street.
         let unit = self
             .tags
