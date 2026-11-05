@@ -111,6 +111,7 @@ def dump(args):
             writer.write_table(pa.table(cols_out, schema=schema))
             done += len(idx)
             print(f"{name}: {done} rows", file=sys.stderr)
+            print(f"##progress sub={min(lo + CHUNK, total)}/{total} label={name}", file=sys.stderr, flush=True)
     finally:
         writer.close()
     (out / f"{name}.json").write_text(json.dumps(
@@ -187,7 +188,8 @@ def diff(args):
 def dump_all(args):
     """`dump` for every records file listed in the sources file, one after the other (about 7 minutes for the seven)."""
     paths = [l.strip() for l in Path(args.sources).read_text().splitlines() if l.strip() and not l.startswith("#")]
-    for path in paths:
+    for i, path in enumerate(paths, 1):
+        print(f"##progress step={i}/{len(paths)} label={Path(path).parent.name}", flush=True)
         print(f"start {path} {time.strftime('%H:%M:%S')}", flush=True)
         dump(argparse.Namespace(records=path, out=args.out, name=None, unit=args.unit))
     print(f"all done {time.strftime('%H:%M:%S')}", flush=True)
