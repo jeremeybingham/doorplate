@@ -410,6 +410,22 @@ PROBES = [
         2,
     ),
     (
+        "zip-plus4-with-space",
+        "519",
+        "a ZIP+4 written with a space (TOWN FL 33000 1234)",
+        r"\b[A-Z]{2},? [0-9]{5} [0-9]{4}(?: \||$)",
+        "S",
+        2,
+    ),
+    (
+        "unit-before-street-residual",
+        "529",
+        "a designator and its value between the house number and the street name (242 APT B ESPLANADE, 2900 APT S OLD 63)",
+        rf"^[0-9]+ {UN} (?:[A-Z]|[0-9]+[A-Z]?|[A-Z][0-9]+) [A-Z]{{3,}}",
+        "M",
+        3,
+    ),
+    (
         "digit-word-line2-highway",
         "531",
         "a number and a word on line 2 under a highway or route (1 STORY under STATE ROUTE 144 WEST)",
