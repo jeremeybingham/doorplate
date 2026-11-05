@@ -51,6 +51,11 @@ def test_keys_are_unique_and_every_pattern_compiles():
         ("ONE MARLOW PLAZA - 99 ELM AVE.", "SUITE 8", None, "spaced-hyphen-building"),
         ("1921 NW", "4 REAR", None, "bare-unit-line2"),
         ("77 OAK ST", "B12", None, "bare-unit-line2"),
+        ("2652 US HIGHWAY 60 W", "1 STORY", None, "digit-word-line2-highway"),
+        ("1990 STATE ROUTE 144 WEST", "1 STORY", None, "digit-word-line2-highway"),
+        ("1780 S 100 W", "4 BARNS", None, "digit-word-line2-nosuffix"),
+        ("11322 S AVE 12 E", "124 SECONDARY", None, "digit-word-line2-nosuffix"),
+        ("782 AIRPORT", "1 DOCTOR", None, "digit-word-line2-nosuffix"),
         ("77 OAK ST COND 12", None, None, "unlisted-unit-words"),
         ("77 OAK ST", "UNIT NORTH", None, "unlisted-unit-words"),
         ("1234 LEE ROAD 2004", None, None, "name-road-number"),
@@ -89,6 +94,13 @@ def test_keys_are_unique_and_every_pattern_compiles():
 )
 def test_each_shape_is_found(line1, line2, zip_code, expect):
     assert expect in probes.hits(line1, line2, zip_code)
+
+
+def test_the_digit_word_line2_probes_leave_a_street_with_a_suffix_alone():
+    for line1, line2 in [("816 SLADE ST", "3 RIGHT"), ("1700 OAK PKWY", "12 STORY"), ("123 OAK ST E", "40 SECONDARY")]:
+        hits = probes.hits(line1, line2, None)
+        assert "digit-word-line2-nosuffix" not in hits and "digit-word-line2-highway" not in hits
+    assert "digit-word-line2-nosuffix" not in probes.hits("2652 US HIGHWAY 60 W", "ROOM 4", None)
 
 
 def test_the_city_field_probes_need_the_city_and_state():

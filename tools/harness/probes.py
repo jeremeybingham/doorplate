@@ -410,6 +410,22 @@ PROBES = [
         2,
     ),
     (
+        "digit-word-line2-highway",
+        "531",
+        "a number and a word on line 2 under a highway or route (1 STORY under STATE ROUTE 144 WEST)",
+        r"^[0-9]+ [^|]*\b(?:HWY|HIGHWAY|ROUTE|RTE|STATE ROAD|COUNTY ROAD|CO RD|SR|CR|FM|RR|US|IH) [^|]*\| [0-9]{1,4} [A-Z]{3,12}$",
+        "S",
+        2,
+    ),
+    (
+        "digit-word-line2-nosuffix",
+        "531",
+        "a number and a word on line 2 under a street with no suffix word (S 100 W, AVENUE 9 EAST, AIRPORT)",
+        rf"^[0-9]+ (?:[^|]*? )?(?:[0-9/]+|(?!(?:{SUF}|ST|TER|TERR|PKY|EXPY|PLZ|SQ|LOOP|RUN|PATH|ROW|BND|(?:N|S|E|W|NE|NW|SE|SW|NORTH|SOUTH|EAST|WEST))\b)[A-Z]+)(?: (?:N|S|E|W|NE|NW|SE|SW|NORTH|SOUTH|EAST|WEST))? \| [0-9]{{1,4}} [A-Z]{{3,12}}$",
+        "S",
+        2,
+    ),
+    (
         "unlisted-unit-words",
         "321",
         "words Pub 28 does not list (COND, SITE, CAMPSITE, UNIT NORTH, FLOOR 2 LEFT)",
