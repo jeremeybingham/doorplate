@@ -150,13 +150,13 @@ def test_fields_from_labels_build_the_fields_to_parse():
               {"start": 15, "end": 17, "component": "UnitNumber"}, {"start": 18, "end": 23, "component": "City"},
               {"start": 24, "end": 26, "component": "State"}, {"start": 27, "end": 32, "component": "Zip5"},
               {"start": 33, "end": 37, "component": "Zip4"}]
-    got = js("H.fieldsFromLabels({}, {})".format(json.dumps(text), json.dumps(labels)))
+    got = js(f"H.fieldsFromLabels({json.dumps(text)}, {json.dumps(labels)})")
     assert got["fields"] == {"line1": "123 OAK ST", "line2": "APT 4", "city": "TOWN", "state": "OH", "zip": "44101-1234"}
     assert got["skipped"] == []
     # the attention line and text not placed are left out, and the commas around a word are not part of it
     text2 = "% PAT, 12 ELM, X"
     labels2 = [{"start": 0, "end": 6, "component": "Attention"}, {"start": 7, "end": 9, "component": "StreetNumber"},
                {"start": 10, "end": 14, "component": "StreetName"}, {"start": 14, "end": 16, "component": "Unparsed"}]
-    got = js("H.fieldsFromLabels({}, {})".format(json.dumps(text2), json.dumps(labels2)))
+    got = js(f"H.fieldsFromLabels({json.dumps(text2)}, {json.dumps(labels2)})")
     assert got["fields"] == {"line1": "12 ELM"}
     assert sorted(got["skipped"]) == ["Attention", "Unparsed"]
