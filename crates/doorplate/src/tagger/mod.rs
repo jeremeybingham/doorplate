@@ -488,6 +488,7 @@ pub(crate) fn tag_fields(
         }
         t.claim_bare_unit(l2.clone());
         t.claim_number_before_designator(l2.clone());
+        t.claim_number_before_word(l2.clone());
         t.claim_soft_unit(l2.clone());
         t.claim_lone_direction(&l2, lone_direction);
         t.claim_name_after_box(&l1, &l2);
@@ -530,6 +531,7 @@ pub(crate) fn tag_fields(
     }
     t.claim_bare_unit(l2.clone());
     t.claim_number_before_designator(l2.clone());
+    t.claim_number_before_word(l2.clone());
     t.claim_soft_unit(l2.clone());
     t.claim_lone_direction(&l2, lone_direction);
     t.claim_name_after_box(&l1, &l2);
