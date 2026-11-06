@@ -19,8 +19,8 @@ import shapes_report as sr  # noqa: E402
 
 # line1, line2, city, state, zip. Street names are invented and must never reach the report.
 ROWS = [
-    ("123 456 QUINCEWOOD ST", None, "MIAMI", "FL", "33101"),
-    ("124 457 QUINCEWOOD ST", None, "MIAMI", "FL", "33101"),
+    ("123 456 901 QUINCEWOOD ST", None, "MIAMI", "FL", "33101"),
+    ("124 457 901 QUINCEWOOD ST", None, "MIAMI", "FL", "33101"),
     ("7 ZEPHYRMILL AVE", "APT 4", "MIAMI", "FL", "33101"),
     ("88 BAYVIEW DR", None, "PENSACOLA", "FL", "32502"),
     ("5 OAK AVE", None, "SPRINGFIELD", "IL", "62701"),
@@ -51,7 +51,7 @@ def test_report_has_counts_and_shapes_never_names(run_dir):
     assert "5 rows" in text
     for name in ("QUINCEWOOD", "ZEPHYRMILL", "BAYVIEW", "OAK", "MIAMI"):
         assert name not in text
-    assert "`9 9 a a`" in text  # the shape of the first two rows
+    assert "`9 9 9 a a`" in text  # the shape of the first two rows
 
 
 def test_shape_sql_matches_the_python_shape(tmp_path):
