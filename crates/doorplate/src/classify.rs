@@ -117,7 +117,9 @@ pub(crate) fn zip_repair(text: &str, zero_state: bool) -> Option<(String, Option
     if parts.is_empty()
         || parts.len() > 2
         || !all_digits(parts[0])
-        || !parts.get(1).is_none_or(|p| all_digits(p) || junk_extension(p))
+        || !parts
+            .get(1)
+            .map_or(true, |p| all_digits(p) || junk_extension(p))
     {
         return None;
     }
