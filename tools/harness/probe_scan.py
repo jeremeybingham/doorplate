@@ -57,6 +57,7 @@ GB = 1 << 30
 ROW_COLS = ["record_id", "source", "role", "line1", "line2", "city", "state", "zip", "last_line"]
 RARE = 20
 ALL_ROWS = "__rows__"
+ONLY = set(filter(None, os.environ.get("PROBE_SCAN_ONLY", "").split(",")))  # a targeted run (--only); empty: every probe
 EXIT_STOPPED = 3  # stopped by a signal or the disk floor, or some chunks failed: start again with the same --run-id
 
 
@@ -73,6 +74,7 @@ def parse_args(argv=None):
     ap.add_argument("--seed", type=int, default=1, help="seed of the match order (rk)")
     ap.add_argument("--min-free-gb", type=float, default=50.0, help="refuse to start (and stop) below this")
     ap.add_argument("--skip-coverage", action="store_true", help="do not require probes.py --coverage to pass (tests)")
+    ap.add_argument("--only", help="comma-separated probe keys: count only these (a targeted run to draw a queue; needs --skip-coverage)")
     ap.add_argument("--confirm", action="store_true", help="actually run (default: print the plan)")
     return ap.parse_args(argv)
 
@@ -210,6 +212,8 @@ def scan_rows(rows, fields_many, parse_many, hit_cap, seed):
         st = (state or "").upper().strip()
         counts[(source or "", role or "", st, ALL_ROWS, "rows")] += 1
         ks = probes.hits(line1, line2, zip_code, city, state)
+        if ONLY:
+            ks = [k for k in ks if k in ONLY]
         if ks:
             matched.append((i, ks))
     parsed = parse_matches([rows[i] for i, _ in matched], fields_many, parse_many)
@@ -363,6 +367,12 @@ def main(argv=None):
         return 0
     if not args.inputs:
         sys.exit("give the list file of inputs (or --summary RUN)")
+    if args.only:
+        os.environ["PROBE_SCAN_ONLY"] = args.only  # inherited by the spawned workers
+        unknown = set(args.only.split(",")) - {p[0] for p in probes.PROBES}
+        if unknown:
+            sys.exit(f"unknown probe(s): {', '.join(sorted(unknown))}")
+        args.skip_coverage = True
     inputs = read_inputs(args.inputs)
     for inp in inputs:
         if not Path(inp["path"]).exists():
