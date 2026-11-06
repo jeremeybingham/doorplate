@@ -64,7 +64,12 @@ def dual(e):
     """A street and a PO Box in one record (Pub 28 section 215)."""
     return has_street(e) and bool(e.get("po_box"))
 
+# Not Pub 28 designators (#545): they do not read back from the street line, so the USPS line,
+# the slug and UnparsedAddress write the value as `# n` and leave a bare word out.
+NONPUB_UNIT_TYPES={"LEFT","RIGHT","BACK","ADU"}
+
 def unit_text(t,n):
+    if t in NONPUB_UNIT_TYPES: t=None
     n=plain(n) if n else ""
     if t and n: return f"{t} {n}"
     if t: return t

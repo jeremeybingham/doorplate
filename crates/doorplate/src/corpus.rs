@@ -506,7 +506,9 @@ pub fn load(dir: &Path) -> Result<Corpus, Vec<String>> {
 fn validate(cases: &[(String, Case)], errors: &mut Vec<String>) {
     let lex = Lexicons::builtin();
     let suffixes: BTreeSet<_> = lex.suffixes().map(|s| s.abbr()).collect();
-    let units: BTreeSet<_> = lex.units().map(|u| u.abbr()).collect();
+    let mut units: BTreeSet<_> = lex.units().map(|u| u.abbr()).collect();
+    // Words the tagger reads only on line 2 (`Lexicons::soft_unit`): types of their own (#545).
+    units.extend(["LEFT", "RIGHT", "BACK", "ADU"]);
     let states: BTreeSet<_> = lex.states().map(|s| s.code()).collect();
     let dirs: BTreeSet<_> = Directional::ALL.iter().map(|d| d.abbr()).collect();
     let codes: BTreeSet<_> = Warning::ALL.iter().map(Warning::code).collect();
