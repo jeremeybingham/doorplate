@@ -2,6 +2,7 @@
 """The leftover-shape scan: parse every row of whole sources and tabulate what the parser leaves behind (#524).
 
     python tools/harness/shape_scan.py INPUTS.txt [--run-id NAME] [--limit-chunks 1] [--confirm]
+    python tools/harness/shape_scan.py INPUTS.txt --mode roundtrip [--run-id NAME] [--confirm]
     python tools/harness/shape_scan.py --summary local-data/shape-scan/NAME [--top 40]
 
 The probe scan counts shapes somebody thought of. This one needs no idea in advance: it parses all rows (the same inputs file
@@ -9,6 +10,12 @@ and chunking as `probe_scan.py`) and counts, for every row that carries one of t
 of what was left over, per source and state. A shape turns each number into `9`, each word that is not a Pub 28 word into `a`
 and keeps the words of the lexicon tables (suffixes, unit designators, directionals, special lines), so `816 SLADE ST` over
 `3 RIGHT` is `9 a ST | 9 a` and `STAR RT BOX 12` is `STAR RT BOX 9`. A name or a street never appears: only its form.
+
+`--mode roundtrip` is the other scan of this file: for every row with a key it writes the USPS lines (`to_usps()`), parses them
+again joined with commas and compares both keys with the originals, as the corpus test `usps_output_round_trips_to_the_same_key`
+does. A row whose key changes is counted under `property_key`, `unit_key` or `reparse_no_key` with the shape of the input and of
+the USPS line (dual addresses and intersections are left out, as in the test); `__rows__` counts all rows and `checked` the compared
+ones. It finds emitter bugs: an output the parser does not read back.
 
 Warnings counted: unparsed_remainder (with the shape of the leftover), missing_street_number, missing_street_name,
 missing_unit_number, possibly_truncated, multiple_addresses, ambiguous_street_number, second_line_in_street. A row with no
@@ -84,18 +91,51 @@ def shape_of(text, vocab):
 _STATE = {}
 
 
-def _worker_init(run, inputs):
+def _worker_init(run, inputs, mode="shapes"):
     import duckdb
     from doorplate import parse_fields_many, parse_many
 
     signal.signal(signal.SIGINT, signal.SIG_IGN)
     con = duckdb.connect()
     con.execute("set threads = 1")
-    _STATE.update(run=Path(run), inputs=inputs, duck=con, sqlite={}, vocab=vocabulary(),
+    _STATE.update(run=Path(run), inputs=inputs, mode=mode, duck=con, sqlite={}, vocab=vocabulary(),
                   fields_many=parse_fields_many, parse_many=parse_many)
 
 
+def usps_lines(a):
+    u = a.to_usps()
+    return [x for x in (u.get("line1"), u.get("line2"), u.get("last_line")) if x]
+
+
+def roundtrip_chunk(rows, vocab, fields_many, parse_many):
+    counts = Counter()
+    parsed = ps.parse_matches(rows, fields_many, parse_many)
+    todo = []
+    for r, a in zip(rows, parsed):
+        source, state = r[1] or "", (r[6] or "").upper().strip()
+        counts[(source, state, ALL_ROWS, "", "")] += 1
+        if a is None or a.key() is None or "dual_address" in a.warnings or "intersection_detected" in a.warnings:
+            continue
+        lines = usps_lines(a)
+        if lines:
+            todo.append((r, a, lines, source, state))
+    again = parse_many([", ".join(t[2]) for t in todo]) if todo else []
+    for (r, a, lines, source, state), b in zip(todo, again):
+        counts[(source, state, "checked", "", "")] += 1
+        if b is None or b.key() is None:
+            kind = "reparse_no_key"
+        else:
+            p, u = a.key() != b.key(), a.key(unit=True) != b.key(unit=True)
+            kind = "property_key" if p else ("unit_key" if u else "")
+        if kind:
+            ish = shape_of(r[3], vocab) + (" | " + shape_of(r[4], vocab) if r[4] else "")
+            counts[(source, state, kind, ish, " | ".join(shape_of(x, vocab) for x in lines)[: MAX_SHAPE * 2])] += 1
+    return counts
+
+
 def scan_chunk(rows, vocab, fields_many, parse_many):
+    if _STATE.get("mode") == "roundtrip":
+        return roundtrip_chunk(rows, vocab, fields_many, parse_many)
     counts = Counter()
     parsed = ps.parse_matches(rows, fields_many, parse_many)
     for r, a in zip(rows, parsed):
@@ -176,8 +216,9 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("inputs", nargs="?", type=Path)
     ap.add_argument("--summary", type=Path)
+    ap.add_argument("--mode", choices=("shapes", "roundtrip"), default="shapes")
     ap.add_argument("--top", type=int, default=40)
-    ap.add_argument("--out-root", type=Path, default=ROOT / "local-data" / "shape-scan")
+    ap.add_argument("--out-root", type=Path)
     ap.add_argument("--run-id")
     ap.add_argument("--chunk-rows", type=int, default=250_000)
     ap.add_argument("--limit-chunks", type=int)
@@ -190,6 +231,8 @@ def main(argv=None):
         return 0
     if not args.inputs:
         sys.exit("give the list file of inputs (or --summary RUN)")
+    if args.out_root is None:
+        args.out_root = ROOT / "local-data" / ("roundtrip-scan" if args.mode == "roundtrip" else "shape-scan")
     inputs = ps.read_inputs(args.inputs)
     for inp in inputs:
         if not Path(inp["path"]).exists():
@@ -237,7 +280,7 @@ def main(argv=None):
     finished = rows_done = 0
     pending = iter(todo)
     with cf.ProcessPoolExecutor(max_workers=args.workers, mp_context=multiprocessing.get_context("spawn"),
-                                initializer=_worker_init, initargs=(str(run), inputs)) as pool:
+                                initializer=_worker_init, initargs=(str(run), inputs, args.mode)) as pool:
         live = set()
 
         def top_up():
