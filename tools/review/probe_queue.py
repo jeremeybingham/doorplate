@@ -52,6 +52,7 @@ def parse_args(argv=None):
     ap.add_argument("--max-source-share", type=float, default=0.4)
     ap.add_argument("--exclude-answers", default="local-data/review/answers*.jsonl")
     ap.add_argument("--out-dir", type=Path, default=ROOT / "local-data" / "review" / "probe-queues")
+    ap.add_argument("--flagged-only", action="store_true", help="draw only from the matches the parser flags (a warning or a partial key)")
     ap.add_argument("--confirm", action="store_true")
     return ap.parse_args(argv)
 
@@ -67,12 +68,12 @@ def answered_ids(pattern):
     return ids
 
 
-def candidates(con, scan_dir, probe, take):
+def candidates(con, scan_dir, probe, take, flagged_only=False):
     """The `take` matches of a probe with the lowest rk in each source: (input index, source, role, record_id, rk, flagged)."""
     sql = (
         "select * from (select cast(regexp_extract(filename, '/([0-9]+)-[0-9]+[.]parquet$', 1) as integer) as i, source, role, "
         "record_id, rk, flagged, row_number() over (partition by source order by rk) as r "
-        "from read_parquet(?, filename = true) where probe = ?) where r <= ? order by rk"
+        "from read_parquet(?, filename = true) where probe = ?" + (" and flagged" if flagged_only else "") + ") where r <= ? order by rk"
     )
     return [row[:6] for row in con.execute(sql, [str(scan_dir / "hits" / "*.parquet"), probe, take]).fetchall()]
 
@@ -160,7 +161,7 @@ def main(argv=None):
     args.out_dir.mkdir(parents=True, exist_ok=True)
     for probe, tot in plan:
         total = int(sum(tot.values()))
-        cands = candidates(con, args.scan_dir, probe, max(args.n * 3, 100))
+        cands = candidates(con, args.scan_dir, probe, max(args.n * 3, 100), args.flagged_only)
         by_input = collections.defaultdict(list)
         for c in cands:
             by_input[c[0]].append(c[3])

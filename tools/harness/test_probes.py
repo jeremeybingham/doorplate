@@ -55,6 +55,11 @@ def test_keys_are_unique_and_every_pattern_compiles():
         ("331 5659 PRIVATE ROAD", None, None, "number-before-road-type"),
         ("2210 3315 FM RD", None, None, "number-before-road-type"),
         ("4212 S UNITED STATES HIGHWAY 27", None, None, "united-states-highway"),
+        ("5300 5301 EXAMPLE RD", None, None, "two-numbers-before-street"),
+        ("1865,1867 E THIESEN RD", None, None, "two-numbers-before-street"),
+        ("816 SLADE ST", "PRIMARY", None, "line2-word-description"),
+        ("816 SLADE ST", "LEFT", None, "line2-word-position"),
+        ("816 SLADE ST", "GREENHOUSES", None, "line2-word-other"),
         ("STAR RT BOX 12", None, None, "star-route"),
         ("STAR ROUTE 2 BOX 45", None, None, "star-route"),
         ("100 EXAMPLE ST, TOWN FL 33000 1234", None, None, "zip-plus4-with-space"),
@@ -118,6 +123,14 @@ def test_the_541_to_543_probes_leave_ordinary_rows_alone():
     assert "united-states-highway" not in probes.hits("UNITED STATES POSTAL SERVICE", None, None)
     assert "zip-plus4-letters" not in probes.hits("100 OAK ST", None, "90001-1234", "SPRINGTOWN", "CA")
     assert "zip-plus4-letters" in probes.hits("100 OAK ST", None, "93313-97ND", "BAKERSFIELD", "CA")
+
+
+def test_line2_word_probes_keep_to_their_group():
+    assert "line2-word-other" not in probes.hits("816 SLADE ST", "PRIMARY", None)
+    assert "line2-word-other" not in probes.hits("816 SLADE ST", "LEFT", None)
+    assert "line2-word-other" not in probes.hits("816 SLADE ST", "REAR", None)
+    assert "line2-word-other" not in probes.hits("816 SLADE ST", "APT 4", None)
+    assert "two-numbers-before-street" not in probes.hits("816 SLADE ST", None, None)
 
 
 def test_star_route_leaves_star_roads_alone():
