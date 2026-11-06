@@ -407,6 +407,23 @@ pub(crate) fn assemble(
             }
         }
     }
+    // The same unit written twice (`STE 5` over `SUITE 5`, `APT 6B APT 6B`, or a letter taken from
+    // the street and written again on line 2): the second is a copy and is dropped (#550). Two
+    // units with different designators (`FL 2`, `UNIT 2`) are two units.
+    if addr.unit_number.is_some()
+        && addr.unit_number == addr.second_unit_number
+        && addr.unit_type == addr.second_unit_type
+    {
+        addr.second_unit_number = None;
+        addr.second_unit_type = None;
+        addr.source.spans.retain(|c| {
+            !matches!(
+                c.component,
+                Component::SecondUnitType | Component::SecondUnitNumber
+            )
+        });
+        addr.diagnostics.warn(Warning::RepeatedText);
+    }
     if addr.city.is_none() && addr.military_post_office.is_none() {
         addr.diagnostics.warn(Warning::MissingCity);
     }
