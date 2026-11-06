@@ -82,7 +82,7 @@ of 41 are analyzed; the rest and the final rescore may move issues in or out) an
    A second number after the house number (#313, #501, #502): a Queens or Hawaii pair is the number, a five-digit number written in two is joined, a number before an ordinal street is a unit. Merged.
 7. The short curated place list of neighborhood mail names (#486): about a dozen names, about 0.01% of rows; held out if it is deferred.
 
-Also in the milestone, not rules: the exact counts for the rare shapes over the largest combined dataset (#465) the post on how rule and performance changes are tested (#491, on hold), and the decisions-at-risk work: row counts for the deliberate decisions, a re-grade of the reviewed cards and five new queues (#524).
+Also in the milestone, not rules: the decisions-at-risk work: row counts for the deliberate decisions, a re-grade of the reviewed cards and five new queues (#524). The post on how rule and performance changes are tested (#491) moved to Later on 2026-11-05: revisit it with 0.6.1, the speed and performance release, when the release-cycle chart spans more releases and there is another round of improvements to show.
 Puerto Rico street-first forms wait for the Puerto Rico research issue. Nothing here changes a key before the release is cut.
 
 ## Waiting, on data or demand
