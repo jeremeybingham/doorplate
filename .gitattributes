@@ -1,0 +1,4 @@
+# Parallel pull requests all add a line at the top of the changelog and conflict every time.
+# The union driver keeps both sides of such a merge, so a merge or rebase in a clone resolves itself
+# (GitHub's own mergeability check may still show a conflict: merge main into the branch locally).
+CHANGELOG.md merge=union
