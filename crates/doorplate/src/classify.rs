@@ -108,7 +108,17 @@ pub(crate) fn zip_parts(t: &str) -> Option<(&str, Option<&str>)> {
 /// false.
 pub(crate) fn zip_repair(text: &str, zero_state: bool) -> Option<(String, Option<String>, bool)> {
     let parts: Vec<&str> = text.split([' ', '-']).filter(|p| !p.is_empty()).collect();
-    if parts.is_empty() || parts.len() > 2 || !parts.iter().all(|p| all_digits(p)) {
+    // The extension may hold letters (`93313-97ND`, a typo of the +4, #541): it is dropped, as a short one is.
+    let junk_extension = |p: &str| {
+        (1..=4).contains(&p.len())
+            && p.bytes().all(|c| c.is_ascii_alphanumeric())
+            && p.bytes().any(|c| c.is_ascii_alphabetic())
+    };
+    if parts.is_empty()
+        || parts.len() > 2
+        || !all_digits(parts[0])
+        || !parts.get(1).is_none_or(|p| all_digits(p) || junk_extension(p))
+    {
         return None;
     }
     let (z5, restored) = match parts[0].len() {
@@ -118,8 +128,8 @@ pub(crate) fn zip_repair(text: &str, zero_state: bool) -> Option<(String, Option
     };
     match parts.get(1) {
         None => Some((z5, None, restored)),
-        Some(e) if e.len() == 4 => Some((z5, Some((*e).to_string()), restored)),
-        Some(e) if e.len() <= 3 => Some((z5, None, true)),
+        Some(e) if e.len() == 4 && all_digits(e) => Some((z5, Some((*e).to_string()), restored)),
+        Some(e) if e.len() <= 3 || !all_digits(e) => Some((z5, None, true)),
         Some(_) => None,
     }
 }
