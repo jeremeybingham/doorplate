@@ -442,6 +442,14 @@ PROBES = [
         1,
     ),
     (
+        "nyc-city-repeat",
+        "553",
+        "a place or neighborhood plus a repeated NEW YORK / NY before the ZIP (BRONX, NEW YORK, NY 10451; MURRAY HILL NY NY 10016)",
+        r"\b(?:BRONX|BROOKLYN|QUEENS|MANHATTAN|STATEN ISLAND|HARLEM|MURRAY HILL|CHELSEA|SOHO|TRIBECA|MIDTOWN)[ ,]+(?:NEW YORK|NY)[ ,]+(?:NEW YORK|NY)[ ,]+(?:1[01][0-9]{3})\b",
+        "S",
+        1,
+    ),
+    (
         "zip-plus4-letters",
         "541",
         "a ZIP+4 whose last part has letters (CA 90001-12AB)",
@@ -811,6 +819,7 @@ REPEATED_STATE = re.compile(
     r"|, [A-Z .'-]+ COUNTY(?:,| \||$)"
 )
 CITY_PLACEHOLDER = {"NOT STATED", "UNKNOWN"}
+NYC_REPEAT = re.compile(r"^(?!NEW YORK$)(?!NEW YORK CITY$)(.+?)[ ,]+(?:NEW YORK CITY|NEW YORK,? NY|NEW YORK|NY,? NY|NY)$")
 ZIP_LETTERS = re.compile(r"^[0-9]{5}-[0-9]{0,3}[A-Z][A-Z0-9]*$")
 
 
@@ -858,6 +867,9 @@ def hits(line1, line2, zip_code=None, city=None, state=None):
     # A ZIP field with a ZIP+4 that has letters (#541; Netsyms writes some as 93313-97ND).
     if zip_code and ZIP_LETTERS.match(str(zip_code).upper().strip()):
         out.append("zip-plus4-letters")
+    # A place name plus a repeated NEW YORK or NY in the city field of a New York City ZIP (#553).
+    if state and str(state).upper().strip() in ("NY", "NEW YORK") and zip_code and NYC_REPEAT.match(c) and re.match(r"^(10[0-4]|11[0-4]|116)", str(zip_code)):
+        out.append("nyc-city-repeat")
     # A placeholder city (#468).
     if c in CITY_PLACEHOLDER:
         out.append("city-placeholder")
