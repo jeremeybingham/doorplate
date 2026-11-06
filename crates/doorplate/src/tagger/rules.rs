@@ -974,6 +974,9 @@ impl Tagger<'_> {
             || lex.soft_unit(word).is_some()
             || lex.suffix(word).is_some()
             || lex.is_placeholder(word)
+            // A provider's structure labels (Arizona's `69 SECONDARY`, `DUPL`, `DUPLEX`) are
+            // not units: the text stays unparsed like other junk (#544).
+            || matches!(word, "PRIMARY" | "SECONDARY" | "DUPL" | "DUPLEX")
         {
             return;
         }
@@ -2331,7 +2334,7 @@ impl Tagger<'_> {
         }
         let (a, b) = (self.text(i - 1), self.text(i));
         let digits = |t: &str| !t.is_empty() && all_digits(t);
-        if !digits(a) || !digits(b) || b.len() > 4 || b.bytes().all(|c| c == b'0') {
+        if !digits(a) || !digits(b) || a.len() > 5 || b.len() > 5 || b.bytes().all(|c| c == b'0') {
             return i;
         }
         let r = i + 1;
@@ -2370,7 +2373,29 @@ impl Tagger<'_> {
             .rev()
             .find(|&k| lex.suffix(self.text(k)).is_some())
             .is_some_and(|s| (s + 1..hi).all(|k| lex.directional(self.text(k)).is_some()));
-        if is_ordinal(self.text(r)) && a != b && !designator && tail_free {
+        // A run of house numbers (`1100 1102 1104 17TH ST`) and a rural grid street written as a
+        // number and a direction (`820 1575 NORTH AVE`) are left as they were.
+        let grid_street = lex.directional(self.text(r)).is_some()
+            && r + 1 < hi
+            && lex.suffix(self.text(r + 1)).is_some();
+        // A split ordinal (`26889 263 RD ST` is 263RD ST) is the street's own number.
+        let split_ordinal = matches!(self.text(r), "ST" | "ND" | "RD" | "TH");
+        if designator || !tail_free || digits(self.text(r)) || grid_street || split_ordinal {
+            return i;
+        }
+        if a == b {
+            // `3210 3210 EXAMPLE ST`: the number written twice; the copy is dropped (#544).
+            self.set(i..i + 1, Tag::Skip);
+            self.repeated();
+            return i + 1;
+        }
+        // Private and county roads write a road number here (#542); a short second number
+        // before a name may start a numbered street (`12 4 ELM ST`).
+        let road_word = matches!(
+            self.text(r),
+            "PRIVATE" | "COUNTY" | "STATE" | "FM" | "PR" | "FARM" | "CR" | "CO"
+        );
+        if is_ordinal(self.text(r)) || (!road_word && lb >= 3) {
             self.set(i..i + 1, Tag::UnitNumber(0));
             self.decide(Decision::BareUnit);
             return i + 1;
