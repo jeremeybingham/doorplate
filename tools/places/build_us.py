@@ -330,6 +330,21 @@ def main():
             continue
         p = add(st, norm(raw), "place", county_name(county) if county else "", "geonames")
         zips[z] = p
+    # Mail names added by hand (tools/places/extra_places.tsv, #486): a new place of kind `place`, or the variants of one the build has.
+    stats["places_from_extra"] = stats["variants_from_extra"] = 0
+    for line in (Path(__file__).resolve().parent / "extra_places.tsv").read_text(encoding="utf-8").splitlines():
+        if not line.strip() or line.startswith("#") or line.startswith("state\t"):
+            continue
+        st, name, county, variants, _why = (line.split("\t") + [""] * 5)[:5]
+        if st not in STATES or not NAME.match(name):
+            fail(f"extra_places.tsv: bad row {line!r}")
+        existing = places.get((st, place_key(name)))
+        p = add(st, name, "place", county, "geonames")
+        if existing is None:
+            stats["places_from_extra"] += 1
+        vs = [v for v in variants.split(";") if v]
+        stats["variants_from_extra"] += len(vs)
+        pending_variants.append((p, vs))
     stats["places_from_geonames_only"] = sum(
         1 for p in places.values() if p.sources == {"geonames"}
     )

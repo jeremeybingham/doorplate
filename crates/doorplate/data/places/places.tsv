@@ -2240,6 +2240,7 @@ AZ	SOLOMON	GRAHAM	place	census;geonames
 AZ	SOMERTON	YUMA	municipality	census;geonames	
 AZ	SONOITA	SANTA CRUZ	place	census;geonames	
 AZ	SOUTH KOMELIK	PIMA	place	census	
+AZ	SOUTH MOUNTAIN		place	geonames	
 AZ	SOUTH TUCSON	PIMA	municipality	census	
 AZ	SPRING VALLEY	YAVAPAI	place	census	
 AZ	SPRINGERVILLE	APACHE	municipality	census;geonames	
@@ -2411,6 +2412,7 @@ CA	ARBUCKLE	COLUSA	place	census;geonames
 CA	ARCADIA	LOS ANGELES	municipality	census;geonames	
 CA	ARCATA	HUMBOLDT	municipality	census;geonames	
 CA	ARDEN ARCADE	SACRAMENTO	place	census	
+CA	ARLETA		place	geonames	
 CA	ARMONA	KINGS	place	census;geonames	
 CA	ARNOLD	CALAVERAS	place	census;geonames	
 CA	AROMAS	SAN BENITO	place	census;geonames	
@@ -3074,6 +3076,7 @@ CA	HILMAR IRWIN	MERCED	place	census
 CA	HINKLEY	SAN BERNARDINO	place	geonames	
 CA	HIOUCHI	DEL NORTE	place	census	
 CA	HOLLISTER	SAN BENITO	municipality	census;geonames	
+CA	HOLLYWOOD HILLS		place	geonames	
 CA	HOLT	SAN JOAQUIN	place	geonames	
 CA	HOLTVILLE	IMPERIAL	municipality	census;geonames	
 CA	HOLY CITY	SANTA CLARA	place	geonames	
@@ -3573,6 +3576,7 @@ CA	PALO CEDRO	SHASTA	place	census;geonames
 CA	PALO VERDE	IMPERIAL	place	census;geonames	
 CA	PALOMA		place	census	
 CA	PALOMAR MOUNTAIN	SAN DIEGO	place	geonames	
+CA	PALOS VERDES		place	geonames	
 CA	PALOS VERDES ESTATES	LOS ANGELES	municipality	census	
 CA	PALOS VERDES PENINSULA	LOS ANGELES	place	geonames	
 CA	PANORAMA CITY	LOS ANGELES	place	geonames	
@@ -4065,6 +4069,7 @@ CA	VALLEJO	SOLANO	municipality	census;geonames
 CA	VALLEY ACRES	KERN	place	census	
 CA	VALLEY CENTER	SAN DIEGO	place	census;geonames	
 CA	VALLEY FORD	SONOMA	place	census;geonames	
+CA	VALLEY GLEN		place	geonames	
 CA	VALLEY HOME	STANISLAUS	place	census	
 CA	VALLEY RANCH	PLUMAS	place	census	
 CA	VALLEY SPRINGS	CALAVERAS	place	census;geonames	
@@ -14591,6 +14596,7 @@ KY	BARBOURVILLE	KNOX	municipality	census;geonames
 KY	BARDSTOWN	NELSON	municipality	census;geonames	
 KY	BARDWELL	CARLISLE	municipality	census;geonames	
 KY	BARLOW	BALLARD	municipality	census;geonames	
+KY	BARNES MOUNTAIN		place	geonames	
 KY	BASKETT	HENDERSON	place	geonames	
 KY	BATTLETOWN	MEADE	place	geonames	
 KY	BAXTER	HARLAN	place	geonames	
@@ -16386,6 +16392,7 @@ MA	MILLVILLE	WORCESTER	place	census;geonames
 MA	MILTON	NORFOLK	place	census;geonames	
 MA	MILTON VILLAGE	NORFOLK	place	geonames	
 MA	MINOT	PLYMOUTH	place	geonames	
+MA	MISSION HILL		place	geonames	
 MA	MONOMOSCOY ISLAND	BARNSTABLE	place	census	
 MA	MONPONSETT	PLYMOUTH	place	geonames	
 MA	MONROE	FRANKLIN	subdivision	census	
@@ -24851,6 +24858,7 @@ MT	FORDS CREEK COLONY	FERGUS	place	census
 MT	FOREST GROVE	FERGUS	place	geonames	
 MT	FOREST HILL VILLAGE	FLATHEAD	place	census	
 MT	FORSYTH	ROSEBUD	municipality	census;geonames	
+MT	FORT BELKNAP		place	geonames	
 MT	FORT BELKNAP AGENCY	BLAINE	place	census	
 MT	FORT BENTON	CHOUTEAU	municipality	census;geonames	
 MT	FORT HARRISON	LEWIS AND CLARK	place	geonames	
@@ -29980,6 +29988,7 @@ NJ	SOUTH DENNIS	CAPE MAY	place	census;geonames
 NJ	SOUTH HACKENSACK	BERGEN	place	geonames	
 NJ	SOUTH HACKENSACK TOWNSHIP	BERGEN	subdivision	census	SOUTH HACKENSACK TWP
 NJ	SOUTH HARRISON TOWNSHIP	GLOUCESTER	subdivision	census	SOUTH HARRISON;SOUTH HARRISON TWP
+NJ	SOUTH KEARNY		place	geonames	
 NJ	SOUTH ORANGE	ESSEX	place	geonames	
 NJ	SOUTH ORANGE VILLAGE TOWNSHIP	ESSEX	subdivision	census	SOUTH ORANGE VILLAGE;SOUTH ORANGE VILLAGE TWP
 NJ	SOUTH PLAINFIELD	MIDDLESEX	municipality	census;geonames	
@@ -31052,9 +31061,11 @@ NY	BEAVER DAMS	SCHUYLER	place	geonames
 NY	BEAVER FALLS	LEWIS	place	geonames	
 NY	BEDFORD	WESTCHESTER	place	census;geonames	
 NY	BEDFORD HILLS	WESTCHESTER	place	census;geonames	
+NY	BEECHHURST	QUEENS	place	geonames	
 NY	BEEKMAN	DUTCHESS	subdivision	census	
 NY	BEEKMANTOWN	CLINTON	subdivision	census	
 NY	BELFAST	ALLEGANY	place	census;geonames	
+NY	BELLE HARBOR	QUEENS	place	geonames	
 NY	BELLE TERRE	SUFFOLK	municipality	census	
 NY	BELLEROSE	NASSAU	municipality	census;geonames	
 NY	BELLEROSE TERRACE	NASSAU	place	census	
@@ -31135,6 +31146,7 @@ NY	BREWSTER	PUTNAM	municipality	census;geonames
 NY	BREWSTER HEIGHTS	PUTNAM	place	census	
 NY	BREWSTER HILL	PUTNAM	place	census	
 NY	BRIARCLIFF MANOR	WESTCHESTER	municipality	census;geonames	
+NY	BRIARWOOD	QUEENS	place	geonames	
 NY	BRIDGEHAMPTON	SUFFOLK	place	census;geonames	
 NY	BRIDGEPORT	ONONDAGA	place	census;geonames	
 NY	BRIDGEVILLE	SULLIVAN	place	census	
@@ -31144,6 +31156,7 @@ NY	BRIGHTON	MONROE	place	census
 NY	BRIGHTWATERS	SUFFOLK	municipality	census;geonames	
 NY	BRINCKERHOFF	DUTCHESS	place	census	
 NY	BRISTOL	ONTARIO	subdivision	census	
+NY	BROAD CHANNEL	QUEENS	place	geonames	
 NY	BROADALBIN	FULTON	municipality	census;geonames	
 NY	BROCKPORT	MONROE	municipality	census;geonames	
 NY	BROCTON	CHAUTAUQUA	municipality	census;geonames	
@@ -31452,6 +31465,7 @@ NY	DIX HILLS	SUFFOLK	place	census
 NY	DOBBS FERRY	WESTCHESTER	municipality	census;geonames	
 NY	DOLGEVILLE	FULTON	municipality	census;geonames	
 NY	DORMANSVILLE	ALBANY	place	geonames	
+NY	DOUGLASTON	QUEENS	place	geonames	
 NY	DOVER	DUTCHESS	subdivision	census	
 NY	DOVER PLAINS	DUTCHESS	place	census;geonames	
 NY	DOWNSVILLE	DELAWARE	place	census;geonames	
@@ -31693,6 +31707,7 @@ NY	GLEN OAKS	QUEENS	place	geonames
 NY	GLEN PARK	JEFFERSON	municipality	census	
 NY	GLEN SPEY	SULLIVAN	place	geonames	
 NY	GLEN WILD	SULLIVAN	place	geonames	
+NY	GLENDALE	QUEENS	place	geonames	
 NY	GLENFIELD	LEWIS	place	geonames	
 NY	GLENFORD	ULSTER	place	geonames	
 NY	GLENHAM	DUTCHESS	place	geonames	
@@ -31850,6 +31865,8 @@ NY	HOLLAND	ERIE	place	census;geonames
 NY	HOLLAND PATENT	ONEIDA	municipality	census;geonames	
 NY	HOLLEY	ORLEANS	municipality	census;geonames	
 NY	HOLLIS	QUEENS	place	geonames	
+NY	HOLLIS HILLS	QUEENS	place	geonames	
+NY	HOLLISWOOD	QUEENS	place	geonames	
 NY	HOLLOWVILLE	COLUMBIA	place	geonames	
 NY	HOLMES	DUTCHESS	place	geonames	
 NY	HOLTSVILLE	SUFFOLK	place	census;geonames	
@@ -31914,6 +31931,7 @@ NY	JACKSON	WASHINGTON	subdivision	census
 NY	JACKSON HEIGHTS	QUEENS	place	geonames	
 NY	JACKSONVILLE	TOMPKINS	place	census;geonames	
 NY	JAMAICA	QUEENS	place	geonames	
+NY	JAMAICA ESTATES	QUEENS	place	geonames	
 NY	JAMESPORT	SUFFOLK	place	census;geonames	
 NY	JAMESTOWN	CHAUTAUQUA	municipality	census;geonames	
 NY	JAMESTOWN WEST	CHAUTAUQUA	place	census	
@@ -31956,6 +31974,7 @@ NY	KENT	PUTNAM	place	census;geonames
 NY	KERHONKSON	ULSTER	place	census;geonames	
 NY	KEUKA PARK	YATES	place	census;geonames	
 NY	KEW GARDENS	QUEENS	place	geonames	
+NY	KEW GARDENS HILLS	QUEENS	place	geonames	
 NY	KIAMESHA LAKE	SULLIVAN	place	census;geonames	
 NY	KIANTONE	CHAUTAUQUA	subdivision	census	
 NY	KILL BUCK	CATTARAUGUS	place	geonames	
@@ -32012,6 +32031,7 @@ NY	LATHAM	ALBANY	place	census;geonames
 NY	LATTINGTOWN	NASSAU	municipality	census	
 NY	LAUREL	SUFFOLK	place	census;geonames	
 NY	LAUREL HOLLOW	NASSAU	municipality	census	
+NY	LAURELTON	QUEENS	place	geonames	
 NY	LAURENS	OTSEGO	municipality	census;geonames	
 NY	LAWRENCE	NASSAU	municipality	census;geonames	
 NY	LAWRENCEVILLE	SAINT LAWRENCE	place	geonames	
@@ -32099,6 +32119,7 @@ NY	MADRID	SAINT LAWRENCE	place	census;geonames
 NY	MAHOPAC	PUTNAM	place	census;geonames	
 NY	MAHOPAC FALLS	PUTNAM	place	geonames	
 NY	MAINE	BROOME	place	census;geonames	
+NY	MALBA	QUEENS	place	geonames	
 NY	MALDEN BRIDGE	COLUMBIA	place	geonames	
 NY	MALDEN ON HUDSON	ULSTER	place	census;geonames	
 NY	MALLORY	OSWEGO	place	geonames	
@@ -32111,6 +32132,7 @@ NY	MAMARONECK	WESTCHESTER	municipality	census;geonames
 NY	MANCHESTER	ONTARIO	municipality	census;geonames	
 NY	MANHASSET	NASSAU	place	census;geonames	
 NY	MANHASSET HILLS	NASSAU	place	census	
+NY	MANHATTAN	NEW YORK	place	geonames	
 NY	MANHEIM	HERKIMER	subdivision	census	
 NY	MANLIUS	ONONDAGA	municipality	census;geonames	
 NY	MANNSVILLE	JEFFERSON	municipality	census;geonames	
@@ -32271,6 +32293,7 @@ NY	NEDROW	ONONDAGA	place	census;geonames
 NY	NELLISTON	MONTGOMERY	municipality	census;geonames	
 NY	NELSON	MADISON	subdivision	census	
 NY	NELSONVILLE	PUTNAM	municipality	census	
+NY	NEPONSIT	QUEENS	place	geonames	
 NY	NESCONSET	SUFFOLK	place	census;geonames	
 NY	NEVERSINK	SULLIVAN	place	census;geonames	
 NY	NEW ALBION	CATTARAUGUS	subdivision	census	
@@ -32300,7 +32323,7 @@ NY	NEW SQUARE	ROCKLAND	municipality	census
 NY	NEW SUFFOLK	SUFFOLK	place	census;geonames	
 NY	NEW WINDSOR	ORANGE	place	census;geonames	
 NY	NEW WOODSTOCK	MADISON	place	geonames	
-NY	NEW YORK	KINGS	municipality	census;geonames	
+NY	NEW YORK	KINGS	municipality	census;geonames	NEW YORK CITY
 NY	NEW YORK MILLS	ONEIDA	municipality	census;geonames	
 NY	NEWARK	WAYNE	municipality	census;geonames	
 NY	NEWARK VALLEY	TIOGA	municipality	census;geonames	
@@ -32595,6 +32618,7 @@ NY	PUTNAM STATION	WASHINGTON	place	geonames
 NY	PUTNAM VALLEY	PUTNAM	place	census;geonames	
 NY	PYRITES	SAINT LAWRENCE	place	geonames	
 NY	QUAKER STREET	SCHENECTADY	place	geonames	
+NY	QUEENS	QUEENS	place	geonames	
 NY	QUEENS VILLAGE	QUEENS	place	geonames	
 NY	QUEENSBURY	WARREN	place	census;geonames	
 NY	QUIOGUE	SUFFOLK	place	census	
@@ -32647,6 +32671,7 @@ NY	RIFTON	ULSTER	place	census;geonames
 NY	RIGA	MONROE	subdivision	census	
 NY	RIPARIUS	WARREN	place	geonames	
 NY	RIPLEY	CHAUTAUQUA	place	census;geonames	
+NY	RIVERDALE	BRONX	place	geonames	
 NY	RIVERHEAD	SUFFOLK	place	census;geonames	
 NY	RIVERSIDE	STEUBEN	municipality	census	
 NY	ROCHESTER	MONROE	municipality	census;geonames	
@@ -32655,6 +32680,7 @@ NY	ROCK CITY FALLS	SARATOGA	place	geonames
 NY	ROCK HILL	SULLIVAN	place	census;geonames	
 NY	ROCK STREAM	YATES	place	geonames	
 NY	ROCK TAVERN	ORANGE	place	geonames	
+NY	ROCKAWAY BEACH	QUEENS	place	geonames	
 NY	ROCKAWAY PARK	QUEENS	place	geonames	
 NY	ROCKLAND	SULLIVAN	subdivision	census	
 NY	ROCKVILLE CENTRE	NASSAU	municipality	census;geonames	
@@ -32665,6 +32691,7 @@ NY	ROME	ONEIDA	municipality	census;geonames
 NY	ROMULUS	SENECA	place	census;geonames	
 NY	RONKONKOMA	SUFFOLK	place	census;geonames	
 NY	ROOSEVELT	NASSAU	place	census;geonames	
+NY	ROOSEVELT ISLAND	NEW YORK	place	geonames	
 NY	ROOSEVELTOWN	SAINT LAWRENCE	place	geonames	
 NY	ROOT	MONTGOMERY	subdivision	census	
 NY	ROSCOE	SULLIVAN	place	census;geonames	
@@ -32947,6 +32974,7 @@ NY	TAPPAN	ROCKLAND	place	census;geonames
 NY	TARRYTOWN	WESTCHESTER	municipality	census;geonames	
 NY	TAYLOR	CORTLAND	subdivision	census	
 NY	TERRYVILLE	SUFFOLK	place	census	
+NY	THE BRONX	BRONX	place	geonames	
 NY	THENDARA	HERKIMER	place	census;geonames	
 NY	THERESA	JEFFERSON	municipality	census;geonames	
 NY	THIELLS	ROCKLAND	place	census;geonames	
@@ -40842,6 +40870,7 @@ SC	HEMINGWAY	WILLIAMSBURG	municipality	census;geonames
 SC	HICKORY GROVE	YORK	municipality	census;geonames	
 SC	HILDA	BARNWELL	municipality	census;geonames	
 SC	HILLTOP	SPARTANBURG	place	census	
+SC	HILTON HEAD		place	geonames	
 SC	HILTON HEAD ISLAND	BEAUFORT	municipality	census;geonames	
 SC	HODGES	GREENWOOD	municipality	census;geonames	
 SC	HOLLY HILL	ORANGEBURG	municipality	census;geonames	
@@ -43703,6 +43732,7 @@ TX	FORNEY	KAUFMAN	municipality	census;geonames
 TX	FORRESTON	ELLIS	place	geonames	
 TX	FORSAN	HOWARD	municipality	census;geonames	
 TX	FORT BLISS	EL PASO	place	census;geonames	
+TX	FORT CAVAZOS		place	geonames	
 TX	FORT CLARK SPRINGS	KINNEY	place	census	
 TX	FORT DAVIS	JEFF DAVIS	place	census;geonames	
 TX	FORT HANCOCK	HUDSPETH	place	census;geonames	
@@ -45369,6 +45399,7 @@ UT	HIDEOUT	WASATCH	municipality	census
 UT	HIGHLAND	UTAH	municipality	census	
 UT	HILDALE	WASHINGTON	municipality	census;geonames	
 UT	HILL AFB	DAVIS	place	geonames	
+UT	HILL AIR FORCE BASE		place	geonames	
 UT	HINCKLEY	MILLARD	municipality	census;geonames	
 UT	HOBBLE CREEK	UTAH	place	census	
 UT	HOLDEN	MILLARD	municipality	census;geonames	
@@ -46301,6 +46332,7 @@ VA	NORA	DICKENSON	place	geonames
 VA	NORFOLK	NORFOLK CITY	municipality	census;geonames	
 VA	NORGE	JAMES CITY	place	geonames	
 VA	NORTH	MATHEWS	place	geonames	
+VA	NORTH CHESTERFIELD		place	geonames	
 VA	NORTH GARDEN	ALBEMARLE	place	census;geonames	
 VA	NORTH SHORE	FRANKLIN	place	census	
 VA	NORTH SPRINGFIELD	FAIRFAX	place	census	
@@ -47351,6 +47383,7 @@ WA	INDIANOLA	KITSAP	place	census;geonames
 WA	IONE	PEND OREILLE	municipality	census;geonames	
 WA	ISSAQUAH	KING	municipality	census;geonames	
 WA	JAMESTOWN	CLALLAM	place	census	
+WA	JOINT BASE LEWIS MCCHORD		place	geonames	
 WA	JOYCE	CLALLAM	place	geonames	
 WA	KAHLOTUS	FRANKLIN	municipality	census;geonames	
 WA	KALAMA	COWLITZ	municipality	census;geonames	
