@@ -410,6 +410,14 @@ PROBES = [
         2,
     ),
     (
+        "star-route",
+        "538",
+        "a Star Route (STAR RT BOX 12, STAR ROUTE 2) read as a street and a unit",
+        r"\bSTAR (?:RT|RTE|ROUTE)\b\.?",
+        "S",
+        2,
+    ),
+    (
         "zip-plus4-with-space",
         "519",
         "a ZIP+4 written with a space (TOWN FL 33000 1234)",
@@ -668,6 +676,7 @@ NO_PROBE = {
     213: "research: whether more state data is needed; measured by the label comparisons, not a text shape",
     238: "a family of unit misses in NAD, split into #320 and #321, which have probes",
     345: "research: a bare number after a street is a unit in some sources and a name in others; no text shape tells them apart",
+    534: "research: the line-2 rules do not run on a comma-separated segment of a one-line string; measured on labeled one-line corpora (2 of 1,702 strings), not a text shape of the scan's field-form rows",
     486: "a curated list of neighborhood city names: counted by city values in the sources (#485), not a text shape",
     410: "research: naming the known-word chains and where the tokenizer and tagger differ; a reading task, not a shape",
 }
