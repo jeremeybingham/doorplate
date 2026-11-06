@@ -60,6 +60,8 @@ def test_keys_are_unique_and_every_pattern_compiles():
         ("816 SLADE ST", "PRIMARY", None, "line2-word-description"),
         ("816 SLADE ST", "LEFT", None, "line2-word-position"),
         ("816 SLADE ST", "GREENHOUSES", None, "line2-word-other"),
+        ("100 EXAMPLE AVE, BRONX, NEW YORK, NY 10451", None, None, "nyc-city-repeat"),
+        ("100 EXAMPLE ST, MURRAY HILL NY NY 10016", None, None, "nyc-city-repeat"),
         ("STAR RT BOX 12", None, None, "star-route"),
         ("STAR ROUTE 2 BOX 45", None, None, "star-route"),
         ("100 EXAMPLE ST, TOWN FL 33000 1234", None, None, "zip-plus4-with-space"),
@@ -131,6 +133,13 @@ def test_line2_word_probes_keep_to_their_group():
     assert "line2-word-other" not in probes.hits("816 SLADE ST", "REAR", None)
     assert "line2-word-other" not in probes.hits("816 SLADE ST", "APT 4", None)
     assert "two-numbers-before-street" not in probes.hits("816 SLADE ST", None, None)
+
+
+def test_nyc_city_repeat_needs_a_place_name_and_a_new_york_zip():
+    assert "nyc-city-repeat" not in probes.hits("100 EXAMPLE AVE", None, "10451", "NEW YORK", "NY")
+    assert "nyc-city-repeat" not in probes.hits("100 EXAMPLE AVE", None, "10451", "BRONX", "NY")
+    assert "nyc-city-repeat" in probes.hits("100 EXAMPLE AVE", None, "10451", "BRONX, NEW YORK", "NY")
+    assert "nyc-city-repeat" not in probes.hits("100 EXAMPLE AVE", None, "90001", "BRONX, NEW YORK", "CA")
 
 
 def test_star_route_leaves_star_roads_alone():
