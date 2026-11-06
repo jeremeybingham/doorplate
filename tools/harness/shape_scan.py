@@ -3,6 +3,8 @@
 
     python tools/harness/shape_scan.py INPUTS.txt [--run-id NAME] [--limit-chunks 1] [--confirm]
     python tools/harness/shape_scan.py INPUTS.txt --mode roundtrip [--run-id NAME] [--confirm]
+    python tools/harness/shape_scan.py INPUTS.txt --mode words [--run-id NAME] [--confirm]
+    python tools/harness/shape_scan.py INPUTS.txt --mode numword [--run-id NAME] [--confirm]
     python tools/harness/shape_scan.py --summary local-data/shape-scan/NAME [--top 40]
 
 The probe scan counts shapes somebody thought of. This one needs no idea in advance: it parses all rows (the same inputs file
@@ -10,6 +12,10 @@ and chunking as `probe_scan.py`) and counts, for every row that carries one of t
 of what was left over, per source and state. A shape turns each number into `9`, each word that is not a Pub 28 word into `a`
 and keeps the words of the lexicon tables (suffixes, unit designators, directionals, special lines), so `816 SLADE ST` over
 `3 RIGHT` is `9 a ST | 9 a` and `STAR RT BOX 12` is `STAR RT BOX 9`. A name or a street never appears: only its form.
+
+`--mode words` counts the lone words left over on line 2 (a word the parser left unparsed that is all of line 2), per source and state, for
+choosing unit words (#545); it keeps the words, so read only the frequent ones. `--mode numword` counts a number and a word as all
+of line 2 (`1 STORY`) by the kind of street before it and what the parser did with it (#531).
 
 `--mode roundtrip` is the other scan of this file: for every row with a key it writes the USPS lines (`to_usps()`), parses them
 again joined with commas and compares both keys with the originals, as the corpus test `usps_output_round_trips_to_the_same_key`
@@ -133,9 +139,51 @@ def roundtrip_chunk(rows, vocab, fields_many, parse_many):
     return counts
 
 
+def words_chunk(rows, fields_many, parse_many):
+    """`--mode words`: the lone words left over on line 2. A row counts when the whole of line 2 is one word of three to
+    twelve letters that the parser left unparsed; the word is the `leftover_shape` column (code `line2_word`). Only the word is
+    kept, never the row (the words that matter are the frequent ones; read them above a count threshold)."""
+    counts = Counter()
+    parsed = ps.parse_matches(rows, fields_many, parse_many)
+    for r, a in zip(rows, parsed):
+        source, state = r[1] or "", (r[6] or "").upper().strip()
+        counts[(source, state, ALL_ROWS, "", "")] += 1
+        l2 = (r[4] or "").strip().upper()
+        if a is None or "unparsed_remainder" not in a.warnings or not (3 <= len(l2) <= 12) or not l2.isalpha():
+            continue
+        if (a.unparsed or "").strip().upper() == l2:
+            counts[(source, state, "line2_word", "", l2)] += 1
+    return counts
+
+
+_NUMWORD = re.compile(r"^[0-9]{1,4} [A-Z]{3,12}$")
+
+
+def numword_chunk(rows, fields_many, parse_many):
+    """`--mode numword`: a number of one to four digits and one word as all of line 2 (`1 STORY`), counted by the street it follows
+    (`highway` or `street`) and by whether the parser left the whole line unparsed (`whole`), only the word (`word`) or placed
+    it (`placed`); the word is the `leftover_shape` column (#531)."""
+    counts = Counter()
+    parsed = ps.parse_matches(rows, fields_many, parse_many)
+    for r, a in zip(rows, parsed):
+        source, state = r[1] or "", (r[6] or "").upper().strip()
+        counts[(source, state, ALL_ROWS, "", "")] += 1
+        l2 = " ".join((r[4] or "").upper().split())
+        if a is None or not _NUMWORD.match(l2):
+            continue
+        un = " ".join((a.unparsed or "").upper().split())
+        how = "whole" if un == l2 else "word" if un and l2.endswith(un) else "placed"
+        counts[(source, state, "numword", ("highway" if a.highway else "street") + " " + how, l2.split()[1])] += 1
+    return counts
+
+
 def scan_chunk(rows, vocab, fields_many, parse_many):
     if _STATE.get("mode") == "roundtrip":
         return roundtrip_chunk(rows, vocab, fields_many, parse_many)
+    if _STATE.get("mode") == "words":
+        return words_chunk(rows, fields_many, parse_many)
+    if _STATE.get("mode") == "numword":
+        return numword_chunk(rows, fields_many, parse_many)
     counts = Counter()
     parsed = ps.parse_matches(rows, fields_many, parse_many)
     for r, a in zip(rows, parsed):
@@ -216,7 +264,7 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("inputs", nargs="?", type=Path)
     ap.add_argument("--summary", type=Path)
-    ap.add_argument("--mode", choices=("shapes", "roundtrip"), default="shapes")
+    ap.add_argument("--mode", choices=("shapes", "roundtrip", "words", "numword"), default="shapes")
     ap.add_argument("--top", type=int, default=40)
     ap.add_argument("--out-root", type=Path)
     ap.add_argument("--run-id")
@@ -232,7 +280,7 @@ def main(argv=None):
     if not args.inputs:
         sys.exit("give the list file of inputs (or --summary RUN)")
     if args.out_root is None:
-        args.out_root = ROOT / "local-data" / ("roundtrip-scan" if args.mode == "roundtrip" else "shape-scan")
+        args.out_root = ROOT / "local-data" / {"roundtrip": "roundtrip-scan", "words": "word-scan", "numword": "word-scan"}.get(args.mode, "shape-scan")
     inputs = ps.read_inputs(args.inputs)
     for inp in inputs:
         if not Path(inp["path"]).exists():

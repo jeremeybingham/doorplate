@@ -78,7 +78,7 @@ of 41 are analyzed; the rest and the final rescore may move issues in or out) an
 3. Missing-value strings in the city, state or ZIP (#419), with a small city-only placeholder list (the words that only ever stand in for a city). Merged.
 4. A care-of line that ends mid-street gets a warning, and `C O` without a slash (#473, narrowed; about 1,000 rows). Merged.
 5. A letter A to D after the house number is usually a unit (#487, reverses an earlier rule). Follow-up from the queues: a letter before a suffix word that is not the street's last suffix is a unit, and a letter before AND stays in the street (#466). Merged.
-6. Unit forms: unit text with no designator on line 2 (#320, first part: a number before a designator word and a directional street name), words Pub 28 does not list as designators (#321, first part: condo and site words on line 2), a unit between the house number and the street (#296, merged). Position words and `ADU` on line 2 are a unit type (#545, merged).
+6. Unit forms: unit text with no designator on line 2 (#320, first part: a number before a designator word and a directional street name), words Pub 28 does not list as designators (#321, first part: condo and site words on line 2), a unit between the house number and the street (#296, merged). Position words and `ADU` on line 2 are a unit type (#545, merged). A road number written before the road type (`331 5659 PRIVATE ROAD`, `2210 3315 FM RD`) stays in the street name (#542, closes #316). Merged.
    A second number after the house number (#313, #501, #502): a Queens or Hawaii pair is the number, a five-digit number written in two is joined, a number before an ordinal street is a unit. Merged. The same for any street (#544): a second number of three to five digits after the house number is the unit, a repeated number is dropped, and `PRIMARY`, `SECONDARY`, `DUPL` and `DUPLEX` are not units after a number on line 2. Merged.
 7. The short curated place list of neighborhood mail names (#486): about a dozen names, about 0.01% of rows; held out if it is deferred.
 
@@ -95,8 +95,8 @@ Puerto Rico street-first forms wait for the Puerto Rico research issue. Nothing 
   - *Boxes and routes:* glued box and route words (#304), a route after a street (#307), `PO BOX` with a placeholder on line 2 (#358), a box followed by street words (#366).
   - *House numbers and street names:* `SO` for `SOUTH` (#269), two house numbers joined by `&` (#274), a spaced hyphen between a building and a street (#310) or after a suffix (#341), grid numbers (#311),
     a letter before the house number (#312), a letter then a direction then a name (#360),
-    the missing `ambiguous_number_letter` warning after a lone letter (#467), `NO` for north (#470).
-  - *State and road forms:* Texas `PR` roads (#314), the FM number before the road type (#316), `AND` between two highways (#317); Puerto Rico (#318, #319, the epic #332, #92).
+    `NO` for north (#470).
+  - *State and road forms:* Texas `PR` roads (#314), `AND` between two highways (#317); Puerto Rico (#318, #319, the epic #332, #92).
   - *City field and line 2:* a unit or a box in the city field (#244), the city field holds the state (#357), a `CO` prefix with a fuller name on line 2 (#367),
     a person or business on line 2 after a real street (#472), a care-of or attention line with a name and no street (#509), a non-Latin city or country (#469), a city that starts with a state name (#480), a region phrase written as the state (#482),
     boilerplate before the street (#483).
