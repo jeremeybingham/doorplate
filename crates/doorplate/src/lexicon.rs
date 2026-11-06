@@ -576,9 +576,27 @@ impl Lexicons {
 
     /// Words Pub 28 does not list that name a unit only on a second line, where the
     /// tagger reads them (`CONDO 4`, `SITE F9`): a condominium unit is a `UNIT` and a
-    /// campsite or park site a `SPC`. They are not in [`Self::unit`] because on the
+    /// campsite or park site a `SPC`; `LEFT`, `RIGHT`, `BACK` and `ADU` are types of their own. They are not in [`Self::unit`] because on the
     /// street line they are often part of a name (`TRASH SITE SERVICES`, #321).
     pub(crate) fn soft_unit(&self, s: &str) -> Option<Lookup<UnitType>> {
+        // Position words and `ADU` name a unit by itself, like `REAR` and `BSMT`: a type of their
+        // own, no value needed (#545).
+        if let "LEFT" | "RIGHT" | "BACK" | "ADU" = s {
+            let name = match s {
+                "LEFT" => "LEFT",
+                "RIGHT" => "RIGHT",
+                "BACK" => "BACK",
+                _ => "ADU",
+            };
+            return Some(Lookup {
+                value: UnitType {
+                    abbr: name,
+                    name,
+                    range_required: false,
+                },
+                kind: MatchKind::Observed,
+            });
+        }
         let base = match s {
             "CND" | "COND" | "CONDO" => "UNIT",
             "SITE" | "CAMPSITE" => "SPC",

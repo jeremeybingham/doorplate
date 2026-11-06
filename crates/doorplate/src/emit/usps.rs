@@ -163,6 +163,9 @@ impl ParsedAddress {
 /// pound sign (sections 213, 213.2); the designator alone when there is no
 /// number (`REAR`).
 fn unit_text(t: Option<UnitType>, number: Option<&str>) -> Option<String> {
+    // `LEFT`, `RIGHT`, `BACK` and `ADU` are not Pub 28 designators and do not read back from the
+    // street line: the value is written as `# n` and the bare word is left out (#545).
+    let t = t.filter(|t| !matches!(t.abbr(), "LEFT" | "RIGHT" | "BACK" | "ADU"));
     match (t, number.map(plain).filter(|n| !n.is_empty())) {
         (Some(t), Some(n)) => Some(format!("{} {n}", t.abbr())),
         (Some(t), None) => Some(t.abbr().to_string()),

@@ -1001,12 +1001,27 @@ impl Tagger<'_> {
             && r.clone()
                 .all(|k| self.toks[k].seg == self.toks[r.start].seg);
         let named = self.tags.contains(&Tag::Name) && self.tags.contains(&Tag::Suffix);
-        if !free || !named || lex.soft_unit(self.text(r.start)).is_none() {
-            return;
+        // `3 RIGHT`, `2 ADU`: a short number before a position word is its value, as `4 REAR` is.
+        if free && named && r.len() == 2 {
+            let (n, w) = (self.text(r.start), self.text(r.start + 1));
+            if all_digits(n)
+                && n.len() <= 4
+                && lex.soft_unit(w).is_some_and(|l| !l.value.range_required())
+            {
+                self.set(r.start..r.start + 1, Tag::UnitNumber(0));
+                self.set(r.start + 1..r.end, Tag::UnitType(0));
+                self.decide(Decision::BareUnit);
+                return;
+            }
         }
+        let Some(soft) = lex.soft_unit(self.text(r.start)).filter(|_| free && named) else {
+            return;
+        };
         if r.len() == 1 {
             self.set(r.clone(), Tag::UnitType(0));
-            self.warn(Warning::MissingUnitNumber);
+            if soft.value.range_required() {
+                self.warn(Warning::MissingUnitNumber);
+            }
         } else {
             let v = self.text(r.start + 1);
             if !(is_unit_value(v) && (has_digit(v) || is_letter(v))) {
