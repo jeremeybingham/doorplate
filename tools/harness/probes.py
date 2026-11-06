@@ -410,6 +410,30 @@ PROBES = [
         2,
     ),
     (
+        "zip-plus4-letters",
+        "541",
+        "a ZIP+4 whose last part has letters (CA 90001-12AB)",
+        r"\b[A-Z]{2},? [0-9]{5}-[0-9]{0,3}[A-Z][A-Z0-9]*(?: \||$)",
+        "S",
+        3,
+    ),
+    (
+        "number-before-road-type",
+        "542",
+        "a road number written before the road type (331 5659 PRIVATE ROAD, 2210 3315 FM RD)",
+        r"^[0-9]+ [0-9]{1,5} (?:PRIVATE|COUNTY|STATE|FARM TO MARKET|FM|PR) (?:ROAD|RD)\b",
+        "M",
+        3,
+    ),
+    (
+        "united-states-highway",
+        "543",
+        "UNITED STATES HIGHWAY n spelled out (4212 S UNITED STATES HIGHWAY 27)",
+        r"\bUNITED STATES (?:HIGHWAY|HWY) [0-9]",
+        "S",
+        3,
+    ),
+    (
         "star-route",
         "538",
         "a Star Route (STAR RT BOX 12, STAR ROUTE 2) read as a street and a unit",
@@ -677,6 +701,8 @@ NO_PROBE = {
     238: "a family of unit misses in NAD, split into #320 and #321, which have probes",
     345: "research: a bare number after a street is a unit in some sources and a name in others; no text shape tells them apart",
     534: "research: the line-2 rules do not run on a comma-separated segment of a one-line string; measured on labeled one-line corpora (2 of 1,702 strings), not a text shape of the scan's field-form rows",
+    544: "decision: two numbers before the street (a range or a leftover); counted by the leftover-shape scan (shape_scan.py), not a text shape",
+    545: "decision: which single words alone on line 2 are units; counted by the leftover-shape scan (shape_scan.py), not a text shape",
     486: "a curated list of neighborhood city names: counted by city values in the sources (#485), not a text shape",
     410: "research: naming the known-word chains and where the tokenizer and tagger differ; a reading task, not a shape",
 }
@@ -753,6 +779,7 @@ REPEATED_STATE = re.compile(
     r"|, [A-Z .'-]+ COUNTY(?:,| \||$)"
 )
 CITY_PLACEHOLDER = {"NOT STATED", "UNKNOWN"}
+ZIP_LETTERS = re.compile(r"^[0-9]{5}-[0-9]{0,3}[A-Z][A-Z0-9]*$")
 
 
 def state_name_repeated(t):
@@ -796,6 +823,9 @@ def hits(line1, line2, zip_code=None, city=None, state=None):
         out.append("null-word-field")
     if REPEATED_STATE.search(t) or state_name_repeated(t):
         out.append("repeated-state-or-county")
+    # A ZIP field with a ZIP+4 that has letters (#541; Netsyms writes some as 93313-97ND).
+    if zip_code and ZIP_LETTERS.match(str(zip_code).upper().strip()):
+        out.append("zip-plus4-letters")
     # A placeholder city (#468).
     if c in CITY_PLACEHOLDER:
         out.append("city-placeholder")
