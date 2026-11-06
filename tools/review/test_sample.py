@@ -20,11 +20,11 @@ import duckdb  # noqa: E402
 import sample  # noqa: E402
 from shape import clip, shape  # noqa: E402
 
-# line1, line2, city, state, zip. Three rows share one failing shape (a `9 9 a a` street).
+# line1, line2, city, state, zip. Three rows share one failing shape (a `9 9 9 a a` street: a run of house numbers stays flagged).
 ROWS = [
-    ("123 456 QUINCEWOOD ST", None, "MIAMI", "FL", "33101"),
-    ("124 457 QUINCEWOOD ST", None, "MIAMI", "FL", "33101"),
-    ("125 458 QUINCEWOOD ST", None, "MIAMI", "FL", "33101"),
+    ("123 456 901 QUINCEWOOD ST", None, "MIAMI", "FL", "33101"),
+    ("124 457 901 QUINCEWOOD ST", None, "MIAMI", "FL", "33101"),
+    ("125 458 901 QUINCEWOOD ST", None, "MIAMI", "FL", "33101"),
     ("5 OAK AVE", "BLDG", "SPRINGFIELD", "IL", "62701"),
     ("5 OAK AVE", None, "SPRINGFIELD", "IL", "62701"),
     ("88 BAYVIEW DR", None, "PENSACOLA", "FL", "32502"),
@@ -105,8 +105,8 @@ def test_a_benchmark_input_is_refused(tmp_path):
 
 
 def test_a_repeated_input_is_queued_once(tmp_path):
-    rows = ROWS + [("123 456 QUINCEWOOD ST", None, "MIAMI", "FL", "33101"),  # the first row again, another id
-                   ("123  456  quincewood st", None, "miami", "fl", "33101")]  # and with other spacing and case
+    rows = ROWS + [("123 456 901 QUINCEWOOD ST", None, "MIAMI", "FL", "33101"),  # the first row again, another id
+                   ("123  456  901  quincewood st", None, "miami", "fl", "33101")]  # and with other spacing and case
     run = make_run(tmp_path, rows=rows)
     out = tmp_path / "q.jsonl"
     assert sample.main([str(run), "--out", str(out), "--confirm", "--per-shape", "9"]) == 0
