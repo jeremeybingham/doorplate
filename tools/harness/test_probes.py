@@ -51,6 +51,10 @@ def test_keys_are_unique_and_every_pattern_compiles():
         ("ONE MARLOW PLAZA - 99 ELM AVE.", "SUITE 8", None, "spaced-hyphen-building"),
         ("1921 NW", "4 REAR", None, "bare-unit-line2"),
         ("77 OAK ST", "B12", None, "bare-unit-line2"),
+        ("100 EXAMPLE ST, SPRINGTOWN, CA 90001-12AB", None, None, "zip-plus4-letters"),
+        ("331 5659 PRIVATE ROAD", None, None, "number-before-road-type"),
+        ("2210 3315 FM RD", None, None, "number-before-road-type"),
+        ("4212 S UNITED STATES HIGHWAY 27", None, None, "united-states-highway"),
         ("STAR RT BOX 12", None, None, "star-route"),
         ("STAR ROUTE 2 BOX 45", None, None, "star-route"),
         ("100 EXAMPLE ST, TOWN FL 33000 1234", None, None, "zip-plus4-with-space"),
@@ -106,6 +110,14 @@ def test_the_digit_word_line2_probes_leave_a_street_with_a_suffix_alone():
         hits = probes.hits(line1, line2, None)
         assert "digit-word-line2-nosuffix" not in hits and "digit-word-line2-highway" not in hits
     assert "digit-word-line2-nosuffix" not in probes.hits("2652 US HIGHWAY 60 W", "ROOM 4", None)
+
+
+def test_the_541_to_543_probes_leave_ordinary_rows_alone():
+    assert "number-before-road-type" not in probes.hits("331 PRIVATE ROAD 5659", None, None)
+    assert "number-before-road-type" not in probes.hits("331 OAK ROAD", None, None)
+    assert "united-states-highway" not in probes.hits("UNITED STATES POSTAL SERVICE", None, None)
+    assert "zip-plus4-letters" not in probes.hits("100 OAK ST", None, "90001-1234", "SPRINGTOWN", "CA")
+    assert "zip-plus4-letters" in probes.hits("100 OAK ST", None, "93313-97ND", "BAKERSFIELD", "CA")
 
 
 def test_star_route_leaves_star_roads_alone():
