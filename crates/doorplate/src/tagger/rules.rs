@@ -2975,12 +2975,19 @@ impl Tagger<'_> {
             j = cut;
         }
         // Postdirectional, unless it is a letter naming the street right
-        // after a lone suffix word ("AVENUE N", like "AVENUE G").
+        // after a lone suffix word ("AVENUE N", like "AVENUE G"). BOULEVARD and
+        // PARKWAY are the exception to the exception: the word after them is a
+        // direction (`BOULEVARD E` is `BOULEVARD EAST`, 6,333 rows in NJ against
+        // 15 lettered ones in the full NAD; `PARKWAY E` 823 against 20), so the
+        // USPS line `55 BOULEVARD E` reads back to the same key (#549).
         if j >= i + 2 {
             if let Some((_, w)) = longest_ending(self.toks, i + 1, j, |s| lex.directional(s)) {
                 let k = j - w;
                 let letter = self.text(k).len() == 1;
-                let lone_suffix = k == i + 1 && lex.suffix(self.text(i)).is_some();
+                let lone_suffix = k == i + 1
+                    && lex
+                        .suffix(self.text(i))
+                        .is_some_and(|l| !matches!(l.value.abbr(), "BLVD" | "PKWY"));
                 if !(letter && lone_suffix) {
                     self.set(k..j, Tag::PostDir);
                     j = k;
