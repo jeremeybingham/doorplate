@@ -158,9 +158,10 @@ standard = "STATE ROUTE"
 forms = ["STATE ROUTE", "STATE RTE", "ST RT", "ST RTE"]
 
 [[highway]]
-# Appendix F: US, US HWY, US HIGHWAY.
+# Appendix F: US, US HWY, US HIGHWAY. The prefix spelled out (UNITED STATES HIGHWAY 27, NAD's own
+# spelling: 238,048 rows in the 289M-row scan) and written U S HIGHWAY read the same (#543).
 standard = "US HIGHWAY"
-forms = ["US HIGHWAY", "US HWY", "US"]
+forms = ["US HIGHWAY", "US HWY", "US", "UNITED STATES HIGHWAY", "UNITED STATES HWY", "U S HIGHWAY", "U S HWY"]
 
 [[highway]]
 # Appendix F: I, IH, INTERSTATE, INTERSTATE HWY.

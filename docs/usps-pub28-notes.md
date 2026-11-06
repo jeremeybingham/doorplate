@@ -443,7 +443,7 @@ Special forms (sourced):
 - Highways (section 237, Appendix F): emit `[<state code>] <standard prefix> <route>`, for
   example `CR 1185` becomes `COUNTY ROAD 1185`, `HWY FM 1320` becomes
   `FM 1320`, `I10` becomes `INTERSTATE 10`, `US 41 SW` becomes
-  `US HIGHWAY 41 SW`. Routes may hold letters (`COUNTY HIGHWAY 60E`,
+  `US HIGHWAY 41 SW`; the prefix spelled out (`UNITED STATES HIGHWAY 27`, `UNITED STATES HWY`) or written `U S HIGHWAY` reads the same, so the three spellings key alike (NAD writes it spelled out; **key-affecting**, held for the `k5`, #543). Routes may hold letters (`COUNTY HIGHWAY 60E`,
   `STATE ROUTE MM`). After the route number, Appendix F abbreviates only the
   last word, as a normal suffix, and spells earlier ones out:
   `HWY 11 BYPASS` becomes `HIGHWAY 11 BYP`, `HIGHWAY 3 BYP ROAD` becomes
