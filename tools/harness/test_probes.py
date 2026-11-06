@@ -51,6 +51,8 @@ def test_keys_are_unique_and_every_pattern_compiles():
         ("ONE MARLOW PLAZA - 99 ELM AVE.", "SUITE 8", None, "spaced-hyphen-building"),
         ("1921 NW", "4 REAR", None, "bare-unit-line2"),
         ("77 OAK ST", "B12", None, "bare-unit-line2"),
+        ("STAR RT BOX 12", None, None, "star-route"),
+        ("STAR ROUTE 2 BOX 45", None, None, "star-route"),
         ("100 EXAMPLE ST, TOWN FL 33000 1234", None, None, "zip-plus4-with-space"),
         ("242 APT B ESPLANADE", None, None, "unit-before-street-residual"),
         ("2900 APT S OLD 63", "2 8-203", None, "unit-before-street-residual"),
@@ -104,6 +106,11 @@ def test_the_digit_word_line2_probes_leave_a_street_with_a_suffix_alone():
         hits = probes.hits(line1, line2, None)
         assert "digit-word-line2-nosuffix" not in hits and "digit-word-line2-highway" not in hits
     assert "digit-word-line2-nosuffix" not in probes.hits("2652 US HIGHWAY 60 W", "ROOM 4", None)
+
+
+def test_star_route_leaves_star_roads_alone():
+    assert "star-route" not in probes.hits("100 FIVE STAR RD", None, None)
+    assert "star-route" not in probes.hits("100 STAR ROAD", None, None)
 
 
 def test_the_city_field_probes_need_the_city_and_state():
