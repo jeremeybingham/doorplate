@@ -1,0 +1,40 @@
+# Mail names the build adds by hand (#486): names real address data writes as the city that the Census Gazetteer and the GeoNames ZIP
+# places lack. Every name is a populated place in the GeoNames dump (https://download.geonames.org/export/geonames.org/ US.zip, the
+# feature code is in `why`) and has 100 or more city-field rows in one of the real sources (counts in docs/places.md); a name that is
+# also a whole street name more often than a city is left out (SANTA FE, CALIFORNIA; HARRISON, FLORIDA; CRESTVIEW, TEXAS). A row whose
+# name is already a place only adds its variants (NEW YORK CITY is another name of NEW YORK). Columns: state, name, county, variants, why; the county is given where the parser needs it (the Queens house-number rule reads it, `place.rs`), from the GeoNames county code of the feature, and is empty elsewhere.
+state	name	county	variants	why
+AZ	SOUTH MOUNTAIN			PPLX, Phoenix; city of 58,103 NAD rows
+MA	MISSION HILL			PPL, Boston; city of 15,972 SAM Boston rows
+WA	JOINT BASE LEWIS MCCHORD			PPL, military installation
+TX	FORT CAVAZOS			PPL, military installation (Fort Hood until 2023)
+UT	HILL AIR FORCE BASE			PPL, military installation
+NY	BRIARWOOD	QUEENS		PPLX, Queens mail name
+NY	ROCKAWAY BEACH	QUEENS		PPLX, Queens mail name
+NY	JAMAICA ESTATES	QUEENS		PPLX, Queens mail name
+NY	THE BRONX	BRONX		PPLA2, borough written with its article
+NY	HOLLISWOOD	QUEENS		PPLX, Queens mail name
+NY	ROOSEVELT ISLAND	NEW YORK		PPLX, Manhattan mail name
+NY	QUEENS	QUEENS		PPLA2, borough written as the city
+NY	MANHATTAN	NEW YORK		PPLA2, borough written as the city
+NY	GLENDALE	QUEENS		PPL, Queens mail name
+NY	LAURELTON	QUEENS		PPLX, Queens mail name
+NY	DOUGLASTON	QUEENS		PPLX, Queens mail name
+NY	RIVERDALE	BRONX		PPL, Bronx mail name
+NY	BELLE HARBOR	QUEENS		PPLX, Queens mail name
+NY	BEECHHURST	QUEENS		PPLX, Queens mail name
+NY	HOLLIS HILLS	QUEENS		PPLX, Queens mail name
+NY	BROAD CHANNEL	QUEENS		PPLX, Queens mail name
+NY	NEPONSIT	QUEENS		PPLX, Queens mail name
+NY	KEW GARDENS HILLS	QUEENS		PPLX, Queens mail name
+NY	MALBA	QUEENS		PPLX, Queens mail name
+NY	NEW YORK		NEW YORK CITY	another name of NEW YORK; 7,303 rows in the New York City ZIPs
+CA	ARLETA			PPLX, Los Angeles mail name
+CA	HOLLYWOOD HILLS			PPLX, Los Angeles mail name
+CA	VALLEY GLEN			PPLX, Los Angeles mail name
+CA	PALOS VERDES			PPL, mail name of the peninsula
+VA	NORTH CHESTERFIELD			PPLX, Chesterfield County mail name
+NJ	SOUTH KEARNY			PPLL, Kearny mail name
+SC	HILTON HEAD			PPL, mail name of the island
+KY	BARNES MOUNTAIN			PPL
+MT	FORT BELKNAP			PPL

@@ -80,7 +80,7 @@ k4:S|123|N|MAIN|ST||FL|33101
   form for people, usaddress-style labels, a canonical match key (`k4:...`), a URL-safe slug.
 - **Diagnostics.** Stable warning codes and the text it could not place, so doubtful rows go to review instead
   of into your database.
-- **Place data.** A national list of 50,375 places and 41,154 ZIPs finds the city on a line with no commas and
+- **Place data.** A national list of 50,408 places and 41,154 ZIPs finds the city on a line with no commas and
   completes a cut-off city; `default_state` is a hint for input with no state.
 - **Your own spellings and places.** A custom layer (a folder of small files) adds spellings, words, places and ZIPs your
   data uses on top of the shipped tables, without editing them: `doorplate parse --custom-layer DIR`, `doorplate.load_layer`,
@@ -196,7 +196,7 @@ with warnings. [`docs/how-it-works.md`](docs/how-it-works.md) has the details.
 ### Place data
 
 
-A **national list** of 50,375 places and 41,154 ZIPs (Census Gazetteer and GeoNames
+A **national list** of 50,408 places and 41,154 ZIPs (Census Gazetteer and GeoNames
 postal codes) lets the parser find the city on a line with no commas, tell
 `WINGATE ST, 32507` (a street) from `PALM BEACH, 33480` (a city), and complete a cut-off
 city. A **state's data** is hand-checked data for one state, added where real data
