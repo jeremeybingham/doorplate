@@ -196,6 +196,10 @@ Add a probe when an issue is opened, with its pattern, size and harm; remove it 
 
 ## Progress lines in the long-running tools (#524)
 
+### The leftover-shape scan (`shape_scan.py`, #524)
+
+The probe scan counts shapes someone thought of. `tools/harness/shape_scan.py` needs no idea in advance: it parses every row of the same inputs file (about 9 minutes for 289M rows on 13 workers) and counts, per source and state, the shape of the input and of the leftover text for each failure warning (`unparsed_remainder`, `missing_street_number`, `missing_street_name`, `missing_unit_number`, `possibly_truncated`, `multiple_addresses`, `ambiguous_street_number`, `second_line_in_street`). A shape turns numbers into `9` and words outside the lexicon tables into `a`, so no name or street appears. `python tools/harness/shape_scan.py INPUTS.txt --run-id NAME --confirm`, then `--summary local-data/shape-scan/NAME` for the ranked table; the run directory holds `counts/` (one Parquet file per chunk), `summary.json` and `DONE`. Resume with the same `--run-id`. Run it after a batch of rules and on the release commit: a shape with a large count and no probe or issue is a finding.
+
 The tools that run for minutes print `##progress` lines (the one-line protocol of [tqdm-claude](https://github.com/ExtReMLapin/tqdm-claude/blob/main/PROTOCOL.md): `##progress step=3/7 label=NAME sub=1840/2400`, `pct=45`, `eta=`, `msg=`), flushed, next to their usual output, so a wrapper can say how far along a run is without reading its log by eye: `key_diff.py dump` (rows of the source, `sub`), `key_diff.py dump-all` (the source, `step`), `probe_scan.py` (`pct` per finished chunk) and `disable_check.py` (call site `sub`). The lines go to stderr in `dump` (its own progress is there) and stdout elsewhere. A tool that does not know the format ignores them.
 
 ## MessyStreets (`messy_score.py`, #323)
