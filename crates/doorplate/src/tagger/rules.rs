@@ -2520,6 +2520,33 @@ impl Tagger<'_> {
             && self.lex.suffix(self.text(line_end - 1)).is_some()
             && self.lex.suffix(self.text(name)).is_none()
             && !ORDINAL_SUFFIXES.contains(&self.text(name))
+            && !self.road_number_first(k, line_end)
+    }
+
+    /// A road number written before the road type (`331 5659 PRIVATE ROAD`, `2210 3315 FM RD`):
+    /// the second number of three or four digits, one of the road words `PRIVATE`, `COUNTY`,
+    /// `STATE`, `FM` or `FARM TO MARKET`, then `ROAD` or `RD` and at most a direction. The number
+    /// belongs to the road, not to a second address (#542): it stays in the street name, so
+    /// different roads no longer share one key.
+    fn road_number_first(&self, k: usize, line_end: usize) -> bool {
+        let w = match self.text(k + 1) {
+            "PRIVATE" | "COUNTY" | "STATE" | "FM" => 1,
+            "FARM"
+                if line_end > k + 4 && self.text(k + 2) == "TO" && self.text(k + 3) == "MARKET" =>
+            {
+                3
+            }
+            _ => return false,
+        };
+        let ty = k + 1 + w;
+        ty < line_end
+            && self.text(k).len() <= 4
+            && !self.text(k).bytes().all(|c| c == b'0')
+            && self
+                .lex
+                .suffix(self.text(ty))
+                .is_some_and(|l| l.value.abbr() == "RD")
+            && (ty + 1..line_end).all(|j| self.lex.directional(self.text(j)).is_some())
     }
 
     fn street_from(&mut self, lo: usize, hi: usize) {
