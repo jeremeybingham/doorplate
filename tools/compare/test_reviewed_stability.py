@@ -78,3 +78,12 @@ def test_main_writes_the_report_and_the_ids(tmp_path):
     out, ids = tmp_path / "r.md", tmp_path / "ids.txt"
     assert R.main(["--review-dir", str(tmp_path), "--out", str(out), "--ids-out", str(ids)]) == 0
     assert "Reviewed rows" in out.read_text() and ids.read_text() == "b\n"
+
+
+def test_the_warning_table_counts_flagged_cards_by_group(tmp_path):
+    odd = {"line1": "12 Elm St and more words here", "city": "Dayton", "state": "OH", "zip": "45402"}
+    flagged = R.current_reading(doorplate, odd)[1]
+    write(tmp_path, card("a", "doorplate_right", FIELDS), card("b", "both_wrong", odd))
+    text = "\n".join(R.report(doorplate, R.load_cards(tmp_path))[0])
+    assert "| right | 1 | 0 | 1 |" in text
+    assert f"| wrong | 1 | {int(flagged)} | {1 - int(flagged)} |" in text

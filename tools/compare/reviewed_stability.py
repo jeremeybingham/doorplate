@@ -77,19 +77,28 @@ def load_cards(review_dir):
     return best
 
 
+def current_reading(doorplate, inp):
+    """(the property key, whether the parser flags the row: a warning or unparsed text) of the card's input now; (None, False) on error."""
+    try:
+        parsed = _parse(doorplate, inp)
+        return parsed.key(), bool(parsed.warnings) or bool(parsed.unparsed)
+    except Exception:  # noqa: BLE001  (a row the parser rejects counts as not parsed, never as a crash)
+        return None, False
+
+
 def current_key(doorplate, inp):
     """The property key of the card's input now (None when the parser raises)."""
-    try:
-        if inp.get("last_line"):
-            parsed = doorplate.parse(one_line(inp))
-        else:
-            parsed = doorplate.parse_fields(
-                line1=inp.get("line1") or None, line2=inp.get("line2") or None, city=inp.get("city") or None,
-                state=inp.get("state") or None, zip=inp.get("zip") or None,
-            )  # fmt: skip
-        return parsed.key()
-    except Exception:  # noqa: BLE001  (a row the parser rejects counts as not parsed, never as a crash)
-        return None
+    return current_reading(doorplate, inp)[0]
+
+
+def _parse(doorplate, inp):
+    """The card's input parsed as the review page parses it: fields, or one joined line when the card has a `last_line`."""
+    if inp.get("last_line"):
+        return doorplate.parse(one_line(inp))
+    return doorplate.parse_fields(
+        line1=inp.get("line1") or None, line2=inp.get("line2") or None, city=inp.get("city") or None,
+        state=inp.get("state") or None, zip=inp.get("zip") or None,
+    )  # fmt: skip
 
 
 def compare(cards, doorplate):
@@ -100,10 +109,11 @@ def compare(cards, doorplate):
     by_version = collections.defaultdict(collections.Counter)
     changed_right = []
     same_version = collections.Counter()
+    flagged = collections.defaultdict(collections.Counter)  # group -> cards, with a warning now
     for cid, d in cards.items():
         g = group_of(d["verdict"])
         stored = d["parse"]["key"]
-        now = current_key(doorplate, d["input"])
+        now, warned = current_reading(doorplate, d["input"])
         v = d["parse"].get("library_version") or "unknown"
         tot[g]["cards"] += 1
         by_version[v]["cards"] += g == "right"
@@ -114,6 +124,8 @@ def compare(cards, doorplate):
         if not (sp and np_) or sp.group(1) != np_.group(1):
             tot[g]["other_key_format"] += 1
             continue
+        flagged[g]["cards"] += 1
+        flagged[g]["warned"] += warned
         tot[g]["comparable"] += 1
         same = stored == now
         tot[g]["unchanged" if same else "changed"] += 1
@@ -127,11 +139,11 @@ def compare(cards, doorplate):
         if v == version:
             same_version["cards"] += 1
             same_version["changed"] += not same
-    return tot, by_source, by_version, changed_right, same_version
+    return tot, by_source, by_version, changed_right, same_version, flagged
 
 
 def report(doorplate, cards):
-    tot, by_source, by_version, changed_right, same_version = compare(cards, doorplate)
+    tot, by_source, by_version, changed_right, same_version, flagged = compare(cards, doorplate)
     out = [
         "## Reviewed rows: do they keep the reading they were judged on?", "",
         f"doorplate {doorplate.__version__}; {len(cards):,} judged cards (the latest answer for each id), re-parsed from their stored input. "
@@ -149,6 +161,13 @@ def report(doorplate, cards):
             f"Of the {same_version['cards']:,} cards stored under this same version string, {same_version['changed']:,} read differently now "
             "(a development version string such as `0.6.0-dev` is not one build: rules land under it, so some change is expected).", "",
         ]  # fmt: skip
+    out += ["### Does the parser flag the rows a person judged wrong? (warning or unparsed text now; comparable cards)", "",
+            "| Verdict group | Cards | With a warning | Without |", "|---|---|---|---|"]  # fmt: skip
+    for g in ("right", "wrong"):
+        f = flagged[g]
+        out.append(f"| {g} | {f['cards']:,} | {f['warned']:,} | {f['cards'] - f['warned']:,} |")
+    out += ["", "A person-judged error with no warning is a silent one; a right card with a warning is a flag that was not needed. The cards are not "
+            "a random sample, so these are counts of the cards, not rates for a source.", ""]  # fmt: skip
     out += ["### Right cards by source (comparable)", "", "| Source | Cards | Key changed |", "|---|---|---|"]
     for s, c in sorted(by_source.items(), key=lambda kv: -kv[1]["cards"])[:15]:
         out.append(f"| {s} | {c['cards']:,} | {c['changed']:,} |")
