@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Python speed: doorplate against usaddress on the same strings.
 
-    python benchmarks/speed_python.py [N] [--cache-usaddress]
+    python benchmarks/speed_python.py [N] [--cache-usaddress] [--with-libpostal [--libpostal-home DIR]]
 
 Build the extension with `maturin develop --release` first (a debug build is
 much slower). The inputs are the golden corpus's one-line addresses (committed,
@@ -18,6 +18,11 @@ the closest like-for-like rows are `parse` / `tag` and `parse_tokens` /
 `--cache-usaddress` reuses the usaddress timings stored by an earlier run (`local-data/benchmarks/usaddress-cache.json`)
 when the usaddress version, the inputs, N and the machine are the same, and stores them when they are not: usaddress
 is most of the run and does not change. The output says which rows came from the cache and when they were made.
+
+`--with-libpostal` adds libpostal rows (the Senzing build: `docs/libpostal-compat.md`), timed the same way (the best of five passes over
+the same strings) but in its own processes, because libpostal lives in its own folder and virtualenv: one process (one thread) and
+four processes (one thread each, started together, the strings split in four). The model load time and memory are printed under the
+table.
 """
 import os
 import sys
@@ -34,6 +39,11 @@ from _common import (  # noqa: E402
     machine,
     usable_cpus,
 )
+
+try:
+    import _libpostal
+except ImportError:  # the helper needs tools/compare; absent only in a trimmed checkout
+    _libpostal = None
 
 import doorplate as dp  # noqa: E402
 
@@ -87,11 +97,24 @@ def table(name, texts):
             results.append((label, secs))
             continue
         results.append((label, best(fn)))
+    lp = []
+    if WITH_LIBPOSTAL:
+        for procs in (1, 4):
+            r = _libpostal.bench(texts, procs=procs, reps=5, home=LIBPOSTAL_HOME)
+            lp.append(r)
+            label = "libpostal `parse_address` (1 process, one thread)" if procs == 1 else f"libpostal `parse_address` ({procs} processes, one thread each)"
+            results.append((label, r["seconds"]))
     base = dict(results)
     print(f"### {name} ({n:,} addresses)\n")
     print("| | Time | Addresses per second | Microseconds each |\n|---|---|---|---|")
     for label, secs in results:
         print(f"| {label} | {secs:.3f} s | {rate(n, secs)} | {secs / n * 1e6:,.1f} |")
+    if lp:
+        one, four = lp
+        print(f"\nlibpostal (Senzing build): the model loads in {one['load_seconds']:.1f} s per process and a process is {one['rss_after_load_mb']:,.0f} MB "
+              f"resident after loading; {four['procs']} processes together hold {four['pss_total_mb']:,.0f} MB (proportional set size, so pages "
+              "they share are counted once). Not comparable row for row with the in-process rows above: a different process, started "
+              "fresh, with its load time left out of the timing.")
     if cached_from:
         print(f"\nThe usaddress rows are from the cache (made {', '.join(sorted(cached_from))} on this machine, same usaddress version and inputs); the doorplate rows were measured now.")
     if usaddress is not None:
@@ -123,12 +146,20 @@ def _fa_tag(t):
 
 
 CACHE = False
+WITH_LIBPOSTAL = False
+LIBPOSTAL_HOME = None
 
 
 def main():
-    global CACHE
+    global CACHE, WITH_LIBPOSTAL, LIBPOSTAL_HOME
     args = [a for a in sys.argv[1:] if a != "--cache-usaddress"]
     CACHE = len(args) != len(sys.argv) - 1
+    WITH_LIBPOSTAL = "--with-libpostal" in args
+    args = [a for a in args if a != "--with-libpostal"]
+    if "--libpostal-home" in args:
+        i = args.index("--libpostal-home")
+        LIBPOSTAL_HOME = args[i + 1]
+        del args[i : i + 2]
     n = int(args[0]) if args else 100_000
     print(f"# Python speed\n\nMachine: {machine()}")
     print(f"doorplate {dp.__version__}" + (f"; usaddress {_usaddress_version()}" if usaddress else "; usaddress not installed")
