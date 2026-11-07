@@ -227,10 +227,100 @@ def run_compare(args):
     out += group("stratum", lambda r: [r["stratum"]]) + group("style", lambda r: [r["style"]] if r.get("style") else [])
     out += group("address type", lambda r: [r["type"]]) + group("modifier", lambda r: r.get("mods") or ["(none)"])
     out += group("blind-spot class or hand shape", lambda r: r["tags"])
+    if args.with_libpostal:
+        out += [""] + run_three_way(recs, preds, args, C)
     text = "\n".join(out)
     print(text)
     print(f"\n_Compared in {time.time() - t0:.0f} seconds._")
     return text
+
+
+def score_record_common(rec, pred, lib, C):
+    """(right, tokens right, tokens total, [(gold, predicted)] errors) with every label folded to the common set (issue 215).
+
+    `pred` is [(token, label)] for doorplate and usaddress, and libpostal's pieces already cut into tokens with common labels."""
+    s = rec["input"]
+    gold = rec["tokens"]
+    g_spans = C.byte_spans(s, [t for t, _ in gold])
+    finder = C.byte_spans_ci if lib == "libpostal" else C.byte_spans
+    p_spans = [(a[0], a[1], lab) for a, (_, lab) in zip(finder(s, [t for t, _ in pred]), pred) if a]
+    ok = True
+    right = total = 0
+    errors = []
+    for (tok, gl), span in zip(gold, g_spans):
+        if not C.scored(tok):
+            continue
+        g = C.common(gl)
+        p = C.common(C.overlap_label(span, p_spans))
+        handled = lib == "doorplate" and C.norm(gl) == "CountryName" and p is None  # dropped on purpose, `country_ignored`
+        total += 1
+        if handled or g == p:
+            right += 1
+        else:
+            ok = False
+            errors.append((g, p))
+    return ok, right, total, errors
+
+
+def run_three_way(recs, preds, args, C):
+    """The comparison track again with libpostal as a third column, on the common label set (docs/libpostal-compat.md)."""
+    inputs = [r["input"] for r in recs]
+    lp = C.libpostal_run(inputs, args.libpostal_home)
+    pins = C.libpostal_pins(args.libpostal_home)
+    preds = dict(preds, libpostal=[C.libpostal_pairs(p) for p in lp["results"]])
+    libs = ("doorplate", "usaddress", "libpostal")
+    res = {lib: [score_record_common(r, p, lib, C) for r, p in zip(recs, preds[lib])] for lib in libs}
+    n = len(recs)
+    allidx = list(range(n))
+    shared = [not any(C.norm(l) in C.OUT_OF_SCOPE for _, l in r["tokens"]) and C.expressible(r["tokens"]) for r in recs]
+    sharedidx = [i for i in allidx if shared[i]]
+    nat = [i for i in allidx if recs[i]["stratum"] == "natural"]
+    nat_shared = [i for i in nat if shared[i]]
+    out = [
+        f"## Three-way comparison with libpostal (Senzing model): common labels ({n:,} records)", "",
+        f"libpostal commit {pins['commit']}, parser model {pins['parser_model']}, base data {pins['base_data']}, language "
+        f"classifier {pins['language_classifier']}, data checksum {pins['data_checksum'][:12]}. Model load "
+        f"{lp['load_seconds']:.1f} s; {n:,} strings parsed in {lp['parse_seconds']:.1f} s on one thread (a check of the run, "
+        "not the speed benchmark, and outside the 4-CPU profile's pinned timing).", "",
+        "All three are scored on one common label set, folded from the labels of the comparison track: street parts are "
+        "`StreetName`, occupancy type and identifier are `Occupancy`, box type and identifier are `USPSBox`, because libpostal "
+        "gives `unit` and `po_box` as one piece. *Shared labels* leaves out the records with a gold label either doorplate or "
+        "libpostal cannot produce (a rural-route box group, a recipient); *all records* leaves nothing out, so such a label "
+        "counts as wrong. The suite's `hard` stratum was drawn from the blind spots of doorplate and usaddress, so it is not a "
+        "fair test of libpostal: read `natural`. libpostal was trained on OpenStreetMap and OpenAddresses, which overlap the "
+        "National Address Database this suite draws on. Not comparable with the two-way figures above (a coarser label set).", ""]
+
+    def row(name, idx):
+        cells = " | ".join(cell(sum(res[lib][i][0] for i in idx), len(idx)) for lib in libs)
+        return f"| {name} | {len(idx):,} | {cells} |"
+
+    head = ["| Records | Count | doorplate | usaddress | libpostal |", "|---|---|---|---|---|"]
+    out += ["### Headline (common labels, whole record right)", ""] + head
+    out += [row("`natural` only, shared labels", nat_shared), row("`natural` only, all records", nat),
+            row("Whole suite, shared labels", sharedidx), row("Whole suite, all records", allidx), ""]
+    tok = {lib: (sum(r[1] for r in res[lib]), sum(r[2] for r in res[lib])) for lib in libs}
+    out += ["Tokens right: " + ", ".join(f"{lib} {cell(*tok[lib])}" for lib in libs) + ".", ""]
+    only_l = sum(1 for i in allidx if res["libpostal"][i][0] and not res["doorplate"][i][0])
+    only_d = sum(1 for i in allidx if res["doorplate"][i][0] and not res["libpostal"][i][0])
+    both = sum(1 for i in allidx if res["doorplate"][i][0] and res["libpostal"][i][0])
+    out += ["### Paired: doorplate and libpostal (common labels, all records)", "",
+            "| Both right | Only doorplate | Only libpostal | Both wrong |", "|---|---|---|---|",
+            f"| {both:,} | {only_d:,} | {only_l:,} | {n - both - only_d - only_l:,} |", ""]
+
+    def group(title, keyf):
+        groups = collections.defaultdict(list)
+        for i, r in enumerate(recs):
+            for k in keyf(r):
+                groups[k].append(i)
+        lines = [f"### By {title}", ""] + head
+        return lines + [row(k, idx) for k, idx in sorted(groups.items()) if len(idx) >= args.min_group] + [""]
+
+    out += group("stratum", lambda r: [r["stratum"]]) + group("address type", lambda r: [r["type"]])
+    out += group("style", lambda r: [r["style"]] if r.get("style") else [])
+    errors = collections.Counter(e for i in nat for e in res["libpostal"][i][3])
+    out += ["### libpostal's most common token errors on `natural` (gold, predicted)", "", "| Gold | Predicted | Tokens |", "|---|---|---|"]
+    out += [f"| {g} | {p or '(unplaced)'} | {c:,} |" for (g, p), c in errors.most_common(12)] + [""]
+    return out
 
 
 # ---- the doorplate-only track --------------------------------------------------------------------------
@@ -403,6 +493,9 @@ def main():
     ap.add_argument("--min-group", type=int, default=30, help="smallest group to print in a breakdown")
     ap.add_argument("--no-profile", action="store_true", help="do not pin CPUs, threads or memory")
     ap.add_argument("--with-usaddress", action="store_true", help=argparse.SUPPRESS)
+    ap.add_argument("--with-libpostal", action="store_true",
+                    help="add a three-way comparison track with libpostal (the Senzing build; see docs/libpostal-compat.md)")
+    ap.add_argument("--libpostal-home", help="the libpostal build folder (default: $LIBPOSTAL_HOME or ~/projects/libpostal-senzing)")
     ap.add_argument("--cache-usaddress", action="store_true",
                     help="reuse the usaddress predictions and timing stored by an earlier run (same usaddress version, "
                          "inputs and, for the timing, machine); store them when there are none")
