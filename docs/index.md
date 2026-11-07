@@ -22,6 +22,7 @@ a.key()                # "k4:S|123|N|MAIN|ST||FL|33101"
 | See how accurate and fast it is | [Accuracy and speed](benchmarks.md) |
 | Add your own spellings, or share messy data safely | [Custom layers](custom-layers.md), [Anonymizing](anonymizing.md) |
 | Switch from usaddress | [Coming from usaddress](usaddress-compat.md) |
+| Compare with libpostal | [Compared with libpostal](libpostal-compat.md) |
 | Look up a function or an option | [Python reference](python-api.md), [Command-line reference](cli.md), [Rust on docs.rs](https://docs.rs/doorplate) |
 | Know what data it uses | [Data policy](data-policy.md), [Places](places.md), [State data](states/README.md) |
 | Fix a bug, add a rule, run the tools | [Development](change-checklist.md): the checklist, the tools, the tests, the benchmarks, the roadmap |
