@@ -15,8 +15,42 @@ import sys
 import time
 
 
+def rss_mb():
+    import resource
+
+    return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024
+
+
+def bench(request):
+    """Speed mode (benchmarks/_libpostal.py): load, say READY, wait for GO, then time `reps` passes over the strings.
+
+    Prints READY, then after a line `GO` one JSON line: `load_seconds`, `best_seconds` (the fastest pass, one thread),
+    `rss_after_load_mb` and `rss_peak_mb` (the peak resident size of this process)."""
+    t = time.time()
+    # importing loads the model: that is the load time
+    from postal.parser import parse_address
+
+    parse_address("1 main st")
+    load = time.time() - t
+    after_load = rss_mb()
+    print("READY", flush=True)
+    sys.stdin.readline()
+    strings = request["strings"]
+    best = None
+    for _ in range(request["bench"]):
+        t = time.perf_counter()
+        for s in strings:
+            parse_address(s)
+        took = time.perf_counter() - t
+        best = took if best is None else min(best, took)
+    print(json.dumps({"load_seconds": load, "best_seconds": best, "rss_after_load_mb": after_load, "rss_peak_mb": rss_mb()}), flush=True)
+
+
 def main():
-    strings = json.load(sys.stdin)
+    request = json.loads(sys.stdin.readline())
+    if isinstance(request, dict) and "bench" in request:
+        return bench(request)
+    strings = request
     t = time.time()
     # importing loads the model: that is the load time
     from postal.parser import parse_address

@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """Size, import time and memory: doorplate against usaddress.
 
-    python benchmarks/size_memory.py
+    python benchmarks/size_memory.py [--with-libpostal [--libpostal-home DIR]]
 
 Needs the release CLI, `maturin` (to build a release wheel), the installed
 `doorplate` extension and `uv` (to install usaddress into a scratch directory
 and measure it). Prints Markdown. Memory is the peak resident set size of a
 fresh Python process (`ru_maxrss`), which is what a worker holding the parser
-costs; it includes the interpreter.
+costs; it includes the interpreter. `--with-libpostal` adds libpostal's sizes and its model load time and
+memory (the Senzing build, in its own process; `docs/libpostal-compat.md`).
 """
 import json
 import shutil
@@ -54,7 +55,24 @@ def memory(imp, work, n=100_000):
     return child(MEASURE.format(imp=imp, work=work, texts=texts, n=n))
 
 
+def libpostal_size_rows(home):
+    """Rows for the size table: the libpostal build folder's parts (the Senzing build; docs/libpostal-compat.md)."""
+    home = Path(home)
+    rows = []
+    for label, path in (("libpostal build (`install/`: library and headers)", home / "install"),
+                        ("libpostal data directory (the Senzing model, `data/`)", home / "data"),
+                        ("the libpostal address parser model file (`address_parser_crf.dat`)", home / "data/libpostal/address_parser/address_parser_crf.dat"),
+                        ("`pypostal` and its dependencies, installed (`venv/`)", home / "venv/lib")):
+        if path.exists():
+            rows.append(f"| {label} | {mb(tree_size(path) if path.is_dir() else path.stat().st_size)} |")
+    return rows
+
+
 def main():
+    with_lp = "--with-libpostal" in sys.argv
+    lp_home = None
+    if "--libpostal-home" in sys.argv:
+        lp_home = sys.argv[sys.argv.index("--libpostal-home") + 1]
     need_cli()
     print(f"# Size and memory\n\nMachine: {machine()}\n")
 
@@ -98,6 +116,11 @@ def main():
         model = next(Path(d).rglob("usaddr.crfsuite"), None)
         if model:
             print(f"| the usaddress model file | {mb(model.stat().st_size)} |")
+    if with_lp:
+        import _libpostal  # noqa: PLC0415
+
+        for row in libpostal_size_rows(_libpostal.C.libpostal_home(lp_home)):
+            print(row)
     print("\nThe lexicon tables, the national place list and the Florida state data are compiled into the binary\n"
           "(`docs/places.md` sizes the place list); there is no model or data file to load.\n")
 
@@ -117,6 +140,12 @@ def main():
     print(f"| `usaddress`, a loop of `parse` (all results kept) | {theirs['import_s'] * 1000:.0f} ms | {theirs['after_import']:.0f} MB | {theirs['after_batch']:.0f} MB |")
     print(f"| `doorplate`, a loop of `parse` (each result dropped) | {ours_d['import_s'] * 1000:.0f} ms | {ours_d['after_import']:.0f} MB | {ours_d['after_batch']:.0f} MB |")
     print(f"| `usaddress`, a loop of `parse` (each result dropped) | {theirs_d['import_s'] * 1000:.0f} ms | {theirs_d['after_import']:.0f} MB | {theirs_d['after_batch']:.0f} MB |")
+    if with_lp:
+        texts = corpus_inputs()
+        texts = (texts * (100_000 // len(texts) + 1))[:100_000]
+        r = _libpostal.bench(texts, procs=1, reps=1, home=lp_home)
+        print(f"| `libpostal` (Senzing build), a loop of `parse_address`, in its own process | {r['load_seconds'] * 1000:,.0f} ms (import loads the model) "
+              f"| {r['rss_after_load_mb']:,.0f} MB | {r['rss_peak_mb']:,.0f} MB |")
     print("\nNote: usaddress loads its model on the first call, so its memory after import understates it; the\n"
           "batch column includes it. \"Kept\" rows hold 100,000 result objects; \"dropped\" rows show what the\n"
           "parser itself needs. `parse_many` builds all its results at once on several threads, so its peak is\n"

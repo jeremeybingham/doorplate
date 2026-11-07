@@ -442,6 +442,28 @@ def speed_worker(args):
     print(json.dumps(res))
 
 
+def libpostal_rows(args, n, ua):
+    """(table rows, a note) for libpostal (the Senzing build), timed in its own processes: the best of 3 passes, as the other rows."""
+    if not args.with_libpostal:
+        return [], None
+    import _libpostal  # noqa: PLC0415
+    inputs = [r["input"] for r in load("compare.jsonl.gz")]
+    if args.limit:
+        inputs = inputs[: args.limit]
+    ps = lambda secs: f"{n / secs:,.0f}"  # noqa: E731
+    rows = []
+    for procs in (1, PROFILE_CPUS):
+        r = _libpostal.bench(inputs, procs=procs, reps=3, home=args.libpostal_home)
+        name = "1 process, one thread" if procs == 1 else f"{procs} processes, one thread each"
+        rows.append(f"| libpostal `parse_address` ({name}; Senzing build) | {r['seconds']:.2f} s | {ps(r['seconds'])} | {ua / r['seconds']:.1f}x |")
+        if procs == 1:
+            first = r
+    note = (f"libpostal loads its model in {first['load_seconds']:.1f} s per process (left out of the timing); a process is "
+            f"{first['rss_after_load_mb']:,.0f} MB resident after loading; {PROFILE_CPUS} processes together hold {r['pss_total_mb']:,.0f} MB "
+            "(proportional set size). It runs in its own processes, a `parse_address` call holds the GIL, and every process loads its own model.")
+    return rows, note
+
+
 def run_speed(args):
     rows = {}
     ua_key = f"suite-speed-usaddress|{inputs_id([r['input'] for r in load('compare.jsonl.gz')][: args.limit or None])}|{'unpinned' if args.no_profile else 'profile'}"
@@ -466,6 +488,7 @@ def run_speed(args):
     elif args.cache_usaddress:
         cache_put(ua_key, one["usaddress_parse"], timing=True)
     ps = lambda secs: f"{n / secs:,.0f}"
+    lp_rows, lp_note = libpostal_rows(args, n, one["usaddress_parse"])
     out = [f"## Speed and memory ({n:,} strings; the best of 3 runs; 1 and {PROFILE_CPUS} threads, never all cores)", "",
            "| | Time | Strings per second | Relative to usaddress `parse` |", "|---|---|---|---|"]
     ua = one["usaddress_parse"]
@@ -473,7 +496,8 @@ def run_speed(args):
             f"| doorplate `parse_tokens` (1 thread) | {one['parse_tokens']:.2f} s | {ps(one['parse_tokens'])} | {ua / one['parse_tokens']:.1f}x |",
             f"| doorplate `parse_many` (1 thread) | {one['parse_many']:.2f} s | {ps(one['parse_many'])} | {ua / one['parse_many']:.1f}x |",
             f"| doorplate `parse_many` ({PROFILE_CPUS} threads) | {four['parse_many']:.2f} s | {ps(four['parse_many'])} | {ua / four['parse_many']:.1f}x |",
-            "", f"Peak resident memory: {one['peak_rss_mb']:.0f} MB (1 thread, usaddress {'not loaded: its timing is cached' if cached_ua else 'loaded'}), {four['peak_rss_mb']:.0f} MB "
+            ] + lp_rows + [
+            "", *([lp_note, ""] if lp_note else []), f"Peak resident memory: {one['peak_rss_mb']:.0f} MB (1 thread, usaddress {'not loaded: its timing is cached' if cached_ua else 'loaded'}), {four['peak_rss_mb']:.0f} MB "
             f"({PROFILE_CPUS} threads, doorplate only). Accuracy does not depend on the profile; speed does, so read the ratios, not the "
             "absolute figures.", ""]
     text = "\n".join(out)

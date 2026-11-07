@@ -157,8 +157,7 @@ How to read it:
 - Token-level and whole-record figures, the per-stratum and per-style tables and libpostal's most common token errors are in the
   suite report that `--with-libpostal` prints. The mapping decisions above (a label with no match counts as wrong; `suburb` and its
   kin read as a place) affect these figures a little and were chosen before the run.
-- Speed is not measured here (step 5): libpostal parsed the 19,586 suite strings in 1.3 s on one thread after a model load of about
-  4 s, which is a check of the run only.
+- Speed and size are in the next sections.
 
 ## libpostal's own tests and Senzing's test set (2026-11-07)
 
@@ -195,6 +194,43 @@ Reading it:
   definition of failure that is not stated, so it is not comparable.
 - The doorplate figure here is not the 97.2% in [`benchmarks.md`](benchmarks.md): that used a stricter rule (an empty gold field had to
   stay empty) and counted a different set of fields.
+
+## Speed and size (2026-11-07; one run, to be repeated in the away run's exclusive window)
+
+Measured with the repository's own scripts, extended with `--with-libpostal` (`benchmarks/speed_python.py`, `suite.py speed`,
+`size_memory.py`): the same best-of-N method as the usaddress rows, on an otherwise idle machine, with libpostal's Senzing build
+(commit `25099c5`, parser 1.2.0). Timings on this machine vary by 10 to 60% from run to run, so read ratios, not absolute figures.
+libpostal runs in its own processes: it loads its own model, and a `parse_address` call holds the Python GIL, so the way to use more
+cores is more processes. The "4 processes" rows start four of them together with the strings split in four; the model load time is
+left out of every timing and reported separately. usaddress's rows come from the cache made on this machine (2026-10-31 for the suite).
+
+The suite's 19,586 strings, under its profile (4 CPUs, 8 GB):
+
+| | Strings per second | Relative to usaddress `parse` |
+|---|---|---|
+| usaddress `parse` (1 thread) | 9,297 | 1.0x |
+| libpostal `parse_address` (1 process) | 15,546 | 1.7x |
+| libpostal `parse_address` (4 processes) | 58,230 | 6.3x |
+| doorplate `parse_tokens` (1 thread) | 63,708 | 6.9x |
+| doorplate `parse_many` (1 thread) | 82,399 | 8.9x |
+| doorplate `parse_many` (4 threads) | 265,523 | 28.6x |
+
+So on one thread doorplate takes about a quarter of libpostal's time (4.1x with `parse_tokens`, 5.3x with `parse_many`), and on four threads or
+processes about 4.6x. On `speed_python.py`'s other inputs (20,000 each): the golden corpus's one-line addresses, libpostal 27,357 per
+second in one process and 86,863 in four, doorplate `parse_tokens` 83,820; the geocode benchmark's addresses, libpostal 20,262 and 71,246,
+doorplate `parse_tokens` 66,265. libpostal's README claims 10 to 30 thousand addresses per second per thread; this is inside that range.
+
+| | doorplate | libpostal (Senzing build) |
+|---|---|---|
+| Install | one wheel, about 2.0 MB; no data to load | the build (47 MB), the data directory (2.9 GB, of which the parser model is 1.7 GB), and `pypostal` (0.3 MB) |
+| Load time | about 1 ms to import | 4.3 s (importing the parser loads the model) |
+| Memory after loading | 17 MB (a bare Python process is also 17 MB) | 2,950 MB per process |
+| Memory after parsing 100,000 addresses (each result dropped) | 19 MB | 2,957 MB |
+| Four workers | 253 MB peak for `parse_many` on all threads, one process | 11,764 MB together (proportional set size): the model is not shared between processes |
+
+libpostal's README describes a design for settings "with possibly under 1 GB" of memory per process. The Senzing model measured here is
+about 3 GB per process; the default model (1.8 GB of data) was not measured. The cost of one worker, and of starting one (a 4 s load), is the main
+practical difference for a service or a batch job on a small machine.
 
 ## What a fair comparison needs
 

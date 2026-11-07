@@ -104,3 +104,29 @@ def test_the_real_build_parses_an_invented_address():
     labels = {label for _, label in out["results"][0]}
     assert {"house_number", "road", "city", "state", "postcode"} <= labels
     assert json.dumps(out)  # serializable, so the worker's answer round-trips
+
+
+BENCH_DIR = HERE.parents[1] / "benchmarks"
+
+
+def test_the_speed_helper_stops_with_a_message_when_there_is_no_build(tmp_path):
+    sys.path.insert(0, str(BENCH_DIR))
+    import _libpostal
+
+    with pytest.raises(SystemExit) as e:
+        _libpostal.bench(["12 Elm St"], home=str(tmp_path / "nowhere"))
+    assert "no libpostal virtualenv" in str(e.value)
+
+
+@pytest.mark.skipif(not (Path(C.libpostal_home()) / "venv" / "bin" / "python").exists(), reason="no libpostal build")
+def test_the_speed_helper_times_one_and_two_processes_on_the_real_build():
+    sys.path.insert(0, str(BENCH_DIR))
+    import _libpostal
+
+    texts = ["123 Example Street Apt 4B, Springfield, IL 62701"] * 200
+    one = _libpostal.bench(texts, procs=1, reps=2)
+    two = _libpostal.bench(texts, procs=2, reps=2)
+    assert one["procs"] == 1 and two["procs"] == 2
+    assert one["seconds"] > 0 and two["seconds"] > 0 and one["load_seconds"] > 0
+    assert one["rss_after_load_mb"] > 100 and one["rss_peak_mb"] >= one["rss_after_load_mb"]
+    assert two["pss_total_mb"] > 0  # the models are loaded in both processes before the timed passes start
