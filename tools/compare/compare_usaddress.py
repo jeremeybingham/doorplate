@@ -186,6 +186,179 @@ def score(toks, spans, pred, fold):
     return n, ok, errors
 
 
+# ---- libpostal as a third parser (issue 215) --------------------------------------------------------------------
+# libpostal labels a different set and gives `unit` and `po_box` as one piece ("apt 4b"), so the three-way comparison
+# folds usaddress's labels into a common set first: the street parts into StreetName (as the coarse score does), the
+# occupancy type and identifier into Occupancy, and the box type and identifier into USPSBox.
+OCCUPANCY = {"OccupancyType", "OccupancyIdentifier", "SubaddressType", "SubaddressIdentifier"}
+BOX = {"USPSBoxType", "USPSBoxID"}
+
+
+def common(label):
+    label = norm(label)
+    if label in OCCUPANCY:
+        return "Occupancy"
+    if label in BOX:
+        return "USPSBox"
+    return coarse(label)
+
+
+# libpostal's twenty labels in the common set. A name that is not here stays as `libpostal:NAME` and so never matches.
+LIBPOSTAL_MAP = {
+    "house_number": "AddressNumber",
+    "road": "StreetName",
+    "unit": "Occupancy",
+    "level": "Occupancy",
+    "staircase": "Occupancy",
+    "entrance": "Occupancy",
+    "po_box": "USPSBox",
+    "postcode": "ZipCode",
+    "city": "PlaceName",
+    "suburb": "PlaceName",
+    "city_district": "PlaceName",
+    "island": "PlaceName",
+    "state_district": "PlaceName",
+    "state": "StateName",
+    "house": "BuildingName",
+    "country": "CountryName",
+}
+# The gold labels libpostal can produce, in the common set: a record with any other label (a rural-route box group, a
+# recipient) is outside the "shared labels" figure for libpostal and counts as wrong in the "all records" figure.
+LIBPOSTAL_EXPRESSIBLE = {
+    "AddressNumber", "StreetName", "Occupancy", "USPSBox", "ZipCode", "PlaceName", "StateName", "BuildingName", "CountryName",
+}
+
+
+def expressible(toks):
+    """True when libpostal can produce every scored gold label of the record (the common set)."""
+    return all(common(label) in LIBPOSTAL_EXPRESSIBLE for tok, label in toks if scored(tok) and label)
+
+
+def byte_spans_ci(s, pieces):
+    """Like byte_spans, but ignoring case (libpostal lowercases what it returns)."""
+    low = s.lower()
+    exact = len(low) != len(s)  # lower() changed the length (rare Unicode): match exactly instead
+    hay = s if exact else low
+    out, pos = [], 0
+    for p in pieces:
+        i = hay.find(p if exact else p.lower(), pos)
+        if i < 0:
+            out.append(None)
+            continue
+        out.append((len(s[:i].encode()), len(s[: i + len(p)].encode())))
+        pos = i + len(p)
+    return out
+
+
+def libpostal_pairs(parsed):
+    """[(token, common label)] from libpostal's [(value, label)] pieces: each piece is cut at spaces."""
+    return [(tok, LIBPOSTAL_MAP.get(label, f"libpostal:{label}")) for value, label in parsed for tok in value.split()]
+
+
+def libpostal_spans(s, parsed):
+    """[(start, end, label)] of libpostal's tokens in the input string, found in order and ignoring case."""
+    pairs = libpostal_pairs(parsed)
+    spans = byte_spans_ci(s, [t for t, _ in pairs])
+    return [(sp[0], sp[1], label) for sp, (_, label) in zip(spans, pairs) if sp]
+
+
+def libpostal_home(home=None):
+    return os.path.abspath(os.path.expanduser(home or os.environ.get("LIBPOSTAL_HOME") or "~/projects/libpostal-senzing"))
+
+
+def libpostal_pins(home=None):
+    """What the libpostal build is, from the files the build left (commit, model versions, data checksum)."""
+    home = libpostal_home(home)
+
+    def read(*parts):
+        try:
+            with open(os.path.join(home, *parts), encoding="utf-8") as fh:
+                return fh.read().strip().split()[0]
+        except (OSError, IndexError):
+            return "unknown"
+
+    return {
+        "commit": read("LIBPOSTAL_COMMIT.txt"),
+        "parser_model": read("data", "libpostal", "parser_model_file_version"),
+        "base_data": read("data", "libpostal", "base_data_file_version"),
+        "language_classifier": read("data", "libpostal", "language_classifier_model_file_version"),
+        "data_checksum": read("DATA_CHECKSUM.txt"),
+    }
+
+
+def libpostal_run(strings, home=None):
+    """Parse the strings with libpostal in its own virtualenv: {"load_seconds", "parse_seconds", "results"}."""
+    home = libpostal_home(home)
+    py = os.path.join(home, "venv", "bin", "python")
+    if not os.path.exists(py):
+        sys.exit(f"no libpostal virtualenv at {home} (set LIBPOSTAL_HOME or --libpostal-home; see docs/libpostal-compat.md)")
+    env = dict(os.environ, LD_LIBRARY_PATH=os.path.join(home, "install", "lib"))
+    worker = os.path.join(os.path.dirname(os.path.abspath(__file__)), "libpostal_worker.py")
+    run = subprocess.run([py, "-I", worker], input=json.dumps(strings).encode(), capture_output=True, env=env, check=False)
+    if run.returncode != 0:
+        sys.exit(f"the libpostal worker failed (exit {run.returncode})")
+    out = json.loads(run.stdout)
+    if len(out["results"]) != len(strings):
+        sys.exit("libpostal returned a different number of records than inputs")
+    return out
+
+
+def score_common(toks, spans, pred):
+    """(scored tokens, correct) for one address with every label folded to the common set."""
+    n = ok = 0
+    for (tok, gl), sp in zip(toks, spans):
+        if scored(tok):
+            n += 1
+            ok += common(gl) == common(overlap_label(sp, pred))
+    return n, ok
+
+
+def libpostal_section(rows, args):
+    """The three-way table on the common label set: doorplate, usaddress and libpostal on the same addresses."""
+    lp = libpostal_run([s for _, s, *_ in rows], getattr(args, "libpostal_home", None))
+    pins = libpostal_pins(getattr(args, "libpostal_home", None))
+    names = ("ours", "usaddress", "libpostal")
+    tot = {g: {k: collections.Counter() for k in ("all", "shared")} for g in ("held_out", "seen")}
+    for (group, s, toks, spans, mp, tp), parsed in zip(rows, lp["results"]):
+        preds = {"ours": mp, "usaddress": tp, "libpostal": libpostal_spans(s, parsed)}
+        lspans = byte_spans_ci(s, [t for t, _ in toks])
+        for kind in ("all", "shared"):
+            if kind == "shared" and not expressible(toks):
+                continue
+            t = tot[group][kind]
+            t["addresses"] += 1
+            for who in names:
+                n, ok = score_common(toks, lspans if who == "libpostal" else spans, preds[who])
+                t[f"{who}_tok"] += ok
+                t[f"{who}_addr"] += ok == n
+                if who == "ours":
+                    t["tokens"] += n
+    out = [
+        "", "## Common labels, with libpostal (Senzing model)", "",
+        f"libpostal commit {pins['commit']}, parser model {pins['parser_model']}, base data {pins['base_data']}, "
+        f"language classifier {pins['language_classifier']}, data checksum {pins['data_checksum'][:12]}. "
+        f"Model load {lp['load_seconds']:.1f} s; {len(rows):,} addresses parsed in {lp['parse_seconds']:.1f} s on one thread "
+        "(a check of the run, not the speed benchmark).", "",
+        "All three are scored on one common label set: street parts are `StreetName`, occupancy type and identifier are "
+        "`Occupancy`, box type and identifier are `USPSBox` (libpostal gives `unit` and `po_box` as one piece). "
+        "*All* counts every address; *shared* leaves out the addresses with a gold label libpostal cannot produce "
+        "(a rural-route box group, for example). Addresses out of scope for doorplate are left out of both. "
+        "Figures are not comparable with the fine and coarse tables above.", "",
+    ]
+    for group, title in (("held_out", "Not in usaddress's training files"), ("seen", "Seen in usaddress's training data")):
+        if not tot[group]["all"]["addresses"]:
+            continue
+        out += [f"### {title}", "", "| Addresses | Count | Ours: whole | usaddress: whole | libpostal: whole "
+                "| Ours: tokens | usaddress: tokens | libpostal: tokens |", "|---|---|---|---|---|---|---|---|"]
+        for kind in ("all", "shared"):
+            t = tot[group][kind]
+            n, tk = t["addresses"], t["tokens"]
+            out.append(f"| {kind} | {n} | " + " | ".join(pct(t[f"{w}_addr"], n) for w in names) + " | "
+                       + " | ".join(pct(t[f"{w}_tok"], tk) for w in names) + " |")
+        out.append("")
+    return out
+
+
 def gold_cmd(args):
     seen = load_seen(args.files, args.training_overlap)
     folds = {"fine": lambda l: l, "coarse": coarse}
@@ -195,6 +368,7 @@ def gold_cmd(args):
     example = {}
     only_theirs, only_ours = [], []
     file_rows = []
+    common_rows = []  # (group, string, gold tokens, spans, doorplate spans, usaddress spans) for the libpostal section
     for path in args.files:
         gold = load_gold(path)
         strings = [s for s, _ in gold]
@@ -209,6 +383,8 @@ def gold_cmd(args):
             group = "seen" if key(s) in seen else "held_out"
             counts[group] += 1
             spans = byte_spans(s, [t for t, _ in toks])
+            if getattr(args, "with_libpostal", False):
+                common_rows.append((group, s, toks, spans, mp, tp))
             right = {}
             for who, pred in (("ours", mp), ("usaddress", tp)):
                 for fname, fold in folds.items():
@@ -294,6 +470,8 @@ def gold_cmd(args):
     report += [f"- `{s}`" for s in only_theirs[: args.top * 4]]
     report += ["", f"## Not in training files: right for ours, wrong for usaddress ({len(only_ours)} addresses)", ""]
     report += [f"- `{s}`" for s in only_ours[: args.top * 4]]
+    if common_rows:
+        report += libpostal_section(common_rows, args)
     return report
 
 
@@ -449,6 +627,8 @@ def main():
     g = sub.add_parser("gold", help="score both parsers on usaddress-format XML")
     g.add_argument("files", nargs="+")
     g.add_argument("--training-overlap", help="list of addresses usaddress trained on (default: in_training.txt beside the files)")
+    g.add_argument("--with-libpostal", action="store_true", help="add a three-way table with libpostal (needs a libpostal build, see --libpostal-home)")
+    g.add_argument("--libpostal-home", help="the libpostal build folder (default: $LIBPOSTAL_HOME or ~/projects/libpostal-senzing)")
     t = sub.add_parser("tag", help="compare ParsedAddress::tag() with usaddress.tag()")
     t.add_argument("files", nargs="+")
     t.add_argument("--training-overlap", help="as for gold")
