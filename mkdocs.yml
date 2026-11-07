@@ -83,6 +83,7 @@ nav:
       - Custom layers: custom-layers.md
       - Anonymizing data: anonymizing.md
       - Coming from usaddress: usaddress-compat.md
+      - Compared with libpostal: libpostal-compat.md
   - Python:
       - Python guide: python.md
       - Python reference: python-api.md

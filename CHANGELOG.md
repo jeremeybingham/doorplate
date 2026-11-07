@@ -9,6 +9,7 @@ change to what an input produces needs a new key version.
 
 ### Added
 
+- **A page comparing doorplate with libpostal** (docs only, #215 step 1): what each does, how libpostal's twenty labels map to doorplate's fields, `expand_address` against the key, and the Senzing model that the later measurements will use. No libpostal figures yet.
 - **Review tool: changed-rows queue** (tooling only, #568): `tools/review/changed_queue.py` builds a seeded, stratified review queue of the rows whose key, unit key or warnings changed between two `key_diff.py dump-all` directories, with the earlier reading shown under the current one. Counts only on stdout.
 - **Determinism checks** (tooling only, #567): `tools/compare/phase_g_check.py` compares the WebAssembly build with the native tool (all 30 output columns) and one rayon thread with thirteen (keys, warnings, unit fields) on a seeded sample of up to 10M rows, counts only.
 - **A road number written before the road type stays in the street name** (`k5`, #542, #316): `331 5659 PRIVATE ROAD`, `331 1217 COUNTY ROAD`, `2210 3315 FM RD` and `331 5659 FARM TO MARKET RD` read the street `5659 PRIVATE` / `1217 COUNTY` / `3315 FM` with suffix `RD` instead of the street `PRIVATE RD` with `5659` left over and `multiple_addresses`, so different roads no longer share one key (about 80,000 rows, mostly Texas). Only `ROAD`/`RD`, a number of three or four digits and the road words `PRIVATE`, `COUNTY`, `STATE`, `FM`, `FARM TO MARKET` take it. Corpus `np-013`, `np-019` to `np-025`.

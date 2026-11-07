@@ -119,7 +119,7 @@ Puerto Rico street-first forms wait for the Puerto Rico research issue. Nothing 
 
 International addresses are **not supported** (see below). Two questions about them are being **researched**, not planned: Canadian addresses, as country
 support, a layer or a separate crate (#203), and a comparison with libpostal, which is international, with the question of whether a libpostal-shaped
-output is worth adding (#215). A result would become its own issue; neither changes the list above.
+output is worth adding (#215; the written comparison, [`libpostal-compat.md`](libpostal-compat.md), is done, the measurements are not). A result would become its own issue; neither changes the list above.
 
 ## Not planned
 
