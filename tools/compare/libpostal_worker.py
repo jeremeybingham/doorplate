@@ -18,9 +18,8 @@ import time
 def main():
     strings = json.load(sys.stdin)
     t = time.time()
-    from postal.parser import (
-        parse_address,  # importing loads the model: that is the load time
-    )
+    # importing loads the model: that is the load time
+    from postal.parser import parse_address
 
     parse_address("1 main st")
     load = time.time() - t
