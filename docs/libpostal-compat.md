@@ -160,6 +160,42 @@ How to read it:
 - Speed is not measured here (step 5): libpostal parsed the 19,586 suite strings in 1.3 s on one thread after a model load of about
   4 s, which is a check of the run only.
 
+## libpostal's own tests and Senzing's test set (2026-11-07)
+
+**What libpostal ships.** Its repository has parser tests in `test/test_parser.c`: hand-written cases per country, each an input string and
+the labelled components libpostal should return. The US block, `test_us_parses`, has 53 cases. The data the models were trained on is
+published as tarballs of template-formatted, tagged addresses (about 5.8 GB from OpenStreetMap, 6.6 GB from OpenAddresses, 0.2 GB from
+Senzing). The held-out data behind the README's 99.45% is not published as a file, and libpostal's `address_parser_test` program scores a
+model on a test file of that format, so a held-out file exists only inside a training run. A US slice of the published training data
+would be data libpostal was fitted to, so it would flatter libpostal; it is not scored here.
+
+**What was scored** (`tools/compare/libpostal_tests.py`, one run, libpostal `25099c5` with the Senzing 1.2.0 parser): all three parsers on
+the same fields (house number, road, place, state, ZIP, and the unit when the gold has one). A row is right when every field its gold
+has is right; a field a parser adds that the gold lacks is ignored; text is compared as written without case or punctuation. Selection:
+the 53 cases of `test_us_parses` (read from the clone, not copied); and the 2,233 rows of Senzing's `test_data_v1.2.0.csv` whose
+`country_code` is `us`.
+
+| Set | doorplate | usaddress | libpostal |
+|---|---|---|---|
+| libpostal's own US tests (53 cases) | 86.8% | 90.6% | 96.2% |
+| Senzing's test set, US rows (2,233) | 97.6% | 90.0% | 98.6% |
+
+Reading it:
+
+- libpostal's tests are its regression cases, so a high score for it is expected, as usaddress scores near 100% on its own files. It still
+  returns exactly the expected components for only 51 of its own 53 cases: the Senzing model is not the one the tests were written for.
+- With 53 cases the intervals are wide (doorplate 75 to 94%). The cases are hand-picked hard and odd inputs. Of doorplate's seven
+  misses, three are outside its scope (an organisation or venue name before the house number, twice, and a search phrase that is not an
+  address), three are shapes worth a look in the rule loop (not filed: a floor written as an ordinal, `6th Fl`, after the street; a
+  county written between the city and the state, `Seattle, King County, WA`, which makes the city read as part of the street; and
+  `Apt No. 4`, where the `No.` is not kept in the unit), and one has a line break inside a one-line string.
+- Senzing's test set is the nearest thing to held-out data, but nearly all of it is OpenStreetMap address tags written out as one line:
+  clean, uniform input, close to what libpostal was trained on. libpostal leads doorplate there by one point (98.6% against 97.6%, intervals
+  that overlap at the edges), and both lead usaddress, by 7.6 and 8.6 points. Senzing's own US figure (4.58% failing in v1.2.0) uses a
+  definition of failure that is not stated, so it is not comparable.
+- The doorplate figure here is not the 97.2% in [`benchmarks.md`](benchmarks.md): that used a stricter rule (an empty gold field had to
+  stay empty) and counted a different set of fields.
+
 ## What a fair comparison needs
 
 - The same inputs for both, and the same scoring rule (whole address right, on the fields both have), with the intervals the
