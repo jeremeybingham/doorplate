@@ -311,6 +311,10 @@ finish in a few minutes under the profile.
   are kept in `docs/benchmarks.md`, each with the version it came from.
 - A new version is also needed when the usaddress pin moves or a source is replaced; the old
   version stays runnable.
+- **Letter after a house number (decided in #586, R7).** In `v2`, a letter A to D directly after the
+  house number counts as right whether the gold label puts it in the number or in the unit, like
+  the existing `SAME` map for `AddressNumberSuffix`. `v1` stays frozen, so its `compare` track keeps
+  the constant -212 that the #487 convention costs; the release notes cite it.
 
 ## Step 2 results
 

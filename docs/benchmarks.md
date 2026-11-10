@@ -69,7 +69,9 @@ the Florida check with a command-line binary built from each tree, speed on a qu
 The gain is in the rare shapes: the `hard` stratum (a name or recipient text around the address, boxes, a unit written oddly) moves 7.2 points and
 the `natural` stratum 0.2. The geocode benchmark loses 0.2 on dev: 113 of its 60,522 strings read their street parts differently, and at least 92
 of them are one rule (a letter A to D after the house number joins the number, `123 A ELM ST` is `123A`, as the reviewed sources write it;
-the benchmark's labels keep the letter in the street name). No city changed. The suite does not attribute a gain to a rule, and "improves the suite
+the benchmark's labels keep the letter in the street name). Most of those strings are not a letter at all: they are a street name the benchmark
+split with a stray space on purpose (`318 D ELBERT LN` for DELBERT, its "space addition" error), where the benchmark's label is right and
+both our readings are wrong. Since 0.6.0-dev a letter A to D there is a unit (#487); see "What caps the geocode score" below. No city changed. The suite does not attribute a gain to a rule, and "improves the suite
 score" is not a reason for one (see below).
 
 **Speed.** 0.5.0 is lower than 0.4.1 (Python `parse` on the golden-corpus inputs -12%, on the geocode addresses -10%; the suite's `parse_tokens` on one thread -8%,
@@ -295,6 +297,31 @@ record, kept private, true city known) as one line with no commas
 (`tools/compare/oneline_fl.py`): the city is right for 94.7% of them, 76.6% of the
 5,735 whose line 1 ends in a spelled-out compass word (`5TH AVE NORTH`) and 47.2% of
 the 8,702 whose true city starts with one (`NORTH MIAMI`). The sample is fixed, so runs are comparable: 0.4.1 and 0.5.0 give the same city for every one of the 300,000 records.
+
+#### What caps the geocode score
+
+The benchmark is built by injecting errors into clean reference addresses: half the addresses carry one or two of 21 error types
+(the paper's Table 1), among them a street name split by a space (`Reachcliff` → `Reach Cliff`), a road type written twice
+(`Main St` → `Main St St`), a dropped road type, city, state or ZIP, a misspelled or abbreviated city and a compass word added
+to the city. Its "city" is also often a neighborhood or subdivision name rather than a mailing city. Every whole-address error of
+doorplate on `dev` (development build after 0.5.1, coarse scoring) was sorted into a cause:
+
+| `dev`, 60,522 addresses | Coarse score | Paper's 8-label score |
+|---|---|---|
+| Right | 94.30% | 89.33% |
+| Injected input errors (dropped parts, misspelled or abbreviated cities, a compass word added, doubled road types, misspelled route words) | 2,381 | 5,024 |
+| A street name split by a space | 143 | 364 |
+| A city no place list holds (subdivisions, neighborhoods), on one line with no commas | 565 | 566 |
+| A documented doorplate reading the benchmark labels differently (a letter A to D after the number is a unit, #487; a compass word after the suffix is the postdirectional; a grid direction in a county road name) | 193 | 221 |
+| Parser errors with a named shape | 126 | 268 |
+| Other | 39 | 16 |
+
+Counting the documented readings as agreements gives 94.6% (paper scoring 89.7%); reading split names through as well would give
+94.9% (90.3%). No other gold label in a read of 40 errors was wrong. Only 71.5% of the `dev` cities are in the place list (86.4% on `test`,
+which the place list was first fitted to), so the unlisted place is the largest error that is not injected. In our own seven sources a split
+street name is almost absent (in the full National Address Database, a letter A to D plus a word that joins into a street word is 0.017% of
+names, nearly all county roads `C R` and initials), so doorplate does not read through a stray space: on real data that join would be
+wrong far more often than right.
 
 ### Senzing's libpostal test set (a secondary check)
 
