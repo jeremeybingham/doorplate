@@ -755,6 +755,21 @@ PROBES = [
     # Needs the city field (hits(): city and state), so no pattern.
     ("city-is-state", "357", "the city field holds the state and the real city is on line 2", None, "S", 3),
     ("unit-or-box-in-city", "244", "a unit or a box in the city field", None, "S", 2),
+    # R8 of #586 (decided in R7): one probe per rule or shape. Counts over the records files; key-affecting ones are k5.
+    ("route-letter-road", "589", "a lettered county or state route road after a street (STATE RD QQ)", rf"\b(?:COUNTY|STATE|CTY|ST) (?:ROAD|RD) [A-Z]{{2,3}}\b", "S", 3),
+    ("ocean-gulf-name", "589", "a street name that ends in OCEAN or GULF (12 5TH ST OCEAN)", rf"^[0-9]+ .*\b{SUF} (?:OCEAN|GULF)\b", "S", 3),
+    ("suffix-building-unit", "589", "a building or unit word after a street suffix (PKWY LWR, AVE BLDG)", rf"\b{SUF} (?:LWR|UPR|BLDG|BUILDING)\b", "S", 2),
+    ("range-second-number", "590", "a second number 1 to 20 above the first, with the same parity (read as a unit); hits()", None, "M", 3),
+    ("five-digit-join", "591", "two digits plus three digits outside NYC, Hawaii and Massachusetts (one five-digit number); hits()", None, "M", 3),
+    ("line2-digit-run", "592", "line 2 is only a run of one digit, seven or more long", r"\|\s*(?:0{7,}|1{7,}|2{7,}|3{7,}|4{7,}|5{7,}|6{7,}|7{7,}|8{7,}|9{7,})\b", "S", 1),
+    ("name-road-number-unit", "593", "a road word and a number after a name, read as a unit (HOLLOW ROAD 412)", r"\b[A-Z]+ ROAD [0-9]+\b", "M", 3),
+    ("letter-street-two-suffix", "594", "a one-letter street before its own suffix (9 C ST RD)", rf"^[0-9]+ [A-Z] {SUF} {SUF}\b", "S", 2),
+    ("old-digit-letter", "595", "OLD and a digit-letter after it (18 OLD 25A)", r"\bOLD [0-9]+[A-Z]\b", "S", 2),
+    ("po-drawer-letter", "598", "a lettered PO drawer (PO DRAWER C)", r"\bDRAWER [A-Z]\b", "S", 2),
+    ("zip4-star", "599", "a ZIP+4 written with a star (75000*1234)", r"\b[0-9]{5}\*[0-9]{0,4}\b", "S", 2),
+    ("road-letter", "600", "ROAD followed by one letter before the city (ROAD B, ELMTOWN)", r"\bROAD [A-Z]\b", "S", 2),
+    ("spelled-number-commas", "601", "a line that starts with a spelled number and has a comma", r"^(?:ONE|TWO|THREE|FOUR|FIVE|SIX|SEVEN|EIGHT|NINE|TEN|TWELVE|TWENTY|THIRTY|FORTY|FIFTY|HUNDRED|THOUSAND)\b[A-Z ]*,", "S", 2),
+    ("hash-apt-after-street", "602", "# APT written after the street", rf"\b{SUF} # ?APT\b", "S", 1),
 ]
 # Open rule issues that have no probe, and why. Every other open issue with the label `area:rules` has a probe in PROBES; the
 # issues about docs, tooling, the API or the architecture, and the trackers, are not text shapes and need none.
@@ -769,6 +784,12 @@ NO_PROBE = {
     550: "the same unit written on both lines: counted by the USPS round-trip scan (shape_scan.py --mode roundtrip); the shape needs both lines compared, not one pattern",
     486: "a curated list of neighborhood city names: counted by city values in the sources (#485), not a text shape",
     410: "research: naming the known-word chains and where the tokenizer and tagger differ; a reading task, not a shape",
+    596: "one-line input (a pre-direction, a suffix-word name, an unlisted city): sized on one-line data by tools/compare/oneline_fl.py, not a field-form text shape (#586 R7 row 11)",
+    597: "one-line input (a listed city ending in a suffix word, no comma before it): sized on one-line data, not a field-form text shape (#586 R7 row 11)",
+    583: "a before and after count of the warnings PR 494 changed, by code (#586 B1); not a text shape",
+    584: "a spaced hyphen between house numbers (#586 B3): its shapes are sized in that step, and its probe is added there",
+    585: "possibly_truncated on Netsyms rows (#586 B4): its shapes are sized in that step, and its probe is added there",
+    578: "a convention question, not a text shape: the letter after a house number is documented in docs/usaddress-compat.md and docs/benchmarks.md (#586 R8, #603)",
 }
 NOT_A_SHAPE_LABELS = ("tracker", "area:docs", "area:tooling", "area:api", "area:architecture")
 
@@ -904,6 +925,14 @@ def hits(line1, line2, zip_code=None, city=None, state=None):
     m = re.match(rf"^{BOX} ([0-9]{{5}})$", (line2 or "").upper().strip())
     if m and zip_code and m.group(1) == str(zip_code)[:5]:
         out.append("po-box-equals-zip")
+    # A second number 1 to 20 above the first, with the same parity, is a range (#563, #523; the R8 probe range-second-number).
+    m = re.match(r"^([0-9]+) ([0-9]+) [A-Z]", (line1 or "").upper().strip())
+    if m and 2 <= int(m.group(2)) - int(m.group(1)) <= 20 and (int(m.group(2)) - int(m.group(1))) % 2 == 0:
+        out.append("range-second-number")
+    # Two digits plus three digits, outside NYC, Hawaii and Massachusetts (#523, the R8 probe five-digit-join).
+    m = re.match(r"^[0-9]{2} [0-9]{3} [A-Z]", (line1 or "").upper().strip())
+    if m and str(state or "").upper().strip() not in ("NY", "NEW YORK", "HI", "HAWAII", "MA", "MASSACHUSETTS"):
+        out.append("five-digit-join")
     return out
 
 
