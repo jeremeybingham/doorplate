@@ -15,7 +15,7 @@ Expected: 0 rows differ. Uses the `doorplate` that is installed in the running P
 The sample is every source of `local-data/keycompare/sources.txt` (or `--sources FILE`), drawn with DuckDB's seeded reservoir sample,
 and is processed in chunks of `--chunk` rows, so the disk holds one chunk at a time. Stdout and the exit status carry counts only
 (0: no difference, 1: some rows differ, 2: the check could not run); no row text is printed or kept: the chunk files live in a
-temporary directory under `local-data/` and are deleted. Needs `duckdb`; `wasm-native` needs `node` (20 or newer).
+temporary directory under `local-data/` and are deleted. `--error-log FILE` keeps the full traceback of a failed check in a local file. Needs `duckdb`; `wasm-native` needs `node` (20 or newer).
 This library formats and parses; it does not validate that an address exists or can receive mail.
 """
 
@@ -27,6 +27,7 @@ import subprocess
 import sys
 import tempfile
 import time
+import traceback
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -60,6 +61,14 @@ def sample_table(con, srcs, rows, seed):
     return take
 
 
+def read_native_csv(con, path):
+    """Load the native tool's CSV as the table `nat(i, ...)`, all columns text. The dialect is pinned (comma, `"` quote and escape):
+    DuckDB's sniffer takes an apostrophe for the quote character in a chunk where it is common (`AVENUE 'O'`) and then reads the
+    wrong number of columns (the InvalidInputException that stopped the away run's 10M check, #579)."""
+    con.execute(f"create or replace table nat as select row_number() over () - 1 as i, * from "
+                f"read_csv('{path}', header=true, all_varchar=true, delim=',', quote='\"', escape='\"', strict_mode=false)")
+
+
 def compare_wasm_native(args, con, tmp, n):
     cmd_wasm = ["node", str(HERE / "wasm_batch.mjs"), str(args.wasm)]
     differ = collections_counter = {}
@@ -83,8 +92,7 @@ def compare_wasm_native(args, con, tmp, n):
             print("node failed", file=sys.stderr)
             return 2
         # the native file: the five input columns, then COLUMNS; the wasm file: one array (or null) per input row
-        con.execute(f"create or replace table nat as select row_number() over () - 1 as i, * from "
-                    f"read_csv('{outp}', header=true, all_varchar=true, strict_mode=false)")
+        read_native_csv(con, outp)
         con.execute(f"create or replace table was as select row_number() over () - 1 as i, c from "
                     f"read_json('{wasm_out}', format='newline_delimited', columns={{c: 'VARCHAR[]'}})")
         nn, nw = (con.execute(f"select count(*) from {t}").fetchone()[0] for t in ("nat", "was"))
@@ -172,6 +180,8 @@ def main(argv=None):
     ap.add_argument("--workers", type=int, default=13)
     ap.add_argument("--sources", type=Path, default=ROOT / "local-data" / "keycompare" / "sources.txt")
     ap.add_argument("--tmp-root", type=Path, default=ROOT / "local-data" / "phase-g")
+    ap.add_argument("--error-log", type=Path, help="write the full traceback of a failed check here (DuckDB messages can quote rows: "
+                    "keep the file in local-data); the output still names only the exception type")
     args = ap.parse_args(argv)
     if args.check == "wasm-native" and not (args.wasm and args.exe and args.wasm.exists() and args.exe.exists()):
         print("wasm-native needs --wasm and --exe that exist (build: cargo build --release -p doorplate-cli; "
@@ -192,6 +202,8 @@ def main(argv=None):
             rc = (compare_wasm_native if args.check == "wasm-native" else compare_threads)(args, con, tmp, n)
         except Exception as e:  # noqa: BLE001
             print(f"check failed: {type(e).__name__}", file=sys.stderr)
+            if args.error_log:
+                args.error_log.write_text(traceback.format_exc())
             return 2
         print(f"{'OK' if rc == 0 else 'DIFFERENCES' if rc == 1 else 'NOT RUN'} after {time.time() - t0:.0f} s")
         return rc
