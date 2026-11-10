@@ -792,6 +792,15 @@ PROBES = [
         "S",
         3,
     ),
+    # #586 B3: the hyphen beside the second number after the house number (#584 closed into #612).
+    (
+        "hyphen-before-second-number",
+        "612",
+        "a hyphen with a space beside it between the house number and a second number (1900 -938 ST, 1900 - 938 ST, 1900- 938 ST)",
+        r"^[0-9]+[A-Z]? +- ?[0-9]+[A-Z]?(?: |$)|^[0-9]+[A-Z]? +-[0-9]+[A-Z]?(?: |$)|^[0-9]+- +[0-9]+[A-Z]?(?: |$)",
+        "M",
+        2,
+    ),
 ]
 # Open rule issues that have no probe, and why. Every other open issue with the label `area:rules` has a probe in PROBES; the
 # issues about docs, tooling, the API or the architecture, and the trackers, are not text shapes and need none.
@@ -809,7 +818,6 @@ NO_PROBE = {
     596: "one-line input (a pre-direction, a suffix-word name, an unlisted city): sized on one-line data by tools/compare/oneline_fl.py, not a field-form text shape (#586 R7 row 11)",
     597: "one-line input (a listed city ending in a suffix word, no comma before it): sized on one-line data, not a field-form text shape (#586 R7 row 11)",
     583: "a before and after count of the warnings PR 494 changed, by code (#586 B1); not a text shape",
-    584: "a spaced hyphen between house numbers (#586 B3): its shapes are sized in that step, and its probe is added there",
     585: "possibly_truncated on Netsyms rows (#586 B4): its shapes are sized in that step, and its probe is added there",
     578: "a convention question, not a text shape: the letter after a house number is documented in docs/usaddress-compat.md and docs/benchmarks.md (#586 R8, #603)",
 }
