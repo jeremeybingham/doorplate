@@ -801,6 +801,8 @@ PROBES = [
         "M",
         2,
     ),
+    # #586 B4: the last line inside line 1 (#585 closed into #614); a field probe in hits().
+    ("last-line-in-line1", "614", "line 1 ends with the row's own state and a five-digit ZIP (214 N PARK AVE OAKLAND NE 68045); hits()", None, "M", 3),
 ]
 # Open rule issues that have no probe, and why. Every other open issue with the label `area:rules` has a probe in PROBES; the
 # issues about docs, tooling, the API or the architecture, and the trackers, are not text shapes and need none.
@@ -818,7 +820,6 @@ NO_PROBE = {
     596: "one-line input (a pre-direction, a suffix-word name, an unlisted city): sized on one-line data by tools/compare/oneline_fl.py, not a field-form text shape (#586 R7 row 11)",
     597: "one-line input (a listed city ending in a suffix word, no comma before it): sized on one-line data, not a field-form text shape (#586 R7 row 11)",
     583: "a before and after count of the warnings PR 494 changed, by code (#586 B1); not a text shape",
-    585: "possibly_truncated on Netsyms rows (#586 B4): its shapes are sized in that step, and its probe is added there",
     578: "a convention question, not a text shape: the letter after a house number is documented in docs/usaddress-compat.md and docs/benchmarks.md (#586 R8, #603)",
 }
 NOT_A_SHAPE_LABELS = ("tracker", "area:docs", "area:tooling", "area:api", "area:architecture")
@@ -962,6 +963,10 @@ def hits(line1, line2, zip_code=None, city=None, state=None):
     m = re.match(rf"^{BOX} ([0-9]{{5}})$", (line2 or "").upper().strip())
     if m and zip_code and m.group(1) == str(zip_code)[:5]:
         out.append("po-box-equals-zip")
+    # Line 1 ends with the row's own state and a five-digit ZIP: the last line is inside line 1 (#614, from #585).
+    m = re.search(r" ([A-Z]{2}) [0-9]{5}$", (line1 or "").upper().strip())
+    if m and state and m.group(1) == str(state).upper().strip() and re.match(r"^[0-9]+ [A-Z0-9]", (line1 or "").upper().strip()):
+        out.append("last-line-in-line1")
     # A second number 1 to 20 above the first, with the same parity, is a range (#563, #523; the R8 probe range-second-number).
     m = re.match(r"^([0-9]+) ([0-9]+) [A-Z]", (line1 or "").upper().strip())
     if m and 2 <= int(m.group(2)) - int(m.group(1)) <= 20 and (int(m.group(2)) - int(m.group(1))) % 2 == 0:

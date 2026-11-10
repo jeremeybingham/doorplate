@@ -457,3 +457,21 @@ def test_the_coverage_probes_pass_near_misses(line1, line2, zip_code, city, stat
 def test_the_b2_probes(line1, line2, zip_code, expect, hit):
     """#586 B2 (#605 to #608) and B3 (#612): invented rows."""
     assert (expect in probes.hits(line1, line2, zip_code, "SPRINGTOWN", "IN")) is hit
+
+
+@pytest.mark.parametrize(
+    "line1, state, hit",
+    [
+        ("214 N PARK AVE OAKLAND NE 68045", "NE", True),
+        ("214 N PARK AVE OAKLAND NE 68045", "ne", True),
+        ("214 N PARK AVE OAKLAND NE 68045", "KS", False),
+        ("214 N PARK AVE NE 68045", "NE", True),
+        ("214 N PARK AVE NE", "NE", False),
+        ("214 N PARK AVE", "NE", False),
+        ("NE 68045", "NE", False),
+        ("214 N PARK AVE OAKLAND NE 68045", None, False),
+    ],
+)
+def test_last_line_in_line1_probe(line1, state, hit):
+    """#586 B4 (#614): line 1 ends with the row's own state and a five-digit ZIP. Invented rows."""
+    assert ("last-line-in-line1" in probes.hits(line1, None, None, "SPRINGTOWN", state)) is hit
