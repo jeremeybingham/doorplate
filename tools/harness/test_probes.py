@@ -418,3 +418,34 @@ def test_the_coverage_probes_pass_near_misses(line1, line2, zip_code, city, stat
         "no-for-north", "unit-marker-after-suffix", "name-or-business-line2", "co-name-street-one-line", "state-word-city-no-state", "region-phrase-as-state", "successors-assigns-line1", "letter-after-number",
     }
     assert not set(probes.hits(line1, line2, zip_code, city, state)) & new
+
+
+@pytest.mark.parametrize(
+    "line1, line2, zip_code, expect, hit",
+    [
+        ("12 OAK ST", None, "0", "zip-zero", True),
+        ("12 OAK ST", None, "0000", "zip-zero", True),
+        ("12 OAK ST", None, "00000", "zip-zero", False),
+        ("12 OAK ST", None, "62704", "zip-zero", False),
+        ("12 OAK ST", None, "7500112", "zip-cut-no-hyphen", True),
+        ("12 OAK ST", None, "75001123", "zip-cut-no-hyphen", True),
+        ("12 OAK ST", None, "750011234", "zip-cut-no-hyphen", False),
+        ("12 OAK ST", None, "750011", "zip-cut-no-hyphen", False),
+        ("4212 OAK DRIVE", "5 APT 12", None, "number-before-designator-line2", True),
+        ("4212 OAK DRIVE", "3 # 305", None, "number-before-designator-line2", True),
+        ("4212 OAK DRIVE", "2B UNIT 14", None, "number-before-designator-line2", True),
+        ("4212 OAK DRIVE", "FL 5 APT 12", None, "number-before-designator-line2", False),
+        ("4212 OAK DRIVE", "APT 12", None, "number-before-designator-line2", False),
+        ("4212 OAK DRIVE", "5 APARTMENT", None, "number-before-designator-line2", False),
+        ("4212 OLD UNITED STATES HIGHWAY 27", None, None, "united-states-highway-gap", True),
+        ("4212 UNITED STATES HIGHWAY 41-45", None, None, "united-states-highway-gap", True),
+        ("4212 UNITED STATES HIGHWAY 41/45", None, None, "united-states-highway-gap", True),
+        ("4212 S UNITED STATES HIGHWAY 27", None, None, "united-states-highway-gap", False),
+        ("4212 EAST UNITED STATES HIGHWAY 27", None, None, "united-states-highway-gap", False),
+        ("4212 UNITED STATES HIGHWAY 27", None, None, "united-states-highway-gap", False),
+        ("4212 UNITED STATES HIGHWAY 41 / 45", None, None, "united-states-highway-gap", False),
+    ],
+)
+def test_the_b2_probes(line1, line2, zip_code, expect, hit):
+    """#586 B2 (#605 to #608): invented rows."""
+    assert (expect in probes.hits(line1, line2, zip_code, "SPRINGTOWN", "IN")) is hit

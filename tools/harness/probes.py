@@ -756,7 +756,7 @@ PROBES = [
     ("city-is-state", "357", "the city field holds the state and the real city is on line 2", None, "S", 3),
     ("unit-or-box-in-city", "244", "a unit or a box in the city field", None, "S", 2),
     # R8 of #586 (decided in R7): one probe per rule or shape. Counts over the records files; key-affecting ones are k5.
-    ("route-letter-road", "589", "a lettered county or state route road after a street (STATE RD QQ)", rf"\b(?:COUNTY|STATE|CTY|ST) (?:ROAD|RD) [A-Z]{{2,3}}\b", "S", 3),
+    ("route-letter-road", "589", "a lettered county or state route road after a street (STATE RD QQ)", r"\b(?:COUNTY|STATE|CTY|ST) (?:ROAD|RD) [A-Z]{2,3}\b", "S", 3),
     ("ocean-gulf-name", "589", "a street name that ends in OCEAN or GULF (12 5TH ST OCEAN)", rf"^[0-9]+ .*\b{SUF} (?:OCEAN|GULF)\b", "S", 3),
     ("suffix-building-unit", "589", "a building or unit word after a street suffix (PKWY LWR, AVE BLDG)", rf"\b{SUF} (?:LWR|UPR|BLDG|BUILDING)\b", "S", 2),
     ("range-second-number", "590", "a second number 1 to 20 above the first, with the same parity (read as a unit); hits()", None, "M", 3),
@@ -770,6 +770,28 @@ PROBES = [
     ("road-letter", "600", "ROAD followed by one letter before the city (ROAD B, ELMTOWN)", r"\bROAD [A-Z]\b", "S", 2),
     ("spelled-number-commas", "601", "a line that starts with a spelled number and has a comma", r"^(?:ONE|TWO|THREE|FOUR|FIVE|SIX|SEVEN|EIGHT|NINE|TEN|TWELVE|TWENTY|THIRTY|FORTY|FIFTY|HUNDRED|THOUSAND)\b[A-Z ]*,", "S", 2),
     ("hash-apt-after-street", "602", "# APT written after the street", rf"\b{SUF} # ?APT\b", "S", 1),
+    # #586 B2: one probe per rule issue filed from the NAD leftover shapes.
+    ("zip-zero", "605", "a ZIP field of only zeros, shorter than five digits (0, 0000); hits()", None, "S", 1),
+    ("zip-cut-no-hyphen", "606", "a ZIP field of seven or eight digits: a ZIP+4 cut short with no hyphen (7500112); hits()", None, "S", 3),
+    (
+        "number-before-designator-line2",
+        "607",
+        "line 2 is a bare number before a designated unit (5 APT 12, 3 # 305: NAD's floor or building)",
+        r"\| [0-9]+[A-Z]? (?:APT|APARTMENT|UNIT|STE|SUITE|#|RM|ROOM|LOT|TRLR|SPC) ?[0-9A-Z][0-9A-Z-]*$",
+        "M",
+        2,
+    ),
+    (
+        "united-states-highway-gap",
+        "608",
+        "UNITED STATES HIGHWAY after a word that is not a direction (OLD), or with a route pair (41-45, 41/45)",
+        (
+            r"\b(?!(?:N|S|E|W|NE|NW|SE|SW|NORTH|SOUTH|EAST|WEST|NORTHEAST|NORTHWEST|SOUTHEAST|SOUTHWEST)\b)[A-Z]+ UNITED STATES (?:HIGHWAY|HWY) [0-9]"
+            r"|\bUNITED STATES (?:HIGHWAY|HWY) [0-9]+[-/][0-9]"
+        ),
+        "S",
+        3,
+    ),
 ]
 # Open rule issues that have no probe, and why. Every other open issue with the label `area:rules` has a probe in PROBES; the
 # issues about docs, tooling, the API or the architecture, and the trackers, are not text shapes and need none.
@@ -918,6 +940,13 @@ def hits(line1, line2, zip_code=None, city=None, state=None):
     # A placeholder city (#468).
     if c in CITY_PLACEHOLDER:
         out.append("city-placeholder")
+    z = (str(zip_code) if zip_code else "").strip()
+    # A ZIP field of only zeros, shorter than five digits: NAD's stand-in for no ZIP (#605).
+    if re.fullmatch(r"0{1,4}", z):
+        out.append("zip-zero")
+    # A ZIP+4 cut short with no hyphen: seven or eight digits (#606).
+    if re.fullmatch(r"[0-9]{7,8}", z):
+        out.append("zip-cut-no-hyphen")
     # The street line written twice (#236).
     if repeated_line(line1):
         out.append("repeated-line")
