@@ -444,8 +444,34 @@ def test_the_coverage_probes_pass_near_misses(line1, line2, zip_code, city, stat
         ("4212 EAST UNITED STATES HIGHWAY 27", None, None, "united-states-highway-gap", False),
         ("4212 UNITED STATES HIGHWAY 27", None, None, "united-states-highway-gap", False),
         ("4212 UNITED STATES HIGHWAY 41 / 45", None, None, "united-states-highway-gap", False),
+        ("1900 -938 PAVILION DR", None, None, "hyphen-before-second-number", True),
+        ("1900 - 938 PAVILION DR", None, None, "hyphen-before-second-number", True),
+        ("1900- 938 PAVILION DR", None, None, "hyphen-before-second-number", True),
+        ("1900A -938 PAVILION DR", None, None, "hyphen-before-second-number", True),
+        ("1900 -1B BALTIC AVE", None, None, "hyphen-before-second-number", True),
+        ("1900-938 PAVILION DR", None, None, "hyphen-before-second-number", False),
+        ("1900 BALTIC AVE - 938", None, None, "hyphen-before-second-number", False),
+        ("1900 -ELM ST", None, None, "hyphen-before-second-number", False),
     ],
 )
 def test_the_b2_probes(line1, line2, zip_code, expect, hit):
-    """#586 B2 (#605 to #608): invented rows."""
+    """#586 B2 (#605 to #608) and B3 (#612): invented rows."""
     assert (expect in probes.hits(line1, line2, zip_code, "SPRINGTOWN", "IN")) is hit
+
+
+@pytest.mark.parametrize(
+    "line1, state, hit",
+    [
+        ("214 N PARK AVE OAKLAND NE 68045", "NE", True),
+        ("214 N PARK AVE OAKLAND NE 68045", "ne", True),
+        ("214 N PARK AVE OAKLAND NE 68045", "KS", False),
+        ("214 N PARK AVE NE 68045", "NE", True),
+        ("214 N PARK AVE NE", "NE", False),
+        ("214 N PARK AVE", "NE", False),
+        ("NE 68045", "NE", False),
+        ("214 N PARK AVE OAKLAND NE 68045", None, False),
+    ],
+)
+def test_last_line_in_line1_probe(line1, state, hit):
+    """#586 B4 (#614): line 1 ends with the row's own state and a five-digit ZIP. Invented rows."""
+    assert ("last-line-in-line1" in probes.hits(line1, None, None, "SPRINGTOWN", state)) is hit
