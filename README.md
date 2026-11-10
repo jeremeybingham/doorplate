@@ -306,8 +306,8 @@ option. The ZIP tables in `crates/doorplate/data/states/` and
 ## About the author
 
 I am Jeremey Bingham. I have worked in technology since 2007, with Python for about ten years
-and Rust for about two. I spent years inside real estate data: the Realtor Association of the
-Palm Beaches and [BeachesMLS](https://www.beachesmls.com/), the [Massachusetts Association of Realtors](https://www.marealtor.com/), where I was Director of
+and Rust for about two. I spent years inside real estate data: the [Realtor Association of the
+Palm Beaches / BeachesMLS](https://www.beachesmls.com/), the [Massachusetts Association of Realtors](https://www.marealtor.com/), where I was Director of
 Information Technology, and [HouseCanary](https://www.housecanary.com/), where I built APIs over residential property records. I
 also published [reso-client](https://github.com/jeremeybingham/reso_client), a Rust client for the
 RESO Web API. My resume is at [resume.jeremeybingham.com](https://resume.jeremeybingham.com).
