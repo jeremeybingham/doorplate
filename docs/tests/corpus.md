@@ -446,7 +446,7 @@ Ids `bf-001` to `bf-006` (#302). `BOX 3310 FERNLEAF RD` is the box with the stre
 
 ### `line2-attention.jsonl`
 
-Ids `an-001` to `an-012` (#350). Words only on line 2 under a street are the attention line when they look like a firm or a person (`&`, a business word, an `Att:` lead, two to four plain words); and the cases that stay unparsed (a leading `THE`, a government word, a unit word, a street suffix word, the street repeated, a single word, a place name, a lot or location word). `nm-006` in `name-after-box.jsonl` changed with this rule.
+Ids `an-001` to `an-020` (#350, #472). Words only on line 2 under a street are the attention line when they look like a firm or a person (`&`, a business word, an `Att:` lead, two to four plain words); and the cases that stay unparsed (a leading `THE`, a government word, a unit word, a street suffix word, the street repeated, a single word, a place name, a lot or location word). `nm-006` in `name-after-box.jsonl` changed with this rule. `an-013` to `an-020` (#472): a name after a unit on line 2 (`STE 240, JANE DOE`, with or without a comma, and the unit on line 1), a credential in its own comma segment (`JANE DOE, DDS`, `C/O JANE DOE, CPA`), `D/B/A`; and two that stay unparsed. `rg-221` changed with this rule.
 
 ### `non-us-address.jsonl`
 

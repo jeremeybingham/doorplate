@@ -1194,19 +1194,88 @@ impl Tagger<'_> {
     /// word (unless the line is marked as a firm and does not end in one), a unit designator, highway, box or placeholder word, a unit or government word
     /// (`STORE`, `TOWNSHIP OF`), a place name, words that only repeat line 1.
     pub(super) fn claim_name_after_street(&mut self, l1: &Range<usize>, l2: &Range<usize>) {
-        let lex = self.lex;
         let first = &self.tags[l1.clone()];
         let street = first.contains(&Tag::StreetNumber)
             && first.contains(&Tag::Name)
             && !first.contains(&Tag::PoBox);
+        // A credential in its own comma segment after the name (`JANE DOE, DDS`) is part of it (#472).
+        let name = self.without_credential(l2);
+        if street && self.is_name_line(l1, &name) {
+            self.set(name.clone(), Tag::Attention);
+            self.claim_credential(l2, name.end);
+        }
+    }
+
+    /// `l2` without a credential that sits alone in the last comma segment of a longer line.
+    fn without_credential(&self, l2: &Range<usize>) -> Range<usize> {
+        let last = l2.end.saturating_sub(1);
+        if l2.len() >= 3
+            && self.toks[last].seg != self.toks[last - 1].seg
+            && self.lex.is_credential(self.text(last))
+            && matches!(self.tags[last], Tag::Untagged | Tag::Unparsed)
+        {
+            l2.start..last
+        } else {
+            l2.clone()
+        }
+    }
+
+    /// The credential after a name that is already the attention line: `C/O JANE DOE, CPA` (#472).
+    pub(super) fn claim_credential(&mut self, l2: &Range<usize>, name_end: usize) {
+        if name_end + 1 == l2.end
+            && name_end > l2.start
+            && self.tags[name_end - 1] == Tag::Attention
+            && self.tags[name_end] != Tag::Attention
+            && self.lex.is_credential(self.text(name_end))
+            && matches!(self.tags[name_end], Tag::Untagged | Tag::Unparsed)
+        {
+            self.set(name_end..l2.end, Tag::Attention);
+        }
+    }
+
+    /// A name after a whole unit on line 2, the unit already tagged (`STE 240 JANE DOE`,
+    /// `STE 240, JANE DOE`): the words are the attention line, as under a street (#472).
+    pub(super) fn claim_name_after_unit(&mut self, l1: &Range<usize>, l2: &Range<usize>) {
+        let first = &self.tags[l1.clone()];
+        let street = first.contains(&Tag::StreetNumber)
+            && first.contains(&Tag::Name)
+            && !first.contains(&Tag::PoBox);
+        let Some(u) = l2
+            .clone()
+            .rev()
+            .find(|&k| matches!(self.tags[k], Tag::UnitNumber(_)))
+        else {
+            return;
+        };
+        let tail = u + 1..l2.end;
+        let name = self.without_credential(&tail);
+        if street
+            && l2.clone().take_while(|&k| k <= u).all(|k| {
+                matches!(
+                    self.tags[k],
+                    Tag::UnitType(_) | Tag::UnitNumber(_) | Tag::Untagged
+                )
+            })
+            && self.is_name_line(l1, &name)
+        {
+            self.set(name.clone(), Tag::Attention);
+            self.claim_credential(&tail, name.end);
+        }
+    }
+
+    /// Whether `l2` is a firm or a person's name by the rules above: free tokens in one comma
+    /// segment, two to four plain words (up to seven with a business word), and none of the
+    /// words the rules above exclude.
+    fn is_name_line(&self, l1: &Range<usize>, l2: &Range<usize>) -> bool {
+        let lex = self.lex;
         let free = l2
             .clone()
             .all(|k| matches!(self.tags[k], Tag::Untagged | Tag::Unparsed) && !self.toks[k].paren);
         let one_seg = l2
             .clone()
             .all(|k| self.toks[k].seg == self.toks[l2.start].seg);
-        if !street || l2.is_empty() || l2.len() > 8 || !free || !one_seg {
-            return;
+        if l2.is_empty() || l2.len() > 8 || !free || !one_seg {
+            return false;
         }
         let mut words = 0;
         let mut marked = false;
@@ -1217,10 +1286,12 @@ impl Tagger<'_> {
                 marked = true;
                 continue;
             }
-            let plain = t
-                .chars()
-                .all(|c| c.is_alphabetic() || matches!(c, '.' | '\'' | '-'))
-                && t.chars().filter(|c| c.is_alphabetic()).count() >= 2;
+            // `D/B/A` is the one word with slashes that opens a trade name.
+            let plain = t == "D/B/A"
+                || (t
+                    .chars()
+                    .all(|c| c.is_alphabetic() || matches!(c, '.' | '\'' | '-'))
+                    && t.chars().filter(|c| c.is_alphabetic()).count() >= 2);
             if !plain
                 || lex.unit(t).is_some()
                 || lex.highway(t).is_some()
@@ -1228,7 +1299,7 @@ impl Tagger<'_> {
                 || lex.is_placeholder(t)
                 || lex.is_line2_non_name(t)
             {
-                return;
+                return false;
             }
             marked |= lex.is_business_word(t);
             words += 1;
@@ -1237,22 +1308,18 @@ impl Tagger<'_> {
         // A street suffix word keeps the text unparsed (`MAPLE PARK TRAIL` may say where the
         // street is), unless the line is marked as a firm (`HARBOR & PINE`) and does not end in one.
         if suffix_word && (!marked || lex.suffix(self.text(l2.end - 1)).is_some()) {
-            return;
+            return false;
         }
         let text = join(&self.toks[l2.clone()]);
         let repeat = l2.clone().all(|k| {
             (l1.clone()).any(|j| self.toks[j].text == self.toks[k].text)
                 || matches!(self.text(k), "&" | "AND")
         });
-        if words < 2
+        !(words < 2
             || (words > 4 && !marked)
             || repeat
             || lex.is_placeholder(&text)
-            || lex.is_place(&text)
-        {
-            return;
-        }
-        self.set(l2.clone(), Tag::Attention);
+            || lex.is_place(&text))
     }
 
     /// A lone directional on line 2 that `tag_fields` kept out of the street
@@ -1543,9 +1610,18 @@ impl Tagger<'_> {
             self.set(k..k + w, Tag::Skip);
             return if k == lo { (k + w, hi) } else { (lo, hi) };
         }
-        let end = (k..hi)
+        let mut end = (k..hi)
             .find(|&e| self.toks[e].seg != self.toks[k].seg)
             .unwrap_or(hi);
+        // "C/O JANE DOE, CPA": a credential in its own last segment belongs to the name (#472).
+        if k > lo
+            && end + 1 == hi
+            && end > k + w
+            && self.lex.is_credential(self.text(end))
+            && !self.toks[end].paren
+        {
+            end = hi;
+        }
         // "C/O ACME CORP 20 QUINCEWOOD CT": the address ends the segment, so
         // the attention line stops before its house number (#127).
         if k == lo {
@@ -3505,13 +3581,15 @@ impl Tagger<'_> {
                 break;
             }
             let value = start - 1;
-            if self.toks[value].seg != seg
+            // On pre-split fields the words may follow a comma (`STE 240, JANE DOE`, #472).
+            let vseg = self.toks[value].seg;
+            if (vseg != seg && !self.country_street)
                 || !is_unit_value(self.text(value))
                 || !has_digit(self.text(value))
             {
                 continue;
             }
-            let designator = self.toks[value - 1].seg == seg
+            let designator = self.toks[value - 1].seg == vseg
                 && (self.toks[value - 1].is_hash()
                     || lex.unit(self.text(value - 1)).is_some_and(|l| {
                         l.kind != MatchKind::Observed && l.value.range_required()
