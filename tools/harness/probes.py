@@ -418,6 +418,14 @@ PROBES = [
         2,
     ),
     (
+        "two-numbers-second-four-digit",
+        "617",
+        "two numbers before the street with a four-digit second number (1234 5678 OAK ST): read as a unit, the warnings dropped",
+        rf"^[0-9]{{1,5}}[ ,]+[0-9]{{4}} (?:[A-Z0-9]+ ){{0,3}}{SUF}\b",
+        "M",
+        3,
+    ),
+    (
         "line2-word-description",
         "545",
         "a building description alone on line 2 (PRIMARY, DUPL)",
