@@ -196,6 +196,11 @@ impl Tagger<'_> {
             // "123 MAIN ST, MIAMI": a last segment of plain words after a
             // street is the city.
             let cs = self.seg_start(hi - 1).max(lo);
+            // A parenthesized group at the end is a remark, never the city (#291).
+            if cs > lo && self.toks[cs].group {
+                self.set(cs..hi, Tag::Unparsed);
+                return (cs, None);
+            }
             if cs > lo && self.looks_like_city(cs, hi) && !self.starts_unit(cs, hi) {
                 self.set(cs..hi, Tag::City);
                 self.decide(Decision::CityByComma);
