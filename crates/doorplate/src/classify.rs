@@ -103,7 +103,7 @@ pub(crate) fn zip_parts(t: &str) -> Option<(&str, Option<&str>)> {
 
 /// A ZIP that is nearly right (#275): the leading zero cut off (`7102` for `07102`, only in a state
 /// whose ZIPs start with `0`), a space where the hyphen was (`7102 1234`), or a ZIP+4 extension cut
-/// short (`75001-5`). Returns (zip5, zip4, repaired), where `repaired` is true when a zero was
+/// short (`75001-5`), or cut short with no hyphen (`7500112`, seven or eight digits, #606). Returns (zip5, zip4, repaired), where `repaired` is true when a zero was
 /// restored or a short extension dropped. Text that already is a ZIP comes back with `repaired`
 /// false.
 pub(crate) fn zip_repair(text: &str, zero_state: bool) -> Option<(String, Option<String>, bool)> {
@@ -122,6 +122,10 @@ pub(crate) fn zip_repair(text: &str, zero_state: bool) -> Option<(String, Option
             .map_or(true, |p| all_digits(p) || junk_extension(p))
     {
         return None;
+    }
+    // A ZIP+4 cut to two or three digits of the +4, with no hyphen (`7500112`, #606): the five digits stay.
+    if parts.len() == 1 && matches!(parts[0].len(), 7 | 8) {
+        return Some((parts[0][..5].to_string(), None, true));
     }
     let (z5, restored) = match parts[0].len() {
         5 => (parts[0].to_string(), false),
