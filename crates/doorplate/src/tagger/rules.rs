@@ -2518,6 +2518,14 @@ impl Tagger<'_> {
             self.repeated();
             return i + 1;
         }
+        // A second number 1 to 20 above the first with the same parity is the other end of a
+        // range (`7310 7312 OAK DR`), not a unit: it stays the leftover with
+        // `multiple_addresses` (#590).
+        if let (Ok(na), Ok(nb)) = (a.parse::<u64>(), b.parse::<u64>()) {
+            if nb > na && nb - na <= 20 && (nb - na) % 2 == 0 {
+                return i;
+            }
+        }
         // Private and county roads write a road number here (#542); a short second number
         // before a name may start a numbered street (`12 4 ELM ST`).
         let road_word = matches!(
