@@ -46,6 +46,7 @@ Every parsing bug fixed gets a case here (`CONTRIBUTING.md`).
   `rb-` (a spaced letter after a rural route box number, `rrbox.jsonl`),
   `ff-` (state data on pre-split fields, `fields-state.jsonl`),
   `ll-` (the last line inside line 1 on pre-split fields, `last-line-in-line1.jsonl`),
+  `nbu-` (a bare number before a designated unit on line 2, `number-before-unit.jsonl`),
   `cy-` (CR as CIRCLE and the CTY highway spellings, `county.jsonl`),
   `qk-` (Queens house numbers in the key, `queens.jsonl`),
   `ld-` (a lone directional on line 2, `lonedir.jsonl`),
@@ -460,3 +461,7 @@ Ids `sep-001` to `sep-010` (#308). A tight hyphen glued to a designator, a slash
 ### `last-line-in-line1.jsonl`
 
 Ids `ll-001` to `ll-004` (#614). On pre-split fields, line 1 ending with the state field and a ZIP (`214 N PARK AVE OAKLAND NE 68045`) is read as written, with the city field the same or different; and the two guards that keep the old reading (the state field differs from the line's last two letters, a line 2 is given).
+
+### `number-before-unit.jsonl`
+
+Ids `nbu-001` to `nbu-006` (#607). A bare number (one to four digits, one letter at most) before a designated unit on line 2 (`5 APT 12`, `3 # 305`, `2 UNIT 14`, `5A APT 12`) is the first unit with no designator, and the designated unit the second; and the two cases that keep their reading (`FL 5 APT 12`, a five-digit number).
