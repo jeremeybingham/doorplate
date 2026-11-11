@@ -949,6 +949,38 @@ impl Lexicons {
         )
     }
 
+    /// A credential or professional suffix that follows a name in its own comma segment
+    /// (`JANE DOE, DDS`, `C/O JANE DOE, CPA`), #472.
+    pub(crate) fn is_credential(&self, s: &str) -> bool {
+        matches!(
+            s.trim_end_matches('.'),
+            "DDS"
+                | "DMD"
+                | "DVM"
+                | "MD"
+                | "DO"
+                | "CPA"
+                | "ESQ"
+                | "PHD"
+                | "RN"
+                | "PE"
+                | "JR"
+                | "SR"
+                | "II"
+                | "III"
+                | "IV"
+                | "PA"
+                | "PC"
+                | "PLLC"
+                | "LLC"
+                | "LLP"
+                | "INC"
+                | "LTD"
+                | "DC"
+                | "OD"
+        )
+    }
+
     /// A word that is a unit or a place on line 2, not a name: `STORE`, `AREA B`,
     /// `BARN`, `PRIMARY`, a government unit (`TOWNSHIP OF`), #350.
     pub(crate) fn is_line2_non_name(&self, s: &str) -> bool {
