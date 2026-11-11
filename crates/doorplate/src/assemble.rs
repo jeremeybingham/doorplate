@@ -6,7 +6,9 @@
 //! each token is. Spelling choices that Pub 28 does not list
 //! (`MatchKind::Observed`) raise `NonStandardAbbreviation`.
 
-use crate::classify::{is_fraction, is_ordinal, join, spelled_number, spelled_ordinal, zip_parts};
+use crate::classify::{
+    all_digits, is_fraction, is_ordinal, join, spelled_number, spelled_ordinal, zip_parts,
+};
 use crate::lexicon::{normalize_key, Lexicons, MatchKind, Special};
 use crate::tagger::{Tag, Tagged};
 use crate::tokenize::Token;
@@ -137,6 +139,18 @@ pub(crate) fn assemble(
                 }
             }
             Tag::Name => {
+                // `PRIVATE RD 1234` and `PRIVATE ROAD 1234` are one road (#593): the road type
+                // is written out, as for a county road.
+                let text = match (run, state) {
+                    ([w, ty, n], Some(st))
+                        if lex.regional_road_word(st, &w.text)
+                            && lex.suffix(&ty.text).is_some_and(|l| l.value.abbr() == "RD")
+                            && all_digits(&n.text) =>
+                    {
+                        format!("{} ROAD {}", w.text, n.text)
+                    }
+                    _ => text,
+                };
                 set_once(&mut addr.street_name, text);
                 record(addr, Component::StreetName);
             }

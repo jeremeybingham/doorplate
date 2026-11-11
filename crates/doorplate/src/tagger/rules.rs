@@ -3181,6 +3181,32 @@ impl Tagger<'_> {
     /// excluded: after HWY a number is the route, not a unit. `ROAD` and `LOOP`
     /// are highway words that are suffixes after a name (`MAPLE COVE LOOP 412`,
     /// #145); `LOOP 410` at the start of the street is still a route.
+    /// A road number after `<WORD> ROAD` (`PRIVATE ROAD 1234`, `LEE ROAD 2004`) in a state and
+    /// road word of the closed list [`Lexicon::regional_road_word`]: the number at `k` belongs to the
+    /// road, not to a unit (#593). The street is just the word, the road type and the number;
+    /// every other `<word> RD n` stays a unit (`44 MAPLE RD 46`), and so does the same word in
+    /// another state.
+    fn regional_road_number(&self, name_lo: usize, k: usize) -> bool {
+        let lex = self.lex;
+        let t = self.text(k);
+        if k < name_lo + 2
+            || !all_digits(t)
+            || t.len() > 5
+            || t.bytes().all(|c| c == b'0')
+            || k - 2 != name_lo
+            || self.toks[k - 2].seg != self.toks[k].seg
+            || !lex
+                .suffix(self.text(k - 1))
+                .is_some_and(|l| l.value.abbr() == "RD")
+        {
+            return false;
+        }
+        let Some(state) = self.state_code() else {
+            return false;
+        };
+        lex.regional_road_word(state, self.text(k - 2))
+    }
+
     fn suffix_before(&self, name_lo: usize, k: usize) -> bool {
         let lex = self.lex;
         let mut s = k;
@@ -3818,6 +3844,7 @@ impl Tagger<'_> {
                 let dir = lex.directional(t).is_some();
                 if is_unit_value(t)
                     && !dir
+                    && !self.regional_road_number(name_lo, last)
                     && (self.suffix_before(name_lo, last)
                         || self.bay_before_value(name_lo, last)
                         || (has_digit(t) && self.compass_street_before(name_lo, last))
