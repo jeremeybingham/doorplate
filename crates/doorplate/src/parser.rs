@@ -694,6 +694,14 @@ mod tests {
         let a = p.parse("18 Elm St, Dallas TX 75001-5").unwrap();
         assert!(a.diagnostics.warnings.contains(&Warning::ZipRepaired));
         assert!(a.zip4.is_none());
+        // A ZIP+4 cut after two or three digits with no hyphen reads like 75001-12 (#606).
+        for z in ["7500112", "75001123"] {
+            let a = p.parse(&format!("18 Elm St, Dallas TX {z}")).unwrap();
+            assert_eq!(a.zip5.as_deref(), Some("75001"), "{z}");
+            assert!(a.diagnostics.warnings.contains(&Warning::ZipRepaired));
+        }
+        // Six digits stay invalid.
+        assert_eq!(zip("18 Elm St, Dallas TX 750011"), None);
     }
 
     #[test]
