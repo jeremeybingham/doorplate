@@ -69,7 +69,10 @@ tagger and assemble.
 With separate fields (`parse_fields`, or `parse_fields_many` for columns), each field is tagged on its own and the
 field is a strong signal: the city field is the city. When city, state and ZIP
 are all empty, `line1` and `line2` are read like one line, so a street line plus
-a `CITY, ST ZIP` line still works.
+a `CITY, ST ZIP` line still works. When `line1` itself ends with the state field's
+two letters and a five-digit ZIP (`214 N PARK AVE OAKLAND NE 68045`) and there is no
+`line2`, it holds the last line: it is read as one line and the city, state and ZIP
+fields give way (#614).
 
 ## Principles
 

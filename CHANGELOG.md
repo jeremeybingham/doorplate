@@ -9,6 +9,7 @@ change to what an input produces needs a new key version.
 
 ### Added
 
+- **Line 1 that ends with the row's own state and ZIP holds the last line, in field form** (`k5`, #614, #585): `214 N PARK AVE OAKLAND NE 68045` with the fields `BARNESTON`, `NE`, `68309` reads street `PARK AVE`, city `OAKLAND`, ZIP `68045` instead of a street name holding the city, state and ZIP (and `possibly_truncated`). The fields give way when they differ; off when the state field is absent or differs, and when line 2 is given. The one-line form is unchanged. 72,119 full Netsyms rows in NE, KS and ND (OpenAddresses county sources) and 939 rows of the other sources.
 - **A page comparing doorplate with libpostal** (docs only, #215 step 1): what each does, how libpostal's twenty labels map to doorplate's fields, `expand_address` against the key, and the Senzing model that the later measurements will use. No libpostal figures yet.
 - **Review tool: changed-rows queue** (tooling only, #568): `tools/review/changed_queue.py` builds a seeded, stratified review queue of the rows whose key, unit key or warnings changed between two `key_diff.py dump-all` directories, with the earlier reading shown under the current one. Counts only on stdout.
 - **Determinism checks** (tooling only, #567): `tools/compare/phase_g_check.py` compares the WebAssembly build with the native tool (all 30 output columns) and one rayon thread with thirteen (keys, warnings, unit fields) on a seeded sample of up to 10M rows, counts only.

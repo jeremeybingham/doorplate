@@ -205,6 +205,19 @@ impl Parser {
     /// When only the address lines are given, they are read like a single
     /// line, so a `CITY, ST ZIP` second line still parses.
     pub fn parse_fields(&self, fields: &Fields) -> Result<ParsedAddress, ParseError> {
+        // Line 1 that ends with the row's own state and a ZIP holds the last
+        // line (#614): read line 1 as it is written, the fields give way.
+        if last_line_in_line1(fields) {
+            let line_only = Fields {
+                line1: fields.line1.clone(),
+                ..Fields::default()
+            };
+            if let Ok(mut addr) = self.parse_fields(&line_only) {
+                addr.source.original = fields.joined();
+                addr.source.fields = Some(fields.clone());
+                return Ok(addr);
+            }
+        }
         let order = [
             FieldName::Line1,
             FieldName::Line2,
@@ -351,6 +364,35 @@ fn seg_lengths<'a>(toks: &[Token], text: impl Fn(&Span) -> Option<&'a str>) -> V
 /// The state and ZIP fields take any case. In the city field `NaN`, `nan` and `NAN` count, and
 /// `Nan` (a name) does not; `NULL`, `NONE` and `UNDEFINED` in a city are placeholders already
 /// (`[city_placeholder]`).
+/// Line 1 ends with the state field's two letters and a five-digit ZIP, and
+/// before them there is a number and a name (#614). Line 2 must be empty: a
+/// unit there would be read after the ZIP.
+fn last_line_in_line1(fields: &Fields) -> bool {
+    if fields
+        .line2
+        .as_deref()
+        .is_some_and(|v| !v.trim().is_empty())
+    {
+        return false;
+    }
+    let (Some(line1), Some(state)) = (fields.line1.as_deref(), fields.state.as_deref()) else {
+        return false;
+    };
+    let state = state.trim();
+    let words: Vec<&str> = line1.split_whitespace().collect();
+    let n = words.len();
+    if state.len() != 2 || n < 4 {
+        return false;
+    }
+    let (st, zip) = (words[n - 2], words[n - 1]);
+    st.eq_ignore_ascii_case(state)
+        && st.chars().all(|c| c.is_ascii_alphabetic())
+        && zip.len() == 5
+        && zip.chars().all(|c| c.is_ascii_digit())
+        && words[0].starts_with(|c: char| c.is_ascii_digit())
+        && words[1].starts_with(|c: char| c.is_ascii_alphanumeric())
+}
+
 fn null_field(f: FieldName, v: &str) -> bool {
     let v = v.trim();
     match f {
