@@ -47,6 +47,7 @@ Every parsing bug fixed gets a case here (`CONTRIBUTING.md`).
   `ff-` (state data on pre-split fields, `fields-state.jsonl`),
   `ll-` (the last line inside line 1 on pre-split fields, `last-line-in-line1.jsonl`),
   `nbu-` (a bare number before a designated unit on line 2, `number-before-unit.jsonl`),
+  `sdb-` (a unit designator before the street name, `stray-designator.jsonl`),
   `cy-` (CR as CIRCLE and the CTY highway spellings, `county.jsonl`),
   `qk-` (Queens house numbers in the key, `queens.jsonl`),
   `ld-` (a lone directional on line 2, `lonedir.jsonl`),
@@ -465,3 +466,7 @@ Ids `ll-001` to `ll-004` (#614). On pre-split fields, line 1 ending with the sta
 ### `number-before-unit.jsonl`
 
 Ids `nbu-001` to `nbu-006` (#607). A bare number (one to four digits, one letter at most) before a designated unit on line 2 (`5 APT 12`, `3 # 305`, `2 UNIT 14`, `5A APT 12`) is the first unit with no designator, and the designated unit the second; and the two cases that keep their reading (`FL 5 APT 12`, a five-digit number).
+
+### `stray-designator.jsonl`
+
+Ids `sdb-001` to `sdb-005` (#498). A unit designator right after the house number, with a bare unit value on line 2 and no unit after the street (`123 APT OAK LN` / `1 100`), is the type of that unit and not the start of the street name; and the guards that keep the old reading (no line 2, a line 2 with its own designator).
