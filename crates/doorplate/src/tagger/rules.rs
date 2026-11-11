@@ -3233,6 +3233,49 @@ impl Tagger<'_> {
         (words.clone().all(plain) && !shared && lex.suffix(self.text(j - 1)).is_none()).then_some(t)
     }
 
+    /// Whether `NO` at `i` is north written before a street name (`464 NO MAPLE AVE`, #470): a
+    /// house number right before it, and a name word after it that is a plain word or an
+    /// ordinal. `NO` and the word after it can also be a phrase that names the street
+    /// (`NO NAME RD`, `NO BOTTOM RD`), so a short list of those words keeps `NO` in the name; a
+    /// bare number after it (`NO 5`) may be the abbreviation of "number" and stays too. The
+    /// list is what the seven sources showed (the word after `NO` in 3,162 lines) and the
+    /// review cards of #225.
+    fn no_for_north(&self, i: usize, j: usize) -> bool {
+        let lex = self.lex;
+        const PHRASE: [&str; 14] = [
+            "NAME",
+            "BOTTOM",
+            "PONE",
+            "HEAD",
+            "MAN",
+            "TRESPASSING",
+            "GUNS",
+            "SPIN",
+            "HITCH",
+            "WAY",
+            "WORRY",
+            "COUNTRY",
+            "NOTHING",
+            "LIMIT",
+        ];
+        if self.text(i) != "NO"
+            || i == 0
+            || i + 1 >= j
+            || !matches!(self.tags[i - 1], Tag::StreetNumber | Tag::StreetNumberTail)
+            || self.toks[i].seg != self.toks[i + 1].seg
+        {
+            return false;
+        }
+        let w = self.text(i + 1);
+        (is_ordinal(w) || (w.len() >= 2 && w.bytes().all(|c| c.is_ascii_alphabetic())))
+            && !PHRASE.contains(&w)
+            && lex.suffix(w).is_none()
+            && lex.highway(w).is_none()
+            && lex.unit(w).is_none()
+            && lex.special(w).is_none()
+            && lex.directional(w).is_none()
+    }
+
     /// Predirectional, name, suffix and postdirectional in `i..j` (Pub 28
     /// section 233). `hi` is the end of the whole delivery line.
     fn street_body(&mut self, i: usize, j: usize, hi: usize) {
@@ -3285,6 +3328,9 @@ impl Tagger<'_> {
                 self.set(i..i + w, Tag::PreDir);
                 i += w;
             }
+        } else if self.no_for_north(i, j) {
+            self.set(i..i + 1, Tag::PreDir);
+            i += 1;
         }
         self.set(i..j, Tag::Name);
         // A name with no suffix at the very end may be cut off ("CUTOF").
