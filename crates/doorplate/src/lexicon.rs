@@ -712,6 +712,15 @@ impl Lexicons {
         })
     }
 
+    /// Whether `word` before `ROAD n` names a numbered road in `state` (a USPS code): the closed
+    /// list of #593 (`PRIVATE ROAD 1234` in Texas, `LEE ROAD 2004` in Alabama). Any other pair
+    /// reads the number as a unit.
+    pub(crate) fn regional_road_word(&self, state: &str, word: &str) -> bool {
+        REGIONAL_ROAD_WORDS
+            .iter()
+            .any(|&(st, w)| st == state && w == word)
+    }
+
     /// Highway prefix as read in `state` (a USPS code): a state data may add
     /// a spelling the base table lacks (`SR` is STATE ROAD in Florida, STATE
     /// ROUTE elsewhere), as [`MatchKind::Variant`] or [`MatchKind::Observed`]
@@ -1320,6 +1329,30 @@ fn may_start_multi(
 fn find_str(sorted: &[&str], key: &str) -> bool {
     sorted.binary_search_by(|k| cmp_keys(k, key)).is_ok()
 }
+
+/// State and word pairs where `<WORD> ROAD n` is a numbered road, not a street and a unit (#593):
+/// private roads, county roads written with the county's name and forest, town, tribal and
+/// recreational roads. Source: the National Address Database (2026 release), where every row of
+/// these pairs with at least 300 rows keeps the number in `StNam_Full` and none writes it as a
+/// unit. A pair outside the list stays a unit (docs/usps-pub28-notes.md).
+const REGIONAL_ROAD_WORDS: &[(&str, &str)] = &[
+    ("AL", "LEE"),
+    ("AL", "PRIVATE"),
+    ("AR", "POLK"),
+    ("AR", "PRIVATE"),
+    ("AR", "UNION"),
+    ("MN", "TOWN"),
+    ("MO", "PRIVATE"),
+    ("NM", "CURRY"),
+    ("NM", "FOREST"),
+    ("NM", "QUAY"),
+    ("NM", "TRIBAL"),
+    ("OH", "PARK"),
+    ("OK", "PRIVATE"),
+    ("TX", "PARK"),
+    ("TX", "PRIVATE"),
+    ("TX", "RANCH"),
+];
 
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
