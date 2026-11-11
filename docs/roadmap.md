@@ -5,7 +5,7 @@ What is planned, what depends on what, and what is deliberately not planned.
 messy addresses it sees, the sooner the items below that need them can happen. To send
 some, see [Sharing messy data](../CONTRIBUTING.md#sharing-messy-data).
 
-**Last reviewed 2026-11-11, against the issues up to #617 (the major review of the away run, #586, step B7).** The rules for the labels, the milestones and the order are in
+**Last reviewed 2026-11-11, against the issues up to #617 (the major review of the away run, #586, step B8).** The rules for the labels, the milestones and the order are in
 [`backlog.md`](backlog.md); the open trackers are #402 (0.5.x, in order), #416 (0.6.0, the `k5`) and #417 (decided against).
 
 ## Stability while it is an alpha
@@ -16,7 +16,8 @@ some, see [Sharing messy data](../CONTRIBUTING.md#sharing-messy-data).
   are likely as the parser improves. Store the version prefix with the keys.
 - **API and warning codes.** Names may change before 1.0, with a note in the changelog.
 - **Accuracy and speed** are measured on a few datasets ([`benchmarks.md`](benchmarks.md))
-  and are not guaranteed for yours.
+  and are not guaranteed for yours. How the figures moved from 0.3.1 to `main`, and the release tolerance, are on
+  [`version-comparison.md`](version-comparison.md).
 
 ## Released
 

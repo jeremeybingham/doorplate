@@ -75,6 +75,7 @@ nav:
       - Warnings: warnings.md
       - The match key: key-format.md
       - Accuracy: benchmarks.md
+      - Version comparison: version-comparison.md
       - Speed, size and memory: speed-and-size.md
       - RESO mapping: reso-mapping.md
       - USPS Publication 28 notes: usps-pub28-notes.md
