@@ -945,6 +945,61 @@ impl Tagger<'_> {
         self.decide(Decision::BareUnit);
     }
 
+    /// A bare number before a designated unit on line 2 (`5 APT 12`, `3 # 305`, `2 UNIT 14`):
+    /// NAD builds its sub-address from its floor, building and unit columns without the
+    /// words, so the number is the first unit with no designator and the designated unit
+    /// the second, as `FL 5 APT 12` reads (#607). The number is one to four digits with at
+    /// most one letter after them; the line holds nothing else and the street has no unit
+    /// of its own. The street line is not read this way.
+    pub(super) fn claim_number_before_unit(&mut self, r: Range<usize>) {
+        if r.len() < 3 {
+            return;
+        }
+        let a = r.start;
+        let first = self.text(a);
+        let digits = first.trim_end_matches(|c: char| c.is_ascii_alphabetic());
+        let one_letter = first.len() - digits.len() <= 1;
+        let rest = a + 1..r.end;
+        let designated = matches!(self.tags[a], Tag::Untagged | Tag::Unparsed)
+            && !r.clone().any(|k| self.toks[k].paren)
+            && r.clone().all(|k| self.toks[k].seg == self.toks[a].seg)
+            && !digits.is_empty()
+            && all_digits(digits)
+            && digits.len() <= 4
+            && one_letter
+            && matches!(self.tags[r.end - 1], Tag::UnitNumber(0))
+            && matches!(self.tags[a + 1], Tag::UnitType(0) | Tag::Skip)
+            && self.tags[rest.clone()]
+                .iter()
+                .all(|t| matches!(t, Tag::UnitType(0) | Tag::Skip | Tag::UnitNumber(0)))
+            && self.tags[rest.clone()]
+                .iter()
+                .filter(|t| matches!(t, Tag::UnitType(0)))
+                .count()
+                <= 1
+            && self.tags[rest.clone()]
+                .iter()
+                .filter(|t| matches!(t, Tag::UnitNumber(0)))
+                .count()
+                == 1;
+        let elsewhere =
+            self.tags.iter().enumerate().any(|(k, t)| {
+                !r.contains(&k) && matches!(t, Tag::UnitType(_) | Tag::UnitNumber(_))
+            });
+        if !designated || elsewhere || self.tags[a + 1] == Tag::Skip && self.text(a + 1) != "#" {
+            return;
+        }
+        for t in &mut self.tags[rest] {
+            match *t {
+                Tag::UnitType(0) => *t = Tag::UnitType(1),
+                Tag::UnitNumber(0) => *t = Tag::UnitNumber(1),
+                _ => {}
+            }
+        }
+        self.set(a..a + 1, Tag::UnitNumber(0));
+        self.decide(Decision::BareUnit);
+    }
+
     /// A number and a plain word after it on line 2 (`3 RIGHT`, `12 STORY`, `40 SECONDARY`,
     /// `2 EAST`): the number is the unit. The word stays unparsed and keeps the
     /// `unparsed_remainder` warning, so nothing is invented for the USPS line (the word
