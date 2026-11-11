@@ -151,6 +151,7 @@ pub(crate) fn assemble(
                     }
                     _ => text,
                 };
+                let text = us_highway_spelled(run).unwrap_or(text);
                 set_once(&mut addr.street_name, text);
                 record(addr, Component::StreetName);
             }
@@ -470,4 +471,33 @@ fn run_span(run: &[Token]) -> Option<Span> {
         start: first.span.start,
         end: last.span.end,
     })
+}
+
+/// `OLD UNITED STATES HIGHWAY 27` and `UNITED STATES HWY 41-45` read as `OLD US HIGHWAY 27` and
+/// `US HIGHWAY 41-45`, so the spelled-out and abbreviated forms of the road key alike (#608; the
+/// start of a street name is read as a highway, #543). A route number must follow, so
+/// `UNITED STATES POSTAL SERVICE` is not touched. The word before and the route are kept.
+fn us_highway_spelled(run: &[Token]) -> Option<String> {
+    let at = |k: usize| run.get(k).map(|t| t.text.as_str());
+    let spelled = |k: usize| {
+        at(k) == Some("UNITED")
+            && at(k + 1) == Some("STATES")
+            && matches!(at(k + 2), Some("HIGHWAY" | "HWY"))
+            && at(k + 3).is_some_and(|r| r.starts_with(|c: char| c.is_ascii_digit()))
+    };
+    if !(0..run.len()).any(spelled) {
+        return None;
+    }
+    let mut out: Vec<&str> = Vec::new();
+    let mut k = 0;
+    while k < run.len() {
+        if spelled(k) {
+            out.extend(["US", "HIGHWAY"]);
+            k += 3;
+        } else {
+            out.push(&run[k].text);
+            k += 1;
+        }
+    }
+    Some(out.join(" "))
 }
