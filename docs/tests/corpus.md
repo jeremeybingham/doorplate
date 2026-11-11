@@ -45,6 +45,7 @@ Every parsing bug fixed gets a case here (`CONTRIBUTING.md`).
   `hn-` (hyphenated house number with a letter, `hyphen.jsonl`),
   `rb-` (a spaced letter after a rural route box number, `rrbox.jsonl`),
   `ff-` (state data on pre-split fields, `fields-state.jsonl`),
+  `ll-` (the last line inside line 1 on pre-split fields, `last-line-in-line1.jsonl`),
   `cy-` (CR as CIRCLE and the CTY highway spellings, `county.jsonl`),
   `qk-` (Queens house numbers in the key, `queens.jsonl`),
   `ld-` (a lone directional on line 2, `lonedir.jsonl`),
@@ -455,3 +456,7 @@ Ids `rp-001` to `rp-007` (#236). A street, a unit or both written twice, the cop
 ### `unit-separator.jsonl`
 
 Ids `sep-001` to `sep-010` (#308). A tight hyphen glued to a designator, a slash, and a spaced hyphen then a bare number or digit-letter between a street suffix and a unit are separators; a slash before a PO Box gives the street and the box; and the cases that keep their reading (an ordinal floor after a hyphen, a slash between two streets, a word after the hyphen).
+
+### `last-line-in-line1.jsonl`
+
+Ids `ll-001` to `ll-004` (#614). On pre-split fields, line 1 ending with the state field and a ZIP (`214 N PARK AVE OAKLAND NE 68045`) is read as written, with the city field the same or different; and the two guards that keep the old reading (the state field differs from the line's last two letters, a line 2 is given).
