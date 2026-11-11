@@ -535,6 +535,8 @@ impl Tagger<'_> {
         if c > 0
             && c + 1 < hi
             && is_letter(self.text(c))
+            // `O FALLON`, `D HANIS` and `L ANSE` are places that start with a letter.
+            && !matches!(self.text(c), "O" | "D" | "L")
             && self.lex.directional(self.text(c)).is_none()
             && self.toks[c + 1].seg == self.toks[c].seg
             && !self.toks[c + 1].is_hash()
