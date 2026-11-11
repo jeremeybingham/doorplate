@@ -110,6 +110,20 @@ pub(crate) fn tokenize(
         pieces.push((s, bytes.len(), seg));
     }
 
+    // In a one-line parse, a `(` that is never closed (a truncated field, a pasted remark) would
+    // swallow the commas after it and the ZIP with them: it is dropped (#516).
+    if field.is_none() {
+        pieces.retain_mut(|(a, b, _)| {
+            if text[*a..].contains(')') {
+                return true;
+            }
+            while *a < *b && text[*a..].starts_with('(') {
+                *a += 1;
+            }
+            *a < *b
+        });
+    }
+
     let edge = edge_groups(text, &mut pieces, lex);
 
     // A bracketed `<NULL>` (a database export's missing value) is not part of the address (#419).
