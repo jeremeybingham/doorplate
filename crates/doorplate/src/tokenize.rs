@@ -48,6 +48,9 @@ pub(crate) struct Token {
     pub seg: usize,
     /// Written inside parentheses.
     pub paren: bool,
+    /// Part of a parenthesized group that ends a line and is a segment of its own (#291): a
+    /// remark, a name or a bare value, never the city.
+    pub group: bool,
 }
 
 impl Token {
@@ -76,6 +79,22 @@ pub(crate) fn tokenize(
     let mut start = None;
     for (i, &b) in bytes.iter().enumerate() {
         let sep = b == b' ' || b == b',' || b == b';';
+        // A `(` glued to the word before it starts a piece of its own when the group closes
+        // before the next comma: `6 ELM ST(FARM)` (#291).
+        if b == b'('
+            && i > 0
+            && start.is_some_and(|s| s < i)
+            && bytes[i - 1].is_ascii_alphanumeric()
+            && bytes[i..]
+                .iter()
+                .take_while(|&&c| c != b',' && c != b';')
+                .any(|&c| c == b')')
+        {
+            if let Some(s) = start.replace(i) {
+                pieces.push((s, i, seg));
+            }
+            continue;
+        }
         if sep {
             if let Some(s) = start.take() {
                 pieces.push((s, i, seg));
@@ -90,6 +109,8 @@ pub(crate) fn tokenize(
     if let Some(s) = start {
         pieces.push((s, bytes.len(), seg));
     }
+
+    let edge = edge_groups(text, &mut pieces, lex);
 
     // A bracketed `<NULL>` (a database export's missing value) is not part of the address (#419).
     pieces.retain(|&(a, b, _)| &text[a..b] != "<NULL>");
@@ -125,6 +146,7 @@ pub(crate) fn tokenize(
             .find(|&n| pieces[n].2 > seg)
             .is_some_and(|n| anchors[n]);
         let later_anchor = (k + 1..pieces.len()).any(|n| pieces[n].2 > seg && anchors[n]);
+        let first = out.len();
         let mut p = Piece {
             cleaned,
             field,
@@ -137,7 +159,8 @@ pub(crate) fn tokenize(
         let raw = &text[a..b];
         let opens = raw.starts_with('(');
         let closes = raw.ends_with(')');
-        let paren = in_paren || opens;
+        // An edge group is a segment of its own, read like any other: not marked as a group.
+        let paren = (in_paren || opens) && !matches!(edge[k], Edge::Inline | Edge::Value);
         if opens {
             in_paren = true;
         }
@@ -145,6 +168,20 @@ pub(crate) fn tokenize(
             in_paren = false;
         }
         p.piece(a, b, paren, next_starts_numeric, lex);
+        match edge[k] {
+            Edge::Split => out[first..].iter_mut().for_each(|t| t.group = true),
+            // `(3RD FL)` is a floor, not a state: read it as the word FLOOR.
+            Edge::Inline if edge.get(k + 1) != Some(&Edge::Inline) => {
+                if let Some(t) = out[first..]
+                    .iter_mut()
+                    .next_back()
+                    .filter(|t| t.text == "FL" && k > 0 && edge[k - 1] == Edge::Inline)
+                {
+                    t.text = "FLOOR".to_string();
+                }
+            }
+            _ => {}
+        }
     }
     pass("join_split_grid_number", &mut out, |o| {
         join_split_grid_number(o, lex)
@@ -160,6 +197,85 @@ pub(crate) fn tokenize(
     });
     pass("join_unit_hyphen", &mut out, |o| join_unit_hyphen(o, lex));
     out
+}
+
+/// How a parenthesized group at the end of a segment is read (#291).
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Edge {
+    /// Not an edge group: the usual `paren` marking.
+    No,
+    /// A unit or box in parentheses: part of the line, with no parentheses.
+    Inline,
+    /// Any other group: a segment of its own.
+    Split,
+    /// A bare value with a digit (`(110)`, `(18/22)`): a segment of its own, read as a unit.
+    Value,
+}
+
+/// A parenthesized group that ends a segment (a floor, a box, a unit or a name after the street)
+/// becomes a segment of its own, so the usual unit, box and attention rules read it (#291).
+/// A group in the middle of a segment keeps its words (`9 OAK (PINE HILL) WAY`), an unclosed `(`
+/// is left alone, and a lone number after a highway word stays in the name (`MILITARY HWY (281)`).
+fn edge_groups(text: &str, pieces: &mut [(usize, usize, usize)], lex: &Lexicons) -> Vec<Edge> {
+    let mut edge = vec![Edge::No; pieces.len()];
+    let orig: Vec<usize> = pieces.iter().map(|p| p.2).collect();
+    let mut shift = 0;
+    let mut k = 0;
+    while k < pieces.len() {
+        let (a, _, seg) = pieces[k];
+        pieces[k].2 = seg + shift;
+        if !text[a..].starts_with('(') || k == 0 || orig[k - 1] != seg {
+            k += 1;
+            continue;
+        }
+        // The group runs to the first piece that ends with `)`, within the segment.
+        let end = (k..pieces.len())
+            .take_while(|&n| orig[n] == seg)
+            .find(|&n| text[pieces[n].0..pieces[n].1].ends_with(')'));
+        let closes_segment = end.is_some_and(|e| orig.get(e + 1).map_or(true, |&o| o != seg));
+        let Some(e) = end.filter(|_| closes_segment) else {
+            k += 1;
+            continue;
+        };
+        let word =
+            |n: usize| text[pieces[n].0..pieces[n].1].trim_matches(|c: char| !c.is_alphanumeric());
+        let lone_number = e == k && word(k).bytes().all(|c| c.is_ascii_digit());
+        if lone_number && lex.highway(&word(k - 1).to_ascii_uppercase()).is_some() {
+            k += 1;
+            continue;
+        }
+        // A group that spells a unit or a box (`(SUITE 4)`, `(3RD FL)`, `(BOX 14)`) joins the
+        // line without its parentheses; any other group is a segment of its own.
+        let value = e == k && word(k).bytes().any(|c| c.is_ascii_digit());
+        let first = word(k).to_ascii_uppercase();
+        let last = word(e).to_ascii_uppercase();
+        // A designator takes at most one value (`(BLDG B)`, `(SUITE 120)`); `(REAR ENTRANCE)` is
+        // a remark.
+        let value_ok = e == k
+            || (e == k + 1 && {
+                let v = word(e);
+                v.len() == 1 || v.bytes().any(|c| c.is_ascii_digit())
+            });
+        let designator = lex.unit(&first).is_some()
+            || lex.is_bare_box_word(&first)
+            || lex
+                .special(&first)
+                .is_some_and(|l| matches!(l.value, Special::Box | Special::PoBox));
+        let spells_unit = text[a..].starts_with("(#")
+            || (designator && value_ok)
+            || (e > k && lex.unit(&last).is_some_and(|l| l.value.abbr() == "FL"));
+        if spells_unit {
+            edge[k..=e].fill(Edge::Inline);
+        } else {
+            shift += 1;
+            for piece in &mut pieces[k..=e] {
+                piece.2 = seg + shift;
+            }
+            edge[k..=e].fill(if value { Edge::Value } else { Edge::Split });
+        }
+        k = e + 1;
+    }
+    edge
 }
 
 /// Run a post-pass over the tokens. With the `rule-stats` feature, count it when it changed them.
@@ -473,6 +589,7 @@ impl Piece<'_> {
                 span,
                 seg: self.seg,
                 paren,
+                group: false,
             });
         }
     }

@@ -73,6 +73,7 @@ Every parsing bug fixed gets a case here (`CONTRIBUTING.md`).
   `sep-` (a dash or slash between a suffix and a unit, `unit-separator.jsonl`),
   `rp-` (a phrase written twice, the copy dropped, `repeated-tail.jsonl`),
   `fa-` (a non-US country ends the unplaced text, `non-us-address.jsonl`),
+  `pg-` (a parenthesized group at the end of a line, `paren-group.jsonl`),
   `an-` (words on line 2 under a street are the attention line, `line2-attention.jsonl`),
   `lv-` (level words as units, `level-words.jsonl`),
   `bf-` (a box first, then a street; `PMB` before a PO Box, `box-first.jsonl`),
@@ -471,3 +472,7 @@ Ids `nbu-001` to `nbu-006` (#607). A bare number (one to four digits, one letter
 ### `stray-designator.jsonl`
 
 Ids `sdb-001` to `sdb-005` (#498). A unit designator right after the house number, with a bare unit value on line 2 and no unit after the street (`123 APT OAK LN` / `1 100`), is the type of that unit and not the start of the street name; and the guards that keep the old reading (no line 2, a line 2 with its own designator).
+
+### `paren-group.jsonl`
+
+Ids `pg-001` to `pg-014` (#291). A parenthesized group at the end of a line: a unit, floor or box (`(3RD FL)`, `(SUITE 4)`, `(BLDG B)`) is read as the unit it spells, with or without a city after it; any other group (`(REAR ENTRANCE)`, `(J SMITH)`, `(RT 28)`) is a segment of its own that is never the city or a unit, and lands in `unparsed`; a group glued to the word before it (`ST(FARM)`, `DRIVE(120-301)`) is split off. Unchanged, so they stay put: a group in the middle of the street, a number after a highway word, a bare number in parentheses, a word after a unit.
