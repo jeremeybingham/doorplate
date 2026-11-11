@@ -2453,9 +2453,9 @@ impl Tagger<'_> {
     /// and a suffix): `41 12 80TH AVE`. By state (the 90 cards of #313, #501 and #502):
     /// in New York City (by ZIP) and Massachusetts a pair of one to three digits and two is the house
     /// number (Queens style), in Hawaii two digits and three or four (`91 410 HALEKI ST`);
-    /// elsewhere two digits and three are one five-digit number (`12 345 ELM ST` is
-    /// 12345) and a different number of up to four digits before an ordinal street is a
-    /// unit (`123 104 11TH ST`). Returns where the street starts.
+    /// elsewhere two digits and three are a building and a unit (`31 208 BIRCH LN`, #591;
+    /// one five-digit number when the unit cannot go) and a different number of up to four
+    /// digits before an ordinal street is a unit (`123 104 11TH ST`). Returns where the street starts.
     fn house_number_pair(&mut self, i: usize, hi: usize) -> usize {
         let lex = self.lex;
         if i < 1 || i + 2 >= hi || self.tags[i - 1] != Tag::StreetNumber {
@@ -2489,10 +2489,7 @@ impl Tagger<'_> {
         if matches!(state, "NY" | "MA" | "HI") {
             return i;
         }
-        if la == 2 && lb == 3 {
-            self.set(i..i + 1, Tag::StreetNumberTail);
-            return i + 1;
-        }
+        let join = la == 2 && lb == 3;
         let designator = (r..hi).any(|k| {
             lex.unit(self.text(k))
                 .is_some_and(|l| l.kind != MatchKind::Observed)
@@ -2510,7 +2507,7 @@ impl Tagger<'_> {
         // A split ordinal (`26889 263 RD ST` is 263RD ST) is the street's own number.
         let split_ordinal = matches!(self.text(r), "ST" | "ND" | "RD" | "TH");
         if designator || !tail_free || digits(self.text(r)) || grid_street || split_ordinal {
-            return i;
+            return self.join_pair(i, join);
         }
         if a == b {
             // `3210 3210 EXAMPLE ST`: the number written twice; the copy is dropped (#544).
@@ -2523,7 +2520,7 @@ impl Tagger<'_> {
         // `multiple_addresses` (#590).
         if let (Ok(na), Ok(nb)) = (a.parse::<u64>(), b.parse::<u64>()) {
             if nb > na && nb - na <= 20 && (nb - na) % 2 == 0 {
-                return i;
+                return self.join_pair(i, join);
             }
         }
         // Private and county roads write a road number here (#542); a short second number
@@ -2532,9 +2529,20 @@ impl Tagger<'_> {
             self.text(r),
             "PRIVATE" | "COUNTY" | "STATE" | "FM" | "PR" | "FARM" | "CR" | "CO"
         );
-        if is_ordinal(self.text(r)) || (!road_word && lb >= 3) {
+        if join || is_ordinal(self.text(r)) || (!road_word && lb >= 3) {
             self.set(i..i + 1, Tag::UnitNumber(0));
             self.decide(Decision::BareUnit);
+            return i + 1;
+        }
+        self.join_pair(i, join)
+    }
+
+    /// Two digits and three outside New York City, Hawaii and Massachusetts are a building
+    /// and a unit (`31 208 BIRCH LN`, #591); where the unit cannot go (a designator, a tail
+    /// after the suffix, a range, a grid street) they stay one five-digit number.
+    fn join_pair(&mut self, i: usize, join: bool) -> usize {
+        if join {
+            self.set(i..i + 1, Tag::StreetNumberTail);
             return i + 1;
         }
         i
