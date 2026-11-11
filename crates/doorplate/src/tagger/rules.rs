@@ -3191,7 +3191,13 @@ impl Tagger<'_> {
         }
         self.set(i..j, Tag::Name);
         // A name with no suffix at the very end may be cut off ("CUTOF").
-        if !suffix_taken && j == hi && j > i && self.tags[j - 1] == Tag::Name {
+        // `OLD UNITED STATES HIGHWAY 27` ends in its route: not cut off (#608).
+        let spelled_highway = j >= i + 4
+            && self.text(j - 4) == "UNITED"
+            && self.text(j - 3) == "STATES"
+            && matches!(self.text(j - 2), "HIGHWAY" | "HWY")
+            && self.text(j - 1).starts_with(|c: char| c.is_ascii_digit());
+        if !suffix_taken && !spelled_highway && j == hi && j > i && self.tags[j - 1] == Tag::Name {
             self.incomplete = Some(j - 1);
         }
     }
