@@ -1000,6 +1000,45 @@ impl Tagger<'_> {
         self.decide(Decision::BareUnit);
     }
 
+    /// A unit designator written right after the house number, with the unit value on line 2
+    /// and no unit after the street (`123 APT OAK LN` / `1 100`): the designator is that
+    /// value's type, not the start of the street name (#498). NAD-style rows write the
+    /// designator before the street and the value alone on line 2. The street keeps a name
+    /// and a suffix without the word, line 1 has no unit of its own, and line 2 holds only a
+    /// bare unit value. The words stay: the unit reads `APT 1 100`, as if written after the street.
+    pub(super) fn claim_stray_designator(&mut self, l1: &Range<usize>, l2: &Range<usize>) {
+        let a = l1.start + 1;
+        if l2.is_empty() || a + 2 >= l1.end || self.tags[l1.start] != Tag::StreetNumber {
+            return;
+        }
+        let one_seg = (l1.start..a + 1).all(|k| self.toks[k].seg == self.toks[l1.start].seg);
+        let bare_l2 = l2
+            .clone()
+            .all(|k| self.tags[k] == Tag::UnitNumber(0) && !self.toks[k].paren);
+        let none_on_l1 = !self.tags[l1.clone()]
+            .iter()
+            .any(|t| matches!(t, Tag::UnitType(_) | Tag::UnitNumber(_)));
+        let name_after = self.tags[a + 1..l1.end].contains(&Tag::Name)
+            && self.tags[a + 1..l1.end].contains(&Tag::Suffix);
+        if self.tags[a] != Tag::Name
+            || !one_seg
+            || !bare_l2
+            || !none_on_l1
+            || !name_after
+            || self.tags[l1.end..]
+                .iter()
+                .any(|t| matches!(t, Tag::UnitType(_)))
+            || !matches!(
+                self.text(a),
+                "APT" | "APARTMENT" | "STE" | "SUITE" | "UNIT" | "RM" | "ROOM"
+            )
+        {
+            return;
+        }
+        self.set(a..a + 1, Tag::UnitType(0));
+        self.decide(Decision::BareUnit);
+    }
+
     /// A number and a plain word after it on line 2 (`3 RIGHT`, `12 STORY`, `40 SECONDARY`,
     /// `2 EAST`): the number is the unit. The word stays unparsed and keeps the
     /// `unparsed_remainder` warning, so nothing is invented for the USPS line (the word
