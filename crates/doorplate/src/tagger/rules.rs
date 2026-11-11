@@ -3242,8 +3242,9 @@ impl Tagger<'_> {
     /// review cards of #225.
     fn no_for_north(&self, i: usize, j: usize) -> bool {
         let lex = self.lex;
-        const PHRASE: [&str; 14] = [
+        const PHRASE: [&str; 15] = [
             "NAME",
+            "MANS",
             "BOTTOM",
             "PONE",
             "HEAD",

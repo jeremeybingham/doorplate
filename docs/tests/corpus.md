@@ -480,4 +480,4 @@ Ids `pg-001` to `pg-016` (#291, #516). A parenthesized group at the end of a lin
 
 ### `no-north.jsonl`
 
-Ids `nn-001` to `nn-010` (#470). `NO` right after the house number and before a plain word or an ordinal is north (`464 NO MAPLE AVE`, `88 NO BROADWAY`, `7 No Eccles St`, `1200 NO 2ND ST`, with a fraction or a postdirectional); the phrases that name a street keep `NO` (`NO NAME RD`, `NO BOTTOM RD`, `NO PONE VALLEY RD NW`) and so does a bare number (`NO 5 RD`). `nu-009` (`1234 NO 52ND ST`) moved from the name to north with the rule.
+Ids `nn-001` to `nn-011` (#470). `NO` right after the house number and before a plain word or an ordinal is north (`464 NO MAPLE AVE`, `88 NO BROADWAY`, `7 No Eccles St`, `1200 NO 2ND ST`, with a fraction or a postdirectional); the phrases that name a street keep `NO` (`NO NAME RD`, `NO BOTTOM RD`, `NO PONE VALLEY RD NW`, `NO MAN'S LAND RD`) and so does a bare number (`NO 5 RD`). `nu-009` (`1234 NO 52ND ST`) moved from the name to north with the rule.
