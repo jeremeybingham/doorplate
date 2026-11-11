@@ -5,7 +5,7 @@ What is planned, what depends on what, and what is deliberately not planned.
 messy addresses it sees, the sooner the items below that need them can happen. To send
 some, see [Sharing messy data](../CONTRIBUTING.md#sharing-messy-data).
 
-**Last reviewed 2026-11-03, against the issues up to #502.** The rules for the labels, the milestones and the order are in
+**Last reviewed 2026-11-11, against the issues up to #617 (the major review of the away run, #586, step B7).** The rules for the labels, the milestones and the order are in
 [`backlog.md`](backlog.md); the open trackers are #402 (0.5.x, in order), #416 (0.6.0, the `k5`) and #417 (decided against).
 
 ## Stability while it is an alpha
@@ -81,6 +81,9 @@ of 41 are analyzed; the rest and the final rescore may move issues in or out) an
 6. Unit forms: unit text with no designator on line 2 (#320, first part: a number before a designator word and a directional street name), words Pub 28 does not list as designators (#321, first part: condo and site words on line 2), a unit between the house number and the street (#296, merged). Position words and `ADU` on line 2 are a unit type (#545, merged). A road number written before the road type (`331 5659 PRIVATE ROAD`, `2210 3315 FM RD`) stays in the street name (#542, closes #316). Merged.
    A second number after the house number (#313, #501, #502): a Queens or Hawaii pair is the number, a five-digit number written in two is joined, a number before an ordinal street is a unit. Merged. The same for any street (#544): a second number of three to five digits after the house number is the unit, a repeated number is dropped, and `PRIMARY`, `SECONDARY`, `DUPL` and `DUPLEX` are not units after a number on line 2. Merged.
 7. The short curated place list of neighborhood mail names (#486): about a dozen names, about 0.01% of rows; held out if it is deferred.
+8. Found in the major review of the away run (#586, 2026-11-10; counts are over the 289M-row scan unless named, rows are matches times the review precision, an estimate; the denominator of each is on its issue):
+   - P1: a line-2 digit run is a placeholder (#592, about 29,600), a `<NAME> ROAD n` road number is a unit in a closed list of states (#593, about 765,000, rough), a ZIP field of `0` (#605, 105,710 full NAD rows; `version:O`), a bare number before a unit on line 2 (#607, 319,542 full NAD rows), line 1 that ends in the row's own state and ZIP (#614, 72,119 full Netsyms rows).
+   - P2: words after a street suffix (#589, about 6,500), a range-like second number (#590, about 7,650), a five-digit join outside NYC, Hawaii and Massachusetts (#591, about 7,300), `ROAD` plus a letter before the city (#600, about 24,200), a ZIP+4 cut to seven digits (#606, 15,136 full NAD rows), `UNITED STATES HIGHWAY` after a word or with a route pair (#608, 10,595 full NAD rows), a hyphen beside the second number (#612, 2,900 rows whose reading changes). Not a rule: the `missing_city` docs (#610).
 
 Also in the milestone, not rules: the decisions-at-risk work: row counts for the deliberate decisions, a re-grade of the reviewed cards and five new queues (#524). The post on how rule and performance changes are tested (#491) moved to Later on 2026-11-05: revisit it with 0.6.1, the speed and performance release, when the release-cycle chart spans more releases and there is another round of improvements to show.
 Puerto Rico street-first forms wait for the Puerto Rico research issue. Nothing here changes a key before the release is cut.
@@ -88,6 +91,7 @@ Puerto Rico street-first forms wait for the Puerto Rico research issue. Nothing 
 ## Waiting, on data or demand
 
 - **Later** (the milestone): wanted or known, none at the P2 line, none scheduled. By kind:
+  - *From the major review (#586), all P3 by the full scan:* a lettered street before its suffix (#594), `OLD 25A` (#595), a lettered PO drawer (#598), a ZIP+4 written with `*` (#599), a spelled-number line with commas (#601), `# APT` after the street (#602); the one-line cuts (#596, #597) are not sized on field-form data; two numbers before the street name drop `multiple_addresses` (#617, P3 provisional: card counts only, remeasure on the full sources).
   - *Units:* two suffix words then a unit (#243), a unit value that is a suffix code (#272), `SUT` and `STU` (#289), two units joined by `&` (#290), a floor in parentheses (#291), a
     unit of more than one part (#294), a building word after a route (#295), a `PIER` as a last word (#327), a bare number or letter after a street with no suffix (#345), a name and a floor on line 1 (#351),
     a word and a number after a suffix (#375), NAD unit misses (#238), a unit marker after the street (#471), a building name after the street (#495), a designator with no value before
@@ -104,7 +108,7 @@ Puerto Rico street-first forms wait for the Puerto Rico research issue. Nothing 
   - *Parsing ideas:* a street line that already ends in the city, state and ZIP (#397), repeated state, a county-only segment and `USA` after the ZIP (#435). An opening parenthesis with no closing one that loses the ZIP in the one-line parse (#516); parentheses as the edge of a segment (#291).
   - *Data, API, docs and speed:* Florida pack gaps (#11), more state data (#213), the address-structure labels usaddress has (#35), Canadian addresses (#203), the usaddress comparison post (#88), the examples notebook as a page (#253),
     the docs site move off Material for MkDocs (#233), further performance leads (#418), and an architecture idea, shape-first parsing (#490).
-- **Tooling** (never shipped, never closed): evaluating MessyStreets (#323); the Try page (#434) is in review; benchmarks from a look at fastaddress (#511: a warning-versus-error AUC, a speed column, about 540 labeled messy rows).
+- **Tooling** (never shipped, never closed): evaluating MessyStreets (#323); the Try page (#434) is in review; the ny-corps CEO ingest (#609, from the major review); benchmarks from a look at fastaddress (#511: a warning-versus-error AUC, a speed column, about 540 labeled messy rows).
 - **More shapes and rules** not tied to a state, known and not yet an issue: named buildings without a building word (`THE GARRETT`, `UPTOWN SQUARE`);
   highway modifiers before a city on one line
   (`NORTH HIGHWAY 71 BUSINESS LOWELL`); a comma after a directional (`3324 N, ANDREWS AVE`); a PO box on line 2 beside a street with no number; a unit

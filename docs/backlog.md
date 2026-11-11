@@ -3,7 +3,7 @@
 How the open issues are sorted, what the labels and milestones mean, and how work moves from an issue to a
 release. The current plan is in [`roadmap.md`](roadmap.md); this page is the rules. It replaces the
 definitions that lived in the body of issue #103 (the backlog review), which now only holds its history.
-**Last reviewed 2026-11-04 (the `k5` rerank, #416, after the probe queue round), against the issues up to #516.**
+**Last reviewed 2026-11-11 (the major review of the away run, #586 step B7, on top of the `k5` rerank of 2026-11-04), against the issues up to #617.**
 
 ## The release plan
 
