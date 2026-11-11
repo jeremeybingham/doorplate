@@ -24,6 +24,7 @@ imply otherwise in docs or code comments.
 | The public API surface and the decisions behind each name | [`docs/api-surface.md`](docs/api-surface.md) |
 | Coming from usaddress | [`docs/usaddress-compat.md`](docs/usaddress-compat.md) |
 | Sharing messy data without sharing the data (`doorplate anonymize`) | [`docs/anonymizing.md`](docs/anonymizing.md) |
+| How the figures moved between versions, and the release tolerance | [`docs/version-comparison.md`](docs/version-comparison.md), [`docs/change-checklist.md`](docs/change-checklist.md#release-tolerance-for-the-benchmarks) |
 | Accuracy and speed, and how to rerun them | [`docs/benchmarks.md`](docs/benchmarks.md), [`docs/running-benchmarks.md`](docs/running-benchmarks.md) (every benchmark and which to run) |
 | The benchmark suite: what it holds and the rules that keep it fair (it is not a work list) | [`docs/benchmark-suite.md`](docs/benchmark-suite.md); data in [`benchmarks/suite/`](benchmarks/suite/README.md) |
 | How the parser works | [`docs/how-it-works.md`](docs/how-it-works.md) |
