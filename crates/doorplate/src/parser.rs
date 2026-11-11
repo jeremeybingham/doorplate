@@ -393,14 +393,23 @@ fn last_line_in_line1(fields: &Fields) -> bool {
         && words[1].starts_with(|c: char| c.is_ascii_alphanumeric())
 }
 
+fn null_word(v: &str) -> bool {
+    matches!(
+        v.to_ascii_uppercase().as_str(),
+        "NAN" | "NULL" | "NONE" | "UNDEFINED" | "N/A"
+    )
+}
+
 fn null_field(f: FieldName, v: &str) -> bool {
     let v = v.trim();
     match f {
         FieldName::City => matches!(v, "NaN" | "nan" | "NAN"),
-        FieldName::State | FieldName::Zip => matches!(
-            v.to_ascii_uppercase().as_str(),
-            "NAN" | "NULL" | "NONE" | "UNDEFINED" | "N/A"
-        ),
+        FieldName::State => null_word(v),
+        // A ZIP field of only zeros, shorter than five digits (`0`, `0000`), is NAD's stand-in
+        // for no ZIP (#605). `00000` is a well-formed ZIP and is left alone.
+        FieldName::Zip => {
+            null_word(v) || (v.len() < 5 && !v.is_empty() && v.bytes().all(|b| b == b'0'))
+        }
         _ => false,
     }
 }
@@ -629,6 +638,43 @@ mod tests {
             .next()
             .unwrap();
         assert_eq!(a.source.text(dir), Some("n."));
+    }
+
+    #[test]
+    fn a_zip_field_of_zeros_shorter_than_five_digits_is_no_zip() {
+        let p = Parser::new();
+        let parse = |z: &str| {
+            p.parse_fields(&Fields {
+                line1: Some("12 ELM ST".into()),
+                city: Some("SPRINGFIELD".into()),
+                state: Some("IL".into()),
+                zip: Some(z.into()),
+                ..Fields::default()
+            })
+            .unwrap()
+        };
+        for z in ["0", "00", "000", "0000", " 0 "] {
+            let a = parse(z);
+            assert!(a.zip5.is_none(), "{z:?}");
+            assert!(
+                a.diagnostics.warnings.contains(&Warning::MissingZip),
+                "{z:?}"
+            );
+            assert!(
+                !a.diagnostics.warnings.contains(&Warning::InvalidZip),
+                "{z:?}"
+            );
+            assert!(
+                !a.diagnostics.warnings.contains(&Warning::UnparsedRemainder),
+                "{z:?}"
+            );
+        }
+        // Five zeros is a well-formed ZIP, and a number with other digits is not touched.
+        assert_eq!(parse("00000").zip5.as_deref(), Some("00000"));
+        assert!(parse("0100")
+            .diagnostics
+            .warnings
+            .contains(&Warning::InvalidZip));
     }
 
     #[test]
