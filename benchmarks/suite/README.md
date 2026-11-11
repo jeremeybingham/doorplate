@@ -22,8 +22,14 @@ python benchmarks/suite.py all          # from the repository root
 | `MANIFEST.md` | Composition counts, the build commit, checksums, the hard classes with their quotas and what was built |
 
 The two tracks share record ids and are reported apart: no figure from the doorplate-only track appears in a
-doorplate-versus-usaddress table. `v1` is never edited after it was published; label errors found later go
-into `v2`.
+doorplate-versus-usaddress table. `v1` is never edited after it was published; `v2` is its scoring with the
+letter convention, and later label errors would go into a version of their own.
+
+## What is in `v2/`
+
+No data: `scoring.json` points at the records of `v1` and turns on the letter convention (a letter A to D after the house
+number is right as the number's suffix or as a unit; `MANIFEST.md` has the rule and what it moves). `python benchmarks/suite.py compare --suite benchmarks/suite/v2`
+scores it; `--suite` defaults to `v1` until the release notes move to `v2`.
 
 ## Rebuilding it
 

@@ -91,8 +91,9 @@ Whole suite (19,586), coarse, all records: 92.2% (v0.3.1), 92.3% (v0.4.0, v0.4.1
 85.5% throughout. The `natural` stratum (16,001) is 98.3, 98.3, 98.3, 98.5, 98.5 and 98.3% in the same order. The gain at v0.5.0 is the rare shapes (the
 `hard` stratum 54.6% to 61.8%). The `main` loss is the same letter: 212 strings on `compare`, all a letter A to D after the
 number that suite v1 labels as part of the number. Suite v1 is frozen, so that cost is constant and known; **-212 on `compare` is
-the #487 convention**, not a regression. Suite v2 will count the letter as right under either labelling
-([`benchmark-suite.md`](benchmark-suite.md)).
+the #487 convention**, not a regression. Suite v2 counts the letter as right under either labelling
+([`benchmark-suite.md`](benchmark-suite.md#versions)): on `main` it scores 93.5% on the whole suite (`natural` 98.5%, `hard` 62.1%),
+usaddress unchanged at 85.5%, so the release notes do not lead with the -1.0.
 
 ### Is the loss paid for? Blast radius of each rule (R4)
 
