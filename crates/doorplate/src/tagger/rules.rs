@@ -528,6 +528,26 @@ impl Tagger<'_> {
     /// a postdirectional and a unit.
     fn after_street(&self, c: usize, hi: usize) -> Option<usize> {
         let mut c = c;
+        // `44 MAPLE ROAD B ELMTOWN TX` (#600): a single letter after `ROAD` with city words after
+        // it stays with the street (read as a unit); a city that starts with a letter is a place
+        // the state data know, which `place_city` has already found. A directional is left to the
+        // postdirectional rule below.
+        if c > 0
+            && c + 1 < hi
+            && is_letter(self.text(c))
+            // `O FALLON`, `D HANIS` and `L ANSE` are places that start with a letter.
+            && !matches!(self.text(c), "O" | "D" | "L")
+            && self.lex.directional(self.text(c)).is_none()
+            && self.toks[c + 1].seg == self.toks[c].seg
+            && !self.toks[c + 1].is_hash()
+            && self.lex.unit(self.text(c + 1)).is_none()
+            && self
+                .lex
+                .suffix(self.text(c - 1))
+                .is_some_and(|l| l.value.abbr() == "RD")
+        {
+            c += 1;
+        }
         if c < hi && self.lex.directional(self.text(c)).is_some() {
             // `123 MAIN ST NORTH GLEN ELLYN`: a spelled-out compass word with
             // plain words after it, in the same segment, opens the city (a

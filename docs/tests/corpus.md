@@ -57,6 +57,7 @@ Every parsing bug fixed gets a case here (`CONTRIBUTING.md`).
   `sp-` (spelled-out numbers, `spelled.jsonl`),
   `is-` (intersections, `intersections.jsonl`),
   `nl-` (name lines with commas and two leading units, `name-lines.jsonl`),
+  `rl-` (a letter after ROAD on one line, `road-letter.jsonl`),
   `rt-` (repeated text and its warning, `repeated.jsonl`),
   `zr-` (a nearly right ZIP repaired, `zip-repair.jsonl`),
   `gf-` (a floor written as a plain number and the floor word, `glued-floor.jsonl`),
