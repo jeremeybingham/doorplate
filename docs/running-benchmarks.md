@@ -72,7 +72,8 @@ used only when the usaddress version and the inputs are the same, and, for a tim
 its result stored. The file is `local-data/benchmarks/usaddress-cache.json` (delete it to start again), and the report says which rows came
 from the cache and when they were made. Quote a cached figure as cached: usaddress's time was measured on that earlier day.
 
-`--suite DIR` scores another version (a rebuilt copy, or the private twin), `--limit N` runs the first N
+`--suite DIR` scores another version (`benchmarks/suite/v2`, which scores the same records with a letter A to D after the house number
+right as the number's suffix or as a unit; a rebuilt copy; or the private twin), `--limit N` runs the first N
 records (a quick test), `--min-group N` changes the smallest group a breakdown prints, `--out FILE` also
 writes the Markdown.
 
@@ -98,7 +99,7 @@ tests, the harness and the other tools use all the cores and memory of the machi
 runs the suite unpinned for quick development checks (do not quote its speed).
 
 **What is in `v1/`, and rebuilding it:** [`suite/README.md`](../benchmarks/suite/README.md). `v1` is never edited after it
-was published; label errors found later go into `v2`.
+was published; `v2` is the same records with the letter convention ([`benchmark-suite.md`](benchmark-suite.md#versions)).
 
 ## The geocode benchmark and `accuracy.py`
 

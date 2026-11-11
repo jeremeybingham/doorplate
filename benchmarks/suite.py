@@ -89,15 +89,16 @@ def header(profile, notes):
         ua = importlib.metadata.version("usaddress")
     except importlib.metadata.PackageNotFoundError:
         ua = "not installed"
-    files = {n: hashlib.sha256((SUITE_DIR / n).read_bytes()).hexdigest()[:12] for n in ("compare.jsonl.gz", "doorplate.jsonl.gz")
-             if (SUITE_DIR / n).exists()}
+    files = {n: hashlib.sha256((records_dir() / n).read_bytes()).hexdigest()[:12] for n in ("compare.jsonl.gz", "doorplate.jsonl.gz")
+             if (records_dir() / n).exists()}
     lines = [
         f"- CPU: {cpu_model()}; CPUs available to the runner: {cpus}; RAYON_NUM_THREADS={os.environ.get('RAYON_NUM_THREADS', 'unset')}",
         f"- Address-space limit: {limit}; profile: {'on (4 CPUs, 8 GB)' if profile else 'off'}"
         + (f" ({'; '.join(notes)})" if notes else ""),
         f"- OS: {platform.system()} {platform.release()}; Python {platform.python_version()}; {rust}",
         f"- doorplate {getattr(doorplate, '__version__', '?')}; usaddress {ua}",
-        f"- Suite: {SUITE_DIR.name}; files {', '.join(f'{n} {h}' for n, h in files.items())}",
+        f"- Suite: {SUITE_DIR.name}; files {', '.join(f'{n} {h}' for n, h in files.items())}"
+        + ("; a letter A to D after the house number counts as number suffix or unit" if letter_convention() else ""),
     ]
     return "\n".join(lines)
 
@@ -121,8 +122,33 @@ def cell(k, n):
     return f"{100 * k / n:.1f}% ({100 * lo:.1f} to {100 * hi:.1f})"
 
 
+def scoring():
+    """The version's `scoring.json`, or {} (v1 has none). `records_from` names the folder next to it that holds the records."""
+    f = SUITE_DIR / "scoring.json"
+    return json.loads(f.read_text()) if f.exists() else {}
+
+
+def records_dir():
+    src = scoring().get("records_from")
+    return SUITE_DIR.parent / src if src else SUITE_DIR
+
+
+def letter_convention():
+    return bool(scoring().get("letter_convention"))
+
+
+def letter_indexes(gold):
+    """Gold tokens that are a single letter A to D right after the house number (the #487 convention, suite v2).
+
+    The labels put such a letter in the number (`AddressNumberSuffix`); under v2 it is right as the number's suffix
+    or as a bare unit, and nothing else counts."""
+    return {i for i in range(1, len(gold))
+            if gold[i][1] == "AddressNumberSuffix" and gold[i - 1][1] == "AddressNumber"
+            and len(gold[i][0]) == 1 and gold[i][0] in "ABCDabcd"}
+
+
 def load(name):
-    with gzip.open(SUITE_DIR / name, "rt", encoding="utf-8") as fh:
+    with gzip.open(records_dir() / name, "rt", encoding="utf-8") as fh:
         return [json.loads(line) for line in fh]
 
 
@@ -146,12 +172,14 @@ def score_record(rec, pred, lib, C):
     p_spans = [(a[0], a[1], lab) for a, (_, lab) in zip(C.byte_spans(s, [t for t, _ in pred]), pred) if a]
     coarse_ok = fine_ok = True
     right = total = 0
-    for (tok, gl), span in zip(gold, g_spans):
+    letters = letter_indexes(gold) if letter_convention() else ()
+    for i, ((tok, gl), span) in enumerate(zip(gold, g_spans)):
         if not C.scored(tok):
             continue
         g = C.norm(gl)
         p = C.norm(C.overlap_label(span, p_spans))
         handled = lib == "doorplate" and g == "CountryName" and p is None  # dropped on purpose, `country_ignored`
+        handled = handled or (i in letters and p in ("AddressNumber", "OccupancyIdentifier"))  # suite v2 convention
         total += 1
         if handled or C.coarse(g) == C.coarse(p):
             right += 1
@@ -247,12 +275,14 @@ def score_record_common(rec, pred, lib, C):
     ok = True
     right = total = 0
     errors = []
-    for (tok, gl), span in zip(gold, g_spans):
+    letters = letter_indexes(gold) if letter_convention() else ()
+    for i, ((tok, gl), span) in enumerate(zip(gold, g_spans)):
         if not C.scored(tok):
             continue
         g = C.common(gl)
         p = C.common(C.overlap_label(span, p_spans))
         handled = lib == "doorplate" and C.norm(gl) == "CountryName" and p is None  # dropped on purpose, `country_ignored`
+        handled = handled or (i in letters and p in ("AddressNumber", "Occupancy"))  # suite v2 convention
         total += 1
         if handled or g == p:
             right += 1

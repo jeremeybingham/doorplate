@@ -132,8 +132,8 @@ rule change moved them; the gold and silver rows are not tuned to. Retake with `
 
 `benchmarks/suite/v1/` holds 19,586 labeled addresses and `python benchmarks/suite.py all` scores doorplate
 and usaddress on them (the runner, how to run it and the resource profile: `docs/running-benchmarks.md`).
-It was built once, audited, and is frozen: `v1` is never edited, and label errors found later go into `v2`
-with both versions' scores kept here. Rows are anonymized National Address Database points (the real street,
+It was built once, audited, and is frozen: `v1` is never edited, and `v2` scores the same records with a letter A to D after the house number counted
+as right as a suffix or a unit (`docs/benchmark-suite.md`), with both versions' scores kept here. Rows are anonymized National Address Database points (the real street,
 city, state and ZIP; invented house and unit numbers), Census TIGER street names for the six states NAD
 lacks, templates for PO boxes, routes, military and general delivery, and 1,000 hand-labeled shapes. The
 gold labels come from the field each token was written from, never from either parser. Run on 4 CPUs and

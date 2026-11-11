@@ -46,6 +46,9 @@ benchmarks/suite/
     compare.jsonl.gz       # the comparison track
     doorplate.jsonl.gz     # the doorplate-only track
     MANIFEST.md            # composition counts, sources, the build commit, checksums
+  v2/
+    scoring.json           # the records of v1, with the letter convention (see "Versions")
+    MANIFEST.md
   README.md                # how to run it
 benchmarks/suite.py        # the runner (both tracks, the resource profile)
 tools/benchsuite/build.py  # the generator (maintainers only: reads local-data/)
@@ -311,10 +314,21 @@ finish in a few minutes under the profile.
   are kept in `docs/benchmarks.md`, each with the version it came from.
 - A new version is also needed when the usaddress pin moves or a source is replaced; the old
   version stays runnable.
-- **Letter after a house number (decided in #586, R7).** In `v2`, a letter A to D directly after the
+- **Letter after a house number (decided in #586, R7; built as `v2`).** In `v2`, a letter A to D directly after the
   house number counts as right whether the gold label puts it in the number or in the unit, like
   the existing `SAME` map for `AddressNumberSuffix`. `v1` stays frozen, so its `compare` track keeps
   the constant -212 that the #487 convention costs; the release notes cite it.
+  - **What `v2` is.** The same 19,586 records, byte for byte (`benchmarks/suite/v2/` holds `scoring.json` and `MANIFEST.md`,
+    and `records_from` points at `v1`; nothing is copied). Only the comparison track's scoring differs.
+  - **The rule.** A gold token that is a single letter A to D, labelled `AddressNumberSuffix` and directly after an
+    `AddressNumber`, is right when the library labels it `AddressNumber`, `AddressNumberSuffix` or `OccupancyIdentifier`
+    (in the three-way track, the number or `Occupancy`). Every other token scores as in `v1`. A letter read as part of the
+    street name (usaddress's labelling) is still wrong: the decision counts the number and the unit readings only.
+  - **What it moves.** 241 of the 19,586 records have such a letter (207 `hard`, 33 `natural`, 1 `hand`); none has an `expect`, so
+    the doorplate-only track is unchanged. usaddress's figures are identical in both versions. doorplate on the whole suite,
+    coarse, all records: 92.4% (`v1`) and 93.5% (`v2`); `natural` 98.3% and 98.5%; `hard` 54.8% and 62.1% (on `main` `ad1ee05`).
+  - **Why it adds no sensitivity.** It cannot raise a record that has no such letter, and only the labels named above are
+    accepted, so a real misparse of the number, the unit or the street still fails.
 
 ## Step 2 results
 
