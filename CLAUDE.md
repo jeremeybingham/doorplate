@@ -24,7 +24,7 @@ when working on the project with Claude Code.
 - For each parse-rule PR: the tests above plus a before/after comparison on `local-data/netsyms-2026/sample.sqlite` with `tools/harness/compare.py`. The foundation checkpoint (`tools/compare/checkpoint.py`, `docs/backlog.md`) passed on 2026-10-23, so parsing changes may merge; a key-affecting rule is also measured against the frozen checkpoint keys with `tools/compare/key_diff.py diff`. Full Netsyms runs happen once after a batch of rules and on the release commit.
 - Review queues: build the **comparison** queue (`tools/review/compare_sample.py`) by default, not a flagged one (`docs/tools/review.md`, "Which queue to build"); read the source's `INVENTORY.md` quirks first and choose the roles to match. Use a flagged queue only for a stated reason, recorded on #225.
 - Rebuild the extension (`maturin develop --release`) after every Rust change.
-- A parse-rule PR also runs the sample comparison and, for a rule on one-line input, the checks in `docs/running-benchmarks.md` (`tools/compare/city_diff.py` and `tools/compare/oneline_fl.py`): a rule tuned on the geocode benchmark alone once broke spelled-out postdirectionals. The loop is in `docs/tools/harness.md`.
+- A parse-rule PR also runs the sample comparison and the one-line checks in `docs/running-benchmarks.md` (`tools/compare/city_diff.py` and `tools/compare/oneline_fl.py`; for every rule, not only one-line ones; `measure_rule_pr.sh` runs them): a rule tuned on the geocode benchmark alone once broke spelled-out postdirectionals. The loop is in `docs/tools/harness.md`.
 
 ## Local notes
 
