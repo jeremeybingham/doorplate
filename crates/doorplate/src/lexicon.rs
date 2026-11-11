@@ -865,21 +865,28 @@ impl Lexicons {
     /// A line of no-data markers (issue #51): `NONE`, `PA NONE`, `NULL`,
     /// `999999999 999999999`. Every token is a marker (a one-word
     /// placeholder phrase, or a run of nine or more nines) or, once, a code
-    /// of up to two letters, and at least one is a marker. Only whole lines match,
-    /// so `NONE SUCH RD` is not one.
+    /// of up to two letters, and at least one is a marker. A run of one digit
+    /// seven or more long is also a marker (`5555555 55555555 2`, #592), and
+    /// when the line has one, it may also hold one short number of up to three
+    /// digits. Only whole lines match, so `NONE SUCH RD` is not one.
     pub(crate) fn is_no_data_line(&self, s: &str) -> bool {
         let key = normalize_key(s);
-        let (mut marker, mut codes) = (false, 0);
+        let (mut marker, mut run, mut codes, mut numbers) = (false, false, 0, 0);
         for t in key.split(' ').filter(|t| !t.is_empty()) {
-            if self.is_no_data_token(t) {
+            if is_digit_run(t) {
                 marker = true;
+                run = true;
+            } else if self.is_no_data_token(t) {
+                marker = true;
+            } else if t.len() <= 3 && t.bytes().all(|b| b.is_ascii_digit()) {
+                numbers += 1;
             } else if t.len() > 2 || !t.bytes().all(|b| b.is_ascii_alphabetic()) {
                 return false;
             } else {
                 codes += 1;
             }
         }
-        marker && codes <= 1
+        marker && codes <= 1 && numbers <= usize::from(run)
     }
 
     /// A single no-data marker: `NULL`, `NONE` and the other one-word
@@ -1353,6 +1360,12 @@ const REGIONAL_ROAD_WORDS: &[(&str, &str)] = &[
     ("TX", "PRIVATE"),
     ("TX", "RANCH"),
 ];
+
+/// A run of one digit, seven or more long (`5555555`): a no-data filler (#592).
+fn is_digit_run(t: &str) -> bool {
+    let b = t.as_bytes();
+    b.len() >= 7 && b[0].is_ascii_digit() && b.iter().all(|&c| c == b[0])
+}
 
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
