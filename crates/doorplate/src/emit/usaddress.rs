@@ -195,7 +195,8 @@ impl ParsedAddress {
     /// The input's tokens with usaddress labels, in input order (fields in
     /// `line1, line2, city, state, zip` order).
     ///
-    /// Mapping: street number `AddressNumber`; directionals
+    /// Mapping: street number `AddressNumber`, and a one-letter prefix written
+    /// apart from it (`E 7379`) `AddressNumberPrefix`; directionals
     /// `StreetNamePreDirectional` / `StreetNamePostDirectional`; name
     /// `StreetName`; suffix `StreetNamePostType`; a highway's state and
     /// prefix `StreetNamePreType` and its route `StreetName`; units
@@ -259,6 +260,9 @@ impl ParsedAddress {
             None => "USPSBoxID",
         };
         Some(match hit.component {
+            Component::StreetNumber if i == 0 && self.is_number_prefix(tok, &hit.span) => {
+                "AddressNumberPrefix"
+            }
             Component::StreetNumber => "AddressNumber",
             Component::StreetDirPrefix => "StreetNamePreDirectional",
             Component::StreetName => "StreetName",
@@ -279,6 +283,26 @@ impl ParsedAddress {
             Component::Building => "BuildingName",
             Component::Unparsed => return None,
         })
+    }
+
+    /// Whether `tok` is a house-number prefix written as its own token: one
+    /// letter that opens the number's span `number`, with a digit right after
+    /// it (`E 7379`, #651). The parse holds the two as one number (`E7379`);
+    /// only the label differs. A glued `E7379` is one `AddressNumber` token.
+    fn is_number_prefix(&self, tok: &Span, number: &Span) -> bool {
+        let Some(text) = self.source.text(number) else {
+            return false;
+        };
+        let Some(len) = tok.end.checked_sub(number.start) else {
+            return false;
+        };
+        let (Some(head), Some(rest)) = (text.get(..len), text.get(len..)) else {
+            return false;
+        };
+        tok.start == number.start
+            && head.len() == 1
+            && head.bytes().all(|c| c.is_ascii_alphabetic())
+            && rest.trim_start().starts_with(|c: char| c.is_ascii_digit())
     }
 }
 
@@ -514,6 +538,34 @@ mod tests {
                 "USPSBoxType",
                 "USPSBoxID"
             ]
+        );
+    }
+
+    #[test]
+    fn a_letter_before_the_number_is_the_number_prefix() {
+        // #651: the parse joins the two (`E7379`); only the label differs.
+        let a = Parser::new()
+            .parse("E 7379 Oak Hollow Rd, Madison WI 53704")
+            .unwrap();
+        assert_eq!(a.street_number.as_deref(), Some("E7379"));
+        let l: Vec<_> = a
+            .to_usaddress_tags()
+            .into_iter()
+            .map(|t| t.label.unwrap_or("-"))
+            .collect();
+        assert_eq!(
+            l[..3],
+            ["AddressNumberPrefix", "AddressNumber", "StreetName"]
+        );
+        let t = a.tag();
+        assert_eq!(t.get("AddressNumberPrefix"), Some("E"));
+        assert_eq!(t.get("AddressNumber"), Some("7379"));
+        assert_eq!(t.usaddress_type(), "Street Address");
+        // Written as one token, or with the letter after the number, it is the number.
+        assert_eq!(labels("E7379 Oak Hollow Rd")[0], "AddressNumber");
+        assert_eq!(
+            labels("7379 E Oak Hollow Rd")[..2],
+            ["AddressNumber", "StreetNamePreDirectional"]
         );
     }
 

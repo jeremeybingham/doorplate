@@ -37,7 +37,7 @@ import xml.etree.ElementTree as ET
 OUT_OF_SCOPE = {
     "Recipient", "LandmarkName", "CornerOf",
     "IntersectionSeparator", "NotAddress", "CountryName", "SubaddressType",
-    "SubaddressIdentifier", "StreetNamePreModifier", "AddressNumberPrefix",
+    "SubaddressIdentifier", "StreetNamePreModifier",
 }
 # Labels that differ by convention only; both sides are mapped before
 # comparing.

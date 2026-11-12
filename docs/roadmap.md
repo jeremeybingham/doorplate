@@ -118,7 +118,7 @@ Puerto Rico street-first forms wait for the Puerto Rico research issue. Nothing 
   (`NORTH HIGHWAY 71 BUSINESS LOWELL`); a comma after a directional (`3324 N, ANDREWS AVE`); a PO box on line 2 beside a street with no number; a unit
   followed by business words (`STE 903 BLU SPA`); and `possibly_truncated` firing on some complete units.
 - **A public Arrow result and a Polars expression namespace** only if there is demand (#24 is closed: the helpers build their columns in Rust).
-- **usaddress compatibility** (#9, decided): the drop-in module is done (#36); the labels in #35 proceed when someone needs them. Recipient and name
+- **usaddress compatibility** (#9, decided): the drop-in module is done (#36); the labels in #35 proceed when someone needs them (the number prefix `AddressNumberPrefix` is emitted, #651). Recipient and name
   lines, landmarks and street corners stay out of scope; that text goes to `unparsed`.
 - **Data and benchmarks:** a benchmark built from a national address source rendered in several styles and compared per state and per shape; a
   hand-labeled sample of real messy data in the shapes people actually have.

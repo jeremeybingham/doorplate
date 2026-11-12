@@ -205,7 +205,7 @@ Classes already known, to be counted with the rest:
 | A trailing number in the street read as a unit | doorplate | #37 (F) |
 | A highway modifier before the city on one line | doorplate | #10 |
 | `VILLAGE OF` / `TOWN OF` / `CITY OF` before the city | doorplate | #68 |
-| A label doorplate does not model (number prefix, premodifier, subaddress, intersection) | doorplate | #35 |
+| A label doorplate does not model (premodifier, subaddress, intersection; a number prefix until #651) | doorplate | #35 |
 | usaddress's classes | usaddress | measured in step 2: see "Step 2 results" |
 
 The final table, with counts, goes in `MANIFEST.md`.
@@ -408,7 +408,7 @@ columns are per 10,000 records. Building names are not in the table (decision 2 
    above. The local data cannot measure mixed case (99% uppercase), so these are chosen, not measured;
    the per-style rates above let a reader re-weight them.
 
-Unmodeled labels (recipient lines, number prefixes; #35) are labels doorplate does not model. They fill
+Unmodeled labels (recipient lines, and number prefixes until #651 emitted that label; #35) are labels doorplate does not model. They fill
 most of the doorplate-only classes and make "all records" and "shared labels" differ by about 1
 point for doorplate. This is by design, and why both figures are reported. A trailing `USA` is not among
 them: it is handled (see above).

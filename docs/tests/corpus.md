@@ -431,9 +431,10 @@ are one street (`LAND AND SEA RD`, `BEACH AT SEA DR`, `STATE AND MAIN ST`,
 
 ### `tag.jsonl`
 
-Ids `tg-001` to `tg-008`. Cases with `address_type`, `tag` and `tag_repeated`:
+Ids `tg-001` to `tg-009`. Cases with `address_type`, `tag` and `tag_repeated`:
 one per address shape (street, PO Box, rural route, military, general delivery,
-dual, unknown) and a repeated label (two units).
+dual, unknown), a repeated label (two units) and a one-letter number prefix
+written apart from the number (`tg-009`, #651: `AddressNumberPrefix`).
 
 ### `hash-before-designator.jsonl`
 
