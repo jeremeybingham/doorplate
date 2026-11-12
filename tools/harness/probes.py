@@ -834,6 +834,7 @@ NO_PROBE = {
     410: "research: naming the known-word chains and where the tokenizer and tagger differ; a reading task, not a shape",
     596: "one-line input (a pre-direction, a suffix-word name, an unlisted city): sized on one-line data by tools/compare/oneline_fl.py, not a field-form text shape (#586 R7 row 11)",
     597: "one-line input (a listed city ending in a suffix word, no comma before it): sized on one-line data, not a field-form text shape (#586 R7 row 11)",
+    656: "a decision waiting on a review queue; the glued shape was sized by sibling counts over the seven sources (#653), not a probe",
     583: "a before and after count of the warnings PR 494 changed, by code (#586 B1); not a text shape",
     578: "a convention question, not a text shape: the letter after a house number is documented in docs/usaddress-compat.md and docs/benchmarks.md (#586 R8, #603)",
 }
