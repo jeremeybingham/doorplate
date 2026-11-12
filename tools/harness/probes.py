@@ -814,6 +814,10 @@ PROBES = [
     ),
     # #586 B4: the last line inside line 1 (#585 closed into #614); a field probe in hits().
     ("last-line-in-line1", "614", "line 1 ends with the row's own state and a five-digit ZIP (214 N PARK AVE OAKLAND NE 68045); hits()", None, "M", 3),
+    # Follow-ups to #269, #291 and #516 (0.6.0 open items).
+    ("county-road-so-no-number", "643", "a county road followed by SO and no number (1731 CO RD SO): the south direction or part of the name?", r"\b(?:COUNTY ROAD|COUNTY RD|CO ROAD|CO RD|CTY RD|CTY ROAD) SO(?: [^0-9 ]|,|\||$)", "S", 3),
+    ("paren-group-line1-other", "644", "a parenthesized group inside line 1 that is not a unit, floor or box (ELM ST (OLD MILL) 4)", rf"^[^|]*\((?!\s*(?:{UN}|{BOX}|#|[0-9]+(?:ST|ND|RD|TH)? (?:FL|FLOOR))\b)[^()|]*\)[^|]*(?:\||$)", "S", 2),
+    ("paren-inside-name", "645", "a parenthesis inside a word or in the middle of a name, not at the edge of a line (ELM(ST, MARTIN (LUTHER KING BLVD)", r"[A-Z]\([A-Z]|\b[A-Z]{3,} \([A-Z]+ [A-Z]+[^)|]*(?:\||$)", "S", 3),
 ]
 # Open rule issues that have no probe, and why. Every other open issue with the label `area:rules` has a probe in PROBES; the
 # issues about docs, tooling, the API or the architecture, and the trackers, are not text shapes and need none.
