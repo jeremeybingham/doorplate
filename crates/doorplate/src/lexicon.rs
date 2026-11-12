@@ -593,6 +593,19 @@ impl Lexicons {
         self.suffix_key(&normalize_key_cow(s))
     }
 
+    /// Whether `s` is in the suffix, unit, directional, state, special or highway table: the same
+    /// answer as asking each in turn, with the tables that read the raw spelling first and the
+    /// spelling normalized once for the two that need a key (#672 C5).
+    pub(crate) fn is_known_word(&self, s: &str) -> bool {
+        let key = normalize_key_cow(s);
+        self.suffix_key(&key).is_some()
+            || self.unit(s).is_some()
+            || self.directional_key(&key).is_some()
+            || self.state(s).is_some()
+            || self.special(s).is_some()
+            || self.highway(s).is_some()
+    }
+
     /// [`Self::suffix`] for a spelling that is already a key (see [`normalize_key`]).
     fn suffix_key(&self, key: &str) -> Option<Lookup<StreetSuffix>> {
         self.suffix_base(key)
