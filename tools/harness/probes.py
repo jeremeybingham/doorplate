@@ -773,6 +773,7 @@ PROBES = [
     ("five-digit-join", "591", "two digits plus three digits outside NYC, Hawaii and Massachusetts (one five-digit number); hits()", None, "M", 3),
     ("line2-digit-run", "592", "line 2 is only a run of one digit, seven or more long", r"\|\s*(?:0{7,}|1{7,}|2{7,}|3{7,}|4{7,}|5{7,}|6{7,}|7{7,}|8{7,}|9{7,})\b", "S", 1),
     ("name-road-number-unit", "593", "a road word and a number after a name, read as a unit (HOLLOW ROAD 412)", r"\b[A-Z]+ ROAD [0-9]+\b", "M", 3),
+    ("county-road-dir-number", "642", "a county road, a compass pair and a number (COUNTY ROAD SE 1234), read as a street name", r"\b(?:COUNTY ROAD|COUNTY RD|CO ROAD|CO RD|CR) (?:NE|NW|SE|SW) [0-9]{1,5}\b", "S", 2),
     ("letter-street-two-suffix", "594", "a one-letter street before its own suffix (9 C ST RD)", rf"^[0-9]+ [A-Z] {SUF} {SUF}\b", "S", 2),
     ("old-digit-letter", "595", "OLD and a digit-letter after it (18 OLD 25A)", r"\bOLD [0-9]+[A-Z]\b", "S", 2),
     ("po-drawer-letter", "598", "a lettered PO drawer (PO DRAWER C)", r"\bDRAWER [A-Z]\b", "S", 2),
