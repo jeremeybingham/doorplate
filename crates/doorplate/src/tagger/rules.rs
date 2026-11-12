@@ -2644,7 +2644,7 @@ impl Tagger<'_> {
         let start = v + 1;
         let one_seg = (i..hi).all(|k| self.toks[k].seg == self.toks[i].seg);
         let value = self.text(v);
-        if start + 1 >= hi
+        if start >= hi
             || !one_seg
             || !is_unit_value(value)
             || !(has_digit(value) || is_letter(value))
@@ -2659,7 +2659,34 @@ impl Tagger<'_> {
         }
         let street = self.highway_at(start, hi).is_some()
             || (start + 1..hi).any(|k| lex.suffix(self.text(k)).is_some());
-        street.then_some(start)
+        (street || self.suffixless_street_after_unit(i, start, hi)).then_some(start)
+    }
+
+    /// The street after a unit and its value when it has no suffix word (`242 APT B EXAMPLE`,
+    /// `1250 UNIT 12 CAMINO REAL`, #529): the designator is not `BLDG` (`BLDG O STREET` stays
+    /// one name), the value is not a direction letter (`APT S OLD 63` is a stray designator
+    /// before a street, #498), and a plain name of letters follows, one to three words, the
+    /// first of at least three letters, none of them a suffix, direction or unit word.
+    fn suffixless_street_after_unit(&self, i: usize, start: usize, hi: usize) -> bool {
+        let lex = self.lex;
+        let value = self.text(i + 1);
+        if lex
+            .unit(self.text(i))
+            .is_some_and(|l| l.value.abbr() == "BLDG")
+            || (is_letter(value) && lex.directional(value).is_some())
+            || hi - start > 3
+        {
+            return false;
+        }
+        let first = self.text(start);
+        first.len() >= 3
+            && (start..hi).all(|k| {
+                let w = self.text(k);
+                w.bytes().all(|b| b.is_ascii_alphabetic())
+                    && lex.suffix(w).is_none()
+                    && lex.directional(w).is_none()
+                    && lex.unit(w).is_none()
+            })
     }
 
     /// Whether the number word at `lo` (`ONE` to `TWENTY`) is the house number:
