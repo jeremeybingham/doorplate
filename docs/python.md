@@ -1,5 +1,7 @@
 # Python guide
 
+This library formats and parses; it does not validate that an address exists or can receive mail.
+
 ```python
 import doorplate as dp
 

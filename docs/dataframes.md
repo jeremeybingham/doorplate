@@ -3,6 +3,7 @@
 Pick the call that matches how your addresses arrive; all of them give the same components, keys and warnings. Install the
 extra first ([Getting started](getting-started.md#install)). The functions are in the [Python reference](python-api.md); runnable
 versions with data of several shapes are in the [examples](https://github.com/jeremeybingham/doorplate/tree/main/examples).
+It formats and parses; it does not validate that an address exists or can receive mail.
 
 ## Your data, by shape
 

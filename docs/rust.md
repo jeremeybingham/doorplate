@@ -1,5 +1,7 @@
 # Rust guide
 
+This library formats and parses; it does not validate that an address exists or can receive mail.
+
 ```rust
 use doorplate::{KeyOptions, Parser};
 
