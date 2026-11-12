@@ -801,6 +801,31 @@ impl Lexicons {
         })
     }
 
+    /// Whether a country name may end with `last`, the text of one token: false means that no run of
+    /// tokens ending here is a country (`strip_trailing` then skips joining the candidates). Exact for
+    /// the shipped names; a layer may add any name, so with a layer the answer is always yes (#672 B2).
+    pub(crate) fn country_may_end(&self, last: &str) -> bool {
+        static LAST: OnceLock<Vec<&'static str>> = OnceLock::new();
+        if self.layer.is_some() {
+            return true;
+        }
+        let key = normalize_key_cow(last);
+        if key.is_empty() {
+            return true;
+        }
+        let words = LAST.get_or_init(|| {
+            let mut w: Vec<&'static str> = tables::COUNTRIES
+                .iter()
+                .map(|k| k.rsplit_once(' ').map_or(*k, |(_, w)| w))
+                .collect();
+            w.sort_unstable_by(|a, b| cmp_keys(a, b));
+            w.dedup();
+            w
+        });
+        // A token that normalizes to several words ends in its last one.
+        find_str(words, key.rsplit(' ').next().unwrap_or(&key))
+    }
+
     /// The place named after a municipality-type prefix (`PINECREST` in
     /// `VILLAGE OF PINECREST`), or `None` when `city` has no such prefix or
     /// nothing after it. Source: `data/special.toml` `[place_prefix]`.
@@ -1973,6 +1998,22 @@ mod tests {
             }
         }
         assert!(hits >= 50, "{hits}");
+    }
+
+    /// `country_may_end` never says no to the last word of a country name, in any spelling, and says
+    /// no to ordinary words (#672 B2).
+    #[test]
+    fn country_last_word_test_keeps_every_name() {
+        for k in tables::COUNTRIES {
+            let last = k.rsplit(' ').next().unwrap();
+            assert!(LEX.country_may_end(last), "{k}");
+            assert!(LEX.country_may_end(&last.to_lowercase()), "{k}");
+        }
+        assert!(LEX.country_may_end("U.S.A."));
+        assert!(LEX.country_may_end("."));
+        for w in ["ST", "FL", "33101", "MIAMI", "AVE"] {
+            assert!(!LEX.country_may_end(w), "{w}");
+        }
     }
 
     /// The first-word tests of the highway, directional and state tables (#438) never say no to a word
