@@ -13,7 +13,7 @@ This tool formats and parses; it **does not validate** that an address exists or
 receive mail.
 
 > **Alpha release (0.5.1).** Expect rough edges; names in the API and the warning codes may still change before 1.0.
-> The match key is versioned (`k4:`) and later versions will probably change it (a `k5` is planned for 0.6.0), so store
+> The match key is versioned (`k5:`) and later versions will probably change it, so store
 > the prefix with your keys and plan to re-key. `k4` has only been checked on the project's own data (37 million rows of
 > public records). Accuracy and speed are measurements on a few datasets, not guarantees.
 >
@@ -50,7 +50,7 @@ doorplate layer check DIR                                    # load a custom lay
 
 ```sh
 $ doorplate parse "123 N. Main St #4, miami, fl 33101" | jq -r .key
-k4:S|123|N|MAIN|ST||FL|33101
+k5:S|123|N|MAIN|ST||FL|33101
 ```
 
 `doorplate --help` lists every option.
