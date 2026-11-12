@@ -30,6 +30,5 @@ GitHub Actions, which the repository already uses) on every push to `main` that 
 - Preview locally: `bundle exec jekyll serve --drafts` in this folder (needs Ruby and
   the `github-pages` gem; optional).
 
-Posts follow the project's rules: this library formats and parses; it does not
-validate deliverability. Examples use invented addresses. Never publish rows from
+Posts follow the project's rules: examples use invented addresses. Never publish rows from
 `local-data/`; only aggregate numbers.

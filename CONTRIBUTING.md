@@ -78,7 +78,7 @@ Four READMEs are shown on package pages and must not drift apart: `README.md` (G
 `crates/doorplate-cli/README.md` (crates.io), and `crates/doorplate-py/README.md` (PyPI). If your change affects the API, CLI options, install
 steps, features, minimum Rust or Python versions, warning codes, the key format, figures, or the alpha and help-wanted notices, update every README it
 touches in the same pull request. Links in the three crate READMEs are absolute (crates.io and PyPI do not resolve relative ones), and each keeps the
-statement that the library does not validate deliverability and the Disclaimer section. They are short on purpose: the detail lives in the tours in
+Disclaimer section. They are short on purpose: the detail lives in the tours in
 `docs/`, and a README keeps its install lines, a quickstart and a two-row headline of figures copied from [`docs/benchmarks.md`](docs/benchmarks.md).
 
 ## Documentation
@@ -117,7 +117,7 @@ Maintainers only. The release issue for a version is the checklist. A 0.5.x patc
 5. **Tag.** Tag the merge commit `vX.Y.Z`; the tag must equal the workspace version, and the crates.io job fails if it does not. Pushing a `v*` tag runs both release workflows. The `crates-io` and the `pypi` environments each need a manual approval before anything is published. crates.io gets `doorplate`, then `doorplate-cli` (the repository secret `CARGO_REGISTRY_TOKEN`); PyPI gets the abi3 wheels and the sdist through trusted publishing (no token).
 6. **After.** Check the crates.io and PyPI pages and install the new version in a clean environment. Then the documentation site: activate the new tag's version on Read the Docs, check that `stable` builds, and change the opening of `docs/python-api.md`, which says it describes `main`, to say it describes the release.
 
-The project page is the blog in `site/` (Jekyll), built and deployed by `.github/workflows/pages.yml` on every push to `main` that changes `site/` or the parser (the live demo in `site/demo/` runs the core compiled to WebAssembly, `crates/doorplate-wasm`, which the workflow builds; Pages is enabled with the "GitHub Actions" source). A post in `site/_posts/` is published; `site/_drafts/` is not built. Posts follow the rules in [`site/README.md`](site/README.md): invented addresses, aggregate numbers only, and the statement that the library does not validate deliverability.
+The project page is the blog in `site/` (Jekyll), built and deployed by `.github/workflows/pages.yml` on every push to `main` that changes `site/` or the parser (the live demo in `site/demo/` runs the core compiled to WebAssembly, `crates/doorplate-wasm`, which the workflow builds; Pages is enabled with the "GitHub Actions" source). A post in `site/_posts/` is published; `site/_drafts/` is not built. Posts follow the rules in [`site/README.md`](site/README.md): invented addresses and aggregate numbers only.
 
 ## License
 
