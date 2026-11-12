@@ -80,41 +80,15 @@ box numbers could instead go in `StreetAdditionalInfo` (choice 2).
 The Data Dictionary pages give definitions, types and lookups but not
 conventions, so these are choices, not facts from the Data Dictionary.
 
-1. **`StreetSuffix` form.** The Pub 28 abbreviation (`ST`), matching
-   `to_usps()`. The lookup is open and defines no values.
-2. **PO Box, route and box numbers.** Stay folded into `StreetName`.
-   `StreetAdditionalInfo` is not used.
-3. **`#` units.** `UnitNumber` includes the designator and writes `#55`, as
-   the Data Dictionary's own example does. The USPS line writes `# 55`
-   (Pub 28 puts a space); the difference is intended.
-4. **State codes outside the lookup.** The `StateOrProvince` lookup has 65
-   values (50 states, DC, VI and 13 Canadian provinces and territories) and
-   no `PR`, `GU`, `AS`, `MP`, `FM`, `MH`, `PW`, `AA`, `AE` or `AP`. The
-   lookup is "open with enumerations", so the emitter passes Pub 28 codes
-   through, with no warning. A server that enforces the enumerations would
-   reject them.
-5. **`UnparsedAddress` content.** Built as `LINE1, CITY, ST ZIP`, using the
-   USPS line 1 and ZIP+4 with a hyphen. No country is added.
-6. **`Country`.** Left empty. No option to set it.
-7. **Text not placed.** `Diagnostics::unparsed` is not emitted in the RESO
-   output; it stays available in the diagnostics.
-8. **Dual addresses.** A record with a street address and a PO Box (Pub 28
-   section 215) gives the street in every RESO field, because RESO address
-   fields describe the property; the PO Box is left out. The USPS output
-   writes the box instead (section 215 prefers it on the mailpiece), so the
-   two outputs differ for these records (the key uses the street too).
+1. **`StreetSuffix` form.** The Pub 28 abbreviation (`ST`), as `to_usps()`. The lookup is open and defines no values.
+2. **PO Box, route and box numbers** stay in `StreetName`; `StreetAdditionalInfo` is not used.
+3. **`#` units** keep the designator (`#55`), as the Data Dictionary's example does. The USPS line writes `# 55`, by design.
+4. **State codes outside the lookup** (`PR`, `GU`, `AA`, …) pass through with no warning: the lookup is open with enumerations, but a server that enforces them would reject these.
+5. **`UnparsedAddress`** is `LINE1, CITY, ST ZIP` (USPS line 1, ZIP+4 with a hyphen). No country is added.
+6. **`Country`** is left empty. No option sets it.
+7. **Text not placed** (`Diagnostics::unparsed`) is not emitted; it stays in the diagnostics.
+8. **Dual addresses** give the street in every field, because RESO address fields describe the property. The PO Box is left out, so the USPS output and the RESO output differ for these records (the key uses the street too).
 
 ## Verification status
 
-- Field names, types, lengths, lookups and the two example values were read
-  from the pages listed above on 2026-10-15; the types, lengths, lookup statuses
-  and statuses of the 16 fields in this document were read again on 2026-10-20 and
-  match (the lookup value lists and the example values were not read again).
-- The emitter's output for each shape in "Shapes with no field of their own" was
-  run again on 0.3.0 and matches the table.
-- Tests: `emit/reso.rs` unit tests and the `reso` expectations in
-  `tests/corpus/reso.jsonl`. The corpus values were written from this table,
-  not copied from emitter output.
-- Not checked: behavior of a particular RESO server, and the Data Dictionary's
-  Lookup Resource representation (a server may expose lookup values by
-  `LookupKey` rather than the plain strings used here).
+Checked against the Data Dictionary pages on 2026-10-20: field names, types, lengths, lookup and field statuses. Not checked: the lookup value lists, a particular RESO server, or the Lookup Resource's `LookupKey` form. Tests: `emit/reso.rs` and `tests/corpus/reso.jsonl` (written from this table, not copied from emitter output).

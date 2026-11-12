@@ -21,7 +21,7 @@ New to the project? Read the [project README](../README.md), then
 | [`crates/doorplate-cli/README.md`](../crates/doorplate-cli/README.md) | The `doorplate` command (crates.io): install, usage, CSV files |
 | [`examples/README.md`](../examples/README.md) | Runnable examples: a notebook tour, pandas, Polars and DuckDB pipelines, sample data of several shapes |
 | [`usaddress-compat.md`](usaddress-compat.md) | Coming from usaddress: the drop-in `doorplate.compat` module, the output in its shape, the label mapping, what differs, how the two are compared |
-| [`libpostal-compat.md`](libpostal-compat.md) | Compared with libpostal: what each does, the label mapping, normalization against the key, and the Senzing model the comparison will use (a written comparison; no libpostal figures yet) |
+| [`libpostal-compat.md`](libpostal-compat.md) | Compared with libpostal: what each does, the label mapping, normalization against the key, and the Senzing model the comparison uses, and the first measurements (one run, 2026-11-07) |
 | [`python-api.md`](python-api.md) | The Python reference: every function, class and helper of the `doorplate` package, generated from the type stubs (so it describes `main`) |
 | [`cli.md`](cli.md) | The command-line reference: the commands, their options, the exit codes and the usage text |
 | [`custom-layers.md`](custom-layers.md) | The custom layer and its guide: a demo layer, a template, a prompt for an LLM, then the files, the rules, what it reports, and how a layer can change a key |

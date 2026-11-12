@@ -162,22 +162,15 @@ the call is made from how smoothly the items progress.
 
 ## Version history
 
-- **`k4`** (this page) starts with 0.5.0. The segment layout is the same as `k3`; the value of some keys changes, because 0.5.0
-  reads some inputs differently: the rules are listed in the changelog (each is marked "held for the `k4`") and were measured against
-  the frozen `k3` keys over seven large public sources (36,920,703 rows). The prefix is the only change to a key that no rule
-  touched, so re-keying is a re-parse. Frozen from there: a change to what an input produces needs `k5`.
+Each version's rules are listed in [`CHANGELOG.md`](../CHANGELOG.md) (the entries marked "held for the `k<n>`"). The
+prefix is the only change to a key that no rule touched, so re-keying is a re-parse.
 
-- **`k3`** started with 0.4.0 and is retired with 0.5.0 (the library no longer produces it). The segment layout is the same as
-  `k2`; the value of some keys changes, because 0.4.0 reads some inputs differently: the rules are listed in the changelog (each is
-  marked "held for the `k3`"). The prefix is the only change to a key that no rule touched, so re-keying is a re-parse.
-
-- **`k2`** started with 0.3.0 and is retired with 0.4.0 (the library no longer produces it). The segment layout is the same as
-  `k1`; `k2` exists because 0.3.0 reads some inputs differently, and a changed reading changes the key (the changes are listed in the
-  changelog). **One exception: 0.3.1** corrected the keys of inputs with a `%` care-of line or `IN CARE OF`: 0.3.0 left the care-of
-  text over, which pushed the tail of line 1 into the street name, so those keys were wrong. They were corrected under `k2` instead
-  of waiting for `k3`. If you stored `k2` keys from 0.3.0 for addresses like these, re-parse them.
-
-- **`k1`** was the key of versions 0.1.0 and 0.2.0. It is retired: the library no longer produces it and cannot compute it.
+| Version | Release | Segment layout | What changed |
+|---|---|---|---|
+| `k4` | 0.5.0 (this page) | as `k3` | Some keys change, because 0.5.0 reads some inputs differently. Frozen: a change to what an input produces needs `k5`. |
+| `k3` | 0.4.0, retired in 0.5.0 | as `k2` | Some keys change, because 0.4.0 reads some inputs differently. |
+| `k2` | 0.3.0, retired in 0.4.0 | as `k1` | Some keys change. 0.3.1 corrected the keys of inputs with a `%` care-of line or `IN CARE OF` (the care-of text had pushed the tail of line 1 into the street name). If you stored `k2` keys from 0.3.0 for such addresses, re-parse them. |
+| `k1` | 0.1.0 and 0.2.0 | | Retired: the library no longer produces it and cannot compute it. |
 
 ## Slug
 
