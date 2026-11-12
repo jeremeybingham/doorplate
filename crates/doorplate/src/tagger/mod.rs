@@ -441,6 +441,20 @@ pub(crate) fn tag_fields(
             line = l1.clone();
         }
     }
+    // `242 APT B EXAMPLE` / `# B`: a unit between the house number and the street, written
+    // again on line 2 (`#` and the same value). The copy is dropped, so line 1 alone is read (#529).
+    if !l2.is_empty()
+        && l2.start == l1.end
+        && l1.len() >= 4
+        && crate::classify::house_number(&toks[l1.start].text).is_some()
+        && lex.unit(&toks[l1.start + 1].text).is_some()
+        && matches!(toks[l2.start].text.as_str(), "#" | "NO")
+        && l2.len() == 2
+        && toks[l2.start + 1].text == toks[l1.start + 2].text
+    {
+        t.set(l2.clone(), Tag::Skip);
+        line = l1.clone();
+    }
     // A line 2 of no-data markers (`PA NONE`, `999999999 999999999`) is
     // dropped as a placeholder instead of being read as a unit or leftover.
     if !l2.is_empty()
