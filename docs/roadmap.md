@@ -5,7 +5,7 @@ bring, so the more real, messy addresses it sees, the sooner the items below can
 ([Sharing messy data](../CONTRIBUTING.md#sharing-messy-data)). Labels, milestones and ordering: [`backlog.md`](backlog.md).
 What each release changed is in [`CHANGELOG.md`](../CHANGELOG.md).
 
-**Last reviewed 2026-11-12.** Open trackers: #416 (0.6.0, the `k5`) and #417 (decided against).
+**Last reviewed 2026-11-12.** Open trackers: #416 (0.6.0, the `k5`: the release commit is on `main`, the tag and publish are next) and #417 (decided against).
 
 ## Stability while it is an alpha
 
@@ -16,11 +16,11 @@ What each release changed is in [`CHANGELOG.md`](../CHANGELOG.md).
 
 ## Next: 0.6.0, the `k5`
 
-The next key-changing release (tracker #416). Each rule is measured row by row against the frozen `k4` keys. Nothing
-here changes a key before the release is cut.
+The release commit is on `main` and its keys are `k5` (tracker #416). Each rule was measured row by row against the
+0.5.1 keys before it merged.
 
-- **Merged:** every rule that was planned for it so far (the list and the counts are in [`CHANGELOG.md`](../CHANGELOG.md)).
-- **Open in the milestone:** the docs pass (#528).
+- **Merged:** every rule that was planned for it (the list and the counts are in [`CHANGELOG.md`](../CHANGELOG.md)).
+- **Open in the milestone:** the docs pass (#528), which closes with the release sweep.
 - **Not in the list:** Puerto Rico street-first forms wait for the Puerto Rico research issue.
 
 ## Waiting, on data or demand
@@ -34,7 +34,7 @@ One line per kind. Every open issue is in the **Later** milestone unless noted; 
 - **City field and line 2:** #244, #357, #367, #469, #480, #482, #483, #553, #596, #597, #644, #645.
 - **ZIP forms and odd text:** #519, #599, #598, #601, #602.
 - **Parsing ideas:** #397, #435, #490 (shape-first parsing).
-- **Review data and tooling:** #222, #225, #215, #395, #403; the Tooling milestone (never shipped, never closed): #323, #609, #616.
+- **Review data and tooling:** #222, #225, #215, #395, #403; the Tooling milestone (never shipped, never closed): #323, #609, and the parser showdown (its own repository).
 - **Data, API, docs and speed:** #213, #11 (Won't Do), #88, #253, #233, #418, and the post on how rule changes are tested (#491, with 0.6.1).
 - **Not yet issues:** named buildings without a building word (`THE GARRETT`), a highway modifier before a city on one line, a comma
   after a directional, a PO box on line 2 beside a street with no number, a unit followed by business words, and

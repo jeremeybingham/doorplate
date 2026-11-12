@@ -99,7 +99,7 @@ disagree with labeled data are in [`warnings.md`](warnings.md).
 - **`default_state` is a lookup hint, never a fill.** When the input names no state
   and has no known ZIP, a city is looked up in the hinted state and the state's
   state data readings apply. `state` stays empty, `missing_state` still fires and the
-  key keeps its `k4n` form; `default_state_applied` says when the hint decided
+  key keeps its `k5n` form; `default_state_applied` says when the hint decided
   something.
 - **Dual addresses keep both.** A record with a street address and a PO Box fills
   the street fields and `po_box` and raises `dual_address`. The key, the slug and

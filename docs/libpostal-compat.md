@@ -105,10 +105,10 @@ with a gold label. `suburb`, `city_district`, `island` and `state_district` coun
 `entrance` as `Occupancy`. *Shared labels* leaves out records with a gold label libpostal cannot produce; *all records* leaves
 nothing out. `tools/compare/test_libpostal_provider.py` tests the mapping on invented addresses.
 
-## Measured so far (2026-11-07; one run)
+## Measured so far (2026-11-07; one run, before the release)
 
-One run: libpostal commit `25099c5`, the Senzing 1.2.0 parser (data checksum `7afb91d6ef19`), and doorplate `main` on that
-date. Accuracy is the share of records right (whole address, on the fields both have), with common labels, and the suite's
+One run: libpostal commit `25099c5`, the Senzing 1.2.0 parser (data checksum `7afb91d6ef19`), and doorplate on a 0.6.0 pre-release build (`main` on that
+date; libpostal was not re-run for the release). Accuracy is the share of records right (whole address, on the fields both have), with common labels, and the suite's
 intervals are 95% Wilson. Speed is the best-of-N method on an otherwise idle machine, with the suite's 4-CPU, 8 GB profile. Timings
 on this machine vary by 10 to 60% from run to run, so read ratios, not absolute figures; the model load time is left out of
 every timing and reported apart.

@@ -7,7 +7,7 @@
 - [ ] `cargo fmt`, `cargo clippy --workspace --all-targets --all-features -- -D warnings` and `cargo test --workspace --all-features` pass
 - [ ] A parsing bug fix adds a golden-corpus case (`docs/tests/corpus.md`); `tests/corpus/passing.txt` is updated if more cases now pass
 - [ ] A parse-rule change adds a row to `docs/usps-pub28-notes.md` with its source
-- [ ] A change to what an input produces as a key uses a new version prefix and updates `docs/key-format.md` (never edit a released key version in place; `k4` is cut with 0.5.0 and frozen from there, so a key change needs `k5`)
+- [ ] A change to what an input produces as a key uses a new version prefix and updates `docs/key-format.md` (never edit a released key version in place; `k5` is cut with 0.6.0 and frozen from there, so a key change needs `k6`)
 - [ ] Python changes: `pytest crates/doorplate-py/tests` passes
 - [ ] Related documentation checked and updated: find what you changed in the table in `docs/change-checklist.md`
 - [ ] A new or promoted `area:rules` issue has a probe or a `NO_PROBE` reason in `tools/harness/probes.py` (`python tools/harness/probes.py --coverage` exits 0; `docs/change-checklist.md`)

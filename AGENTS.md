@@ -34,7 +34,7 @@ imply otherwise in docs or code comments.
 
 Parsing never raises on odd input: it returns a `ParsedAddress` with `warnings` (stable
 snake_case codes) and the text it could not place. Only input with no address text at
-all is an error. The match key is versioned (`k4:`); store the prefix with stored keys.
+all is an error. The match key is versioned (`k5:`); store the prefix with stored keys.
 
 ## Contributing
 
@@ -82,10 +82,10 @@ Plain `cargo test` needs no Python. Rust 1.80 or later; the Python extension nee
 - Emitters read `ParsedAddress`; they never re-parse or mutate it.
 - All lexicon access goes through the `Lexicons` interface. No state-specific logic in the tagger.
 - The canonical key format is a public contract. A change to what an input produces
-  needs a new version prefix (`k5`) and an update to `docs/key-format.md`; never edit
-  `k4` in place. `k4` is cut with 0.5.0 from a closed list of rules (`docs/backlog.md`) and is frozen from there: a
-  key-affecting change is a `k5`. The frozen `k3` keys the cut was measured against are in
-  `local-data/keycompare/k3-cut`.
+  needs a new version prefix (`k6`) and an update to `docs/key-format.md`; never edit
+  `k5` in place. `k5` is cut with 0.6.0 from a closed list of rules (`docs/backlog.md`) and is frozen from there: a
+  key-affecting change is a `k6`. The key comparison measures a change against the keys of the last release
+  (`tools/compare/key_diff.py` leaves the prefix out).
 - Every USPS or RESO rule implemented must be traceable to a source in `docs/`
   (`docs/usps-pub28-notes.md`, `docs/reso-mapping.md`).
 - Private data (local exports, the [geocode benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark), the Netsyms database) stays in
