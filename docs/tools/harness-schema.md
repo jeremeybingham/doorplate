@@ -20,10 +20,15 @@ A row whose parse returns no result (no address text) is counted as `no_result`.
 
 ## Comparison rules (the `mismatches` codes)
 
-Schema version 8 compares an ordinal by its number in the `street` check (`5TH` equals `5`, `THIRD` equals `3`): a floor written as an ordinal (`123 MAIN ST 5TH FL`) is parsed as floor 5, and was a false `street` mismatch (issue #114). Schema version 7 compares unit designators by their standard abbreviation in the `street` check (`SUITE` equals `STE`); before, a unit spelled out in line 1 (`123 MAIN ST, SUITE 4`) was a false `street` mismatch. Schema version 6 accepts a spelled-out state (`NEW YORK`) or an alias for the `state` check; before, any source that spells states out was flagged on every row. Schema version 5 runs the `unit` check only for roles that have `label_unit` (a source that says its line 2 is a unit): in sources whose line 2 holds attention lines and building names, `m_unit` of version 4 and earlier counted every line 2 as a missing unit. Schema version 4 changed the `street` rule for PO boxes, rural routes, general delivery and military boxes (below); on those rows `m_street` of version 3 flagged nearly every one. Schema version 3 added `role`, `provider` and the last-line counts, and runs the checks per field:
-a check runs for a role only when some row of that role has the field (the manifest's
-`input.fields_present`). Schema version 2 changed the `street` rule; runs of version 1 are not
-comparable on `m_street`. The counts of version 2 and 3 are the same for the same Netsyms rows.
+Checks run per field: a check runs for a role only when some row of that role has the field (the manifest's `input.fields_present`). Runs of different schema versions are not always comparable; what changed, newest first:
+
+- 8: the `street` check compares an ordinal by its number (`5TH` equals `5`, `THIRD` equals `3`), so a floor written as an ordinal (`123 MAIN ST 5TH FL`) is no false mismatch.
+- 7: the `street` check compares unit designators by their standard abbreviation (`SUITE` equals `STE`).
+- 6: the `state` check accepts a spelled-out state (`NEW YORK`) or an alias.
+- 5: the `unit` check runs only for roles that have `label_unit`; `m_unit` of version 4 and earlier counted every line 2 as a missing unit.
+- 4: the `street` rule changed for PO boxes, rural routes, general delivery and military boxes (below); `m_street` of version 3 flagged nearly all of them.
+- 3: added `role`, `provider` and the last-line counts, and the per-field checks. Counts of versions 2 and 3 are the same for the same Netsyms rows.
+- 2: the `street` rule changed; runs of version 1 are not comparable on `m_street`.
 
 Normalization `norm`: upper case, periods dropped, whitespace collapsed. `compact`: `norm`
 with everything but letters and digits removed.

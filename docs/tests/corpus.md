@@ -28,63 +28,7 @@ Every parsing bug fixed gets a case here (`CONTRIBUTING.md`).
  "note": "# designator: unit_type stays empty"}
 ```
 
-- `id`: unique across all files. Prefixed with the source: `cty-`
-  (shapes seen in Florida county address listings, `county-data.jsonl`),
-  `cty-golden-` (the same, from raw listing lines, `county-data-golden.jsonl`), `p28-`
-  (Pub 28 examples), `rg-` (regressions), `key-`, `reso-` (emitter cases),
-  `fl-` (Florida state data, `fl-state.jsonl`), `pl-` (national place list outside
-  Florida, `places-us.jsonl`), `ds-` (`default_state`, `default-state.jsonl`),
-  `tg-` (`tag()` and `address_type()`, `tag.jsonl`),
-  `co-` (trailing country, `country.jsonl`),
-  `sl-` (a second line used or dropped, `second-line.jsonl`),
-  `ns-` (street lines with no street, `nostreet.jsonl`),
-  `pb-` (misspelled PO BOX words, `pobox.jsonl`),
-  `dp-` (department names, `dept.jsonl`),
-  `gl-` (a word glued to a state-like suffix, `glue.jsonl`),
-  `by-` (BAY in a street name, `bay.jsonl`),
-  `hn-` (hyphenated house number with a letter, `hyphen.jsonl`),
-  `rb-` (a spaced letter after a rural route box number, `rrbox.jsonl`),
-  `ff-` (state data on pre-split fields, `fields-state.jsonl`),
-  `ll-` (the last line inside line 1 on pre-split fields, `last-line-in-line1.jsonl`),
-  `nbu-` (a bare number before a designated unit on line 2, `number-before-unit.jsonl`),
-  `sdb-` (a unit designator before the street name, `stray-designator.jsonl`),
-  `cy-` (CR as CIRCLE and the CTY highway spellings, `county.jsonl`),
-  `qk-` (Queens house numbers in the key, `queens.jsonl`),
-  `ld-` (a lone directional on line 2, `lonedir.jsonl`),
-  `lp-` (LOOP and a number after a name, `loop.jsonl`),
-  `rc-` (recipient text ahead of the address, `recipient.jsonl`),
-  `un-` (units left in the street name, `units.jsonl`),
-  `sp-` (spelled-out numbers, `spelled.jsonl`),
-  `is-` (intersections, `intersections.jsonl`),
-  `nl-` (name lines with commas and two leading units, `name-lines.jsonl`),
-  `rl-` (a letter after ROAD on one line, `road-letter.jsonl`),
-  `rt-` (repeated text and its warning, `repeated.jsonl`),
-  `zr-` (a nearly right ZIP repaired, `zip-repair.jsonl`),
-  `gf-` (a floor written as a plain number and the floor word, `glued-floor.jsonl`),
-  `nlt-` (a letter after the house number, `number-letter.jsonl`), `gnl-` (a letter stuck to the house number, `glued-number-letter.jsonl`),
-  `cn-` (a compass word naming the street, `compass-street.jsonl`),
-  `nn-` (`NO` for north before a street name, `no-north.jsonl`),
-  `so-` (`SO` for south after a street, `so-for-south.jsonl`),
-  `nw-` (null words: a bracketed `<NULL>`, and `NaN` or `undefined` as a city, state or ZIP field, `null-words.jsonl`),
-  `pz-` (a PO Box or unit number equal to the ZIP, `pobox-zip.jsonl`),
-  `bx-` (BOX and a number after a name with no suffix, `box-bare-name.jsonl`),
-  `ub-` (a bare BOX after a unit, `unit-then-box.jsonl`),
-  `hp-` (a spaced hyphen between the house number and a second number, `hyphen-second-number.jsonl`),
-  `br-` (street words after a box number, the road the box is on, `box-road.jsonl`),
-  `nb-` (PO BOX with no number at the end of a street, `bare-po-box.jsonl`),
-  `nm-` (words only on line 2 under a PO Box, `name-after-box.jsonl`),
-  `hu-` (a `#` before a unit designator, `hash-before-designator.jsonl`),
-  `sep-` (a dash or slash between a suffix and a unit, `unit-separator.jsonl`),
-  `rp-` (a phrase written twice, the copy dropped, `repeated-tail.jsonl`),
-  `fa-` (a non-US country ends the unplaced text, `non-us-address.jsonl`),
-  `pg-` (a parenthesized group at the end of a line, `paren-group.jsonl`),
-  `an-` (words on line 2 under a street are the attention line, `line2-attention.jsonl`),
-  `lv-` (level words as units, `level-words.jsonl`),
-  `bf-` (a box first, then a street; `PMB` before a PO Box, `box-first.jsonl`),
-  `pn-` (`PO 5530`, a PO word with no `BOX`, `po-no-box.jsonl`),
-  `nu-` (the number word `NO`/`NUM` before a unit or box value, `number-word.jsonl`),
-  `nat-` (shapes found in a national address database, `national-data.jsonl`);
-  `us-roundtrip-001` in `regressions.jsonl` came from the USPS round trip.
+- `id`: unique across all files, prefixed by the file's id prefix (table below). Ids are never a public contract; a case can be renamed or merged.
 - Exactly one input form:
   - `input`: a single-line string, passed to `Parser::parse`.
   - `lines`: an array of address lines as the source gave them (for example
@@ -118,35 +62,27 @@ Every parsing bug fixed gets a case here (`CONTRIBUTING.md`).
 
 Emitter expectations are optional record keys, checked only when present
 (unlike `expect`, absent means not checked):
-
 - `key`: the property-level key string (`KeyOptions::property()`), or
   `"none"` when the address has no key.
 - `key_unit`: the same for `KeyOptions::unit()`.
-
 - `slug`: the expected `slug()` string, or `"none"`.
-
 - `usps`: `{"line1": ..., "line2": ..., "last_line": ...}` from
   `to_usps()`; an omitted part must be empty.
-
 - `address_type`: the expected `ParsedAddress::address_type().code()`:
   `street`, `po_box`, `rural_route`, `military`, `general_delivery`, `dual`
   or `unknown`. Absent means not checked.
-
 - `tag`: the expected `ParsedAddress::tag()`, an object from usaddress label
   to joined value (`{"AddressNumber": "123", "StreetName": "Main"}`); a label
   not listed must be absent. `tag_repeated` lists the labels `tag()` joined
   from separate runs (two units give `OccupancyType` and
   `OccupancyIdentifier`). Absent `tag` means not checked.
-
 - `default_state`: a state (code or name) passed as
   `ParseOptions::default_state` for this case, so the hint cases (`ds-*`) can
   run in the one corpus. Absent means no hint.
-
 - `place`: `ParsedAddress::place` as `"NAME (source)"`, with the state data's
   standard name and the `PlaceSource::code()` (`"WEST PALM BEACH (name)"`,
   `"FERNANDINA BEACH (completed)"`, `"PENSACOLA (zip)"`), or `"none"`.
   These cases need the state data, which is always built in.
-
 - `reso`: an object of Data Dictionary 2.0 field names to the expected
   `to_reso()` values (`{"StreetName": "MAIN", "City": "MIAMI"}`). A field not
   listed must be empty. Names are checked against the Data Dictionary address
@@ -206,292 +142,98 @@ not standard forms from the lexicon tables.
 The tagger follows these conventions; its rules and their sources are in
 `docs/usps-pub28-notes.md` ("Parser rules").
 
+
 ## Files
 
-Ids are never a public contract; a case can be renamed or merged.
-
-### `county-data.jsonl`
-
-Ids `cty-street-`, `cty-full-`, `cty-placeholder-` and `cty-highway-`.
-Address shapes seen in Florida county property listings, hand-labeled in this
-library's schema: house number letters, units with and without designators,
-highways, placeholders such as `UNKNOWN` and `NO SITUS`. Cases that need a
-place list are in `fl-state.jsonl` instead.
-
-### `county-data-golden.jsonl`
-
-Ids `cty-golden-001` and up. One case per distinct shape in raw address lines
-from eight Florida county listings. Only the inputs were taken; the expected
-values were labeled by hand, not copied from any parser's output.
-
-### `pub28.jsonl`
-
-Built from the examples in USPS Publication 28 (`docs/usps-pub28-notes.md`
-has the page for each section): the highway table in section 237 and the
-"Examples in Use" column of Appendix F, the PO Box (281, 283), rural route
-(241, 244), highway contract route (251, 253) and general delivery (261)
-formats, and the military and Department of State examples in sections
-225.1, 238.1 and 239. Inputs use the spellings Pub 28 says to change, and
-the expected values are the standard forms it gives. House numbers are only
-present where Pub 28's example has one.
-
-### `regressions.jsonl`
-
-Cases for parsing bugs found over time, from Florida address data and from
-other tests (`CONTRIBUTING.md`: every parsing bug fixed gets a case). Ids start with
-`rg-`; each note says what went wrong.
-
-### `keys.jsonl`, `reso.jsonl`
-
-Cases that pin the emitters: exact `k4` key and slug strings (`key-`) and RESO
-field values (`reso-`), written from `docs/key-format.md` and
-`docs/reso-mapping.md`.
-
-### `fl-state.jsonl`
-
-Every folder under `crates/doorplate/data/states/` needs a file like this one, `<st>-state.jsonl`, with cases
-from that state; a test fails when one is missing.
-
-Ids `fl-001` to `fl-047`. The Florida state data and the national place list on
-Florida input: a city on one line with no commas, a city run into the street,
-cut-off cities completed, the place from the ZIP, `zip_city_mismatch`, the
-observed ZIP places, `CR` as CIRCLE, `SR` as STATE ROAD, and communities and
-spellings added to the Florida data (`docs/states/fl.md`). `fl-013` and `fl-019` are
-Georgia and Colorado inputs that show a state with no curated state data. They need
-the default feature `places-us`.
-
-### `places-us.jsonl`
-
-Ids `pl-001` to `pl-021`. The same place behaviors in states with no curated
-state data (`ST LOUIS`, `NORTH LITTLE ROCK`, `LA GRANGE PARK`, `ROARING BROOK TWP`, a
-cut-off city, the place from the ZIP), and `zip_city_mismatch` not raised
-there; and a county written as the city (`city_is_county`, `pl-009` to `pl-013`); and a municipality prefix before the city (`VILLAGE OF PINECREST`, `pl-014` to `pl-021`).
-
-### `default-state.jsonl`
-
-Ids `ds-001` to `ds-007`. Cases with a `default_state` field: a comma-less
-city found in the hinted state, the state's data readings, a city not in the
-hinted state, and the input's own state or a known ZIP winning over the hint.
-
-### `second-line.jsonl`
-
-Ids `sl-001` to `sl-024` (#45, #126; `sl-016` to `sl-024` are the care-of line after a street: a copy, a digit-led name, a unit that is now parsed, and the bare number and second address that stay unparsed). A second address line that is used or dropped without a component of its own is
-reported: a copy of line 1 or a no-data line (`second_line_skipped`), a route, suffix or directional that joins
-the street of line 1 (`second_line_in_street`) and a building name (`second_line_building`); and the near misses
-that get no warning: a unit, a street on line 2 alone, a dual address, an attention line, no line 2, the last line
-on line 2.
-
-### `recipient.jsonl`
-
-Ids `rc-001` to `rc-015` (#127). Recipient text ahead of the address on line 1: after `C/O` or `ATTN`, after `CO`
-(for `C/O`), with no marker, and ahead of a PO Box; with the number kept and the words in `attention`. The near
-misses that must not change: a county road (`COUNTY ROAD 12`, `CO RD 12`), `C/O` directly before the address, and a
-unit designator ahead of the address.
-### `units.jsonl`
-
-Ids `un-001` to `un-018` (#128). Units that stayed in the street name: two numbers after a designator or the suffix,
-`BOX`, `NO`, `NUM` and `LOC` after a street, a designator cut off (`SUIT`, `FLOO`, `FLO`) and a designator written
-twice; and the near misses that must not change (a street named `FLOOR`, `UNIT`, `NUM`, `BOX` or `NO`, a PO Box with a
-unit, a plain unit).
-
-### `spelled.jsonl`
-
-Ids `sp-001` to `sp-016` (#129). Spelled-out numbers: a house number word ahead of a name and a suffix (`ONE COMMERCE
-PLAZA`, `TWO BAYVIEW LANE 15TH FLOOR`), a unit number word (`SUITE TWO`, `UNIT ELEVEN`), a spelled ordinal before a
-floor (`THIRD FLOOR`), `FLR`; and the near misses that must not change (`ONE MILE RD`, `THREE FORKS RD`, `TWO RIVERS
-DR`, `FOUR CORNERS RD`, a street named `THIRD FLOOR`).
-
-### `nostreet.jsonl`
-
-Ids `ns-001` to `ns-012` (#130). Street lines with no street: a lone number (`missing_street_name`, no key), a PO Box
-word with no number (`unparsed_remainder`), a line that is only a country (`country_ignored`); and the near misses
-that must not change (`5TH ST`, `1 A ST`, `PO BOX 12`, a lone number with its street on line 2, a country ahead of a
-street on line 2).
-
-### `pobox.jsonl`
-
-Ids `pb-001` to `pb-018` (#165). The eleven misspellings of PO BOX read as a box, a misspelled box with a unit, after a
-street (`dual_address`), a misspelled word with no number (unparsed); and the near misses that must not change (streets
-named `POX`, `P`, `POP`, the standard spelling).
-
-### `dept.jsonl`
-
-Ids `dp-001` to `dp-010` (#166). A department name on line 2 or after a comma (`MATH DEPT`, `HUMAN RESOURCES DEPARTMENT`)
-as the attention line; and the near misses that must not change (`DEPT 4`, `DEPT. 4`, `DEPT #4`, streets named `FIRE
-DEPT RD` and `FIRE DEPARTMENT RD`, an `ATTN` line).
-
-### `glue.jsonl`
-
-Ids `gl-001` to `gl-011` (#143). A word before a trailing `CT`, `WY`, `KY` or `MT` stays one word (`PINEBRIAR CT`, `TRELLIS
-CT`), in pre-split fields and on one line; and the near misses that must not change (`CIR`, `LN`, a unit after `CT`, a
-city glued to the street with a Connecticut ZIP).
-
-### `bay.jsonl`
-
-Ids `by-001` to `by-011` (#144). `BAY` at the end of a street name (`HERON BAY # 2B`, `HERON BAY 2B`, `HERON BAY W 45`)
-is part of the name; and the near misses that must not change (`BAY` after a suffix or on line 2 is still a unit, a
-street named `BAY` or `OYSTER BAY BLVD`).
-
-### `loop.jsonl`
-
-Ids `lp-001` to `lp-007` (#145). `LOOP` after a street name, then a number (`MAPLE COVE LOOP 412`) is the suffix and a
-bare unit; and the near misses that must not change (no number, a designator, `LOOP 410` at the start of the street).
-
-### `hyphen.jsonl`
-
-Ids `hn-001` to `hn-009` (#100). The Queens house number with one trailing letter (`12-34A`, `123-45A`), alone, with an
-ordinal street and with a unit; and the near misses that must not change (no letter, a letter on a plain number) or stay
-unparsed (two letters, a letter on the first part).
-
-### `rrbox.jsonl`
-
-Ids `rb-001` to `rb-008` (#95). A lone letter after a numeric rural route or highway contract box number (`RR 2 BOX 45 A`)
-is part of the box (`45A`); and the near misses that must not change (the joined form, no letter, a PO Box, two letters,
-a letter on the next line).
-
-### `fields-state.jsonl`
-
-Ids `ff-001` to `ff-005` (#110). A reading only a state's data has (Florida `SR 60` is `STATE ROAD 60`, `CTY HWY` is
-`COUNTY HIGHWAY`) applies to pre-split fields as it does to one-line input, with a state, with a ZIP alone; and the near
-misses that must not change (another state, no state or ZIP).
-
-### `county.jsonl`
-
-Ids `cy-001` to `cy-009` (#108). `CR` after a name is `CIRCLE` in every state; `CTY RD`, `CTY ROAD` and `CTY HWY` before a
-route number are `COUNTY ROAD` and `COUNTY HIGHWAY` outside Florida too; and the near misses that must not change (`CR`
-before a route number, `CO RD`, `CTY` as `CITY`, a street named `CTY`).
-
-### `queens.jsonl`
-
-Ids `qk-001` to `qk-009` (#109). In Queens, NY the key drops the hyphen of `37-12` and `37-12A`, so a building written both
-ways keys the same (`qk-001`/`qk-002`, `qk-003`/`qk-004`); and the near misses that keep the hyphen (Manhattan, the Bronx,
-New Jersey, one digit after the hyphen).
-
-### `compass-street.jsonl`
-
-Ids `cn-001` to `cn-015` (#325, #388). A spelled-out compass word and a street suffix (`44 WEST AVE 2B`) are the street's name and suffix, and the digit value after them is a unit, on one line and on line 2; and the near misses that must not change (an abbreviated direction before a name, a postdirectional, a letter after the suffix, no unit). `cn-011` to `cn-015` (#388): `KY` or `TR` and a number after a compass word are the road (`88 NORTH KY 8`, `1234 EAST TR 56`), not a suffix with a unit.
-
-### `pobox-zip.jsonl`
-
-Ids `pz-001` to `pz-005` (#260). A number after `PO BOX` (or `P.O. BOX`, or a unit designator such as `APT`) is the box or unit number even when it equals the ZIP5, and not a copy of the ZIP; and the near misses (a different number, a box alone on line 1).
-
-### `box-bare-name.jsonl`
-
-Ids `bx-001` to `bx-006` (#299). `BOX` and a number after a street name with no suffix is a unit (`640 PINEWOOD BOX 18`), as after a suffix; and the near misses (a suffix, a street named `BOX`, no name before `BOX`, a letter value).
-
-### `unit-then-box.jsonl`
-
-Ids `ub-001` to `ub-006` (#300). A bare `BOX` and its number after a unit (`STE 105 BOX 121`) is the PO Box with `dual_address`, as with a comma or `PO BOX`; and the cases that stay as they were (BOX after a suffix or a bare name).
-
-### `bare-po-box.jsonl`
-
-Ids `nb-001` to `nb-005` (#301). `PO BOX` with no number at the end of a street line is left unparsed, not part of the street name (`90 NE 5 AVE PO BOX`), a unit before it is still read; and the cases that stay (a box with a number, line 2).
-
-### `box-road.jsonl`
-
-Ids `hp-001` to `hp-006` (#612). A hyphen with a space on both sides between the house number and a second number (`1900 - 938 PAVILION DR`) is dropped, so the second-number rules read it as they read the plain space form; New York, Massachusetts and Hawaii (the pair is the house number there), a Canadian province, an unknown state, and an ordinal or a word after the hyphen are left as before.
-
-Ids `br-001` to `br-006` (#366). Two to four plain words ending in a street suffix after a box number (`PO BOX 190 ELM RD`) are the road the box is on: street name and suffix are filled, `missing_street_number` is raised, and the key stays the box's (`address_type` `po_box`); and the cases that stay unparsed (a repeated suffix, a route number, a word with a digit).
-
-### `name-after-box.jsonl`
-
-Ids `nm-001` to `nm-006` (#303). Words only on line 2 under a PO Box line with no street are the attention line (`PO BOX 1234` / `JANE ROE`); and the cases that stay unparsed (a street suffix word, a digit) or already worked (the `%` marker, a street on line 1).
-
-### `lonedir.jsonl`
-
-Ids `ld-001` to `ld-008` (#170). A lone directional on line 2 (`N`, `NW`) after a line 1 that already ends in its suffix
-is the unit, not the postdirectional; and the near misses that must not change (no suffix on line 1, a postdirectional
-already there, a letter that is not a directional, two words on line 2).
-
-### `country.jsonl`
-
-Ids `co-001` to `co-015`: a trailing `USA`, `US`, `UNITED STATES` or
-`UNITED STATES OF AMERICA` on one line, on its own line, in line 2, in the
-city field and in the state field, each with `country_ignored`; and `US` as a
-highway prefix, which is not a country.
-
-### `national-data.jsonl`
-
-Ids `nat-001` to `nat-023`: parser fixes found by comparing the parser with a
-national address database. The addresses are invented (the database is not
-redistributable and is not in the repository): words that merely begin with a
-suffix spelling and end in a place name (`CREEKWOOD`, `PICO RIVERA`,
-`AVENIDA DE LA LUNA`, `STRAND`), a word after `#`, values after a designator
-(`APT I4`, `# 2WD`), a letter range (`APT A-D`), `U S ROUTE`, a postdirectional
-`NE` before a city that starts with NE, a state code that is also a suffix
-spelling (`CT`, `LA`, `WY`) settled by its ZIP, and `WASHINGTON DC`.
-
-### `intersections.jsonl`
-
-Ids `is-001` to `is-013`: two streets joined by `&`, `AND`, `@` or `AT`, with
-the first street as components, the second in `unparsed`,
-`intersection_detected`, and `none` for key and slug; plus the look-alikes that
-are one street (`LAND AND SEA RD`, `BEACH AT SEA DR`, `STATE AND MAIN ST`,
-`AT&T WAY`), which must not warn.
-
-### `tag.jsonl`
-
-Ids `tg-001` to `tg-009`. Cases with `address_type`, `tag` and `tag_repeated`:
-one per address shape (street, PO Box, rural route, military, general delivery,
-dual, unknown), a repeated label (two units) and a one-letter number prefix
-written apart from the number (`tg-009`, #651: `AddressNumberPrefix`).
-
-### `hash-before-designator.jsonl`
-
-Ids `hu-001` to `hu-009` (#340). A `#` right before a unit designator and its value marks that unit (`# APT-4`, `#APT-18`, `# APT 4`, on line 1, line 2 and in one-line input; two units with the second written `# APT 4`); and the cases that keep their reading (`#4`, `APT #4`, `APT 4 # B`).
-
-### `number-word.jsonl`
-
-Ids `nu-001` to `nu-011` (#293). `NO.9` and `NUM.12` (a period, no space) read as the value, as `APT.9` does; the marker still counts with a second unit after it; the number word after `PO BOX` is dropped; and the guards that keep their reading (`NO 9` with no street suffix, `NO` as north).
-
-### `po-no-box.jsonl`
-
-Ids `pn-001` to `pn-006` (#305). `PO`, `P O` and `P.O.` with a number (or `#` and a number) that ends the line are a PO Box; and the cases that keep their reading (`PO RD 5`, `PO 12 MAIN ST`).
-
-### `level-words.jsonl`
-
-Ids `lv-001` to `lv-011` (#292). `GROUND`, `GROUND LEVEL`, `MEZZANINE`, `GARAGE` alone on line 2, on a comma segment or after the suffix are a unit with no type; `LL` and `LOWER LEVEL` are `LOWR`, `LOBBY LEVEL` is `LBBY`; and the names that keep their reading (`CAMP GROUND RD`, `LL BEAN RD`, `GARAGE ST`).
-
-### `box-first.jsonl`
-
-Ids `bf-001` to `bf-006` (#302). `BOX 3310 FERNLEAF RD` is the box with the street left over; `PMB #31 PO BOX 2250` is the box with a `PMB` unit; and the cases that keep their reading (`PMB 31 123 MAIN ST`, a unit after the street).
-
-### `line2-attention.jsonl`
-
-Ids `an-001` to `an-020` (#350, #472). Words only on line 2 under a street are the attention line when they look like a firm or a person (`&`, a business word, an `Att:` lead, two to four plain words); and the cases that stay unparsed (a leading `THE`, a government word, a unit word, a street suffix word, the street repeated, a single word, a place name, a lot or location word). `nm-006` in `name-after-box.jsonl` changed with this rule. `an-013` to `an-020` (#472): a name after a unit on line 2 (`STE 240, JANE DOE`, with or without a comma, and the unit on line 1), a credential in its own comma segment (`JANE DOE, DDS`, `C/O JANE DOE, CPA`), `D/B/A`; and two that stay unparsed. `rg-221` changed with this rule.
-
-### `non-us-address.jsonl`
-
-Ids `fa-001` to `fa-008` (#361). A foreign address (Ireland, Canada, Germany, the UAE, France) whose line 2 or last segment ends in a country name gets `non_us_address`; and the cases that do not (`ATTN JANE FRANCE` with no digit, `USA`, `NEW MEXICO`).
-
-### `repeated-tail.jsonl`
-
-Ids `rp-001` to `rp-007` (#236). A street, a unit or both written twice, the copy ending line 1 (`260 KEARSING PKWY KEARSING PKWY`), is read once with `repeated_text`; and the cases that keep their reading (a one-word repeat, a street that shares its name with the city).
-
-### `unit-separator.jsonl`
-
-Ids `sep-001` to `sep-010` (#308). A tight hyphen glued to a designator, a slash, and a spaced hyphen then a bare number or digit-letter between a street suffix and a unit are separators; a slash before a PO Box gives the street and the box; and the cases that keep their reading (an ordinal floor after a hyphen, a slash between two streets, a word after the hyphen).
-
-### `last-line-in-line1.jsonl`
-
-Ids `ll-001` to `ll-004` (#614). On pre-split fields, line 1 ending with the state field and a ZIP (`214 N PARK AVE OAKLAND NE 68045`) is read as written, with the city field the same or different; and the two guards that keep the old reading (the state field differs from the line's last two letters, a line 2 is given).
-
-### `number-before-unit.jsonl`
-
-Ids `nbu-001` to `nbu-006` (#607). A bare number (one to four digits, one letter at most) before a designated unit on line 2 (`5 APT 12`, `3 # 305`, `2 UNIT 14`, `5A APT 12`) is the first unit with no designator, and the designated unit the second; and the two cases that keep their reading (`FL 5 APT 12`, a five-digit number).
-
-### `stray-designator.jsonl`
-
-Ids `sdb-001` to `sdb-005` (#498). A unit designator right after the house number, with a bare unit value on line 2 and no unit after the street (`123 APT OAK LN` / `1 100`), is the type of that unit and not the start of the street name; and the guards that keep the old reading (no line 2, a line 2 with its own designator).
-
-### `paren-group.jsonl`
-
-Ids `pg-001` to `pg-016` (#291, #516). A parenthesized group at the end of a line: a unit, floor or box (`(3RD FL)`, `(SUITE 4)`, `(BLDG B)`) is read as the unit it spells, with or without a city after it; any other group (`(REAR ENTRANCE)`, `(J SMITH)`, `(RT 28)`) is a segment of its own that is never the city or a unit, and lands in `unparsed`; a group glued to the word before it (`ST(FARM)`, `DRIVE(120-301)`) is split off. Unchanged, so they stay put: a group in the middle of the street, a number after a highway word, a bare number in parentheses, a word after a unit. `pg-015` is an unclosed `(` (#516), dropped so the ZIP after it is read; `pg-016` is the same line closed, unchanged.
-
-### `no-north.jsonl`
-
-Ids `nn-001` to `nn-011` (#470). `NO` right after the house number and before a plain word or an ordinal is north (`464 NO MAPLE AVE`, `88 NO BROADWAY`, `7 No Eccles St`, `1200 NO 2ND ST`, with a fraction or a postdirectional); the phrases that name a street keep `NO` (`NO NAME RD`, `NO BOTTOM RD`, `NO PONE VALLEY RD NW`, `NO MAN'S LAND RD`) and so does a bare number (`NO 5 RD`). `nu-009` (`1234 NO 52ND ST`) moved from the name to north with the rule.
-
-### `so-for-south.jsonl`
-
-Ids `so-001` to `so-007` (#269). `SO` as the last word of the street, right after a suffix or a grid number (`84 ELMHURST PL SO`, `640 E 3780 SO`), with or without a unit after it, is the postdirectional south; `SO` that opens the name (`SO CAROLINA AVE`), sits inside it (`MAIN SO ST`) or is followed by a name word (`CARY ST SO FLEISHER`) stays in the name (`so-007` records the current result, which is not a claim that it is right).
+One row per `tests/corpus/*.jsonl`; a new file gets a row here and an id prefix no other file uses (grep `"id": "xx-` first; the corpus test reports duplicate ids).
+
+| File | Id prefix | What it covers |
+|---|---|---|
+| `bare-po-box.jsonl` | `nb-` | `PO BOX` with no number at the end of a street line is left unparsed, not part of the street name |
+| `bare-unit-word.jsonl` | `bw-` | A number before a designator word on line 2 (`4 REAR`, `408 SOUTH`) is the unit; a directional plus suffix is a street name |
+| `bay.jsonl` | `by-` | `BAY` at the end of a street name is part of the name; after a suffix or on line 2 it is still a unit |
+| `blvd-direction.jsonl` | `bd-` | A suffix-word street (`BOULEVARD`, `PARKWAY`) with a direction after it, so the USPS line reads back; `AVENUE N` stays a lettered street |
+| `box-bare-name.jsonl` | `bx-` | `BOX` and a number after a street name with no suffix is a unit, as after a suffix |
+| `box-first.jsonl` | `bf-` | A box first, then a street (`BOX 3310 FERNLEAF RD`); `PMB` before a PO Box |
+| `box-road.jsonl` | `br-` | Street words after a box number are the road the box is on; the key stays the box's |
+| `campus-box.jsonl` | `cb-` | A school code then `BOX`, `CPO` and a number: a campus box, the code is the attention line |
+| `care-of-front.jsonl` | `cof-` | `C/O` and a name ahead of a box or a street line: the marker and name go to `attention` |
+| `compass-street.jsonl` | `cn-` | A spelled-out compass word and a suffix (`44 WEST AVE 2B`) are the street's name and suffix; `KY` or `TR` and a number after a compass word are the road |
+| `country.jsonl` | `co-` | A trailing `USA`, `US` or `UNITED STATES` on one line, on its own line, in line 2 or in the city or state field (`country_ignored`); `US` as a highway prefix is not a country |
+| `county.jsonl` | `cy-` | `CR` after a name is `CIRCLE` in every state; `CTY RD` and `CTY HWY` before a route are `COUNTY ROAD` and `COUNTY HIGHWAY` outside Florida too |
+| `county-data.jsonl` | `cty-street-`, `cty-full-`, `cty-placeholder-`, `cty-highway-` | Shapes seen in Florida county property listings, hand-labeled: house number letters, units with and without designators, highways, placeholders (`UNKNOWN`, `NO SITUS`) |
+| `county-data-golden.jsonl` | `cty-golden-` | One case per distinct shape in raw lines from eight Florida county listings; inputs only were taken, the labels are by hand |
+| `default-state.jsonl` | `ds-` | Cases with `default_state`: a comma-less city found in the hinted state, the state's data readings, and the input's own state or a known ZIP winning over the hint |
+| `dept.jsonl` | `dp-` | A department name on line 2 or after a comma is the attention line; `DEPT 4` and streets named `FIRE DEPT RD` are unchanged |
+| `digit-letter-unit.jsonl` | `dl-` | A digit-letter after a name with no suffix (`60 LARKMOOR 1A`) is the unit, with or without a postdirectional |
+| `fields-state.jsonl` | `ff-` | A reading only a state's data has (Florida `SR 60`) applies to pre-split fields as to one line |
+| `fl-state.jsonl` | `fl-` | Florida state data and the national place list on Florida input: a city with no comma, cut-off cities completed, the place from the ZIP, `zip_city_mismatch`, `CR` and `SR` |
+| `glue.jsonl` | `gl-` | A word before a trailing `CT`, `WY`, `KY` or `MT` stays one word (`PINEBRIAR CT`), in pre-split fields and on one line |
+| `glued-floor.jsonl` | `gf-` | A floor written as a plain number and the floor word |
+| `glued-number-letter.jsonl` | `gnl-` | A letter stuck to the house number (`glued_number_letter`) |
+| `hash-before-designator.jsonl` | `hu-` | A `#` right before a unit designator and its value marks that unit (`# APT-4`); `#4` and `APT #4` keep their reading |
+| `hyphen.jsonl` | `hn-` | The Queens house number with one trailing letter (`12-34A`); no letter or two letters stay as they were |
+| `hyphen-second-number.jsonl` | `hp-` | A spaced hyphen between the house number and a second number is dropped; New York, Massachusetts, Hawaii and Canada are left as before |
+| `intersections.jsonl` | `is-` | Two streets joined by `&`, `AND`, `@` or `AT`: first street as components, second in `unparsed`, `intersection_detected`, no key; look-alikes (`AT&T WAY`) must not warn |
+| `keys.jsonl` | `key-` | Pin the emitters: exact key and slug strings, written from `docs/key-format.md` |
+| `last-line-in-line1.jsonl` | `ll-` | On pre-split fields, line 1 ending with the state field and a ZIP is read as written |
+| `letter-before-hyphen.jsonl` | `lh-` | A letter before the hyphen (`53A-53 HOLLIS AVE`) is one house number, kept as written; a range with a letter is `multiple_addresses` |
+| `level-words.jsonl` | `lv-` | `GROUND`, `MEZZANINE`, `GARAGE`, `LL`, `LOBBY LEVEL` as units; `CAMP GROUND RD` and `LL BEAN RD` keep their reading |
+| `line2-attention.jsonl` | `an-` | Words only on line 2 under a street are the attention line when they look like a firm or a person; a name after a unit, a credential, `D/B/A`; the rest stay unparsed |
+| `lonedir.jsonl` | `ld-` | A lone directional on line 2 after a line 1 that ends in its suffix is the unit, not the postdirectional |
+| `loop.jsonl` | `lp-` | `LOOP` after a street name, then a number, is the suffix and a bare unit |
+| `lost-fraction.jsonl` | `lf-` | A fraction written without its slash (`31 1 2 ELM PLACE`) after the house number or in a whole-number street name |
+| `mail-names.jsonl` | `mn-` | Queens mail names (`BRIARWOOD`, `JAMAICA ESTATES`) found in the place list are the city, not part of the street |
+| `name-after-box.jsonl` | `nm-` | Words only on line 2 under a PO Box line with no street are the attention line |
+| `name-before-number.jsonl` | `nbn-` | Words ahead of the house number: an initial is part of the name, `C O` with a space is the care-of marker |
+| `name-lines.jsonl` | `nl-` | Name lines with commas and two leading units |
+| `national-data.jsonl` | `nat-` | Fixes found by comparing the parser with a national address database; the addresses are invented (the database is not redistributable) |
+| `no-north.jsonl` | `nn-` | `NO` right after the house number and before a plain word is north; `NO NAME RD` and a bare number keep `NO` |
+| `non-us-address.jsonl` | `fa-` | A foreign address whose line 2 or last segment ends in a country name gets `non_us_address` |
+| `nostreet.jsonl` | `ns-` | Street lines with no street: a lone number, a PO Box word with no number, only a country |
+| `null-words.jsonl` | `nw-` | A bracketed `<NULL>`, and `NaN` or `undefined` as a city, state or ZIP field |
+| `number-before-unit.jsonl` | `nbu-` | A bare number before a designated unit on line 2 (`5 APT 12`) is the first unit with no designator |
+| `number-letter.jsonl` | `nlt-` | A letter after the house number |
+| `number-pair.jsonl` | `np-` | Two numbers before a street: the house number in New York and Hawaii, a building and a unit elsewhere |
+| `number-word.jsonl` | `nu-` | `NO.9` and `NUM.12` read as the value; the number word after `PO BOX` is dropped |
+| `paren-group.jsonl` | `pg-` | A parenthesized group at the end of a line: a unit, floor or box is read as that unit, any other group lands in `unparsed`; an unclosed `(` is dropped |
+| `placeholder-city.jsonl` | `pcity-` | A placeholder in the city field (`Not stated`, `UNKNOWN`) is no city; a real city is kept |
+| `placeholder-phrases.jsonl` | `ph-` | Registry stand-ins for a missing street (`NO STREET ADDRESS`): a placeholder, no key |
+| `places-us.jsonl` | `pl-` | The place behaviors in states with no curated state data, a county written as the city, a municipality prefix (`VILLAGE OF ...`) |
+| `po-no-box.jsonl` | `pn-` | `PO`, `P O` and `P.O.` with a number that ends the line are a PO Box; `PO RD 5` keeps its reading |
+| `pobox.jsonl` | `pb-` | The eleven misspellings of PO BOX read as a box; streets named `POX`, `P`, `POP` are unchanged |
+| `pobox-zip.jsonl` | `pz-` | A number after `PO BOX` or a designator is the box or unit number even when it equals the ZIP5 |
+| `pub28.jsonl` | `p28-` | Examples from USPS Publication 28 (sections in `docs/usps-pub28-notes.md`): highways, PO Box, rural route, highway contract route, general delivery, military; inputs use the spellings Pub 28 says to change |
+| `queens.jsonl` | `qk-` | In Queens, NY the key drops the hyphen of `37-12`, so a building written both ways keys the same; other places keep it |
+| `recipient.jsonl` | `rc-` | Recipient text ahead of the address on line 1 goes to `attention`; `COUNTY ROAD 12` and `C/O` right before the address are unchanged |
+| `regressions.jsonl` | `rg-`, `us-roundtrip-001` | Parsing bugs found over time, from Florida data and other tests; each note says what went wrong |
+| `repeated.jsonl` | `rt-` | Repeated text and its warning |
+| `repeated-tail.jsonl` | `rp-` | A street, a unit or both written twice, the copy ending line 1, is read once with `repeated_text` |
+| `repeated-unit.jsonl` | `ru-` | The same unit on both lines, or twice on line 2, is kept once; two different units stay two |
+| `reso.jsonl` | `reso-` | Pin the emitters: RESO field values, written from `docs/reso-mapping.md` |
+| `road-letter.jsonl` | `rl-` | A letter after `ROAD` on one line |
+| `road-number.jsonl` | `rn-`, `cd-` | A number after a road word is the road's in a closed list of states and words (`PRIVATE ROAD 1234` in TX), a unit elsewhere; both spellings share a key |
+| `route-typos.jsonl` | `rty-` | Typos of rural route and highway contract prefixes (`RUR RTE 3 BOX 84`, `HRC 5 BOX 12M`) |
+| `rrbox.jsonl` | `rb-` | A lone letter after a numeric rural route or contract route box number is part of the box (`45A`) |
+| `second-line.jsonl` | `sl-` | A second address line used or dropped without a component of its own is reported (`second_line_skipped`, `second_line_in_street`, `second_line_building`); a unit, a street, a dual address and an attention line get no warning |
+| `so-for-south.jsonl` | `so-` | `SO` as the last word of the street, after a suffix or a grid number, is the postdirectional south; `SO CAROLINA AVE` keeps it in the name |
+| `spelled.jsonl` | `sp-` | Spelled-out numbers: a house number word (`ONE COMMERCE PLAZA`), a unit number word (`SUITE TWO`), a spelled ordinal floor; `ONE MILE RD` is unchanged |
+| `spelled-number.jsonl` | `sn-` | A singular suffix word starts the name, so `ONE` is the house number (`ONE PARK AVE`) |
+| `stray-designator.jsonl` | `sdb-` | A unit designator right after the house number, with a bare unit value on line 2, is that unit's type |
+| `tag.jsonl` | `tg-` | Cases with `address_type`, `tag` and `tag_repeated`: one per address shape, a repeated label, a one-letter number prefix written apart from the number |
+| `text-after-suffix.jsonl` | `ta-` | Plain words after the suffix are the attention line |
+| `unit-before-street.jsonl` | `ubs-` | A unit between the house number and the street (`123 SUITE A OAK ST`) |
+| `unit-road-word.jsonl` | `rw-` | A bare `#` followed by the street's own suffix or a direction is not a unit |
+| `unit-separator.jsonl` | `sep-` | A dash or slash between a suffix and a unit, and a spaced hyphen then a bare value, are separators; a slash before a PO Box gives street and box |
+| `unit-spaced-hyphen.jsonl` | `uh-` | A spaced hyphen between a designator and its value is dropped |
+| `unit-then-box.jsonl` | `ub-` | A bare `BOX` and its number after a unit (`STE 105 BOX 121`) is the PO Box with `dual_address` |
+| `units.jsonl` | `un-` | Units left in the street name: two numbers after a designator, `BOX`, `NO`, `NUM`, `LOC` after a street, a cut-off designator; a street named `FLOOR` or `UNIT` is unchanged |
+| `unlisted-unit-words.jsonl` | `uw-` | `CND`, `COND` and `CONDO` on line 2 are a plain unit; on the street line they stay in the name |
+| `us-highway-spelled.jsonl` | `ush-` | `UNITED STATES HIGHWAY 27` and `U S HIGHWAY 27` read as the US highway, like `US HWY 27` |
+| `warnings.jsonl` | `wn-` | A letter after the number read into the street name warns that it may be the number's suffix or an initial |
+| `zip-repair.jsonl` | `zr-` | A nearly right ZIP is repaired |
+
+Notes on single files:
+
+- `<st>-state.jsonl`: every folder under `crates/doorplate/data/states/` needs one, with cases from that state; a test fails when one is missing. `fl-013` and `fl-019` are Georgia and Colorado inputs that show a state with no curated data. The place cases need the default feature `places-us`.
+- `pub28.jsonl` takes its inputs from the highway table (section 237), Appendix F, and the PO Box, rural route, contract route, general delivery and military sections; `docs/usps-pub28-notes.md` has the page for each. House numbers are present only where Pub 28's example has one.
