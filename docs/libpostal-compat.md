@@ -89,7 +89,7 @@ default, because it is the one meant for US data. Facts from the README and from
   version and a checksum of the data directory, which the comparison tools print.
 
 A secondary check already exists: Senzing publishes the test set it scores its models on, and `doorplate` was scored on its US
-rows without running libpostal ([`benchmarks.md`](benchmarks.md), "Senzing's libpostal test set"). That score is not a
+rows without running libpostal ([`benchmarks.md`](benchmarks.md#other-checks), the Senzing row). That score is not a
 comparison with libpostal.
 
 ## Running the comparison

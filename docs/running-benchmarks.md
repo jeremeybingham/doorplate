@@ -153,6 +153,25 @@ geocode benchmark's addresses (only timings are printed). The suite's `speed` co
 under the fixed profile; use it when you want a figure someone else can reproduce, and these scripts when you
 want the shape of the cost (single call, batch, frames).
 
+### Profiling the engine
+
+Judge engine speed by instruction counts, which repeat exactly; wall time on a shared machine varies by 10% to 60%.
+
+1. Write plain input files from the suite: `python benchmarks/profile_inputs.py` (`mix.txt` is the `natural` mix).
+2. Build the timing loop with frame pointers and symbols:
+   `RUSTFLAGS="-C force-frame-pointers=yes" CARGO_PROFILE_RELEASE_STRIP=false cargo build --release -p doorplate --example profile_loop`.
+3. Run it under callgrind on a few thousand inputs:
+   `valgrind --tool=callgrind --callgrind-out-file=OUT target/release/examples/profile_loop FILE 1`, then read
+   `callgrind_annotate --inclusive=yes OUT`.
+4. To compare two builds, profile both on the same file and compare function by function. A function that inlines
+   differently in the two builds shows as new or gone: check its callers before believing a difference. Cut the number
+   of calls before rewriting a hot function.
+5. Quote wall time only from alternating builds in one session on one pinned CPU, best of five.
+
+Allocations per parse: `crates/doorplate/examples/profile_alloc.rs` (a counting allocator) and `benchmarks/profile_heap.py`
+(groups a `heaptrack` run by the innermost `doorplate::` frame). `benchmarks/profile_fold.py` folds a `perf record -g`
+profile into tables by function and by stage, where `perf` can resolve symbols.
+
 ## Checks on private data (maintainers)
 
 These need `local-data/` and the go-aheads in `CLAUDE.md`; only aggregate numbers leave it
@@ -165,7 +184,7 @@ not published as accuracy.
 | `tools/harness/nad_score.py` | Scores doorplate against the labeled columns of the National Address Database sample | `docs/tools/harness.md` |
 | `tools/compare/compare_usaddress.py` | The token-by-token comparison with usaddress that `suite.py` and `accuracy.py` use; also runs on any labeled XML or CSV | its docstring |
 | `tools/compare/oneline_fl.py`, `city_diff.py` | The one-line Florida check and the cities gained and lost (above) | above |
-| `profile_inputs.py`, `profile_fold.py`, `profile_heap.py`, `crates/doorplate/examples/profile_loop.rs`, `profile_alloc.rs` | The profiling kit: plain input files from the suite, a single-thread timing loop, allocations per parse, a table of where `perf` samples land (by function and by stage) and where `heaptrack` says the allocations are made | the "Profile" section of [`docs/benchmarks.md`](benchmarks.md) |
+| `profile_inputs.py`, `profile_fold.py`, `profile_heap.py`, `crates/doorplate/examples/profile_loop.rs`, `profile_alloc.rs` | The profiling kit: plain input files from the suite, a single-thread timing loop, allocations per parse, a table of where `perf` samples land (by function and by stage) and where `heaptrack` says the allocations are made | [Profiling the engine](#profiling-the-engine) |
 | `tools/compare/checkpoint.py` | The foundation checkpoint (`docs/backlog.md`): the key comparison with the released build over all the large sources in one run, keeping the current keys as the baseline for the `k3`; prints a plan and needs `--confirm` | [`docs/backlog.md`](backlog.md) |
 | `tools/compare/key_diff.py` | The row-by-row key comparison between two builds over the records files (`dump` in each environment, then `diff`; counts only; each dump records the version and the checkout's commit, and warns when the installed extension is older than the source; `dump --unit` also writes the unit-level key and the unit fields, which a rule that only moves a unit needs, since the property-level key has no unit) | [`docs/backlog.md`](backlog.md) |
 | `tools/benchsuite/` | The suite's generator, label audit and inventories; rebuilds the suite from private data | [`docs/benchmark-suite.md`](benchmark-suite.md) |

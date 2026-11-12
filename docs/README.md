@@ -51,8 +51,7 @@ New to the project? Read the [project README](../README.md), then
 
 | Page | What it covers |
 |---|---|
-| [`benchmarks.md`](benchmarks.md), [`speed-and-size.md`](speed-and-size.md) | The results (accuracy; speed, size and memory): the suite, the [geocode benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark), speed, size and memory |
-| [`version-comparison.md`](version-comparison.md) | How accuracy, speed, size and keys moved from 0.3.1 to `main` in the 2026-11-07 run, the causes of the drift, and why it is one decision |
+| [`benchmarks.md`](benchmarks.md), [`speed-and-size.md`](speed-and-size.md) | The results (accuracy; speed, size and memory): the suite, the [geocode benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark) and the other checks, how the figures moved between versions, speed and size by version |
 | [`docs/running-benchmarks.md`](running-benchmarks.md) | How to run every benchmark, and which one answers which question |
 | [`benchmark-suite.md`](benchmark-suite.md) | The benchmark suite's specification: what it holds, how it was built and audited, the rules that keep it fair |
 | [`benchmarks/suite/README.md`](../benchmarks/suite/README.md), [`MANIFEST.md`](../benchmarks/suite/v1/MANIFEST.md) | The suite's data folder, and the composition and checksums of `v1` |
