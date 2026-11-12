@@ -13,7 +13,7 @@ mod key;
 mod place_key;
 
 pub use key::normalize_key;
-use key::normalize_key_cow;
+pub(crate) use key::normalize_key_cow;
 
 use std::collections::HashSet;
 use std::sync::OnceLock;
@@ -971,13 +971,13 @@ impl Lexicons {
     }
 
     pub(crate) fn is_placeholder(&self, s: &str) -> bool {
-        let key = normalize_key(s);
+        let key = normalize_key_cow(s);
         if !key.chars().any(char::is_alphanumeric) {
             return true;
         }
         let rest = match key.split_once(' ') {
             Some((zeros, rest)) if zeros.bytes().all(|b| b == b'0') => rest,
-            _ => key.as_str(),
+            _ => &*key,
         };
         if self.is_placeholder_phrase(rest) {
             return true;

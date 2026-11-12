@@ -9,7 +9,7 @@
 use crate::classify::{
     all_digits, is_fraction, is_ordinal, join, spelled_number, spelled_ordinal, zip_parts,
 };
-use crate::lexicon::{normalize_key, Lexicons, MatchKind, Special};
+use crate::lexicon::{normalize_key_cow, Lexicons, MatchKind, Special};
 use crate::tagger::{Tag, Tagged};
 use crate::tokenize::Token;
 use crate::types::{
@@ -334,7 +334,7 @@ pub(crate) fn assemble(
             }
             // A stand-in for the city (`Not stated`, `Unknown`, NAD's convention) is no city:
             // `missing_city` follows, and the key never held a city (#468).
-            Tag::City if lex.is_city_placeholder_phrase(&normalize_key(&text)) => {}
+            Tag::City if lex.is_city_placeholder_phrase(&normalize_key_cow(&text)) => {}
             Tag::City => {
                 set_once(&mut addr.city, text.into_owned());
                 record(addr, Component::City);
