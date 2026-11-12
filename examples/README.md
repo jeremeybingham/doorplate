@@ -1,8 +1,6 @@
 # Examples
 
-Runnable examples of the Python package and the `doorplate` CLI. Every address in
-`data/` is invented. This library formats and parses; it does not validate
-that an address exists or can receive mail.
+Runnable examples of the Python package and the `doorplate` CLI. Every address in `data/` is invented.
 
 | File | Shows |
 |---|---|

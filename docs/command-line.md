@@ -1,19 +1,5 @@
 # Command-line guide
 
-The `doorplate` command parses addresses from a shell, a pipe or a CSV file, with no Python. It wraps the same parser as the
-library. This page is the tour; every command, option and exit code is in the [command-line reference](cli.md).
-It formats and parses; it does not validate that an address exists or can receive mail.
-
-## Install
-
-```sh
-cargo install doorplate-cli        # installs the `doorplate` command
-```
-
-Rust 1.80 or later.
-
-## Usage
-
 ```sh
 doorplate parse "123 N Main St, Miami FL 33101" --pretty     # JSON: components, output, key, warnings, provenance
 doorplate --version                                          # the library version, also in the JSON as provenance.library_version (and provenance.state_data_version)
@@ -25,16 +11,13 @@ doorplate parse "123 N Main St, Miami FL 33101" --display    # mixed case; --lon
 doorplate parse "123 N Main St, Miami FL 33101" --tag        # usaddress-style joined labels
 doorplate parse -  < addresses.txt                           # one address per line, JSON lines out
 doorplate anonymize in.csv --column address -o shareable.csv   # same shape, other digits and names
-doorplate parse "123 Oak Trayl, Miami FL 33101" --custom-layer DIR   # your own spellings and places 
+doorplate parse "123 Oak Trayl, Miami FL 33101" --custom-layer DIR   # your own spellings and places
 doorplate layer check DIR                                    # load a custom layer: every problem, or what it holds
 ```
 
-```sh
-$ doorplate parse "123 N. Main St #4, miami, fl 33101" | jq -r .key
-k4:S|123|N|MAIN|ST||FL|33101
-```
-
-`doorplate --help` lists every option.
+The `doorplate` command wraps the same parser as the library, with no Python. Install: [Getting started](getting-started.md#install).
+This page is the tour; every command, option and exit code is in the [command-line reference](cli.md), and
+`doorplate --help` lists them too.
 
 ## CSV files
 
@@ -52,11 +35,8 @@ doorplate parse-file split.csv --column line1 --line2 line2 --city city --state 
 doorplate parse-file addresses.csv --column address --default-state FL -o parsed.csv
 ```
 
-The [demo page](https://jeremeybingham.github.io/doorplate/demo/#csv) does the same in the browser, with no install: pick the file, choose the
-address column (or the line 1, line 2, city, state and ZIP columns), tick the columns to add, and download the result. The file is read and parsed
-in the tab (WebAssembly in a worker), nothing is uploaded, and the columns and their `addr_` prefix are `parse-file`'s. It holds the whole result
-in memory, so for files of several hundred megabytes use `parse-file`. The same section can **anonymize** a file (below, "In the browser" in
-[`anonymizing.md`](anonymizing.md)), and offers a sample file of invented addresses to try both.
+The [demo page](https://jeremeybingham.github.io/doorplate/demo/#csv) does the same in the browser with no install; the file stays in the
+tab, and it holds the whole result in memory, so for files of several hundred megabytes use `parse-file`.
 
 Every input column is kept, and the new `addr_` columns are the components (`street_number`, `street_name`,
 `unit_number`, `city`, `state`, `zip5`, ...), the shapes (`po_box`, `rural_route`, `military`, `general_delivery`),

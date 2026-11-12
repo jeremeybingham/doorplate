@@ -12,12 +12,14 @@ a.to_usps()["line1"]   # "123 N MAIN ST APT 4"
 a.key()                # "k4:S|123|N|MAIN|ST||FL|33101"
 ```
 
-[Try it in your browser](https://jeremeybingham.github.io/doorplate/demo/): the parser runs on your machine, nothing is sent. The same page parses a whole CSV file in the browser ([Parse a CSV file](https://jeremeybingham.github.io/doorplate/demo/#csv)): the columns are the ones `doorplate parse-file` writes, and the file stays on your computer. A sample file of invented addresses is on the page, and the same section can anonymize a file (the digits and names change, the shape stays).
+[Try it in your browser](https://jeremeybingham.github.io/doorplate/demo/): the parser runs on your machine, nothing is sent. The page also [parses or anonymizes a whole CSV file](https://jeremeybingham.github.io/doorplate/demo/#csv), with a sample file of invented addresses.
 
 ## Where to go
 
 | If you want to | Go to |
 |---|---|
+| Install it and parse an address | [Getting started](getting-started.md) |
+| Use it from Python, a shell, Rust or a DataFrame | [Python](python.md), [Command line](command-line.md), [Rust](rust.md), [pandas, Polars and DuckDB](dataframes.md) |
 | Understand what it does and why | [How it works](how-it-works.md), [Warnings](warnings.md), [The match key](key-format.md) |
 | See how accurate and fast it is | [Accuracy and speed](benchmarks.md) |
 | Add your own spellings, or share messy data safely | [Custom layers](custom-layers.md), [Anonymizing](anonymizing.md) |
@@ -27,11 +29,8 @@ a.key()                # "k4:S|123|N|MAIN|ST||FL|33101"
 | Know what data it uses | [Data policy](data-policy.md), [Places](places.md), [State data](states/README.md) |
 | Fix a bug, add a rule, run the tools | [Development](change-checklist.md): the checklist, the tools, the tests, the benchmarks, the roadmap |
 
-The install steps and the longer tours are in the READMEs on GitHub for now:
-[the project](https://github.com/jeremeybingham/doorplate#readme),
-[Python](https://github.com/jeremeybingham/doorplate/blob/main/crates/doorplate-py/README.md),
-[Rust](https://github.com/jeremeybingham/doorplate/blob/main/crates/doorplate/README.md) and
-[the command line](https://github.com/jeremeybingham/doorplate/blob/main/crates/doorplate-cli/README.md).
+Install and a first parse are in [Getting started](getting-started.md); the tours are the [Python guide](python.md),
+the [command-line guide](command-line.md), the [Rust guide](rust.md) and [pandas, Polars and DuckDB](dataframes.md).
 
 !!! warning "It parses and formats; it does not validate"
     doorplate does not check that an address exists or can receive mail. Pub 28 formatting is not deliverability, and

@@ -1,12 +1,10 @@
 # pandas, Polars and DuckDB
 
-How to parse a column, a CSV file or a table. Pick the call that matches how your addresses arrive; all of them give
-the same components, keys and warnings. The functions are described in the [Python reference](python-api.md); runnable
+Pick the call that matches how your addresses arrive; all of them give the same components, keys and warnings. Install the
+extra first ([Getting started](getting-started.md#install)). The functions are in the [Python reference](python-api.md); runnable
 versions with data of several shapes are in the [examples](https://github.com/jeremeybingham/doorplate/tree/main/examples).
 
 ## Your data, by shape
-
-Pick the call that matches how your addresses arrive; all of them give the same components, keys and warnings.
 
 | Your data | Use |
 |---|---|
@@ -20,20 +18,15 @@ Pick the call that matches how your addresses arrive; all of them give the same 
 
 ## Batches and DataFrames
 
-`parse_many(texts)` takes a list or tuple of strings, releases the GIL, parses in
-parallel with Rust threads, and returns the results in order. On 100,000 addresses
-with 4 CPUs, the benchmark suite's profile (`crates/doorplate-py/benchmarks/bench_batch.py`, run under
-`taskset -c 0-3` with `RAYON_NUM_THREADS=4`; more cores make the batch rows faster):
+`parse_many(texts)` takes a list or tuple of strings, releases the GIL, parses in parallel with Rust threads, and returns
+the results in order. On 100,000 addresses with 4 CPUs (`crates/doorplate-py/benchmarks/bench_batch.py`; more cores are faster):
 
 | | Time | Per second | Speed-up |
 |---|---|---|---|
 | a loop of `parse` | 1.79 s | 56,000 | 1x |
 | `parse_many` | 0.62 s | 162,000 | 2.9x |
-| `parse_many` and a pandas DataFrame of 7 columns | 0.77 s | 131,000 | 2.3x |
-| `parse_many` and a Polars DataFrame of 7 columns | 0.69 s | 144,000 | 2.6x |
 | DuckDB, `doorplate_parse(a)` with 7 columns | 0.64 s | 157,000 | 2.8x |
-| `pandas.parse_column`, the 15 default columns | 0.83 s | 121,000 | 1.9x |
-| `polars.parse_column`, the 15 default columns | 0.70 s | 143,000 | 2.3x |
+| `pandas.parse_column` / `polars.parse_column`, the 15 default columns | 0.70 to 0.83 s | 121,000 to 143,000 | 1.9x to 2.3x |
 
 **Helpers.** Install the extra and parse a column in one call:
 
@@ -70,41 +63,7 @@ rel = dd.parse_column(con.table("addresses"), "address", connection=con)   # inp
 
 `doorplate_parse` returns a STRUCT of VARCHAR fields (`columns` defaults to the same list as the other helpers; `AVAILABLE_COLUMNS` has the rest) and NULL for a NULL, blank or no-address-text row. Each row is parsed once however many fields you read, in batches of 2,048 rows that Rust parses in parallel with the GIL released. Choose only the columns you need: building every column costs more (about 110,000 addresses/s with all 15 against 157,000 with 7, on 4 CPUs). `parse_column` stays lazy, so it works on tables larger than memory. Pass `connection=` unless the relation came from `duckdb.sql(...)`.
 
-**Polars by hand** (when you want other fields):
-
-```python
-import polars as pl
-import doorplate as dp
-
-df = pl.read_csv("addresses.csv")
-parsed = dp.parse_many(df["address"].fill_null("").to_list())  # None for a blank row
-
-cols = ["street_number", "street_name", "street_suffix", "unit_number", "city", "state", "zip5"]
-flat = pl.DataFrame(
-    {f"addr_{c}": [getattr(a, c) if a else None for a in parsed] for c in cols}
-    | {
-        "addr_key": [a.key() if a else None for a in parsed],
-        "addr_warnings": [",".join(a.warnings) if a else None for a in parsed],
-    },
-    schema={f"addr_{c}": pl.String for c in cols}
-    | {"addr_key": pl.String, "addr_warnings": pl.String},
-)
-out = df.hstack(flat)
-```
-
-(Give the schema: a column that is `None` in every row would otherwise be typed
-`Null`.) For every field, build structs from `to_dict()` and pick fields from them:
-
-```python
-full = pl.DataFrame([a.to_dict() if a else None for a in parsed], infer_schema_length=None)
-full.select(
-    "street_name",
-    pl.col("place").struct.field("name").alias("place_name"),
-    pl.col("usps").struct.field("line1").alias("usps_line1"),
-)
-```
-
-**pandas by hand:**
+**By hand** (when you want other fields): parse once, then read attributes.
 
 ```python
 import pandas as pd
@@ -120,11 +79,22 @@ flat["warnings"] = [",".join(a.warnings) if a else None for a in parsed]
 out = pd.concat([df, flat.add_prefix("addr_")], axis=1)
 ```
 
-For every field with pandas, use `to_dict()` and
-`pd.json_normalize([a.to_dict() if a else {} for a in parsed])`.
+With Polars, give an explicit schema (a column that is `None` in every row would otherwise be typed `Null`):
 
-Calling `to_dict()` on every row costs about as much as parsing again (a loop with
-`to_dict` ran at 26,000 per second), and reading attributes from 100,000 Python
-objects was most of the time, so the `parse_column` helpers and `doorplate.duckdb` build their columns in Rust, with no Python
-object per row (#24; before it, the 15-column rows above took 1.03 s for pandas and 0.86 s for Polars on 4 CPUs; on 14 CPUs the gain is about 1.4x). Pick columns when you can. Pre-split columns
-(`line1`, `city`, ...): call `parse_fields_many(line1=df["line1"].tolist(), city=...)`.
+```python
+import polars as pl
+
+df = pl.read_csv("addresses.csv")
+parsed = dp.parse_many(df["address"].fill_null("").to_list())
+flat = pl.DataFrame(
+    {f"addr_{c}": [getattr(a, c) if a else None for a in parsed] for c in cols}
+    | {"addr_key": [a.key() if a else None for a in parsed]},
+    schema={f"addr_{c}": pl.String for c in cols} | {"addr_key": pl.String},
+)
+out = df.hstack(flat)
+```
+
+For every field, use `to_dict()` (`pd.json_normalize([a.to_dict() if a else {} for a in parsed])`,
+or `pl.DataFrame([...], infer_schema_length=None)` and `struct.field`), but it costs about as much as parsing again:
+the `parse_column` helpers and `doorplate.duckdb` build their columns in Rust, so pick columns when you can. Pre-split columns
+(`line1`, `city`, ...): `parse_fields_many(line1=df["line1"].tolist(), city=...)`.

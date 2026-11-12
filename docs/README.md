@@ -15,10 +15,10 @@ New to the project? Read the [project README](../README.md), then
 | [`index.md`](index.md), [`getting-started.md`](getting-started.md) | The home page of the site; install, a first parse, what it does not do |
 | [`python.md`](python.md), [`command-line.md`](command-line.md), [`rust.md`](rust.md) | The tour for each way of using it: Python, the command, the Rust crate |
 | [`dataframes.md`](dataframes.md) | pandas, Polars and DuckDB: a column, a table or a file, with timings |
-| [`README.md`](../README.md) | What it is, quickstart, features, working with pandas, Polars, DuckDB and CSV files, the benchmarks at a glance |
-| [`crates/doorplate-py/README.md`](../crates/doorplate-py/README.md) | The Python package (PyPI): install, the API, batches and DataFrames, coming from usaddress |
-| [`crates/doorplate/README.md`](../crates/doorplate/README.md) | The Rust library (crates.io): install, API, features, batches |
-| [`crates/doorplate-cli/README.md`](../crates/doorplate-cli/README.md) | The `doorplate` command: parsing a line, a file or a pipe |
+| [`README.md`](../README.md) | What it is, quickstart, install, the benchmarks at a glance, what it does not do, and links to the guides |
+| [`crates/doorplate-py/README.md`](../crates/doorplate-py/README.md) | The Python package (PyPI): install, quickstart, links to the guides |
+| [`crates/doorplate/README.md`](../crates/doorplate/README.md) | The Rust library (crates.io): quickstart, cargo features |
+| [`crates/doorplate-cli/README.md`](../crates/doorplate-cli/README.md) | The `doorplate` command (crates.io): install, usage, CSV files |
 | [`examples/README.md`](../examples/README.md) | Runnable examples: a notebook tour, pandas, Polars and DuckDB pipelines, sample data of several shapes |
 | [`usaddress-compat.md`](usaddress-compat.md) | Coming from usaddress: the drop-in `doorplate.compat` module, the output in its shape, the label mapping, what differs, how the two are compared |
 | [`libpostal-compat.md`](libpostal-compat.md) | Compared with libpostal: what each does, the label mapping, normalization against the key, and the Senzing model the comparison will use (a written comparison; no libpostal figures yet) |
