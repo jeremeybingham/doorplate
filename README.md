@@ -28,12 +28,12 @@ postal-service-certified data; warnings such as `zip_city_mismatch` are hints ab
 input, not verdicts.
 
 > **Alpha release (0.5.1).** Expect rough edges; names in the API and the warning codes may still change before 1.0.
-> The match key is versioned (`k4:`) and later versions will probably change it, so store the prefix with your keys
-> and plan to re-key. `k4` has only been checked on the project's own data (37 million rows of public records).
-> Accuracy and speed are measurements on a few datasets, not guarantees.
+> The match key is versioned (`k4:`) and later versions will probably change it (a `k5` is planned for 0.6.0), so store
+> the prefix with your keys and plan to re-key. `k4` has only been checked on the project's own data (37 million rows of
+> public records). Accuracy and speed are measurements on a few datasets, not guarantees.
 >
-> **Help wanted: messy addresses.** If it parses your addresses badly (odd abbreviations,
-> typos, cut-off lines, units in strange places, county or mailing-list exports), please
+> **Help wanted: messy addresses.** If it parses your addresses badly (odd abbreviations, typos, cut-off lines, units in
+> strange places, county or mailing-list exports), please
 > [open an issue](https://github.com/jeremeybingham/doorplate/issues/new?template=misparse-or-messy-data.md)
 > with a sample. I want to fix them. Private data can be anonymized first
 > ([how](CONTRIBUTING.md#sharing-messy-data)).
@@ -57,8 +57,7 @@ a.to_display()["line1"]             # "123 N Main St Apt 4" (mixed case, display
 a.warnings                          # []
 ```
 
-The same from the command line, and the same address written another way gives
-the same key:
+The same from the command line; the same address written another way gives the same key:
 
 ```sh
 $ doorplate parse "123 N. Main St #4, miami, fl 33101" --usps
@@ -68,141 +67,23 @@ $ doorplate parse "123 N. Main St #4, miami, fl 33101" | jq -r .key
 k4:S|123|N|MAIN|ST||FL|33101
 ```
 
-## Features
-
-- **Any shape of address.** Street addresses with directionals, suffixes, units and a second unit; PO boxes;
-  rural and highway-contract routes; military and general delivery; highways with a state or county prefix;
-  intersections and care-of lines are recognized and set apart. Missing pieces (no ZIP, no state, no commas)
-  parse, with a warning that says what is missing ([what each warning tells you](docs/warnings.md)).
-- **One line or separate fields.** `parse` takes a single string; `parse_fields` takes `line1`, `line2`, `city`,
-  `state` and `zip` as your data has them, in whatever combination is filled in.
-- **Output you can load.** Components, USPS Publication 28 lines, RESO Data Dictionary 2.0 fields, a display
-  form for people, usaddress-style labels, a canonical match key (`k4:...`), a URL-safe slug.
-- **Diagnostics.** Stable warning codes and the text it could not place, so doubtful rows go to review instead
-  of into your database.
-- **Place data.** A national list of 50,408 places and 41,154 ZIPs finds the city on a line with no commas and
-  completes a cut-off city; `default_state` is a hint for input with no state.
-- **Your own spellings and places.** A custom layer (a folder of small files) adds spellings, words, places and ZIPs your
-  data uses on top of the shipped tables, without editing them: `doorplate parse --custom-layer DIR`, `doorplate.load_layer`,
-  checked with `doorplate layer check`. A layer can change a key, so every parse reports it. The guide has a demo layer, a template and a
-  prompt for an LLM ([docs](docs/custom-layers.md)).
-- **Sharing messy data.** `doorplate anonymize` (and `Anonymizer` in Python and Rust) swaps the digits and names of
-  address-like text, even text that does not parse, and keeps the shape, so a bug report can start from a real
-  address. Obfuscation, not anonymity: read the output before you share it ([how it works](docs/anonymizing.md)).
-- **DataFrames, SQL and CSV files.** pandas, Polars and DuckDB helpers, a batch call that uses every core, and a
-  command that parses a CSV file ([below](#works-with-your-data)).
-- **Offline and deterministic.** The same input gives the same output on every platform. Rust, Python and the
-  command line share one parser.
-
-## Works with your data
-Addresses arrive as a column, split fields, a CSV file or a table. One call per shape gives the same components, keys and
-warnings:
-
-```python
-import pandas as pd
-from doorplate.pandas import parse_column
-
-df = pd.read_csv("addresses.csv")                                # a column named "address"
-out = df.join(parse_column(df["address"], default_state="FL"))   # addr_street_name, addr_zip5, addr_key, addr_warnings, ...
-```
-
-```sh
-doorplate parse-file addresses.csv --column address -o parsed.csv    # a CSV file, no Python
-```
-
-Polars, DuckDB (in SQL), split columns and the timings are in [pandas, Polars and DuckDB](https://doorplate.readthedocs.io/en/latest/dataframes/); on the benchmark suite's
-inputs `parse_many` handles about 138,000 addresses per second on 4 CPUs (`usaddress.parse` in a loop: about 9,300).
-Runnable versions: [`examples/`](examples/README.md).
-
-## What you get
-
-One address, followed through:
-
-| Input | `123 north main street apt 4, Miami FL 33101` |
-|---|---|
-| Components | street number `123`, predirectional `N`, name `MAIN`, suffix `ST`, unit `APT 4`, city `MIAMI`, state `FL`, ZIP `33101` |
-| Place | `MIAMI`, Dade County, found by name (`city` keeps what you wrote) |
-| USPS (Pub 28) | `123 N MAIN ST APT 4` / `MIAMI FL 33101` |
-| RESO | `StreetNumber` `123`, `StreetDirPrefix` `N`, `StreetName` `MAIN`, `StreetSuffix` `ST`, `UnitNumber` `APT 4`, `City` `MIAMI`, `StateOrProvince` `FL`, `PostalCode` `33101`, `UnparsedAddress` `123 N MAIN ST APT 4, MIAMI, FL 33101` |
-| Key | `k4:S\|123\|N\|MAIN\|ST\|\|FL\|33101` (with the unit: `k4:S\|123\|N\|MAIN\|ST\|\|FL\|33101\|4\|`) |
-| Slug | `123-n-main-st-apt-4-miami-fl-33101` |
-| Warnings | none |
-
-**The key** identifies a property for deduplication and joins. It uses the street
-parts, state and ZIP, not the city, and it is versioned: the `k4:` format will not
-change in place. [`docs/key-format.md`](docs/key-format.md) is the contract.
-**The slug** is for URLs and display; it is not unique. **Warnings** are stable
-snake_case codes (`missing_zip`, `unparsed_remainder`, `dual_address`, ...) meant
-for a database column; the list is in [`docs/how-it-works.md`](docs/how-it-works.md).
-
-Input does not have to be tidy. Messy and incomplete addresses still parse, with
-warnings that say what is missing:
-
-```python
->>> a = doorplate.parse("12 elm st. #5 orlando fl")
->>> a.to_usps()["line1"], a.key(), a.warnings
-('12 ELM ST # 5', 'k4n:S|12||ELM|ST||FL|', ['missing_zip'])
-```
-
-With no ZIP the key starts `k4n:` (a weaker match), and `missing_zip` says why.
-Only input with no address text at all is an error.
-
 ## Install
 
 **Python 3.10 or later** (one abi3 wheel per platform: Linux, macOS, Windows):
 
 ```sh
 pip install doorplate                 # the parser
-pip install "doorplate[pandas]"       # plus DataFrame helpers (or [polars])
+pip install "doorplate[pandas]"       # plus DataFrame helpers (or [polars], [duckdb])
 ```
 
-**Rust:**
+**Rust** (1.80 or later):
 
 ```sh
 cargo add doorplate                   # the library
 cargo install doorplate-cli           # the `doorplate` command
 ```
 
-**From source** (Rust 1.80 or later; the Python extension needs 1.83):
-
-```sh
-git clone https://github.com/jeremeybingham/doorplate && cd doorplate
-cargo build --release -p doorplate-cli          # target/release/doorplate
-cd crates/doorplate-py && pip install maturin && maturin develop --release
-```
-
-## Using it
-The tours, one per way of using it: the [Python guide](https://doorplate.readthedocs.io/en/latest/python/), the [command-line guide](https://doorplate.readthedocs.io/en/latest/command-line/) and the
-[Rust guide](https://doorplate.readthedocs.io/en/latest/rust/). The functions and options are in the [Python reference](https://doorplate.readthedocs.io/en/latest/python-api/) and the
-[command-line reference](https://doorplate.readthedocs.io/en/latest/cli/), and the Rust API is on [docs.rs](https://docs.rs/doorplate).
-
-## How it works
-
-```
-input (one line or fields)
-  -> clean and tokenize -> classify and tag -> assemble (ParsedAddress)
-       -> USPS | RESO | key | slug | usaddress labels
-  every step reads the Pub 28 tables, the place list and the state data (Lexicons)
-```
-
-The parser is rules plus place data. There is no machine-learned model, so the same
-input gives the same output on every platform, and a fix is a rule or a line of
-data rather than a retraining. The last line of the address (ZIP, state, city) is
-read first, right to left, then the delivery line from both ends. A place list
-tells a city from street words on a line with no commas. The output formats read the
-parsed address and never re-parse it. Parsing never panics: odd input comes back
-with warnings. [`docs/how-it-works.md`](docs/how-it-works.md) has the details.
-
-### Place data
-
-
-A **national list** of 50,408 places and 41,154 ZIPs (Census Gazetteer and GeoNames
-postal codes) lets the parser find the city on a line with no commas, tell
-`WINGATE ST, 32507` (a street) from `PALM BEACH, 33480` (a city), and complete a cut-off
-city. A **state's data** is hand-checked data for one state, added where real data
-shows a need; Florida is the first. Layers only add to each other. `city` always keeps
-what the input said; the place found is reported beside it. Sources and licenses:
-[`docs/places.md`](docs/places.md) and [`docs/states/fl.md`](docs/states/fl.md).
+To build from source, see [Getting started](https://doorplate.readthedocs.io/en/latest/getting-started/#install).
 
 ## Benchmarks
 | 0.5.1 | doorplate | usaddress |
@@ -218,61 +99,32 @@ caveats and how to rerun them: [benchmarks](docs/benchmarks.md) and [speed, size
 ## What it does not do
 
 - It does not validate that an address exists or can receive mail.
-- It does not geocode, match fuzzily, correct addresses, or handle international
-  addresses. Recipient lines, landmarks and street corners are not modeled; text
-  it cannot place goes to `unparsed` with a warning. `USA` after an address is
-  ignored, and an intersection (`MAIN ST & 1ST AVE`) is reported, not keyed.
-- It has no learned model.
-- The shipped tables are fixed at compile time. If it misparses an address, report
-  the input so the tables or rules can be fixed; a user-extensible layer of aliases
-  and places is not part of this release.
+- It does not geocode, match fuzzily, correct addresses, or handle international addresses.
+  Recipient lines, landmarks and street corners are not modeled; text it cannot place goes to
+  `unparsed` with a warning.
+- It has no learned model. A misparse is fixed by a rule or a line of data, and you can add your own
+  spellings and places with a [custom layer](docs/custom-layers.md).
 
 ## Where it is going
-0.5.1 is out (an alpha: the `k4` key is new and a `k5` is planned for an eventual 0.6.0 release). 0.5.0 was the key-changing release (`k4`); 0.5.x is for speed, and 0.5.1 is half the time per parse of 0.4.1. What is planned, what depends on what, and what is deliberately not
-planned (validation, geocoding, international addresses) are in [`docs/roadmap.md`](docs/roadmap.md).
 
-## Coming from usaddress
-The labels are usaddress's, so a pipeline built on them keeps working. For a script that only calls `usaddress.parse` and
-`usaddress.tag`, change one import: `import doorplate.compat as usaddress` (label compatibility, not identical output). On the joined
-dicts of usaddress's own test files the two agree on 99.3% of 8,103 addresses. The mapping, the differences and a feature comparison:
-[`docs/usaddress-compat.md`](docs/usaddress-compat.md).
-
-## Examples
-
-[`examples/`](examples/README.md) has a notebook tour (`parse`, the output formats,
-keys, messy lines, `parse_many`, a DataFrame, the CLI), Polars and pandas pipelines,
-and small invented sample files.
+An alpha; a `k5` key is planned for 0.6.0. What is planned, what depends on what and what is deliberately not
+planned (validation, geocoding, international addresses) is in [`docs/roadmap.md`](docs/roadmap.md).
 
 ## Documentation
-**<https://doorplate.readthedocs.io/en/latest/>** is a searchable site built from the Markdown in [`docs/`](docs/README.md) (the index of every page, for
-GitHub readers). Start with [Getting started](https://doorplate.readthedocs.io/en/latest/getting-started/); the pages most people want:
+
+**<https://doorplate.readthedocs.io/en/latest/>** is a searchable site built from [`docs/`](docs/README.md) (the index of
+every page, for GitHub readers). Start with [Getting started](https://doorplate.readthedocs.io/en/latest/getting-started/).
 
 | Page | Contents |
 |---|---|
-| [`docs/how-it-works.md`](docs/how-it-works.md) | The pipeline, the design choices |
-| [`docs/key-format.md`](docs/key-format.md), [`docs/warnings.md`](docs/warnings.md) | The `k4` key (the contract) and what each warning tells you |
+| [Python guide](https://doorplate.readthedocs.io/en/latest/python/), [command-line guide](https://doorplate.readthedocs.io/en/latest/command-line/), [Rust guide](https://doorplate.readthedocs.io/en/latest/rust/) | The tours, one per way of using it; the reference is [Python](https://doorplate.readthedocs.io/en/latest/python-api/), [command line](https://doorplate.readthedocs.io/en/latest/cli/) and [docs.rs](https://docs.rs/doorplate) |
+| [pandas, Polars and DuckDB](https://doorplate.readthedocs.io/en/latest/dataframes/) | A column, split fields, a table or a CSV file, one call per shape; runnable versions in [`examples/`](examples/README.md) |
+| [`docs/how-it-works.md`](docs/how-it-works.md), [`docs/places.md`](docs/places.md) | The pipeline and the design choices; the place data |
+| [`docs/key-format.md`](docs/key-format.md), [`docs/warnings.md`](docs/warnings.md) | The match key (the contract); what each warning tells you |
 | [`docs/custom-layers.md`](docs/custom-layers.md), [`docs/anonymizing.md`](docs/anonymizing.md) | Your own spellings and places; sharing messy data |
+| [`docs/usaddress-compat.md`](docs/usaddress-compat.md) | Coming from usaddress: `import doorplate.compat as usaddress` |
 | [`docs/benchmarks.md`](docs/benchmarks.md) | Accuracy, speed and size |
-| [`docs/roadmap.md`](docs/roadmap.md), [`CHANGELOG.md`](CHANGELOG.md) | Planned work; release notes |
-
-## Development
-
-See [`CONTRIBUTING.md`](CONTRIBUTING.md) for reporting a misparse and fixing one.
-
-```sh
-cargo fmt --check
-cargo clippy --workspace --all-targets --all-features -- -D warnings
-cargo test --workspace --all-features
-cargo bench -p doorplate --bench parse
-
-# Python (in a virtualenv with maturin and pytest)
-cd crates/doorplate-py && maturin develop --release && cd ../..
-pytest crates/doorplate-py/tests
-```
-
-Plain `cargo test` and `clippy` need no Python: the `doorplate-py` crate has no Rust
-test target, and maturin supplies the extension-module build settings. The golden
-corpus (`tests/corpus/`) is the regression suite: a parsing bug fixed gets a case.
+| [`CONTRIBUTING.md`](CONTRIBUTING.md), [`docs/roadmap.md`](docs/roadmap.md), [`CHANGELOG.md`](CHANGELOG.md) | Reporting and fixing a misparse; planned work; release notes |
 
 ## Disclaimer
 

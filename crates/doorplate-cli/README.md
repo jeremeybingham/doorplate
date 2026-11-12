@@ -12,10 +12,16 @@ warnings. It wraps the [`doorplate`](https://crates.io/crates/doorplate) library
 This tool formats and parses; it **does not validate** that an address exists or can
 receive mail.
 
-> **Alpha release (0.5.1).** The match key is versioned (`k4:`) and will probably
-> get new versions, so store the version prefix with your keys. `k4` is new in 0.5.0 and has only been checked on the project's own data (37 million rows of public records), and a `k5` is planned for an eventual 0.6.0 release. Options and output
-> fields may still change before 1.0. If it parses your addresses badly, please
-> [open an issue](https://github.com/jeremeybingham/doorplate/issues/new?template=misparse-or-messy-data.md).
+> **Alpha release (0.5.1).** Expect rough edges; names in the API and the warning codes may still change before 1.0.
+> The match key is versioned (`k4:`) and later versions will probably change it (a `k5` is planned for 0.6.0), so store
+> the prefix with your keys and plan to re-key. `k4` has only been checked on the project's own data (37 million rows of
+> public records). Accuracy and speed are measurements on a few datasets, not guarantees.
+>
+> **Help wanted: messy addresses.** If it parses your addresses badly (odd abbreviations, typos, cut-off lines, units in
+> strange places, county or mailing-list exports), please
+> [open an issue](https://github.com/jeremeybingham/doorplate/issues/new?template=misparse-or-messy-data.md)
+> with a sample. I want to fix them. Private data can be anonymized first
+> ([how](https://github.com/jeremeybingham/doorplate/blob/main/CONTRIBUTING.md#sharing-messy-data)).
 
 ## Install
 
@@ -38,7 +44,7 @@ doorplate parse "123 N Main St, Miami FL 33101" --display    # mixed case; --lon
 doorplate parse "123 N Main St, Miami FL 33101" --tag        # usaddress-style joined labels
 doorplate parse -  < addresses.txt                           # one address per line, JSON lines out
 doorplate anonymize in.csv --column address -o shareable.csv   # same shape, other digits and names
-doorplate parse "123 Oak Trayl, Miami FL 33101" --custom-layer DIR   # your own spellings and places (below)
+doorplate parse "123 Oak Trayl, Miami FL 33101" --custom-layer DIR   # your own spellings and places
 doorplate layer check DIR                                    # load a custom layer: every problem, or what it holds
 ```
 
@@ -50,6 +56,7 @@ k4:S|123|N|MAIN|ST||FL|33101
 `doorplate --help` lists every option.
 
 ## CSV files
+
 `parse-file` reads a CSV file and writes it back with the parsed columns appended (`addr_street_number`, `addr_key`,
 `addr_warnings`, ...). Every input column is kept, and a blank row stays blank instead of stopping the run:
 
@@ -58,18 +65,7 @@ doorplate parse-file addresses.csv --column address -o parsed.csv               
 doorplate parse-file split.csv --column line1 --line2 line2 --city city --state state --zip zip -o parsed.csv   # split columns
 ```
 
-The columns, the state hint and the speed are in the [command-line guide](https://doorplate.readthedocs.io/en/latest/command-line/).
-
-## Custom layers
-`doorplate layer check DIR` and `--custom-layer DIR` add your own spellings, words, places and ZIPs on top of the shipped
-tables. A layer can change a key, so every record reports it (`provenance.custom_layer`). The files, the rules and a template
-are in [Custom layers](https://doorplate.readthedocs.io/en/latest/custom-layers/).
-
-## Sharing messy data
-`doorplate anonymize in.csv --column address -o shareable.csv` rewrites address-like text so it keeps its shape and loses its
-names and numbers, even when it does not parse. **It is obfuscation, not anonymity:** read the output before you share it.
-The rules and limits are in [Anonymizing data](https://doorplate.readthedocs.io/en/latest/anonymizing/). For a data frame, SQL or a notebook, the
-[Python package](https://pypi.org/project/doorplate/) has pandas, Polars and DuckDB helpers over the same parser.
+Custom layers (`--custom-layer`, `layer check`), `anonymize` and the other options are in the [command-line guide](https://doorplate.readthedocs.io/en/latest/command-line/).
 
 ## Disclaimer
 
@@ -87,9 +83,8 @@ US Postal Service, RESO, DataMade (the authors of usaddress) or any data source 
 names are used only to say what the output follows or is compared with.
 
 ## More
-- [Documentation site](https://doorplate.readthedocs.io/en/latest/): the [command-line guide](https://doorplate.readthedocs.io/en/latest/command-line/) and [reference](https://doorplate.readthedocs.io/en/latest/cli/), the [key](https://doorplate.readthedocs.io/en/latest/key-format/) and [how it works](https://doorplate.readthedocs.io/en/latest/how-it-works/).
+- [Documentation site](https://doorplate.readthedocs.io/en/latest/): the [command-line guide](https://doorplate.readthedocs.io/en/latest/command-line/) and [reference](https://doorplate.readthedocs.io/en/latest/cli/), [custom layers](https://doorplate.readthedocs.io/en/latest/custom-layers/), [anonymizing](https://doorplate.readthedocs.io/en/latest/anonymizing/), the [key](https://doorplate.readthedocs.io/en/latest/key-format/) and [how it works](https://doorplate.readthedocs.io/en/latest/how-it-works/).
 - [Project README](https://github.com/jeremeybingham/doorplate#readme).
 - The library is [`doorplate`](https://crates.io/crates/doorplate); the Python package is [`doorplate` on PyPI](https://pypi.org/project/doorplate/).
 
 Licensed under either of MIT or Apache-2.0 at your option.
-

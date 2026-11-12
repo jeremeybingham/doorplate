@@ -14,12 +14,13 @@ to download.
 This library formats and parses; it **does not validate** that an address exists or
 can receive mail.
 
-> **Alpha release (0.5.1).** Expect rough edges. The match key is versioned (`k4:`) and
-> will probably get new versions as the parser improves, so store the version prefix
-> with your keys and plan to re-key. `k4` is new in 0.5.0 and has only been checked on the project's own data (37 million rows of public records), and a `k5` is planned for an eventual 0.6.0 release. Accuracy and speed are measurements on a few
-> datasets, not guarantees.
+> **Alpha release (0.5.1).** Expect rough edges; names in the API and the warning codes may still change before 1.0.
+> The match key is versioned (`k4:`) and later versions will probably change it (a `k5` is planned for 0.6.0), so store
+> the prefix with your keys and plan to re-key. `k4` has only been checked on the project's own data (37 million rows of
+> public records). Accuracy and speed are measurements on a few datasets, not guarantees.
 >
-> **Help wanted: messy addresses.** If it parses your addresses badly, please
+> **Help wanted: messy addresses.** If it parses your addresses badly (odd abbreviations, typos, cut-off lines, units in
+> strange places, county or mailing-list exports), please
 > [open an issue](https://github.com/jeremeybingham/doorplate/issues/new?template=misparse-or-messy-data.md)
 > with a sample. I want to fix them. Private data can be anonymized first
 > ([how](https://github.com/jeremeybingham/doorplate/blob/main/CONTRIBUTING.md#sharing-messy-data)).
@@ -34,21 +35,14 @@ pip install doorplate
 import doorplate as dp
 
 a = dp.parse("123 north main street apt 4, Miami FL 33101")
-a.street_name          # "MAIN"
-a.unit_number          # "4"
-a.place                # {"name": "MIAMI", "state": "FL", "county": "DADE", ...}
-a.warnings             # []
-a.to_usps()["line1"]   # "123 N MAIN ST APT 4"
-a.to_display()["line1"]  # "123 N Main St Apt 4" (to_long(): "123 North Main Street Apartment 4"); display only, not Pub 28
-a.key()                # "k4:S|123|N|MAIN|ST||FL|33101"
-a.slug()               # "123-n-main-st-apt-4-miami-fl-33101"
-a.to_reso()            # RESO Data Dictionary 2.0 fields
-a.to_dict()            # everything above as plain Python values, and provenance (the library version and the state data version; also `a.library_version`, `a.state_data_version`)
+a.street_name, a.unit_number   # ("MAIN", "4")
+a.to_usps()["line1"]           # "123 N MAIN ST APT 4"
+a.key()                        # "k4:S|123|N|MAIN|ST||FL|33101"
+a.slug()                       # "123-n-main-st-apt-4-miami-fl-33101"
+a.warnings                     # []
 
-dp.parse_fields(line1="THE COVE", line2="1111 ASBURY WAY",
-                city="Orlando", state="FL", zip="32801")
+dp.parse_fields(line1="THE COVE", line2="1111 ASBURY WAY", city="Orlando", state="FL", zip="32801")
 dp.parse_many(["1 Main St, Miami FL", "PO Box 5, Tampa FL"])  # GIL released
-dp.parse_fields_many(line1=["1 Main St", "PO Box 5"], city=["Miami", "Tampa"])
 dp.parse("281 EVELYN DR DOTHAN", default_state="AL").city     # "DOTHAN"
 ```
 
@@ -77,49 +71,13 @@ maturin develop --release      # builds the extension into your virtualenv
 pytest tests
 ```
 
-## The API
-The calls are `parse`, `parse_fields`, `parse_many`, `parse_fields_many`, `Parser`, `tag`, `parse_tokens`,
-`load_layer`, `Anonymizer` and `address_type`; a `ParsedAddress` is read-only and typed (`py.typed`), with the components,
-`warnings`, `unparsed`, and `key()`, `slug()`, `to_usps()`, `to_display()`, `to_reso()` and `to_dict()`. The tour is the
-[Python guide](https://doorplate.readthedocs.io/en/latest/python/); every function and class is in the [Python reference](https://doorplate.readthedocs.io/en/latest/python-api/).
+## Guides
 
-## Your data, by shape
-A column of addresses in pandas, Polars or DuckDB, split columns, mixed shapes, a CSV file: see
-[pandas, Polars and DuckDB](https://doorplate.readthedocs.io/en/latest/dataframes/) (one call per shape, with timings), or the examples in the repository.
-
-## Batches, pandas, Polars and DuckDB
-`parse_many(texts)` parses a list on every core with the GIL released (about 3x a loop of `parse`), and the helpers
-`doorplate.pandas.parse_column`, `doorplate.polars.parse_column` and `doorplate.duckdb` build on it:
-
-```python
-from doorplate.polars import parse_column   # or doorplate.pandas
-
-out = df.hstack(parse_column(df["address"]))                    # Polars
-out = df.join(parse_column(df["address"], default_state="FL"))  # pandas
-```
-
-The columns, DuckDB in SQL, doing it by hand and the timings are in [pandas, Polars and DuckDB](https://doorplate.readthedocs.io/en/latest/dataframes/).
-
-## Custom layers
-Your data spells `TRAIL` as `TRAYL`, or lives in a place the shipped list lacks? `doorplate.load_layer("DIR")` adds your own
-spellings, words, places and ZIPs on top of the shipped tables (`custom_layer=` on every call). A layer can change a key, so
-every parse reports it. The files, the rules, a demo layer, a template and a prompt for an LLM are in
-[Custom layers](https://doorplate.readthedocs.io/en/latest/custom-layers/).
-
-## Sharing messy data
-`doorplate.Anonymizer(seed=None).anonymize("123 N Zephyrmill Ave Apt 4, Miami, FL 33101")` gives a copy that keeps the shape and
-loses the names and numbers, even when the text does not parse. **It is obfuscation, not anonymity:** read the output before
-you share it. The rules, the limits and what it can leak are in [Anonymizing data](https://doorplate.readthedocs.io/en/latest/anonymizing/).
-
-## Coming from usaddress
-For a script that calls `usaddress.parse` and `usaddress.tag`, change one import (label compatibility, not identical output):
-
-```python
-import doorplate.compat as usaddress    # was: import usaddress
-```
-
-The same calls under doorplate's own names are `parse_tokens(s)` and `tag(s)`. The mapping and the differences are in
-[Coming from usaddress](https://doorplate.readthedocs.io/en/latest/usaddress-compat/).
+- [Python guide](https://doorplate.readthedocs.io/en/latest/python/) (the tour) and [Python reference](https://doorplate.readthedocs.io/en/latest/python-api/) (every function and class).
+- [pandas, Polars and DuckDB](https://doorplate.readthedocs.io/en/latest/dataframes/): a column, split fields, a table or a CSV file, one call per shape. `parse_many` uses every core with the GIL released.
+- [Custom layers](https://doorplate.readthedocs.io/en/latest/custom-layers/): `doorplate.load_layer("DIR")` adds your own spellings, words, places and ZIPs; a layer can change a key, so every parse reports it.
+- [Anonymizing data](https://doorplate.readthedocs.io/en/latest/anonymizing/): `doorplate.Anonymizer` keeps the shape and loses names and numbers. Obfuscation, not anonymity: read the output before you share it.
+- [Coming from usaddress](https://doorplate.readthedocs.io/en/latest/usaddress-compat/): `import doorplate.compat as usaddress` (label compatibility, not identical output).
 
 ## Accuracy and speed
 
@@ -149,9 +107,8 @@ US Postal Service, RESO, DataMade (the authors of usaddress) or any data source 
 names are used only to say what the output follows or is compared with.
 
 ## More
-- [Documentation site](https://doorplate.readthedocs.io/en/latest/): the [Python guide](https://doorplate.readthedocs.io/en/latest/python/), [reference](https://doorplate.readthedocs.io/en/latest/python-api/), [pandas, Polars and DuckDB](https://doorplate.readthedocs.io/en/latest/dataframes/), the [key](https://doorplate.readthedocs.io/en/latest/key-format/), [warnings](https://doorplate.readthedocs.io/en/latest/warnings/) and [how it works](https://doorplate.readthedocs.io/en/latest/how-it-works/).
+- [Documentation site](https://doorplate.readthedocs.io/en/latest/): the [key](https://doorplate.readthedocs.io/en/latest/key-format/), [warnings](https://doorplate.readthedocs.io/en/latest/warnings/) and [how it works](https://doorplate.readthedocs.io/en/latest/how-it-works/).
 - [Project README](https://github.com/jeremeybingham/doorplate#readme): what it does, the Rust library, the command-line tool.
 - [Examples](https://github.com/jeremeybingham/doorplate/tree/main/examples): a notebook tour and a pipeline for each DataFrame library.
 
 Licensed under either of MIT or Apache-2.0 at your option.
-

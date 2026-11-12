@@ -15,14 +15,15 @@ parsing never panics.
 This library formats and parses; it **does not validate** that an address exists or
 can receive mail.
 
-> **Alpha release (0.5.1).** Expect rough edges. The match key is versioned (`k4:`)
-> and will probably get new versions as the parser improves, so store the version
-> prefix with your keys and plan to re-key. `k4` is new in 0.5.0 and has only been checked on the project's own data (37 million rows of public records), and a `k5` is planned for an eventual 0.6.0 release. Names in the API and the warning codes may
-> still change before 1.0.
+> **Alpha release (0.5.1).** Expect rough edges; names in the API and the warning codes may still change before 1.0.
+> The match key is versioned (`k4:`) and later versions will probably change it (a `k5` is planned for 0.6.0), so store
+> the prefix with your keys and plan to re-key. `k4` has only been checked on the project's own data (37 million rows of
+> public records). Accuracy and speed are measurements on a few datasets, not guarantees.
 >
-> **Help wanted: messy addresses.** If it parses your addresses badly, please
+> **Help wanted: messy addresses.** If it parses your addresses badly (odd abbreviations, typos, cut-off lines, units in
+> strange places, county or mailing-list exports), please
 > [open an issue](https://github.com/jeremeybingham/doorplate/issues/new?template=misparse-or-messy-data.md)
-> with a sample. Private data can be anonymized first
+> with a sample. I want to fix them. Private data can be anonymized first
 > ([how](https://github.com/jeremeybingham/doorplate/blob/main/CONTRIBUTING.md#sharing-messy-data)).
 
 ## Quickstart
@@ -58,12 +59,10 @@ a.diagnostics.state_data_version; // Some("2026.10.5") for Florida, None for a s
   `ParsedAddress` with warnings (stable snake_case codes; [what each one tells you, and how often
   it is wrong](https://github.com/jeremeybingham/doorplate/blob/main/docs/warnings.md)) and the text it could not place.
 
-Batches, pre-split fields (`Fields`), PO boxes, military and general delivery go through the same calls; `doorplate::Anonymizer`
-rewrites address-like text so it can be shared (obfuscation, not anonymity). These are in the [Rust guide](https://doorplate.readthedocs.io/en/latest/rust/). The runnable
-tour is [`examples/quickstart.rs`](https://github.com/jeremeybingham/doorplate/blob/main/crates/doorplate/examples/quickstart.rs)
-(`cargo run -p doorplate --example quickstart` in a clone). For CSV files without writing code, install
-[`doorplate-cli`](https://crates.io/crates/doorplate-cli); for pandas, Polars and DuckDB, use the
-[Python package](https://pypi.org/project/doorplate/), which wraps this crate.
+Batches, pre-split fields, PO boxes, military and general delivery, and the `Anonymizer` are in the
+[Rust guide](https://doorplate.readthedocs.io/en/latest/rust/); the runnable tour is
+[`examples/quickstart.rs`](https://github.com/jeremeybingham/doorplate/blob/main/crates/doorplate/examples/quickstart.rs)
+(`cargo run -p doorplate --example quickstart` in a clone).
 
 ## Features
 
@@ -86,13 +85,6 @@ Measured against the Python library [usaddress](https://github.com/datamade/usad
 yours; every figure by build, the caveats and how to rerun them: [benchmarks](https://doorplate.readthedocs.io/en/latest/benchmarks/)
 and [speed, size and memory](https://doorplate.readthedocs.io/en/latest/speed-and-size/).
 
-## The match key
-
-`a.key(...)` identifies a property for deduplication and joins. It uses the street
-parts, state and ZIP, not the city, and it is versioned: the `k4:` format will not
-change in place. [Key format](https://github.com/jeremeybingham/doorplate/blob/main/docs/key-format.md) is the contract. The
-slug is for URLs and display; it is not unique.
-
 ## Disclaimer
 
 doorplate is provided "as is", without warranty of any kind, under the [MIT](https://github.com/jeremeybingham/doorplate/blob/main/LICENSE-MIT) or
@@ -109,9 +101,8 @@ US Postal Service, RESO, DataMade (the authors of usaddress) or any data source 
 names are used only to say what the output follows or is compared with.
 
 ## More
-- [Rust guide](https://doorplate.readthedocs.io/en/latest/rust/), [API documentation](https://docs.rs/doorplate) and the [documentation site](https://doorplate.readthedocs.io/en/latest/) (how it works, the key, warnings, custom layers).
+- [Rust guide](https://doorplate.readthedocs.io/en/latest/rust/), [API documentation](https://docs.rs/doorplate) and the [documentation site](https://doorplate.readthedocs.io/en/latest/) (how it works, the match key, warnings, custom layers).
 - [Project README](https://github.com/jeremeybingham/doorplate#readme): what it does, accuracy and speed, the Python package.
-- The command-line tool is [`doorplate-cli`](https://crates.io/crates/doorplate-cli); the Python package is [`doorplate` on PyPI](https://pypi.org/project/doorplate/).
+- For CSV files without code, [`doorplate-cli`](https://crates.io/crates/doorplate-cli); for pandas, Polars and DuckDB, the [Python package](https://pypi.org/project/doorplate/).
 
 Licensed under either of MIT or Apache-2.0 at your option.
-

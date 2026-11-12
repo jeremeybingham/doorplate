@@ -19,7 +19,15 @@ cargo add doorplate                   # the library
 cargo install doorplate-cli           # the `doorplate` command
 ```
 
-From source, see the [Python guide](python.md#install) and the [repository](https://github.com/jeremeybingham/doorplate).
+Wheels are built for Linux (x86_64, aarch64), macOS (universal2) and Windows (x64), and tested on Python 3.10 and 3.13.
+
+**From source** (Rust 1.80 or later; the Python extension needs 1.83):
+
+```sh
+git clone https://github.com/jeremeybingham/doorplate && cd doorplate
+cargo build --release -p doorplate-cli          # target/release/doorplate
+cd crates/doorplate-py && pip install maturin && maturin develop --release
+```
 
 ## Parse an address
 
@@ -70,10 +78,10 @@ One address, followed through:
 
 **The key** identifies a property for deduplication and joins. It uses the street
 parts, state and ZIP, not the city, and it is versioned: the `k4:` format will not
-change in place. [`docs/key-format.md`](key-format.md) is the contract.
+change in place. [The key format](key-format.md) is the contract.
 **The slug** is for URLs and display; it is not unique. **Warnings** are stable
 snake_case codes (`missing_zip`, `unparsed_remainder`, `dual_address`, ...) meant
-for a database column; the list is in [`docs/how-it-works.md`](how-it-works.md).
+for a database column; [what each one tells you](warnings.md).
 
 Input does not have to be tidy. Messy and incomplete addresses still parse, with
 warnings that say what is missing:
@@ -94,10 +102,8 @@ Only input with no address text at all is an error.
   addresses. Recipient lines, landmarks and street corners are not modeled; text
   it cannot place goes to `unparsed` with a warning. `USA` after an address is
   ignored, and an intersection (`MAIN ST & 1ST AVE`) is reported, not keyed.
-- It has no learned model.
-- The shipped tables are fixed at compile time. If it misparses an address, report
-  the input so the tables or rules can be fixed; a user-extensible layer of aliases
-  and places is not part of this release.
+- It has no learned model. A misparse is fixed by a rule or a line of data; you can add your own spellings and
+  places with a [custom layer](custom-layers.md).
 
 ## Where next
 

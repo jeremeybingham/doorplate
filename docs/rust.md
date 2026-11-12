@@ -1,15 +1,5 @@
 # Rust guide
 
-The `doorplate` crate is the parser itself; the Python package and the command-line tool wrap it. This page is the tour
-and the cargo features; the API reference is on [docs.rs](https://docs.rs/doorplate). It formats and parses; it does not
-validate that an address exists or can receive mail.
-
-## Quickstart
-
-```sh
-cargo add doorplate
-```
-
 ```rust
 use doorplate::{KeyOptions, Parser};
 
@@ -27,6 +17,10 @@ a.diagnostics.warnings;           // e.g. MissingZip, UnparsedRemainder
 a.diagnostics.state_data_version; // Some("2026.10.5") for Florida, None for a state without curated data
 ```
 
+The `doorplate` crate is the parser itself; the Python package and the command-line tool wrap it. Add it with `cargo add doorplate`
+([Getting started](getting-started.md#install)). This page is the tour and the cargo features; the API reference is on
+[docs.rs](https://docs.rs/doorplate).
+
 - `Parser::parse_fields` takes pre-split fields (`Fields`: `line1`, `line2`, `city`, `state`, `zip`, each optional).
 - `Parser::parse_many` and `Parser::parse_fields_many` parse a batch, in parallel
   with the `rayon` feature.
@@ -34,8 +28,7 @@ a.diagnostics.state_data_version; // Some("2026.10.5") for Florida, None for a s
   state hint. It is a lookup hint, never a fill: `state` stays empty and
   `missing_state` still fires.
 - Only input with no address text at all is an error; anything else comes back as a
-  `ParsedAddress` with warnings (stable snake_case codes; [what each one tells you, and how often
-  it is wrong](warnings.md)) and the text it could not place.
+  `ParsedAddress` with warnings ([what each one tells you](warnings.md)) and the text it could not place.
 
 Addresses arrive in different shapes. Whole lines, split columns, PO boxes, rural routes, military and
 general delivery, units on a second line, and rows with gaps all go through the same calls:
@@ -60,14 +53,11 @@ for r in parser.parse_fields_many(&rows) {
 ```
 
 The runnable tour is [`examples/quickstart.rs`](https://github.com/jeremeybingham/doorplate/blob/main/crates/doorplate/examples/quickstart.rs)
-(`cargo run -p doorplate --example quickstart` in a clone). For CSV files without writing code, install
-[the command-line tool](command-line.md); for pandas, Polars and DuckDB, use the
-[Python package](python.md), which wraps this crate.
+(`cargo run -p doorplate --example quickstart` in a clone). For CSV files without code, use the [command-line tool](command-line.md);
+for pandas, Polars and DuckDB, the [Python package](python.md).
 
-`doorplate::Anonymizer` rewrites address-like text so it can be shared: digits and unknown words are replaced by
-others of the same length and case, and what decides how the parser reads a line stays. It is obfuscation that keeps
-the shape, not anonymity; read the output before you share it. The rules and limits are in
-[Anonymizing address data](anonymizing.md).
+`doorplate::Anonymizer` rewrites address-like text so it can be shared. It is obfuscation, not anonymity: read the output
+before you share it ([Anonymizing data](anonymizing.md)).
 
 ```rust
 let a = doorplate::Anonymizer::with_seed(7).anonymize("123 N Zephyrmill Ave Apt 4, Miami, FL 33101");
@@ -83,9 +73,4 @@ assert!(a.text.contains(" N ") && a.text.contains(", FL 331") && !a.text.contain
 | `corpus` | no | the golden-corpus loader and runner (`doorplate::corpus`); pulls in serde |
 | `custom-layer` | no | `CustomLayer::from_sources` and `from_dir`: your own spellings, words, places and ZIPs on top of the shipped tables, reported in `Diagnostics::custom_layer`; pulls in `toml`. A layer can change a key ([Custom layers](custom-layers.md)) |
 
-## The match key
-
-`a.key(...)` identifies a property for deduplication and joins. It uses the street
-parts, state and ZIP, not the city, and it is versioned: the `k4:` format will not
-change in place. [Key format](key-format.md) is the contract. The
-slug is for URLs and display; it is not unique.
+The key (`a.key(...)`) is a versioned contract: [Key format](key-format.md).
