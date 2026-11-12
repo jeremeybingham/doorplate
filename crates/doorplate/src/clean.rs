@@ -43,6 +43,22 @@ pub(crate) fn clean(input: &str) -> Cleaned {
     let mut pending_space = false;
     for (i, c) in input.char_indices() {
         let range = (i, i + c.len_utf8());
+        if c.is_ascii() {
+            // ASCII: white space and controls are the bytes up to the space and DEL; every
+            // other byte is kept, upper-cased, as one byte.
+            if c <= ' ' || c == '\x7f' {
+                pending_space = !text.is_empty();
+                continue;
+            }
+            if pending_space {
+                text.push(' ');
+                src.push((range.0, range.0));
+                pending_space = false;
+            }
+            text.push(c.to_ascii_uppercase());
+            src.push(range);
+            continue;
+        }
         if c.is_whitespace() || c.is_control() {
             pending_space = !text.is_empty();
             continue;
