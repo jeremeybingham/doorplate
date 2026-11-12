@@ -25,7 +25,7 @@ New to the project? Read the [project README](../README.md), then
 | [`python-api.md`](python-api.md) | The Python reference: every function, class and helper of the `doorplate` package, generated from the type stubs (so it describes `main`) |
 | [`cli.md`](cli.md) | The command-line reference: the commands, their options, the exit codes and the usage text |
 | [`custom-layers.md`](custom-layers.md) | The custom layer and its guide: a demo layer, a template, a prompt for an LLM, then the files, the rules, what it reports, and how a layer can change a key |
-| [`anonymizing.md`](anonymizing.md) | Sharing messy data: `doorplate anonymize`, `Anonymizer` in Python and Rust, what it changes and keeps, seeds, the faithfulness check, what it can leak, how well it works |
+| [`anonymizing.md`](anonymizing.md) | Sharing messy data: `doorplate anonymize`, `Anonymizer` in Python and Rust, what it changes and keeps, seeds, the faithfulness check, what it can leak, measured rates |
 
 ## How it works, and what it outputs
 
