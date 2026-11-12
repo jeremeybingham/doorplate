@@ -133,7 +133,9 @@ pub(crate) fn assemble(
                 }
             }
             Tag::PreDir => {
-                if let Some(l) = lex.directional(&text) {
+                // `NO` for north before a name (#470) is tagged by the tagger's own rule.
+                let word = if text == "NO" { "N" } else { &text };
+                if let Some(l) = lex.directional(word) {
                     addr.street_dir_prefix.get_or_insert(l.value);
                     record(addr, Component::StreetDirPrefix);
                 }

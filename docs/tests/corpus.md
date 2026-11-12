@@ -63,6 +63,7 @@ Every parsing bug fixed gets a case here (`CONTRIBUTING.md`).
   `gf-` (a floor written as a plain number and the floor word, `glued-floor.jsonl`),
   `nlt-` (a letter after the house number, `number-letter.jsonl`),
   `cn-` (a compass word naming the street, `compass-street.jsonl`),
+  `nn-` (`NO` for north before a street name, `no-north.jsonl`),
   `nw-` (null words: a bracketed `<NULL>`, and `NaN` or `undefined` as a city, state or ZIP field, `null-words.jsonl`),
   `pz-` (a PO Box or unit number equal to the ZIP, `pobox-zip.jsonl`),
   `bx-` (BOX and a number after a name with no suffix, `box-bare-name.jsonl`),
@@ -476,3 +477,7 @@ Ids `sdb-001` to `sdb-005` (#498). A unit designator right after the house numbe
 ### `paren-group.jsonl`
 
 Ids `pg-001` to `pg-016` (#291, #516). A parenthesized group at the end of a line: a unit, floor or box (`(3RD FL)`, `(SUITE 4)`, `(BLDG B)`) is read as the unit it spells, with or without a city after it; any other group (`(REAR ENTRANCE)`, `(J SMITH)`, `(RT 28)`) is a segment of its own that is never the city or a unit, and lands in `unparsed`; a group glued to the word before it (`ST(FARM)`, `DRIVE(120-301)`) is split off. Unchanged, so they stay put: a group in the middle of the street, a number after a highway word, a bare number in parentheses, a word after a unit. `pg-015` is an unclosed `(` (#516), dropped so the ZIP after it is read; `pg-016` is the same line closed, unchanged.
+
+### `no-north.jsonl`
+
+Ids `nn-001` to `nn-011` (#470). `NO` right after the house number and before a plain word or an ordinal is north (`464 NO MAPLE AVE`, `88 NO BROADWAY`, `7 No Eccles St`, `1200 NO 2ND ST`, with a fraction or a postdirectional); the phrases that name a street keep `NO` (`NO NAME RD`, `NO BOTTOM RD`, `NO PONE VALLEY RD NW`, `NO MAN'S LAND RD`) and so does a bare number (`NO 5 RD`). `nu-009` (`1234 NO 52ND ST`) moved from the name to north with the rule.
