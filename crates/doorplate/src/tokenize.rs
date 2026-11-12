@@ -74,7 +74,7 @@ pub(crate) fn tokenize(
     let text = cleaned.text.as_str();
     let bytes = text.as_bytes();
     // Raw pieces: (start, end, segment) in cleaned byte offsets.
-    let mut pieces = Vec::new();
+    let mut pieces = Vec::with_capacity(bytes.len() / 4 + 1);
     let mut seg = seg0;
     let mut start = None;
     for (i, &b) in bytes.iter().enumerate() {
@@ -138,7 +138,12 @@ pub(crate) fn tokenize(
             lex.state(w).is_some() || zip_parts(w).is_some()
         })
         .collect();
-    let mut out = Vec::new();
+    // Every piece trimmed to its alphanumerics: the words after a piece are a slice of this.
+    let words: Vec<&str> = pieces
+        .iter()
+        .map(|&(na, nb, _)| text[na..nb].trim_matches(|c: char| !c.is_alphanumeric()))
+        .collect();
+    let mut out = Vec::with_capacity(pieces.len() + 2);
     let mut in_paren = false;
     for (k, &(a, b, seg)) in pieces.iter().enumerate() {
         let next_starts_numeric = pieces.get(k + 1).is_some_and(|&(na, _, nseg)| {
@@ -150,11 +155,13 @@ pub(crate) fn tokenize(
         });
         // The words after this piece in its segment, for a city glued to
         // the street.
-        let after: Vec<&str> = pieces[k + 1..]
-            .iter()
-            .take_while(|&&(_, _, s)| s == seg)
-            .map(|&(na, nb, _)| text[na..nb].trim_matches(|c: char| !c.is_alphanumeric()))
-            .collect();
+        let seg_end = k
+            + 1
+            + pieces[k + 1..]
+                .iter()
+                .take_while(|&&(_, _, s)| s == seg)
+                .count();
+        let after = &words[k + 1..seg_end];
         // The next segment starts with a state or a ZIP: the glued city's end.
         let later_seg = (k + 1..pieces.len())
             .find(|&n| pieces[n].2 > seg)
@@ -165,7 +172,7 @@ pub(crate) fn tokenize(
             cleaned,
             field,
             seg,
-            after: &after,
+            after,
             later_seg,
             later_anchor,
             out: &mut out,
