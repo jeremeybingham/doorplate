@@ -2,15 +2,13 @@
 
 [libpostal](https://github.com/openvenues/libpostal) is a C library that parses and normalizes street addresses from
 anywhere in the world with a statistical model. `doorplate` is a US-only parser that works with rules and place data and
-also standardizes, builds a key and reports diagnostics. This page is for people who use libpostal or are choosing between
-the two: what each does, where the outputs line up, and what is not comparable.
+also standardizes, builds a key and reports diagnostics. This page compares the two: what each does, where the outputs
+line up, and the first measurements (one run, 2026-11-07, to be repeated).
 
-**This page is a written comparison, not a measurement.** No libpostal accuracy or speed figure is reported here, because
-libpostal has not been run against `doorplate` yet. When it is, the figures go in [`benchmarks.md`](benchmarks.md) and
-[`speed-and-size.md`](speed-and-size.md), measured with the **Senzing model** (see "The model the comparison will use").
-The facts about libpostal below come from its README and from Senzing's model repository, read on 2026-11-07; what those
-pages do not say is marked as not stated. Examples are invented. This library formats and parses; it does not validate that
-an address exists or can receive mail.
+The figures in "Measured so far" are notes from that first run, not the published figures; the published ones will go in
+[`benchmarks.md`](benchmarks.md) and [`speed-and-size.md`](speed-and-size.md). The facts about libpostal come from its
+README and from Senzing's model repository, read on 2026-11-07; what those pages do not say is marked as not stated.
+Examples are invented. This library formats and parses; it does not validate that an address exists or can receive mail.
 
 ## Two different tools
 
@@ -27,8 +25,8 @@ an address exists or can receive mail.
 | Stated accuracy | 99.45% full-parse accuracy (every token right) on its own held-out data; the README does not name that data further | See [`benchmarks.md`](benchmarks.md) |
 
 Two cautions on the last two rows. libpostal's figure is on addresses like the ones it was trained on, from all over the
-world, so it does not say how libpostal reads US government exports or messy county data; the same is true of any score
-`doorplate` has on its own sets. And the figures are not measured the same way: neither is a claim about the other.
+world, so it does not say how libpostal reads US government exports or messy county data. And the figures are not measured
+the same way: neither is a claim about the other.
 
 The README does not say when the last release was or whether the project is still maintained. Check the repository before
 you depend on it.
@@ -56,41 +54,28 @@ twenty. The table says where each lands in `doorplate`, for a US address.
 | `state` | `state` |
 | `country` | a trailing `USA` or `US` is dropped with the warning `country_ignored` |
 
-So a comparison of the two is a comparison on the fields they share: house number, road (as one field), unit, PO box,
-city, state and ZIP. `doorplate` has more fields on the US side (the Pub 28 lines, the key, the warnings); libpostal has
-more on the world side. [`usaddress-compat.md`](usaddress-compat.md) has the same kind of mapping for usaddress, and the
-scoring rules there (compare by character span, fold the street parts) are the ones a libpostal comparison would reuse.
+So a comparison is on the fields they share: house number, road (as one field), unit, PO box, city, state and ZIP. The
+scoring rules are the ones in [`usaddress-compat.md`](usaddress-compat.md#scoring-rules), with the libpostal mapping below.
 
 ## Normalization and keys
 
 `expand_address` turns one messy address into several normalized spellings so that two records written differently can be
-matched by search or hashing. `doorplate` goes the other way: it reads an address into one canonical form, and the
-[match key](key-format.md) and the slug are what two records are compared on. A key is one string per address, not a set of
-variants, so the two are alternatives for the same job (finding duplicates), not equivalents. libpostal's README does not
-name a function for finding near-duplicates; it presents deduplication as a use of the library.
+matched by search or hashing. `doorplate` reads an address into one canonical form instead: the [match key](key-format.md)
+and the slug are what two records are compared on. A key is one string per address, not a set of variants, so the two are
+alternatives for the same job (finding duplicates), not equivalents.
 
-## The model the comparison will use
+## The model the comparison uses
 
-libpostal ships a default model and an alternative made by Senzing, "for improved parsing on US, UK and Singapore
-addresses and improved US rural route address handling". The comparison will use **the Senzing model from the start**, not the
-default, because it is the one meant for US data. Facts from the README and from Senzing's repository,
-[`Senzing/libpostal-data`](https://github.com/Senzing/libpostal-data) (Apache-2.0):
+libpostal ships a default model and an alternative from Senzing, "for improved parsing on US, UK and Singapore addresses".
+The comparison uses **the Senzing model from the start**, because it is the one meant for US data. It is chosen when
+libpostal is built (`./configure ... MODEL=senzing`); its data is about 2.2 GB, against 1.8 GB for the default.
 
-- It is chosen when libpostal is built: `./configure --datadir=DIR MODEL=senzing`. The data for it is about 2.2 GB, against 1.8 GB
-  for the default.
-- Senzing trained it on OpenAddresses, OpenStreetMap and data it generated (about 1.2 billion records from over 230 countries),
-  and says it parsed 4.3% better than the default model on its own test set. That is Senzing's figure, on its test set.
-- Senzing lists its changes by version: 1.0.0 improved US rural routes, US addresses without a state, Singapore and British
-  addresses; 1.1.0 Japanese addresses and Mexican state codes; 1.2.0 Chinese, Taiwanese and Korean addresses. The latest
-  version on the page is 1.2.0.
-- Neither page says which model version `MODEL=senzing` downloads. A build on 2026-11-07 at libpostal commit `25099c5`
-  (2025-12-06) fetched the Senzing **1.2.0 parser**, with the base data and the language classifier at 1.1.0. How to choose a
-  model once libpostal is built is still not stated. Every libpostal figure therefore carries the libpostal commit, the model
-  version and a checksum of the data directory, which the comparison tools print.
-
-A secondary check already exists: Senzing publishes the test set it scores its models on, and `doorplate` was scored on its US
-rows without running libpostal ([`benchmarks.md`](benchmarks.md#other-checks), the Senzing row). That score is not a
-comparison with libpostal.
+- Neither the README nor Senzing's repository
+  ([`Senzing/libpostal-data`](https://github.com/Senzing/libpostal-data), Apache-2.0) says which model version `MODEL=senzing`
+  fetches, or how to choose one after the build. The build on 2026-11-07 fetched the Senzing **1.2.0 parser**.
+- Senzing's own figure (4.3% better than the default on its test set) is not a comparison with libpostal.
+- Every libpostal figure therefore carries the libpostal commit, the model version and a checksum of the data directory,
+  which the comparison tools print. Senzing's published US score is in [`benchmarks.md`](benchmarks.md#other-checks).
 
 ## Running the comparison
 
@@ -113,26 +98,22 @@ python benchmarks/suite.py compare --with-libpostal
 python tools/compare/compare_usaddress.py --out report.md gold FILES.xml --with-libpostal
 ```
 
-Both add a third column to a table of **common labels**, beside the unchanged two-way tables. The common set folds usaddress's labels
-because libpostal gives `unit` and `po_box` as one piece: street parts are `StreetName` (as in the coarse score), occupancy type
-and identifier are `Occupancy`, box type and identifier are `USPSBox`. libpostal's labels map as the table above shows, with
-`suburb`, `city_district`, `island` and `state_district` all read as `PlaceName` (usaddress has one place label) and `level`,
-`staircase` and `entrance` as `Occupancy`; a label with no match (`category`, `near`, `country_region`, `world_region`) never
-agrees with a gold label. libpostal returns lowercase pieces, so they are found in the input ignoring case, in order, and cut at
-spaces to tokens. *Shared labels* leaves out the records with a gold label libpostal cannot produce (a rural-route box group, a
-recipient); *all records* leaves nothing out. The report prints the libpostal commit, the model version, the data checksum, the
-model load time and the one-thread parse time (the last two are a check of the run, not the speed benchmark).
-`tools/compare/test_libpostal_provider.py` tests the mapping on invented addresses.
+Both add a third column to a table of **common labels**, beside the unchanged two-way tables. The common set folds usaddress's
+labels because libpostal gives `unit` and `po_box` as one piece (street parts are `StreetName`, occupancy is `Occupancy`, box
+type and identifier are `USPSBox`). A label with no match (`category`, `near`, `country_region`, `world_region`) never agrees
+with a gold label. `suburb`, `city_district`, `island` and `state_district` count as `PlaceName`, and `level`, `staircase` and
+`entrance` as `Occupancy`. *Shared labels* leaves out records with a gold label libpostal cannot produce; *all records* leaves
+nothing out. `tools/compare/test_libpostal_provider.py` tests the mapping on invented addresses.
 
-## First measurement (2026-11-07; one run, to be repeated)
+## Measured so far (2026-11-07; one run)
 
-Measured once on the benchmark suite's comparison track (19,586 records), usaddress's own test files and the geocode benchmark's `dev`
-split, with libpostal commit `25099c5` and the Senzing 1.2.0 parser (data checksum `7afb91d6ef19`), on the parser of doorplate
-`main` at that date. Common labels, whole record or address right; the suite's intervals are 95% Wilson. These are notes from the first run,
-not the published figures: they will be measured again in the away run and moved to [`benchmarks.md`](benchmarks.md) with the other
-tables.
+One run: libpostal commit `25099c5`, the Senzing 1.2.0 parser (data checksum `7afb91d6ef19`), and doorplate `main` on that
+date. Accuracy is the share of records right (whole address, on the fields both have), with common labels, and the suite's
+intervals are 95% Wilson. Speed is the best-of-N method on an otherwise idle machine, with the suite's 4-CPU, 8 GB profile. Timings
+on this machine vary by 10 to 60% from run to run, so read ratios, not absolute figures; the model load time is left out of
+every timing and reported apart.
 
-| Set | doorplate | usaddress | libpostal |
+| Measure | doorplate | usaddress | libpostal |
 |---|---|---|---|
 | Suite, `natural`, shared labels (15,275) | 98.8% | 97.2% | 96.4% |
 | Suite, `natural`, all records (16,001) | 98.3% | 96.3% | 93.8% |
@@ -140,112 +121,53 @@ tables.
 | Suite, whole suite, all records (19,586) | 92.4% | 86.0% | 89.5% |
 | Suite, `hard` stratum (2,585) | 55.1% | 20.2% | 65.8% |
 | Suite, `hand` stratum (1,000) | 94.3% | 90.3% | 80.3% |
-| usaddress's test files, not in its training files, all (2,248) | 99.1% | 100.0% | 98.1% |
+| usaddress's test files, not in its training files (2,248) | 99.1% | 100.0% | 98.1% |
 | Geocode benchmark `dev` (60,522) | 94.3% | 88.1% | 80.0% |
+| libpostal's own US tests (53 cases) | 86.8% | 90.6% | 96.2% |
+| Senzing's test set, US rows (2,233) | 97.6% | 90.0% | 98.6% |
+| Strings per second, suite, one thread | 63,708 (`parse_tokens`); 82,399 (`parse_many`) | 9,297 | 15,546 (one process) |
+| Strings per second, suite, four workers | 265,523 (`parse_many`, four threads) | n/a | 58,230 (four processes) |
+| Memory after loading | 17 MB | n/a | 2,950 MB per process |
 
 How to read it:
 
-- On the suite's `natural` records (the estimate for ordinary input) doorplate leads libpostal by 2.4 to 4.5 points. libpostal leads on
-  `hard`, the stratum drawn from doorplate's and usaddress's blind spots, so that row is not a fair test of libpostal. usaddress's own
-  files are its regression tests, so its near 100% says nothing.
-- The geocode `dev` gap is the largest, and its cause is specific. The inputs are one line with no commas, and when the city is rare,
-  misspelled or several words, libpostal's `road` runs on into it: of the wrong `dev` tokens, the biggest class by far is a city word
-  read as part of the road. Case is not the cause (uppercase and title-case inputs gave identical parses on a 3,000-address sample), and
-  commas alone are not (the suite's comma-less styles score 90 to 92% for libpostal, as well as its comma styles do). doorplate looks the
-  city up in its US place data, keyed by the state and ZIP, where libpostal reads the line with one model trained on addresses from
+- **Ordinary input.** On the suite's `natural` records doorplate leads libpostal by 2.4 to 4.5 points. libpostal leads on `hard`,
+  which was drawn from doorplate's and usaddress's blind spots, so that row is not a fair test of a third library. usaddress's
+  own test files are its regression tests, so its near 100% says nothing.
+- **The geocode `dev` gap.** The inputs are one line with no commas. When the city is rare, misspelled or several words,
+  libpostal's `road` runs on into it: the biggest class of its wrong tokens is a city word read as part of the road. Case is not
+  the cause (uppercase and title-case inputs parsed identically on a 3,000-address sample), and neither are commas. doorplate looks
+  the city up in its US place data, keyed by state and ZIP; libpostal reads the line with one model trained on addresses from
   everywhere. This is a difference in design on this input, not a ranking of the parsers.
-- Token-level and whole-record figures, the per-stratum and per-style tables and libpostal's most common token errors are in the
-  suite report that `--with-libpostal` prints. The mapping decisions above (a label with no match counts as wrong; `suburb` and its
-  kin read as a place) affect these figures a little and were chosen before the run.
-- Speed and size are in the next sections.
-
-## libpostal's own tests and Senzing's test set (2026-11-07)
-
-**What libpostal ships.** Its repository has parser tests in `test/test_parser.c`: hand-written cases per country, each an input string and
-the labelled components libpostal should return. The US block, `test_us_parses`, has 53 cases. The data the models were trained on is
-published as tarballs of template-formatted, tagged addresses (about 5.8 GB from OpenStreetMap, 6.6 GB from OpenAddresses, 0.2 GB from
-Senzing). The held-out data behind the README's 99.45% is not published as a file, and libpostal's `address_parser_test` program scores a
-model on a test file of that format, so a held-out file exists only inside a training run. A US slice of the published training data
-would be data libpostal was fitted to, so it would flatter libpostal; it is not scored here.
-
-**What was scored** (`tools/compare/libpostal_tests.py`, one run, libpostal `25099c5` with the Senzing 1.2.0 parser): all three parsers on
-the same fields (house number, road, place, state, ZIP, and the unit when the gold has one). A row is right when every field its gold
-has is right; a field a parser adds that the gold lacks is ignored; text is compared as written without case or punctuation. Selection:
-the 53 cases of `test_us_parses` (read from the clone, not copied); and the 2,233 rows of Senzing's `test_data_v1.2.0.csv` whose
-`country_code` is `us`.
-
-| Set | doorplate | usaddress | libpostal |
-|---|---|---|---|
-| libpostal's own US tests (53 cases) | 86.8% | 90.6% | 96.2% |
-| Senzing's test set, US rows (2,233) | 97.6% | 90.0% | 98.6% |
-
-Reading it:
-
-- libpostal's tests are its regression cases, so a high score for it is expected, as usaddress scores near 100% on its own files. It still
-  returns exactly the expected components for only 51 of its own 53 cases: the Senzing model is not the one the tests were written for.
-- With 53 cases the intervals are wide (doorplate 75 to 94%). The cases are hand-picked hard and odd inputs. Of doorplate's seven
-  misses, three are outside its scope (an organisation or venue name before the house number, twice, and a search phrase that is not an
-  address), three are shapes worth a look in the rule loop (not filed: a floor written as an ordinal, `6th Fl`, after the street; a
-  county written between the city and the state, `Seattle, King County, WA`, which makes the city read as part of the street; and
-  `Apt No. 4`, where the `No.` is not kept in the unit), and one has a line break inside a one-line string.
-- Senzing's test set is the nearest thing to held-out data, but nearly all of it is OpenStreetMap address tags written out as one line:
-  clean, uniform input, close to what libpostal was trained on. libpostal leads doorplate there by one point (98.6% against 97.6%, intervals
-  that overlap at the edges), and both lead usaddress, by 7.6 and 8.6 points. Senzing's own US figure (4.58% failing in v1.2.0) uses a
-  definition of failure that is not stated, so it is not comparable.
-- The doorplate figure here is not the 97.2% in [`benchmarks.md`](benchmarks.md): that used a stricter rule (an empty gold field had to
-  stay empty) and counted a different set of fields.
-
-## Speed and size (2026-11-07; one run, to be repeated in the away run's exclusive window)
-
-Measured with the repository's own scripts, extended with `--with-libpostal` (`benchmarks/speed_python.py`, `suite.py speed`,
-`size_memory.py`): the same best-of-N method as the usaddress rows, on an otherwise idle machine, with libpostal's Senzing build
-(commit `25099c5`, parser 1.2.0). Timings on this machine vary by 10 to 60% from run to run, so read ratios, not absolute figures.
-libpostal runs in its own processes: it loads its own model, and a `parse_address` call holds the Python GIL, so the way to use more
-cores is more processes. The "4 processes" rows start four of them together with the strings split in four; the model load time is
-left out of every timing and reported separately. usaddress's rows come from the cache made on this machine (2026-10-31 for the suite).
-
-The suite's 19,586 strings, under its profile (4 CPUs, 8 GB):
-
-| | Strings per second | Relative to usaddress `parse` |
-|---|---|---|
-| usaddress `parse` (1 thread) | 9,297 | 1.0x |
-| libpostal `parse_address` (1 process) | 15,546 | 1.7x |
-| libpostal `parse_address` (4 processes) | 58,230 | 6.3x |
-| doorplate `parse_tokens` (1 thread) | 63,708 | 6.9x |
-| doorplate `parse_many` (1 thread) | 82,399 | 8.9x |
-| doorplate `parse_many` (4 threads) | 265,523 | 28.6x |
-
-So on one thread doorplate takes about a quarter of libpostal's time (4.1x with `parse_tokens`, 5.3x with `parse_many`), and on four threads or
-processes about 4.6x. On `speed_python.py`'s other inputs (20,000 each): the golden corpus's one-line addresses, libpostal 27,357 per
-second in one process and 86,863 in four, doorplate `parse_tokens` 83,820; the geocode benchmark's addresses, libpostal 20,262 and 71,246,
-doorplate `parse_tokens` 66,265. libpostal's README claims 10 to 30 thousand addresses per second per thread; this is inside that range.
-
-| | doorplate | libpostal (Senzing build) |
-|---|---|---|
-| Install | one wheel, about 2.0 MB; no data to load | the build (47 MB), the data directory (2.9 GB, of which the parser model is 1.7 GB), and `pypostal` (0.3 MB) |
-| Load time | about 1 ms to import | 4.3 s (importing the parser loads the model) |
-| Memory after loading | 17 MB (a bare Python process is also 17 MB) | 2,950 MB per process |
-| Memory after parsing 100,000 addresses (each result dropped) | 19 MB | 2,957 MB |
-| Four workers | 253 MB peak for `parse_many` on all threads, one process | 11,764 MB together (proportional set size): the model is not shared between processes |
-
-libpostal's README describes a design for settings "with possibly under 1 GB" of memory per process. The Senzing model measured here is
-about 3 GB per process; the default model (1.8 GB of data) was not measured. The cost of one worker, and of starting one (a 4 s load), is the main
-practical difference for a service or a batch job on a small machine.
+- **libpostal's own tests.** libpostal returns exactly the expected components for 51 of its 53 cases; the Senzing model is not
+  the one the tests were written for. With 53 cases the interval for doorplate is 75 to 94%. Of doorplate's seven misses, three
+  are outside its scope (an organisation or venue name before the house number, and a search phrase), three are shapes worth a
+  look in the rule loop (a floor written as an ordinal after the street, a county between the city and the state, and `Apt No. 4`),
+  and one has a line break inside a one-line string.
+- **Senzing's test set.** It is the nearest thing to held-out data, but nearly all of it is OpenStreetMap address tags written out as
+  one line: clean, uniform input, close to what libpostal was trained on. libpostal leads doorplate there by one point, with intervals
+  that overlap at the edges. Senzing's own US failure rate (4.58% in v1.2.0) uses a definition of failure that is not stated.
+- **Cost.** On one thread doorplate takes about a quarter of libpostal's time, and on four threads or processes it is about 4.6 times
+  as fast (the speed figures are from one run). libpostal's README claims 10 to 30 thousand
+  addresses per second per thread; this is inside that range. The Senzing model is about 3 GB per process and loads in about 4 s; the
+  default model (1.8 GB of data) was not measured. libpostal runs in its own processes, because a `parse_address` call holds the
+  Python GIL, and each process loads its own copy of the model: four workers took 11,764 MB together against 253 MB for doorplate's
+  `parse_many` on all threads of one process.
 
 ## What a fair comparison needs
 
-- The same inputs for both, and the same scoring rule (whole address right, on the fields both have), with the intervals the
-  [benchmark suite](benchmark-suite.md) prints. The suite's `hard` stratum was drawn from the blind spots of `doorplate` and
-  usaddress, so it is not a fair test of a third library; `natural` and the outside sets are.
+- The same inputs and the same scoring rule for both, with the intervals the [benchmark suite](benchmark-suite.md) prints. Use
+  `natural` and the outside sets, not `hard`.
 - Say what each was trained near. libpostal was trained on OpenStreetMap and OpenAddresses, and the National Address Database
-  that the suite draws on overlaps OpenAddresses. `doorplate` has no training data, but its rules were written while reading
-  some of the sets (the geocode benchmark's `test` split, see [`benchmarks.md`](benchmarks.md)), so a score on those is optimistic.
-- Cost beside accuracy: install effort, model size, model load time, memory and addresses per second on the suite's
-  4-CPU, 8 GB profile, with the load time reported apart from the per-address speed.
-- Defaults only: no retraining of either side.
+  that the suite draws on overlaps OpenAddresses. doorplate's rules were written while reading some of the sets (the geocode
+  benchmark's `test` split, see [`benchmarks.md`](benchmarks.md)), so a score on those is optimistic.
+- Cost beside accuracy: install effort, model size, load time, memory and addresses per second, with the load time apart from the
+  per-address speed. Defaults only: no retraining of either side.
+
+The plan for a full comparison, with a hand-labeled golden set, is in issue [#616](https://github.com/jeremeybingham/doorplate/issues/616).
 
 ## Sources
 
 The libpostal [README](https://github.com/openvenues/libpostal), the [`pypostal` README](https://github.com/openvenues/pypostal)
-and Senzing's [`libpostal-data`](https://github.com/Senzing/libpostal-data), all read on 2026-11-07. Plan and status of the
-comparison: issue [#215](https://github.com/jeremeybingham/doorplate/issues/215).
+and Senzing's [`libpostal-data`](https://github.com/Senzing/libpostal-data), all read on 2026-11-07. Status of the comparison:
+issue [#215](https://github.com/jeremeybingham/doorplate/issues/215).

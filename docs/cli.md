@@ -1,7 +1,6 @@
 # Command-line reference
 
-The `doorplate` command (`cargo install doorplate-cli`, Rust 1.80 or later). It formats and parses; it does not
-validate that an address exists or can receive mail. `doorplate --help` prints the same list of options as the
+The `doorplate` command (`cargo install doorplate-cli`, Rust 1.80 or later). `doorplate --help` prints the same list of options as the
 "Usage text" section below, and `doorplate --version` prints the library version (also in each JSON record as
 `provenance.library_version`). The tour with examples is in the [command-line README](../crates/doorplate-cli/README.md);
 the library is in the [Python reference](python-api.md) and on [docs.rs](https://docs.rs/doorplate).

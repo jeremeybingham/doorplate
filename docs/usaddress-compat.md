@@ -193,12 +193,6 @@ suite ([`benchmark-suite.md`](benchmark-suite.md)) is built for that, and
 
 ### How closely `tag()` agrees
 
-Rerun on 0.3.0 (2026-10-20; the same numbers as before). On the strings of usaddress's test files that use only labels doorplate models
-(8,108 addresses, 6,658 of them in usaddress's training files), the joined dicts
-are identical on 8,043 of 8,103 compared (99.3%), and the address type on 99.8%.
-The 60 dicts that differ are boundary choices: `SAINT JOHN W ST` (the `W` in the
-name or a postdirectional), a `BUSINESS` or `LH` suffix word, `TWP` in the city, a
-number range (`5240;5220`) or an `AddressNumberSuffix` (`214 B`), and labels
-doorplate does not model (`church street station` as `BuildingName`). The type
-differences are addresses with no `AddressNumber` or `USPSBoxID` here. Rerun the
-`tag` mode after a parser change; it prints every label that differs.
+On usaddress's test strings that use only modeled labels (0.3.0, 2026-10-20), the joined `tag()` dicts are identical on 99.3% and
+the address type on 99.8%. The differences are boundary choices (see the label conventions above) and labels doorplate does not
+model. Rerun the `tag` mode after a parser change; it prints every label that differs.
