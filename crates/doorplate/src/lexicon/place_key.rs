@@ -36,8 +36,15 @@ where
 {
     for word in s.split(|c: char| c.is_whitespace() || c == '-' || c == '/') {
         let start = out.len();
-        for c in word.chars().filter(|c| c.is_alphanumeric()) {
-            out.extend(c.to_uppercase());
+        for c in word.chars() {
+            // ASCII is the common case: its upper case is one byte, no iterator.
+            if c.is_ascii() {
+                if c.is_ascii_alphanumeric() {
+                    out.push(c.to_ascii_uppercase());
+                }
+            } else if c.is_alphanumeric() {
+                out.extend(c.to_uppercase());
+            }
         }
         let replacement = match &out[start..] {
             "" => continue,
