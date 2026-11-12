@@ -3,17 +3,12 @@
 A **custom layer** lets you add your own spellings and words to doorplate without editing the shipped tables: a street
 suffix your data spells `TRAYL`, a unit word your county uses, a country word that trails your addresses, or a
 state-specific reading of a spelling. It is loaded at run time, checked against the shipped tables, and reported in every
-parse it touches. This library formats and parses; it does not validate that an address exists or can receive mail.
+parse it touches.
 
 A layer can hold spellings, word lists, state-scoped readings, places and ZIPs. It works in the core library (the
-`custom-layer` cargo feature), the command line and Python. This page has a [demo layer](#the-demo-layer), a
-[template](#writing-your-own-layer) to copy and a [prompt for an LLM](#a-prompt-for-an-llm) that drafts a layer from your misparsed
-addresses (tracked in [#3](https://github.com/jeremeybingham/doorplate/issues/3)).
-
-Contents: [What a layer is](#what-a-layer-is) · [The demo layer](#the-demo-layer) · [Writing your own layer](#writing-your-own-layer) ·
-[A prompt for an LLM](#a-prompt-for-an-llm) · [The files](#the-files) · [Rules](#rules) · [Checking a layer](#checking-a-layer) ·
-[Using it from the command line](#using-it-from-the-command-line) · [From Python](#from-python) · [From Rust](#from-rust) ·
-[What it reports, and keys](#what-it-reports-and-keys) · [What a layer cannot change](#what-a-layer-cannot-change)
+`custom-layer` cargo feature), the command line and Python. This page covers the [demo layer](#the-demo-layer), how to
+[write your own](#writing-your-own-layer), a [prompt for an LLM](#a-prompt-for-an-llm) that drafts one, the [files](#the-files) and
+the [rules](#rules).
 
 ## What a layer is
 
@@ -102,8 +97,7 @@ A layer is worth writing when the same misreading shows up many times in your da
 6. **Keep the fingerprint with your keys.** A layer can change a key (see below). Store `layer.fingerprint` beside any stored
    keys and re-key when it changes.
 
-Keep entries small and evidenced. A layer changes how addresses are *read*; it does not make an address exist, and the library
-does not validate that one can receive mail.
+Keep entries small and evidenced. A layer changes how addresses are *read*, not whether an address exists.
 
 ## A prompt for an LLM
 
@@ -284,24 +278,17 @@ The reading applies to an address in that state (its state, or with none, its ZI
 
 ## Rules
 
-| Rule | What happens |
-|---|---|
-| A spelling or word the shipped tables already have | Error: `... is already in the shipped tables; a layer only adds spellings` |
-| A spelling two entries add | Error: `... is already added by another entry` |
-| An abbreviation, code or name that is not a shipped row | Error naming the table |
-| An unknown key or table in a file | Error listing the keys it knows |
-| An entry with no `evidence` or `note` | Error |
-| A state override of a spelling the shipped state data already overrides | Error |
-| A state override of a spelling the shipped tables do not have | Error: add it under `aliases.toml` instead |
-| A place, or a spelling of one, whose key the national list or the shipped state data already has | Error |
-| A place or spelling whose key an earlier row (or the same row) already has | Error |
-| A ZIP the shipped list already has, or one listed twice; a ZIP that is not five digits | Error |
-| A ZIP whose place is not a known place of its state | Error |
-| A row of a TSV file with the wrong number of columns, an unknown column, or no `evidence` | Error |
-| Invalid TOML | Error naming the file |
+Any of these is an error, and nothing loads until all are fixed:
 
-A layer entry defaults to `observed`, so a parse that uses it carries `non_standard_abbreviation`, the same as the shipped
-`observed` spellings. Use `kind = "variant"` for a spelling that is standard where you work.
+- A spelling or word the shipped tables already have, or one that two entries add.
+- An abbreviation, code or name that is not a shipped row, or a state override the shipped data already gives (use `aliases.toml` for a spelling the shipped tables lack).
+- An unknown key, table or column, invalid TOML, or a TSV row with the wrong number of columns.
+- An entry with no `evidence` or `note`.
+- A place or spelling whose key the national list, the shipped state data or an earlier row already has.
+- A ZIP the shipped list already has, listed twice, not five digits, or whose place is not a known place of its state.
+
+An entry defaults to `observed`, so a parse that uses it carries `non_standard_abbreviation`, as the shipped `observed`
+spellings do. Use `kind = "variant"` for a spelling that is standard where you work.
 
 ## Checking a layer
 
@@ -332,68 +319,41 @@ On any problem nothing loads, the command exits 2, and standard error lists ever
 line (`county-extras/aliases.toml [[suffix]] #2: ...`). Fix them all and run it again. `doorplate layer check` is the loop for
 writing a layer: edit, check, repeat.
 
-## Using it from the command line
+## Using it from the command line, Python and Rust
 
-`--custom-layer DIR` goes with `parse`, `parse-file` and `corpus test`:
+On the command line, `--custom-layer DIR` goes with `parse`, `parse-file` and `corpus test`. Every JSON record then carries
+`provenance.custom_layer` (`null` when no layer was used); a layer that cannot be loaded is exit 2.
 
 ```sh
 doorplate parse "123 Oak Trayl, Miami, FL 33101" --custom-layer county-extras --pretty
-doorplate parse - --custom-layer county-extras < addresses.txt
-doorplate parse-file in.csv --column address --custom-layer county-extras -o out.csv
-doorplate corpus test --dir my-corpus --custom-layer county-extras   # your own golden cases, against your layer
 ```
 
-Every JSON record carries `provenance.custom_layer` (`{"name", "version", "fingerprint"}`, or `null` when no layer was used). A
-layer that cannot be loaded is exit 2 with the problems on standard error. `corpus test` runs a corpus the way you would test any
-parser change ([`docs/tests/corpus.md`](tests/corpus.md)): write cases with the expected parse, keep a `passing.txt`,
-and a layer edit that breaks one fails the run. (The project's own corpus is for the shipped tables; point `--dir` at yours.)
-
-## From Python
+In Python, `custom_layer=` takes a `doorplate.CustomLayer` or a folder path. Load once and pass the object when you call often:
 
 ```python
-import doorplate
-
 layer = doorplate.load_layer("county-extras")        # raises doorplate.LayerError listing every problem
-layer.name, layer.version, layer.fingerprint         # ('county-extras', '2026.10.1', '2ca8edfe22b5e7fc')
-layer.counts()                                       # {'suffix spellings': 1, 'places': 1, ...}
-
 a = doorplate.parse("123 Oak Trayl, Miami, FL 33101", custom_layer=layer)
 a.street_suffix                                      # 'TRL'
 a.custom_layer                                       # {'name': 'county-extras', 'version': '2026.10.1', 'fingerprint': ...}
-a.to_dict()["provenance"]["custom_layer"]            # the same; None when no layer was used
-
-parser = doorplate.Parser(default_state="FL", custom_layer=layer)
-parser.parse_many(lines)                             # a Parser keeps the layer; parse_many releases the GIL
 ```
 
-`custom_layer=` takes a `doorplate.CustomLayer` or the path of a layer folder (loaded on the spot, so load once and pass the
-object when you call often). It is accepted by `Parser`, `parse`, `parse_fields`, `parse_many`, `parse_fields_many`, `tag`,
-`parse_tokens`, `address_type`, and by `doorplate.pandas.parse_column`, `doorplate.polars.parse_column`, and
-`doorplate.duckdb.register` and `parse_column`. A runnable version is
-[`examples/custom_layer_example.py`](../examples/custom_layer_example.py).
-
-## From Rust
+In Rust, enable the feature (`features = ["custom-layer"]`; it adds the `toml` parser, and the default build has none), build the
+layer once and pass it through `ParseOptions`:
 
 ```rust
-use doorplate::{CustomLayer, LayerSources, ParseOptions, Parser};
-
-let layer = CustomLayer::from_sources(
-    &LayerSources::new("name = \"county\"\nversion = \"1\"\n").aliases(
-        "[[suffix]]\nabbr = \"TRL\"\nspellings = [\"TRAYL\"]\nevidence = \"county export\"\n",
-    ),
-)?;
-let parser = Parser::with_options(ParseOptions::new().custom_layer(layer))?;
+let layer = doorplate::CustomLayer::from_dir("county-extras")?;   // or from_sources, with the files' text
+let parser = doorplate::Parser::with_options(doorplate::ParseOptions::new().custom_layer(layer))?;
 let a = parser.parse("123 Oak Trayl, Miami, FL 33101")?;
 assert_eq!(a.street_suffix.map(|s| s.abbr()), Some("TRL"));
-assert_eq!(a.diagnostics.custom_layer.map(|l| l.name), Some("county"));
-# Ok::<(), Box<dyn std::error::Error>>(())
 ```
 
-Enable the feature: `doorplate = { version = "...", features = ["custom-layer"] }`. It adds one dependency, the `toml` parser; the
-default build has none. `CustomLayer::from_sources` takes the text of the files (`LayerSources` has `aliases`, `overrides`, `places` and `zips`);
-`CustomLayer::from_dir(path)` reads a folder, as the command line and Python do, and `CustomLayer::counts()` summarizes one.
-A loaded layer lives for the rest of the process (its strings are leaked once, and loading the same text again returns the
-same layer), so load it once and reuse it.
+A loaded layer lives for the rest of the process, so load it once and reuse it.
+
+The full options are in [`cli.md`](cli.md), [`python-api.md`](python-api.md) and [`rust.md`](rust.md). A runnable Python
+example is [`examples/custom_layer_example.py`](../examples/custom_layer_example.py).
+
+`corpus test --dir my-corpus --custom-layer county-extras` runs your own golden cases against the layer; a layer edit that
+breaks one fails the run ([`tests/corpus.md`](tests/corpus.md)).
 
 ## What it reports, and keys
 
@@ -409,12 +369,12 @@ feature: 100,000 sampled rows gave the same keys, USPS lines and warnings, at th
 
 ## What a layer cannot change
 
-The shapes in code (house numbers, ordinals, ZIP and route values, unit value shapes), the input folding and output casing,
-the rules that name a table row, the military kinds and post offices (fixed by USPS), and the words that are constants in
-`lexicon.rs` for now (the missing-number markers, the unit filler words, the value joiners and the intersection connectors)
-([`how-it-works.md`](how-it-works.md), "What a layer can extend"). A layer cannot remove or replace a shipped entry.
+A layer cannot remove or replace a shipped entry, and it cannot change:
 
-## Related pages
+- the shapes in code: house numbers, ordinals, ZIP and route values, unit value shapes;
+- the input folding and output casing, and the rules that name a table row;
+- the military kinds and post offices (fixed by USPS);
+- the constant words in `lexicon.rs`: the missing-number markers, the unit filler words, the value joiners and the intersection connectors.
 
-[`how-it-works.md`](how-it-works.md) ("Lexicon layers") · [`key-format.md`](key-format.md) · [`api-surface.md`](api-surface.md) ·
-[`states/README.md`](states/README.md) (the shipped state data a layer's overrides mirror).
+Related: [`how-it-works.md`](how-it-works.md) ("What a layer can extend") · [`key-format.md`](key-format.md) ·
+[`states/README.md`](states/README.md) (the shipped state data that overrides mirror).
