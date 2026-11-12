@@ -117,6 +117,8 @@ impl ParsedAddress {
         // A dual address (Pub 28 section 215) gives the street: RESO fields
         // describe the property. The USPS output writes the PO Box.
         let dual = self.is_dual();
+        // A box on a road (`PO BOX 190 ELM RD`, #366) writes the box alone.
+        let box_road = self.po_box.is_some() && !dual && self.has_street();
         let street_name = if dual {
             self.street_name_text()
         } else {
@@ -146,10 +148,19 @@ impl ParsedAddress {
         ResoAddress {
             street_number_numeric: street_number.as_deref().and_then(leading_number),
             street_number,
-            street_dir_prefix: self.street_dir_prefix.map(|d| d.abbr().to_string()),
+            street_dir_prefix: self
+                .street_dir_prefix
+                .filter(|_| !box_road)
+                .map(|d| d.abbr().to_string()),
             street_name: street_name.filter(|n| !n.is_empty()),
-            street_suffix: self.street_suffix.map(|s| s.abbr().to_string()),
-            street_dir_suffix: self.street_dir_suffix.map(|d| d.abbr().to_string()),
+            street_suffix: self
+                .street_suffix
+                .filter(|_| !box_road)
+                .map(|s| s.abbr().to_string()),
+            street_dir_suffix: self
+                .street_dir_suffix
+                .filter(|_| !box_road)
+                .map(|d| d.abbr().to_string()),
             unit_number: (!unit_number.is_empty()).then_some(unit_number),
             city: usps.city,
             state_or_province: usps.state,

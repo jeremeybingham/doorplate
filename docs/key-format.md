@@ -54,7 +54,7 @@ k4:G|<state>|<zip5>
 - `<state>` is the USPS code. `<zip5>` is five digits.
 - **Dual addresses:** a record with a street address and a PO Box (Pub 28
   section 215, `dual_address` warning) uses form `S`, from the street; the box is
-  not in the key.
+  not in the key. A box with street words after it and no house number (`PO BOX 190 ELM RD`, #366) is not a dual address: it uses form `P`, and the road is only in the components.
 - **Floors:** a floor unit's value is a number (`5TH FLOOR` gives `5`).
 - **Not in the key:** city, ZIP+4, unit type, the attention line, the
   building name, anything in

@@ -62,7 +62,8 @@ def has_street(e): return bool(e.get("street_name") or e.get("highway"))
 
 def dual(e):
     """A street and a PO Box in one record (Pub 28 section 215)."""
-    return has_street(e) and bool(e.get("po_box"))
+    # With no house number the street words are the road the box is on (#366).
+    return has_street(e) and bool(e.get("po_box")) and bool(e.get("street_number"))
 
 # Not Pub 28 designators (#545): they do not read back from the street line, so the USPS line,
 # the slug and UnparsedAddress write the value as `# n` and leave a bare word out.
@@ -108,7 +109,7 @@ def key(e,unit):
     st,z=e.get("state",""),e.get("zip5","")
     pre="k4:" if st and z else "k4n:"
     # A dual address keys on the street (docs/key-format.md).
-    if e.get("po_box") and not has_street(e): body=["P",e["po_box"],st,z]
+    if e.get("po_box") and not dual(e): body=["P",e["po_box"],st,z]
     elif e.get("rural_route"):
         r=e["rural_route"]; body=["R",r["kind"],route_key(r["route"]),r.get("box",""),st,z]
     elif e.get("military"):
