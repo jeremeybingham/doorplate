@@ -5,6 +5,16 @@ All notable changes are listed here, newest first. The project follows
 version (currently `k5`), tracked separately in [`docs/key-format.md`](docs/key-format.md): a
 change to what an input produces needs a new key version.
 
+## [Unreleased]
+
+### Changed
+
+- **Speed: four measured cuts, no output change** (#672 B6, B5, B3, B2; no key change, no parsing change). Each was checked on the survey's recipe (the first 4,000 `natural` suite inputs, callgrind, release build with frame pointers), with the `ParsedAddress` of all 76,421 public suite inputs byte-identical and 0 keys, warnings or unit keys changed on the seven key-comparison sources. The figures are each step against the one before it:
+  - `longest_at` and `longest_ending` build no heap `String`: a one-word run passes the token text as it is, a longer run joins in a per-thread buffer, and a nested call gets its own buffer (#677). −4.94% instructions, 85.9 to 65.2 allocations per parse.
+  - `tokenize` sizes its piece and token lists up front and keeps the words that follow each piece in one shared list, not a `Vec` per piece (#678). −2.47%, 65.2 to 58.7 allocations.
+  - `state_base` reads a two-letter spelling from a 26×26 table; longer spellings and a custom layer's states use the lookup as before (#679). −3.91%.
+  - `country::strip_trailing` first asks whether any country name can end with the last token (a list of the last words of the names), and joins candidates only if so; with a custom layer loaded the check always says yes, because a layer can add country names (#672 B2). −2.48% instructions, 58.7 to 53.2 allocations.
+
 ## [0.6.0] - 2026-11-12
 
 The `k5` key release. The match key is now `k5:` / `k5n:`, cut from the closed list of rules below and frozen; the next
