@@ -679,6 +679,8 @@ PROBES = [
         "S",
         1,
     ),
+    # Done (#468, #610): the rule is in. Kept to show the shape fall; its `flagged` count is mostly partial keys (no ZIP as well
+    # as no city, 97.3% of the nad-raw flags), not open placeholder problems, so do not read it as a work list.
     ("city-placeholder", "468", "a placeholder in the city field (NOT STATED, UNKNOWN)", None, "S", 1),
     (
         "non-latin-text",
