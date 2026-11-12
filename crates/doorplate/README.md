@@ -16,7 +16,7 @@ This library formats and parses; it **does not validate** that an address exists
 can receive mail.
 
 > **Alpha release (0.5.1).** Expect rough edges; names in the API and the warning codes may still change before 1.0.
-> The match key is versioned (`k4:`) and later versions will probably change it (a `k5` is planned for 0.6.0), so store
+> The match key is versioned (`k5:`) and later versions will probably change it, so store
 > the prefix with your keys and plan to re-key. `k4` has only been checked on the project's own data (37 million rows of
 > public records). Accuracy and speed are measurements on a few datasets, not guarantees.
 >
@@ -42,7 +42,7 @@ assert_eq!(a.unit_number.as_deref(), Some("4"));
 
 a.to_usps().line1;                // Some("123 N MAIN ST APT 4")
 a.to_reso();                      // RESO Data Dictionary 2.0 fields
-a.key(KeyOptions::property());    // Some("k4:S|123|N|MAIN|ST||FL|33101")
+a.key(KeyOptions::property());    // Some("k5:S|123|N|MAIN|ST||FL|33101")
 a.slug();                         // Some("123-n-main-st-apt-4-miami-fl-33101"), display only
 a.to_display().line1;             // Some("123 N Main St Apt 4"); to_long(): "123 North Main Street Apartment 4"
 a.diagnostics.warnings;           // e.g. MissingZip, UnparsedRemainder

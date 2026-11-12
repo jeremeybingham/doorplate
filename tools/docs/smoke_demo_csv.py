@@ -111,7 +111,7 @@ def main():
             page.wait_for_selector("#dp-app:not([hidden])", timeout=30000)
             assert page.is_hidden("#dp-status"), page.inner_text("#dp-status")
             page.fill("#dp-q", "123 north main street apt 4, Miami FL 33101")
-            page.wait_for_selector("#dp-out td:has-text('k4:')", timeout=10000)
+            page.wait_for_selector("#dp-out td:has-text('k5:')", timeout=10000)
             page.wait_for_selector("#dp-csv-file:not([disabled])", timeout=30000)
             page.set_input_files("#dp-csv-file", str(src))
             page.wait_for_selector("#dp-csv-config:not([hidden])")

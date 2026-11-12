@@ -35,7 +35,7 @@ def test_groups_follow_the_verdicts():
 
 def test_an_unchanged_right_card_and_a_tampered_one(tmp_path):
     other = {"line1": "40 Oak Ave", "line2": "Apt 3", "city": "Tampa", "state": "FL", "zip": "33601"}
-    write(tmp_path, card("a", "doorplate_right", FIELDS), card("b", "both_right", other, key="k4:S|99||NOPE|ST||FL|33601"))
+    write(tmp_path, card("a", "doorplate_right", FIELDS), card("b", "both_right", other, key="k5:S|99||NOPE|ST||FL|33601"))
     out, changed = R.report(doorplate, R.load_cards(tmp_path))
     text = "\n".join(out)
     assert "| right | 2 | 2 | 1 | 1 | 0 | 0 |" in text
@@ -68,13 +68,13 @@ def test_last_line_cards_are_parsed_as_one_line(tmp_path):
 
 
 def test_the_same_version_check_counts_a_difference(tmp_path):
-    write(tmp_path, card("a", "doorplate_right", FIELDS), card("b", "both_right", FIELDS, key="k4:S|1||X|ST||OH|45402"))
+    write(tmp_path, card("a", "doorplate_right", FIELDS), card("b", "both_right", FIELDS, key="k5:S|1||X|ST||OH|45402"))
     text = "\n".join(R.report(doorplate, R.load_cards(tmp_path))[0])
     assert "Of the 2 cards stored under this same version string, 1 read differently now" in text
 
 
 def test_main_writes_the_report_and_the_ids(tmp_path):
-    write(tmp_path, card("b", "both_right", FIELDS, key="k4:S|1||X|ST||OH|45402"))
+    write(tmp_path, card("b", "both_right", FIELDS, key="k5:S|1||X|ST||OH|45402"))
     out, ids = tmp_path / "r.md", tmp_path / "ids.txt"
     assert R.main(["--review-dir", str(tmp_path), "--out", str(out), "--ids-out", str(ids)]) == 0
     assert "Reviewed rows" in out.read_text() and ids.read_text() == "b\n"

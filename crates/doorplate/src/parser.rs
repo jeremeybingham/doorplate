@@ -461,7 +461,7 @@ mod tests {
         assert!(a.diagnostics.has(&Warning::MissingState));
         assert_eq!(
             a.key(crate::KeyOptions::property()).unwrap(),
-            "k4n:S|281||EVELYN|DR|||"
+            "k5n:S|281||EVELYN|DR|||"
         );
         // Without the hint the city is not found.
         let b = Parser::new().parse("281 EVELYN DR DOTHAN").unwrap();
