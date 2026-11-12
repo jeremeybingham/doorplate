@@ -31,7 +31,7 @@ New to the project? Read the [project README](../README.md), then
 
 | Page | What it covers |
 |---|---|
-| [`how-it-works.md`](how-it-works.md) | The pipeline, the principles, the warnings, the lexicon layers, the tests |
+| [`how-it-works.md`](how-it-works.md) | The pipeline, the principles, the output, the choices that shape it, the lexicon layers |
 | [`warnings.md`](warnings.md) | What each warning tells you, in two groups, and how often rows that carry it disagree with labeled data |
 | [`key-format.md`](key-format.md) | The match key (`k4`) and the slug: the contract, and when a key changes |
 | [`reso-mapping.md`](reso-mapping.md) | The RESO Data Dictionary 2.0 field mapping |

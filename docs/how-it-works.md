@@ -1,9 +1,5 @@
 # How doorplate works
 
-What the library does, how an address moves through it, and why it behaves the
-way it does. For usage see the [README](../README.md); for the exact output
-formats see the reference pages listed at the end.
-
 ## What it is for
 
 `doorplate` turns a US address, written as one line or as separate fields, into:
@@ -22,14 +18,9 @@ It is a Rust library with no runtime dependencies, a command-line tool (which
 also parses CSV files) and a Python package (PyO3, abi3 wheels for Python 3.10 and
 later, with pandas, Polars and DuckDB helpers). Nothing is downloaded at run time.
 
-**What it does not do.** It formats and parses; it does not validate. Pub 28
-formatting is not the same as a deliverable address, and real validation needs
-postal-service-certified data. It does not geocode, match fuzzily, correct
-addresses or handle international addresses. When the place list finds a city
-for an address, the parsed `city` stays what the input said and the match is
-reported beside it (`place`). It is provided as is, without
-warranty, and you use it at your own risk (see the Disclaimer in the
-[project README](../README.md)).
+**What it does not do.** It formats and parses; it does not validate, geocode, match fuzzily, correct addresses or
+handle international addresses. When the place list finds a city, the parsed `city` stays what the input said and the
+match is reported beside it (`place`).
 
 ## The pipeline
 
@@ -46,25 +37,12 @@ Lexicons (Pub 28 tables, national places, state data) are read by classify, the
 tagger and assemble.
 ```
 
-1. **clean** produces uppercase, single-spaced text and keeps a map from every
-   cleaned byte to the original input, so components can report spans into the
-   text the caller gave.
-2. **tokenize** splits the cleaned text into tokens that keep their spans.
-   Commas and semicolons separate *segments* (address lines or parts of one),
-   which the tagger uses as strong boundaries. It splits tokens that were glued
-   together when the pieces are unambiguous (`101BRADDOCK`, `APT.1285`,
-   `178ST`).
-3. **classify** applies shape tests to single tokens (numbers, ZIPs, ordinals,
-   unit values) and longest-match lookups of runs of words in the lexicon.
-4. **tagger** decides what each token is. The last line (ZIP, state, city) is
-   read first, right to left, then the delivery line from both ends: units and
-   postdirectional from the right, house number and predirectional from the left
-   (Pub 28 section 231). It uses the place list to find a city on a line with no
-   commas.
-5. **assemble** turns runs of tokens into a `ParsedAddress`, looks up the
-   standard values, and raises warnings.
-6. **emitters** read the parsed address and nothing else. They never re-parse
-   and never change it.
+Each stage keeps spans: `clean` maps every byte back to the original input; `tokenize` splits on whitespace and
+treats commas and semicolons as strong segment boundaries, splitting glued tokens only when unambiguous (`101BRADDOCK`,
+`APT.1285`); `classify` applies shape tests and longest-match lexicon lookups; the `tagger` reads the last line (ZIP,
+state, city) first, right to left, then the delivery line from both ends (Pub 28 section 231), using the place list to
+find a city on a line with no commas; `assemble` builds the `ParsedAddress`, looks up standard values and raises
+warnings. Emitters read the parsed address and nothing else.
 
 With separate fields (`parse_fields`, or `parse_fields_many` for columns), each field is tagged on its own and the
 field is a strong signal: the city field is the city. When city, state and ZIP
@@ -79,8 +57,7 @@ fields give way (#614).
 - **Deterministic.** The same input gives the same output on every platform.
 - **Never panics on input.** Parsing always returns a `ParsedAddress` with
   diagnostics. Only input with no address text at all is an error. Property tests
-  and fuzz targets check this, and a full run over the 146.6 million US rows of the
-  Netsyms address database (see Testing) parsed every row.
+  and fuzz targets check this; the size of the real-data runs is in [`data-policy.md`](data-policy.md).
 - **Spans are preserved.** Components keep their byte range in the original
   input (and the field, for separate fields).
 - **Lexicons behind one interface.** The tagger never reads a table directly:
@@ -104,16 +81,9 @@ ZIP+4, `place`, `diagnostics` and `source` (the original text and the spans).
 `Diagnostics` holds the warnings, the unparsed remainder, the library version and the
 version of the state's curated data (`state_data_version`, `None` without it).
 
-Warnings have a stable snake_case `code()` meant for a database column:
-`unparsed_remainder`, `ambiguous_token`, `placeholder`, `missing_street_number`,
-`missing_street_name`, `zero_street_number`, `ambiguous_street_number`,
-`multiple_addresses`, `dual_address`, `possibly_truncated`, `missing_unit_number`,
-`non_standard_abbreviation`, `missing_city`, `missing_state`, `unknown_state`,
-`missing_zip`, `invalid_zip`, `zip_city_mismatch`, `default_state_applied`,
-`repeated_label`, `country_ignored`, `non_us_address`, `intersection_detected`, `second_line_skipped`,
-`second_line_in_street`, `second_line_building`, `repeated_text`, `zip_repaired`, `ambiguous_number_letter`, `glued_number_letter` and `city_is_county`. A warning is a
-finding about the parse, not a statement that the address is wrong. What each one tells you, and how
-often rows that carry it disagree with labeled data: [`warnings.md`](warnings.md).
+Warnings have a stable snake_case `code()` meant for a database column. A warning is a finding about the
+parse, not a statement that the address is wrong. The codes, what each means and how often rows that carry it
+disagree with labeled data are in [`warnings.md`](warnings.md).
 
 ## Choices that shape the output
 
@@ -135,30 +105,16 @@ often rows that carry it disagree with labeled data: [`warnings.md`](warnings.md
   the street fields and `po_box` and raises `dual_address`. The key, the slug and
   the RESO output use the street; the USPS output writes the PO Box alone, as Pub
   28 section 215 prefers for the mailpiece.
-- **Shapes with no RESO field are folded in.** Highway routes, general delivery,
-  military lines and second units have fields in `ParsedAddress`; the RESO emitter
-  writes them into `StreetName` or `UnitNumber` (`docs/reso-mapping.md`).
+- **Shapes with no RESO field are folded in** (`StreetName` or `UnitNumber`; [`reso-mapping.md`](reso-mapping.md)).
 - **Attention lines are a field** (`ATTN`, `C/O`, `% NAME`) and are not written by any
   emitter.
 - **A trailing country is ignored.** `USA`, `US` or `UNITED STATES` after the
   address is dropped with `country_ignored`; other countries are not recognized.
-- **A second address line that is used or dropped without a component of its own is
-  reported**, so a pipeline can audit those rows: `second_line_skipped` (line 2 is a
-  copy of the end of line 1 or of the city, or a line of no-data markers, and is dropped),
-  `second_line_in_street` (line 2 became part of the street that line 1 began: the route of
-  `COUNTY RD` / `A`, a suffix or a directional) and `second_line_building` (line 2 is the
-  building name, which no emitter prints). A unit, an attention line, the city, state and ZIP,
-  or a street that is on line 2 alone get no warning: they are components of their own. These
-  are warnings, like `country_ignored`, not a separate list; none changes a component or a key.
-- **A letter after the house number is reported**: `123 B MAIN ST` raises
-  `ambiguous_number_letter` because the letter may be a unit, the number's suffix (`123B`) or the first word of the
-  street. The letters `A` to `D` are read as a unit (house number 123, unit B; the reviewers' reading, `warnings.md`),
-  the others stay in the street name (`12 F OAK ST`). It is not raised when the
-  letter is stuck to the number, is a directional, is the whole street name (`123 A ST`) or is the `U` of
-  `U S ROUTE`.
-- **A letter stuck to the house number is reported too**: `123B ELM ST` keeps the letter in the number (key `123B`) and
-  raises `glued_number_letter`, because the spaced form (`123 B ELM ST`) and the unit form (`123 ELM ST APT B`) both key as
-  `123` (#653, #655). Only the letters `A` to `D`; `123E ELM ST` has no warning.
+- **A second line that is used or dropped without a component of its own is reported** (`second_line_skipped`,
+  `second_line_in_street`, `second_line_building`), so a pipeline can audit those rows. None changes a component or a key.
+- **A letter after the house number is reported.** `123 B MAIN ST` raises `ambiguous_number_letter`: the letters `A` to
+  `D` are read as a unit, the others stay in the street name. `123B ELM ST` keeps the letter in the number and raises
+  `glued_number_letter`; its key differs from the spaced form. Details: [`warnings.md`](warnings.md).
 - **Intersections have no key.** `MAIN ST & 1ST AVE` raises
   `intersection_detected`: the first street is parsed, the second stays in
   `unparsed`, and `key()` and `slug()` are `None`, because the first street alone
@@ -172,116 +128,22 @@ often rows that carry it disagree with labeled data: [`warnings.md`](warnings.md
 
 ## The key
 
-The canonical key is a deterministic string for deduplication and joins:
-`123 N. Main Street, Apt 4` and `123 north main st #4` give the same key. It uses
-the street components, state and ZIP5 and leaves out the city, which is the noisiest
-field. Addresses missing a state or ZIP get the weaker `k4n:` prefix and a warning.
-Unit inclusion is an option (off by default, property level).
-
-The key format is versioned (`k4:`). Any change to what an input produces needs a
-new version prefix (`k5:`) and an update to `docs/key-format.md`; `k4` is never
-edited in place. This is an alpha release, so expect new key versions as the parser
-improves; store the version with your keys. The slug is built from the
-USPS output, is for display, and is not unique or versioned.
+The canonical key is a deterministic string for deduplication and joins (`123 N. Main Street, Apt 4` and
+`123 north main st #4` give the same key). It uses the street components, state and ZIP5 and leaves out the city.
+Any change to what an input produces needs a new version prefix; store the version with your keys.
+Format and history: [`key-format.md`](key-format.md). The slug is for display and is not unique or versioned.
 
 ## Lexicon layers
 
-Data comes in layers, each a set of files compiled in by `build.rs` into static,
-sorted tables, so lookups are a key normalization plus a binary search with no
-runtime data loading. `build.rs` fails the build on a malformed or contradictory
-table.
+Data comes in layers, compiled in by `build.rs` into static sorted tables (a malformed or contradictory table fails the
+build): the base Pub 28 and RESO lexicons (`crates/doorplate/data/*.toml`), the national place list (`data/places/`,
+cargo feature `places-us`, on by default; [`places.md`](places.md)), curated state data (`data/states/<st>/`;
+[`states/fl.md`](states/fl.md)) and, at run time, an optional custom layer (`custom-layer` feature). Layering is
+add-only: a later layer adds names, variants and ZIPs and never replaces an earlier entry; a state's `overrides.toml`
+is the one exception. What a custom layer can extend and what stays code: [`custom-layers.md`](custom-layers.md).
 
-1. **Base lexicons** (`crates/doorplate/data/*.toml`): Pub 28 and RESO tables
-   (suffixes, units, states, directionals, special words), each with its source.
-   Spellings Pub 28 does not list but real data uses are kept apart as `observed`
-   and raise `non_standard_abbreviation`.
-2. **National place list** (`data/places/`, cargo feature `places-us`, on by
-   default): generated for every state, DC and Puerto Rico from public data
-   (Census Gazetteer, GeoNames ZIPs). It finds cities and matches ZIPs everywhere;
-   it has no misspellings. `docs/places.md`.
-3. **Curated state data** (`data/states/<st>/`, always compiled in): hand-checked
-   data for one state, added where real data shows a need. Florida is the first.
-   A folder is a state's data, with a golden-corpus file of its own
-   (`tests/corpus/<st>-state.jsonl`, checked by a test) and a `version` in its
-   `state.toml`, which a parse reports as `state_data_version` (with the library version
-   it ties a stored result to the data that produced it). `docs/states/fl.md`.
-
-Layering is add-only: a later layer adds names, variants and ZIPs and never replaces
-or removes an earlier entry, and a conflict fails the build. The one exception is a
-state data's `overrides.toml`, which can read a spelling the base table has as another
-suffix in that state or add a highway prefix (`SR` is
-STATE ROAD); each entry names its evidence. The shipped tables and state data are fixed
-at compile time.
-
-4. **A custom layer** (#3, `custom-layer` cargo feature): the one runtime layer. It is loaded from text
-   ([`custom-layers.md`](custom-layers.md)), checked against the shipped tables (a conflict is an error), and consulted by
-   `Lexicons` after them; the tagger does not change. It adds spellings of existing rows and words to the word
-   lists, and can read a spelling differently in one state.
-
-### What a layer can extend
-
-Everything the tagger and tokenizer know about words goes through `Lexicons`; no table is read around it. The word lists below are behind `Lexicons` too
-(`is_number_filler`, `is_value_joiner`, `is_intersection_connector`); they are constants in `lexicon.rs` until a
-layer needs them as data. What a layer may add, by table:
-
-| Table | Source | Read through | A layer may |
-|---|---|---|---|
-| Street suffixes (202) | `data/suffixes.toml` | `suffix`, `suffix_in(state)` | add spellings; read a spelling differently in one state (`overrides.toml`) |
-| Directionals (8), unit designators (25) | `directionals.toml`, `units.toml` | `directional`, `unit` | add spellings (the values are Pub 28's and closed) |
-| States (62) | `states.toml` | `state` | add spellings only (the set is USPS's) |
-| Special words: PO box, box, rural route, highway contract, general delivery, attention | `special.toml` | `special` | add spellings |
-| Highway prefixes (15) | `special.toml` `[[highway]]` | `highway`, `highway_in(state)` | add; scope to a state |
-| Military kinds (5) and post offices (3) | `special.toml` | `military`, `military_post_office` | nothing: fixed by USPS |
-| Country words, municipality prefix words, non-recipient words, numbered-street words, placeholder phrases, area words, city heads, building words | `special.toml` | internal predicates | add words |
-| National places and ZIPs | `data/places/` | `place`, `is_place`, `zip_places` | add places, spellings, ZIPs |
-| State data (Florida) | `data/states/<st>/` | the same, plus `has_state_data`, `state_data_version` | this is the shape of a layer |
-| Missing-number markers (`NULL`, nine or more nines), the `UNASSIGNED LOCATION` line, the unit filler words (`NO`, `NUM`, `NUMBER`), the unit-value joiners (`&`, `AND`), the intersection connectors (`&`, `@`, `AND`, `AT`) | constants in `lexicon.rs` | internal predicates | add words, once they are data |
-
-What stays **code**, by design, and a layer cannot change:
-
-- The shapes: house numbers (plain, lettered, hyphenated, grid, fractions), ordinals (`ST`, `ND`, `RD`, `TH`, written in
-  `classify`, `tokenize`, `assemble` and `emit/display`), ZIP and route values, unit value shapes.
-- The input folding in `clean` (accents, dashes, fractions) and the output casing in `emit/display` (`MC` names, `Unit`).
-- Rules that name a table row: the penthouse and floor designators `PH` and `FL`, the standard names `HIGHWAY`,
-  `ROAD`, `COUNTY ROAD` and `COUNTY HIGHWAY`, `WASHINGTON` before the District, `U S` before a route. They need
-  those rows to exist, so a layer must not remove them (layering is add-only anyway).
-- One state-specific rule in code, which breaks the rule that the core has none: the Queens house-number exception in
-  `place.rs` (`NY` and `QUEENS`). It would move to the state data if that data gets a rule format.
-
-**The interface for a layer.** A layer is a folder with the shape of a state's folder: `places.tsv`, `zips.tsv`, a
-state-scoped `overrides.toml`, and an `aliases.toml` for spellings of the base tables and the word lists above. It
-is add-only, validated on load with the checks `build.rs` runs (they move into the library for the loader),
-deterministic, and reported in the output beside `state_data_version` (its name and a hash). The loader reads it
-into the same tables `Lexicons` reads, so the tagger does not change: #3 is a loader and a command on top.
-`Lexicons` itself is the public lookup interface (`builtin`, the typed lookups, the place functions and the table
-iterators); the predicates the tagger uses (`is_*`, `place_key`) are crate-private, since a layer extends their data
-and does not call them.
-
-Cargo features: `rayon` (parallel `parse_many`), `corpus` (the golden-corpus runner;
-pulls in serde), and `places-us` (on by default). The default build
-has no runtime dependencies.
-
-## Lessons from real address data
-
-The warnings and many rules exist because real county and licensing data is
-messier than examples:
-
-- Statuses make bulk data usable, so users can filter and count by warning code.
-- Placeholder text (`NO SITUS`, `NOT ASSIGNED`, `0 UNKNOWN`) is common and must not
-  be parsed as a street.
-- House number 0 means no number, usually vacant land.
-- Several addresses in one field (`5210/5212 BRISTO ST`) and numbers run into a
-  numbered street (`409742ND SQ`) cannot be split reliably, so they are reported
-  rather than guessed at.
-- County sites cut lines at about 30 characters, mid-street or mid-unit
-  (`possibly_truncated`).
-- A unit word with nothing after it (`... DR #`) is reported (`missing_unit_number`).
-- Real data uses spellings Pub 28 does not list (`TRC`, `UN`, `LT`).
-- The number after a highway word is the road's, not a unit (`8932 HWY 2301`).
-- A suffix word can start a street name (`2108 AVENUE G`), and the letter after it
-  is the name.
-- Cities run into the street line, with or without a space, are only safe to split
-  with a place list.
+Cargo features: `rayon` (parallel `parse_many`), `corpus` (the golden-corpus runner; pulls in serde) and `places-us`
+(on by default). The default build has no runtime dependencies.
 
 ## Where to look next
 
