@@ -475,3 +475,24 @@ def test_the_b2_probes(line1, line2, zip_code, expect, hit):
 def test_last_line_in_line1_probe(line1, state, hit):
     """#586 B4 (#614): line 1 ends with the row's own state and a five-digit ZIP. Invented rows."""
     assert ("last-line-in-line1" in probes.hits(line1, None, None, "SPRINGTOWN", state)) is hit
+
+
+@pytest.mark.parametrize(
+    "line1, line2, expect, hit",
+    [
+        ("1731 CO RD SO", None, "county-road-so-no-number", True),
+        ("40 COUNTY ROAD SO, SPRINGTOWN", None, "county-road-so-no-number", True),
+        ("1731 CO RD SO 12", None, "county-road-so-no-number", False),
+        ("1731 CO RD SOUTH", None, "county-road-so-no-number", False),
+        ("12 ELM ST (OLD MILL)", None, "paren-group-line1-other", True),
+        ("12 ELM ST (3RD FL)", None, "paren-group-line1-other", False),
+        ("12 ELM ST (APT 4)", None, "paren-group-line1-other", False),
+        ("12 ELM ST", "(OLD MILL)", "paren-group-line1-other", False),
+        ("ELM(ST", None, "paren-inside-name", True),
+        ("MARTIN (LUTHER KING BLVD", None, "paren-inside-name", True),
+        ("12 ELM ST (OLD MILL)", None, "paren-inside-name", False),
+        ("12 ELM ST", None, "paren-inside-name", False),
+    ],
+)
+def test_the_follow_up_probes_for_643_to_645(line1, line2, expect, hit):
+    assert (expect in probes.hits(line1, line2, None)) is hit
