@@ -93,7 +93,9 @@ Whole suite (19,586), coarse, all records: 92.2% (v0.3.1), 92.3% (v0.4.0, v0.4.1
 number that suite v1 labels as part of the number. Suite v1 is frozen, so that cost is constant and known; **-212 on `compare` is
 the #487 convention**, not a regression. Suite v2 counts the letter as right under either labelling
 ([`benchmark-suite.md`](benchmark-suite.md#versions)): on `main` it scores 93.5% on the whole suite (`natural` 98.5%, `hard` 62.1%),
-usaddress unchanged at 85.5%, so the release notes do not lead with the -1.0.
+usaddress unchanged at 85.5%, so the release notes do not lead with the -1.0. Since #651 (the usaddress labels emit
+`AddressNumberPrefix`; labels only, no key change) `main` scores 94.4% on v1 (`natural` 98.5%, `hard` 69.0%) and 95.6% on v2
+(`natural` 98.7%, `hard` 76.4%); the figures before it in this paragraph are the build before that change.
 
 ### Is the loss paid for? Blast radius of each rule (R4)
 

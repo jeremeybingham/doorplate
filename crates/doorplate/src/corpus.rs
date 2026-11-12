@@ -202,7 +202,8 @@ const RESO_FIELDS: [&str; 12] = [
 ];
 
 /// The usaddress labels this parser produces (`ParsedAddress::tag`).
-const USADDRESS_LABELS: [&str; 17] = [
+const USADDRESS_LABELS: [&str; 18] = [
+    "AddressNumberPrefix",
     "AddressNumber",
     "StreetNamePreDirectional",
     "StreetNamePreType",

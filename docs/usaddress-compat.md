@@ -60,6 +60,12 @@ What differs:
   One difference is left: pre-split fields are tokenized one field at a time, so the commas
   that would sit between the fields are not there. The scripts below still compare by
   character span, which does not depend on the cut.
+- A one-letter house-number prefix written apart from the number (`E 7379 OAK HOLLOW RD`, the
+  Wisconsin form) is `AddressNumberPrefix` and the number is `AddressNumber`, as in usaddress
+  (#651). The parse itself holds them as one number (`street_number` is `E7379`, and so is the
+  key); only the label differs. The same prefix glued to the number (`E7379`) is one token and
+  stays `AddressNumber`. The grid form (`N45 W2210`, #311) and a lone letter before a number
+  that is not read as its prefix (#312) are not covered.
 - usaddress's `AddressNumberSuffix` (`214 B`) and number ranges (`5240;5220`) are
   kept in `AddressNumber` or left out. Its intersection, landmark, `CornerOf`,
   country, recipient and `NotAddress` labels are not modeled: that text goes to
@@ -155,8 +161,9 @@ usaddress's labeled test files are vendored in `tests/external/usaddress/` (MIT)
   with no letter or digit (`-`, `&`) are not scored.
 - **Out of scope:** addresses whose gold labels include `Recipient`,
   `LandmarkName`, `CornerOf`, `IntersectionSeparator`, `NotAddress`,
-  `CountryName`, `SubaddressType`, `SubaddressIdentifier`, `StreetNamePreModifier`
-  or `AddressNumberPrefix` are left out; this parser does not model them.
+  `CountryName`, `SubaddressType`, `SubaddressIdentifier` or `StreetNamePreModifier`
+  are left out; this parser does not model them. (`AddressNumberPrefix` was on this
+  list until #651; it is emitted now, so those records are scored.)
 - **Same thing, different label:** `AddressNumberSuffix` counts as `AddressNumber`
   on both sides. In raw mode, usaddress's `SubaddressType` and `SubaddressIdentifier`
   count as `OccupancyType` and `OccupancyIdentifier`.

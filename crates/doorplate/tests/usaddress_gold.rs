@@ -16,7 +16,7 @@ use doorplate::Parser;
 const TOKEN_FLOOR: f64 = 99.7;
 const ADDRESS_FLOOR: f64 = 99.4;
 
-const OUT_OF_SCOPE: [&str; 10] = [
+const OUT_OF_SCOPE: [&str; 9] = [
     "Recipient",
     "LandmarkName",
     "CornerOf",
@@ -26,7 +26,6 @@ const OUT_OF_SCOPE: [&str; 10] = [
     "SubaddressType",
     "SubaddressIdentifier",
     "StreetNamePreModifier",
-    "AddressNumberPrefix",
 ];
 
 fn coarse(label: &str) -> &str {

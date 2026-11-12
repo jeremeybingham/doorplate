@@ -161,6 +161,23 @@ gold labels come from the field each token was written from, never from either p
   counted against doorplate: it drops the word and says so with `country_ignored`.
 - **Paired, all records:** both right on 16,264, only doorplate on 2,035, only usaddress on 482, neither on 805.
 - Tokens right (coarse): doorplate 98.8%, usaddress 96.8%.
+- **`main` after #651** (the usaddress labels emit `AddressNumberPrefix`; labels only, the parse and the keys are
+  the same). The label is no longer out of scope, so "shared labels" is 18,814 records (15,499 in `natural`) and
+  772 are left out. Measured on the build before the change and on the one with it, both with the new scoring:
+
+  | Whole address right, coarse | Records | v1 before | v1 after | v2 before | v2 after |
+  |---|---|---|---|---|---|
+  | `natural` stratum, all records | 16,001 | 98.3% | 98.5% | 98.5% | 98.7% |
+  | Whole suite, shared labels | 18,814 | 92.8% | 94.9% | 94.0% | 96.1% |
+  | Whole suite, all records | 19,586 | 92.4% | 94.4% | 93.5% | 95.6% |
+  | `hard` stratum | 2,585 | 54.8% | 69.0% | 62.2% | 76.4% |
+  | `hand` stratum | 1,000 | 94.3% | 95.1% | 94.4% | 95.2% |
+
+  usaddress is the same on every row (85.5% on all records). Tokens right: 98.6% to 98.9% (v1), 98.8% to 99.1%
+  (v2). Paired, v1 after: both right 16,113, only doorplate 2,378, only usaddress 633, neither 462. The two
+  number-prefix classes of the `hard` stratum (767 records) go from 0.0% to 97.6% (376 records, the prefix was
+  labelled as the number) and 91.3% (391, as street). The "before" columns differ from the 0.5.1 table above by
+  the letter convention of #487 ([`version-comparison.md`](version-comparison.md)), not by this change.
 
 By how the record is written (all strata, whole address right):
 
@@ -189,7 +206,7 @@ token that differs, and the full list with every class is in the run's report):
 | Blind spot | Records | doorplate | usaddress |
 |---|---|---|---|
 | A trailing direction read as part of the city | 395 | 79.2% | 16.5% |
-| A number prefix (`W 615`) read as the number or as street | 767 | 0.0% | 1.7% |
+| A number prefix (`W 615`) read as the number or as street (94.4% on `main` since #651) | 767 | 0.0% | 1.7% |
 | A fraction or suffix after the number read as street | 233 | 79.4% | 66.1% |
 | A unit identifier read as street | 333 | 60.4% | 5.4% |
 | A unit identifier read as city | 209 | 38.8% | 48.8% |

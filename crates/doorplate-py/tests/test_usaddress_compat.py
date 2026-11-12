@@ -19,7 +19,6 @@ FILES = sorted(
 OUT_OF_SCOPE = {
     "Recipient", "LandmarkName", "CornerOf", "IntersectionSeparator", "NotAddress",
     "CountryName", "SubaddressType", "SubaddressIdentifier", "StreetNamePreModifier",
-    "AddressNumberPrefix",
 }
 
 
