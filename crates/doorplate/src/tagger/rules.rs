@@ -2949,7 +2949,27 @@ impl Tagger<'_> {
         }
 
         if let Some(h) = self.highway_at(i, hi) {
-            let floor = h.route + 1;
+            let mut floor = h.route + 1;
+            // `COUNTY ROAD SE 1234`: a compass pair as the route and a bare number that ends its
+            // segment: the number is a unit, as `LEE ROAD 2004` is, not a street name (#642).
+            // A single letter stays a route (`COUNTY ROAD N 1234`).
+            let county = self
+                .lex
+                .highway(&join(&self.toks[h.prefix.clone()]))
+                .is_some_and(|l| matches!(l.value.standard(), "COUNTY ROAD" | "COUNTY HIGHWAY"));
+            let route = self.text(h.route);
+            if county
+                && route.len() == 2
+                && self.lex.directional(route).is_some()
+                && floor < hi
+                && all_digits(self.text(floor))
+                && self.text(floor).len() <= 5
+                && (floor + 1 >= hi || self.toks[floor + 1].seg != self.toks[floor].seg)
+            {
+                self.set(floor..floor + 1, Tag::UnitNumber(0));
+                self.decide(Decision::BareUnit);
+                floor += 1;
+            }
             // The route anchors the units after it, as a name does (`HWY A1A`
             // then a line `405` is unit 405).
             let j = self.units(floor, h.route.saturating_sub(1), hi, true);
