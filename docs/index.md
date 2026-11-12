@@ -9,7 +9,7 @@ import doorplate
 
 a = doorplate.parse("123 north main street apt 4, Miami FL 33101")
 a.to_usps()["line1"]   # "123 N MAIN ST APT 4"
-a.key()                # "k4:S|123|N|MAIN|ST||FL|33101"
+a.key()                # "k5:S|123|N|MAIN|ST||FL|33101"
 ```
 
 [Try it in your browser](https://jeremeybingham.github.io/doorplate/demo/): the parser runs on your machine, nothing is sent. The page also [parses or anonymizes a whole CSV file](https://jeremeybingham.github.io/doorplate/demo/#csv), with a sample file of invented addresses.
@@ -37,7 +37,7 @@ the [command-line guide](command-line.md), the [Rust guide](rust.md) and [pandas
     a warning such as `zip_city_mismatch` is a hint about the input, not a verdict.
 
 !!! note "Alpha"
-    Expect rough edges. The match key is versioned (`k4:`) and may get new versions as the parser improves, so store
+    Expect rough edges. The match key is versioned (`k5:`) and may get new versions as the parser improves, so store
     the version prefix with your keys. Accuracy and speed are measurements on a few data sets, not guarantees.
     If it parses your addresses badly, please
     [open an issue](https://github.com/jeremeybingham/doorplate/issues/new?template=misparse-or-messy-data.md).

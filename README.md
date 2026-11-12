@@ -27,10 +27,9 @@ receive mail. Pub 28 formatting is not deliverability, and validation needs
 postal-service-certified data; warnings such as `zip_city_mismatch` are hints about the
 input, not verdicts.
 
-> **Alpha release (0.5.1).** Expect rough edges; names in the API and the warning codes may still change before 1.0.
-> The match key is versioned (`k4:`) and later versions will probably change it (a `k5` is planned for 0.6.0), so store
-> the prefix with your keys and plan to re-key. `k4` has only been checked on the project's own data (37 million rows of
-> public records). Accuracy and speed are measurements on a few datasets, not guarantees.
+> **Alpha release (0.6.0).** Expect rough edges; names in the API and the warning codes may still change before 1.0.
+> The match key is versioned (`k5:`) and later versions will probably change it, so store
+> the prefix with your keys and plan to re-key. `k5` has only been checked on the project's own data (public records). Accuracy and speed are measurements on a few datasets, not guarantees.
 >
 > **Help wanted: messy addresses.** If it parses your addresses badly (odd abbreviations, typos, cut-off lines, units in
 > strange places, county or mailing-list exports), please
@@ -51,7 +50,7 @@ a = doorplate.parse("123 north main street apt 4, Miami FL 33101")
 
 a.street_name, a.unit_number        # ("MAIN", "4")
 a.to_usps()["line1"]                # "123 N MAIN ST APT 4"
-a.key()                             # "k4:S|123|N|MAIN|ST||FL|33101"
+a.key()                             # "k5:S|123|N|MAIN|ST||FL|33101"
 a.slug()                            # "123-n-main-st-apt-4-miami-fl-33101"
 a.to_display()["line1"]             # "123 N Main St Apt 4" (mixed case, display only)
 a.warnings                          # []
@@ -64,7 +63,7 @@ $ doorplate parse "123 N. Main St #4, miami, fl 33101" --usps
 123 N MAIN ST # 4
 MIAMI FL 33101
 $ doorplate parse "123 N. Main St #4, miami, fl 33101" | jq -r .key
-k4:S|123|N|MAIN|ST||FL|33101
+k5:S|123|N|MAIN|ST||FL|33101
 ```
 
 ## Install
@@ -86,11 +85,11 @@ cargo install doorplate-cli           # the `doorplate` command
 To build from source, see [Getting started](https://doorplate.readthedocs.io/en/latest/getting-started/#install).
 
 ## Benchmarks
-| 0.5.1 | doorplate | usaddress |
+| 0.6.0 | doorplate | usaddress |
 |---|---|---|
-| Whole address right, [benchmark suite](docs/benchmark-suite.md), `natural` stratum (16,001 addresses written in five styles) | 98.5% | 96.1% |
-| Whole address right, [geocode benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark) dev split (60,522 one-line addresses) | 94.3% | 88.1% |
-| Addresses per second from Python, one thread (suite inputs, 4 CPUs) | about 43,400 | about 9,300 |
+| Whole address right, [benchmark suite](docs/benchmark-suite.md), `natural` stratum (16,001 addresses written in five styles) | 98.7% | 96.1% |
+| Whole address right, [geocode benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark) dev split (60,522 one-line addresses) | 94.4% | 88.1% |
+| Addresses per second from Python, one thread (suite inputs, 4 CPUs) | about 65,000 | about 9,300 |
 
 Measured against [usaddress](https://github.com/datamade/usaddress) on a few data sets (the geocode benchmark is Yin, Li and
 Goldberg, [arXiv:2310.14360](https://arxiv.org/abs/2310.14360)), not promises for yours; every figure by build, the

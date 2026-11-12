@@ -167,7 +167,8 @@ prefix is the only change to a key that no rule touched, so re-keying is a re-pa
 
 | Version | Release | Segment layout | What changed |
 |---|---|---|---|
-| `k5` | 0.6.0 (this page) | as `k4` | Some keys change, because 0.6.0 reads some inputs differently (the rules held for the `k5`, listed in [`CHANGELOG.md`](../CHANGELOG.md)). Frozen: a change to what an input produces needs `k6`. || `k4` | 0.5.0, retired in 0.6.0 | as `k3` | Some keys change, because 0.5.0 reads some inputs differently. |
+| `k5` | 0.6.0 (this page) | as `k4` | Some keys change, because 0.6.0 reads some inputs differently (the rules held for the `k5`, listed in [`CHANGELOG.md`](../CHANGELOG.md)). Frozen: a change to what an input produces needs `k6`. |
+| `k4` | 0.5.0, retired in 0.6.0 | as `k3` | Some keys change, because 0.5.0 reads some inputs differently. |
 | `k3` | 0.4.0, retired in 0.5.0 | as `k2` | Some keys change, because 0.4.0 reads some inputs differently. |
 | `k2` | 0.3.0, retired in 0.4.0 | as `k1` | Some keys change. 0.3.1 corrected the keys of inputs with a `%` care-of line or `IN CARE OF` (the care-of text had pushed the tail of line 1 into the street name). If you stored `k2` keys from 0.3.0 for such addresses, re-parse them. |
 | `k1` | 0.1.0 and 0.2.0 | | Retired: the library no longer produces it and cannot compute it. |

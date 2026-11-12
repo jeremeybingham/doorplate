@@ -15,10 +15,9 @@ parsing never panics.
 This library formats and parses; it **does not validate** that an address exists or
 can receive mail.
 
-> **Alpha release (0.5.1).** Expect rough edges; names in the API and the warning codes may still change before 1.0.
+> **Alpha release (0.6.0).** Expect rough edges; names in the API and the warning codes may still change before 1.0.
 > The match key is versioned (`k5:`) and later versions will probably change it, so store
-> the prefix with your keys and plan to re-key. `k4` has only been checked on the project's own data (37 million rows of
-> public records). Accuracy and speed are measurements on a few datasets, not guarantees.
+> the prefix with your keys and plan to re-key. `k5` has only been checked on the project's own data (public records). Accuracy and speed are measurements on a few datasets, not guarantees.
 >
 > **Help wanted: messy addresses.** If it parses your addresses badly (odd abbreviations, typos, cut-off lines, units in
 > strange places, county or mailing-list exports), please
@@ -75,10 +74,10 @@ Batches, pre-split fields, PO boxes, military and general delivery, and the `Ano
 
 ## Accuracy and speed
 
-| 0.5.1 | doorplate | usaddress |
+| 0.6.0 | doorplate | usaddress |
 |---|---|---|
-| Whole address right, [benchmark suite](https://doorplate.readthedocs.io/en/latest/benchmark-suite/), `natural` stratum (16,001 addresses written in five styles) | 98.5% | 96.1% |
-| Whole address right, [geocode benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark) dev split (60,522 one-line addresses) | 94.3% | 88.1% |
+| Whole address right, [benchmark suite](https://doorplate.readthedocs.io/en/latest/benchmark-suite/), `natural` stratum (16,001 addresses written in five styles) | 98.7% | 96.1% |
+| Whole address right, [geocode benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark) dev split (60,522 one-line addresses) | 94.4% | 88.1% |
 | One address in Rust (median of the corpus shapes, criterion) | 4 to 11 µs | |
 
 Measured against the Python library [usaddress](https://github.com/datamade/usaddress) on a few data sets, not promises for

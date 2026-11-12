@@ -2,10 +2,16 @@
 
 All notable changes are listed here, newest first. The project follows
 [Semantic Versioning](https://semver.org/). The canonical key format has its own
-version (currently `k4`), tracked separately in [`docs/key-format.md`](docs/key-format.md): a
+version (currently `k5`), tracked separately in [`docs/key-format.md`](docs/key-format.md): a
 change to what an input produces needs a new key version.
 
-## [Unreleased]
+## [0.6.0] - 2026-11-12
+
+The `k5` key release. The match key is now `k5:` / `k5n:`, cut from the closed list of rules below and frozen; the next
+key change is a `k6`. Every rule was measured row by row against the 0.5.1 keys before it merged. Accuracy, speed and
+size were re-measured on the release commit (`a6a7df4`) and are on [`docs/benchmarks.md`](docs/benchmarks.md) and
+[`docs/speed-and-size.md`](docs/speed-and-size.md); the documentation was swept against them (#528), so no page names
+`k4` as the current key. Stored `k4` keys do not match `k5` keys: store the prefix and re-key.
 
 ### Added
 

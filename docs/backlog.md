@@ -32,7 +32,7 @@ reports the last release's version. A pull request that says its keys do not cha
 |---|---|
 | `research` | An issue whose first output is a measurement or a decision, not code . It says what outcome would close it |
 | `size:S` / `M` / `L` / `D` | Hours; a day or two; several pull requests or a design; a decision with no code |
-| `version:K` | Changes a key (the number, directionals, street name, suffix, state, ZIP or unit; place data that moves the street/city split). Held for the next key release (the `k5`, tracker #416); it can merge to `main` unreleased, measured row by row against the frozen keys |
+| `version:K` | Changes a key (the number, directionals, street name, suffix, state, ZIP or unit; place data that moves the street/city split). Held for the next key release (the `k6`); it can merge to `main` unreleased, measured row by row against the frozen keys |
 | `version:B` | Breaks an API: removes or renames a public thing |
 | `version:O` | Changes output without a key: a warning, a new field, a new opt-in API |
 | `version:N` | No user-visible change: docs, tooling, tests, internal |
