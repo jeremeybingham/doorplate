@@ -7,8 +7,8 @@ in [`roadmap.md`](roadmap.md). **Last reviewed 2026-11-12.**
 
 | Milestone | What it is |
 |---|---|
-| **0.6.0** | The `k5`, the next key-changing release: the `version:K` issues measured at P2 or above, plus the short curated place list; the list is on [`roadmap.md`](roadmap.md). Tracker #416 |
-| **0.6.x** | Point releases with no key change: tooling, documentation and performance |
+| **0.6.x** | Point releases with no key change: speed, tooling and documentation. Tracker #673 |
+| **0.7.0** | The `k6`, the next key-changing release: the `version:K` issues measured at P2 or above (including the Puerto Rico rules); the list is on [`roadmap.md`](roadmap.md) |
 | **Later** | Wanted or known, not planned: new API surface, parse rules below the P2 line, anything waiting on demand or a decision. The list by kind is on [`roadmap.md`](roadmap.md), "Waiting" |
 | **Tooling** | Tooling not planned for a release (harness, review tool, benchmarks and CI items waiting for a rule or a decision): never shipped, never closed |
 | **Won't Do** | Decided against, with the reason: tracker #417 |
@@ -45,7 +45,7 @@ reports the last release's version. A pull request that says its keys do not cha
 | `tracker` | A meta issue that lists other issues |
 
 The milestone says **which release**; `version:` says **what kind of change**; `area:` says **which part of the
-project**. An issue that is `version:K` is in the 0.6.0 milestone (the `k5`) once it is planned, and in Later until then.
+project**. An issue that is `version:K` is in the 0.7.0 milestone (the `k6`) once it is planned, and in Later until then.
 
 ## Where an issue comes from
 
