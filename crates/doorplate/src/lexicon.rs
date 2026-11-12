@@ -449,6 +449,20 @@ impl Filter {
             && self.bits[(b >> 6) as usize] >> (b & 63) & 1 != 0
     }
 
+    /// Whether `key`, already a key, cannot be in the table: it has two bytes or more, both ASCII,
+    /// and no key of the table starts with that pair (a key of one byte is never ruled out here).
+    #[inline]
+    fn rules_out_key(&self, key: &str) -> bool {
+        let [a, b, ..] = *key.as_bytes() else {
+            return false;
+        };
+        if a >= 0x80 || b >= 0x80 {
+            return false;
+        }
+        let i = pair_slot(a, b);
+        self.pairs[i >> 6] >> (i & 63) & 1 == 0
+    }
+
     /// Whether a spelling cannot normalize to a key of the table, from its first two bytes alone
     /// (no normalizing, no hash): when both are ASCII and neither is a period or a space, the key
     /// starts with them in upper case, and no key of the table does. Anything else (a shorter
@@ -481,6 +495,9 @@ fn find_filtered<'a, V>(
     key: &str,
 ) -> Option<&'a V> {
     let f = filter.get_or_init(|| Filter::new(index.iter().map(|(k, _)| *k)));
+    if f.rules_out_key(key) {
+        return None;
+    }
     if f.may_contain(key) {
         find(f.run(index, key), key)
     } else {
