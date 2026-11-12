@@ -1,13 +1,9 @@
 # National place list (`crates/doorplate/data/places/`)
 
-Layer 2 of the lexicon (`docs/how-it-works.md`): place
-names and ZIP places for every state, DC and Puerto Rico, generated from
-public data. It lets the parser find a city on a line with no commas, tell a
-street from a city before a ZIP, and complete a cut-off city. A curated state
-state data (`docs/states/fl.md`) sits above it and wins for its state.
-
-This data helps the parser find and name the city. It does not say an
-address exists or can receive mail.
+Layer 2 of the lexicon (`docs/how-it-works.md`): place names and ZIP places for every
+state, DC and Puerto Rico, generated from public data. It lets the parser find a city on
+a line with no commas, tell a street from a city before a ZIP, and complete a cut-off
+city. A curated state data (`docs/states/fl.md`) sits above it and wins for its state.
 
 ## Files
 
@@ -41,9 +37,8 @@ GeoNames gives each ZIP one place.
 
 ## Sources and licenses
 
-The rules for what may be committed, and how data seen only in private sources (such as
-the Netsyms database) may reach this list, are in [`data-policy.md`](data-policy.md).
-
+What may be committed, and how data seen only in private sources (such as Netsyms) may
+reach this list: [`data-policy.md`](data-policy.md).
 
 | Data | Source | License |
 |---|---|---|
@@ -60,54 +55,57 @@ checksums in `local-data/README.md` and `SHA256SUMS` there).
 python3 tools/places/build_us.py            # reads local-data/places/
 ```
 
-The output is deterministic (a second run is byte-identical). The builder
-stops on a name that is not upper-case words, two names that the parser's
-place comparison rule (`lexicon/place_key.rs`, ported into the script with
-the suffix and directional tables) would treat as one in a state, a ZIP whose
-place is not in `places.tsv`, a ZIP outside a place's state, and a state with
-no places or no ZIPs.
+The output is deterministic. The builder stops on a name that is not upper-case words, two
+names the parser's place comparison rule (`lexicon/place_key.rs`, ported into the script)
+would treat as one in a state, a ZIP whose place is not in `places.tsv` or lies outside
+the place's state, and a state with no places or no ZIPs.
 
 ## What the builder settles
 
-- **Places.** Every Gazetteer place in the 50 states, DC and Puerto Rico.
-  The type word is dropped (`Alachua city` is `ALACHUA`; `Milford city
-  (balance)` is `MILFORD`; the part after a comma is dropped). A
-  consolidated city-county is called by its city (`ATHENS`, `LOUISVILLE`,
-  `LEXINGTON`), with the Census name as a variant. Massachusetts' `Amherst
-  Town` is `AMHERST`, with `AMHERST TOWN` a variant.
-- **Subdivisions.** Only active governments (Census `FUNCSTAT` A) whose type
-  mail uses: townships, plantations, gores, grants, purchases and locations
-  keep the type word in the name (`WASHINGTON TOWNSHIP`) and add the bare
-  name and, for townships and plantations, `TWP` and `PLT` forms as variants;
-  towns, cities, villages and boroughs that are not Census places (New
-  England, New York, Wisconsin) take the bare name. Census county divisions
-  (`CCD`), unorganized territories, precincts, districts, wards, barrios and
-  numbered townships are left out (20,299 subdivisions in all). A bare name
-  that a place already has, or that two subdivisions share, is not added as a
-  variant (4,400 and 78 dropped).
-- **One county for a place that spans several.** The 2020 list names every
-  county a place touches but not how much of it lies in each. 1,301 places
-  span more than one; each gets the county whose center (Gazetteer
-  `INTPTLAT`/`INTPTLONG`) is nearest the place's own internal point.
-  Connecticut's counties were replaced in 2022 and are missing from the 2024
-  Gazetteer, so a Connecticut place that spans several takes the lowest
-  county code. It is a tie-break for display, not a fact about the place.
-- **A subdivision name used several times in a state** (`WASHINGTON
-  TOWNSHIP` in 22 Pennsylvania counties) is one row with no county.
-- **The 462 places newer than the 2020 county list** get a county only if
-  GeoNames has a ZIP with the same name in the state; otherwise it is empty.
-  A guess from the nearest county center would be wrong often enough to
-  mislead. 1,503 rows have no county in all (those, and the shared township
-  names).
-- **GeoNames names.** Each ZIP's place is GeoNames' name for it, folded to
-  the same spelling. A name the Census does not have becomes a `place` row
-  (6,508 rows, `sources` = `geonames`: `BROOKLYN`, `WASHINGTON CROSSING`).
-  Where a Census row and a GeoNames name are the same place by the
-  comparison rule, the row gets both sources. 206 pairs differ only in
-  spacing (`LAKEVIEW` and `LAKE VIEW`); the parser cannot tell them apart,
-  so there is one row, spelled as the better kind of source has it
-  (municipality over place over subdivision).
-- **Mail names added by hand (#486).** `tools/places/extra_places.tsv` lists 33 places and one variant that real address data writes as the city and that neither the Census nor the GeoNames ZIP places have: Queens, Bronx, Brooklyn and Manhattan mail names (`BRIARWOOD`, `JAMAICA ESTATES`, `LAURELTON`, `THE BRONX`, `QUEENS`, `MANHATTAN`), Los Angeles ones (`ARLETA`, `VALLEY GLEN`), military installations (`FORT CAVAZOS`, `JOINT BASE LEWIS MCCHORD`, `HILL AIR FORCE BASE`), and a few island and neighborhood names (`HILTON HEAD`, `PALOS VERDES`, `SOUTH MOUNTAIN`, `MISSION HILL`). `NEW YORK CITY` is a variant of `NEW YORK`. Each name is a populated place in the GeoNames dump (`US.txt`; the feature code is in the file), so its `sources` is `geonames`, and it has 100 or more city-field rows in one of the real sources (the 289M-row corpus: NAD, Netsyms, NY corporations, FMCSA, IRS, CA unclaimed, SAM Boston and the rest); the counts are selection evidence and stay out of the repository (`data-policy.md`). The threshold left 22 GeoNames-only names; `LA` (a state code) and a name that is a whole street name more often than a city (`SANTA FE`, `HARRISON`, `CRESTVIEW`) are left out. The 14 other New York City names are in GNIS and GeoNames but not in the Census Gazetteer, taken at the same 100 rows within a New York City ZIP prefix (`100`-`104`, `110`-`114`, `116`). Misspellings and abbreviations (`BROOKYLN`, `BKLYN`, `NYC`, `LIC`) are not added: this list has none. `kind` is `place`. The New York City names carry their county (Queens, Bronx or New York, from the GeoNames county code), because the Queens house-number rule (`21-77` keys as `2177`) reads the place's county; before, a Queens address whose city was `QUEENS`, `BRIARWOOD` or `GLENDALE` found no place and kept its hyphen in the key (17,223 sampled rows in Queens ZIPs). The county is empty for the others. Before, `100 EXAMPLE BRIARWOOD NY 11435` read the city as part of the street (`EXAMPLE BRIARWOOD`, `missing_city`); now the city is `BRIARWOOD` (corpus `mn-001` to `mn-008`).
+- **Places.** Every Gazetteer place in the 50 states, DC and Puerto Rico, without the type
+  word (`Alachua city` is `ALACHUA`; `Milford city (balance)` is `MILFORD`; the part after
+  a comma is dropped). A consolidated city-county is called by its city (`ATHENS`,
+  `LOUISVILLE`), with the Census name as a variant; Massachusetts' `Amherst Town` is
+  `AMHERST`, with `AMHERST TOWN` a variant.
+- **Subdivisions.** Only active governments (Census `FUNCSTAT` A) whose type mail uses.
+  Townships, plantations, gores, grants, purchases and locations keep the type word
+  (`WASHINGTON TOWNSHIP`) and add the bare name and, for townships and plantations, `TWP`
+  and `PLT` forms as variants. Towns, cities, villages and boroughs that are not Census
+  places (New England, New York, Wisconsin) take the bare name. Left out: Census county
+  divisions (`CCD`), unorganized territories, precincts, districts, wards, barrios and
+  numbered townships (20,299 subdivisions kept). A bare name that a place already has, or
+  that two subdivisions share, is not added as a variant (4,400 and 78 dropped).
+- **One county for a place that spans several.** The 2020 list names every county a place
+  touches, not how much lies in each. The 1,301 places that span several get the county
+  whose center (Gazetteer `INTPTLAT`/`INTPTLONG`) is nearest the place's internal point; a
+  Connecticut place takes the lowest county code (the 2022 counties are missing from the
+  2024 Gazetteer). It is a tie-break for display, not a fact about the place.
+- **A subdivision name used several times in a state** (`WASHINGTON TOWNSHIP` in 22
+  Pennsylvania counties) is one row with no county. The 462 places newer than the 2020
+  county list get a county only if GeoNames has a ZIP with the same name in the state
+  (a guess from the nearest center would mislead). 1,503 rows have no county in all.
+- **GeoNames names.** Each ZIP's place is GeoNames' name for it, folded to the same
+  spelling. A name the Census does not have becomes a `place` row (6,508 rows, `sources` =
+  `geonames`: `BROOKLYN`, `WASHINGTON CROSSING`). Where a Census row and a GeoNames name
+  are the same place by the comparison rule, the row gets both sources. 206 pairs differ
+  only in spacing (`LAKEVIEW`, `LAKE VIEW`); the parser cannot tell them apart, so there
+  is one row, spelled as the better kind of source has it (municipality over place over
+  subdivision).
+- **Mail names added by hand (#486).** `tools/places/extra_places.tsv` lists 33 places and
+  one variant that real address data writes as the city and that neither the Census nor
+  the GeoNames ZIP places have: Queens, Bronx, Brooklyn and Manhattan mail names
+  (`BRIARWOOD`, `THE BRONX`, `QUEENS`), Los Angeles ones (`ARLETA`), military installations
+  (`FORT CAVAZOS`), and a few island and neighborhood names (`HILTON HEAD`). `NEW YORK CITY`
+  is a variant of `NEW YORK`. Each is a populated place in the GeoNames dump (`US.txt`), so
+  its `sources` is `geonames`, and it has 100 or more city-field rows in one of the real
+  sources; the counts are selection evidence and stay out of the repository
+  (`data-policy.md`). Left out: `LA` (a state code) and names that are a street name more
+  often than a city (`SANTA FE`, `HARRISON`, `CRESTVIEW`). Misspellings and abbreviations
+  (`BKLYN`, `NYC`) are not added: this list has none. `kind` is `place`. The New York City
+  names carry their county (from the GeoNames county code), because the Queens house-number
+  rule (`21-77` keys as `2177`) reads the place's county; the county is empty for the
+  others. Before, `100 EXAMPLE BRIARWOOD NY 11435` read the city as part of the street
+  (`missing_city`); now the city is `BRIARWOOD` (corpus `mn-001` to `mn-008`).
 - **Puerto Rico is in this pass** (`PR.zip` is a separate GeoNames file whose
   county column is the municipio). The 513 GeoNames rows left out are the
   511 military ZIPs (`APO AE` and the like, no state) and 2 Marshall
@@ -120,18 +118,14 @@ no places or no ZIPs.
 (it is by default), under the state data:
 
 - A state with a curated state data keeps the state data's places and ZIPs. A national
-  row whose comparison key the state data already has, as a name or a variant, is
-  the state data's and is skipped; the national list adds the rest. For Florida
-  that is 405 Census places the state data lacks (`TRINITY`, `CITRUS SPRINGS`,
-  ... all CDPs). The Florida data itself has 665 places and, since version 2026.10.5, 62
-  added communities (727 in all); with the national rows Florida has 1,132. The Census's
-  `Everglades` is renamed `EVERGLADES CITY` by the builder (`CENSUS_NAMES`
-  in `build_us.py`), the state data's name, so it is the state data's place and not a
-  second one. The state data's 1,473 ZIPs are untouched (GeoNames is the source of
-  both, so the national ZIPs for Florida are the same pairs); the new places'
-  ZIPs come from the observed-ZIP table, which includes them
-  (`docs/states/fl.md`); `build.rs` adds those pairs once the national rows
-  are in, and leaves them out when `places-us` is off.
+  row whose comparison key the state data already has, as a name or a variant, is the
+  state data's and is skipped; the national list adds the rest. For Florida that is 405
+  Census places the state data lacks (`TRINITY`, `CITRUS SPRINGS`, all CDPs): 727 state
+  places (665 plus 62 added communities) and 1,132 with the national rows. The builder
+  renames the Census's `Everglades` to `EVERGLADES CITY` (`CENSUS_NAMES` in
+  `build_us.py`), the state data's name. The state data's 1,473 ZIPs are untouched
+  (GeoNames is the source of both); the observed-ZIP pairs (`docs/states/fl.md`) are added
+  once the national rows are in, and left out when `places-us` is off.
 - For every other state a name, variant or ZIP that would lead to two places
   is a build error, as in a state's data. Names, counties and kinds are checked the
   same way.
@@ -146,15 +140,11 @@ no places or no ZIPs.
   ZIP, and its place equals the written city on only 75.8% of the
   benchmark's addresses.
 
-The tables are packed records in `OUT_DIR`, read with `include_bytes!`
-(`emit_places` in `build.rs` has the layout), not tables of `&str`. A
-`&str` table costs a pointer and a relocation per string: the first version
-added 13.4 MB to the `doorplate` binary. Packed, the national list adds **2.9
-MB** (stripped release binary 1.57 MB without it, 4.49 MB with it, as measured when
-the list was added; the tables are 3.1 MB before linking: names 0.53, keys 0.87,
-index 0.68, rows 0.45, ZIPs 0.37, and 0.2 for the any-state name index that
-`is_place` uses). `build.rs` takes about 2 seconds more. The 0.3.0 command-line tool,
-with the list, the Florida state data and the rules added since, is 4.64 MB stripped.
+The tables are packed records in `OUT_DIR`, read with `include_bytes!` (`emit_places` in
+`build.rs` has the layout); a table of `&str` costs a pointer and a relocation per string
+and added 13.4 MB. Packed, the national list adds **2.9 MB** to the stripped release binary
+(1.57 MB without it, 4.49 MB with it, as measured when it was added; current sizes are on
+`docs/speed-and-size.md`), and `build.rs` takes about 2 seconds more.
 
 ## Coverage
 
@@ -167,14 +157,10 @@ Measured on the blind [geocode benchmark](https://github.com/zhengcongyin/geocod
 | ZIP is in `zips.tsv` | 88.2% |
 | ZIP's place equals the city | 75.8% |
 
-The last row is why `zip_city_mismatch` stays limited to states with a
-curated state data: GeoNames names one place per ZIP, and many ZIPs
-are used by several. The list contains 657 of the Florida state data's 665 places
-(the state data wins for Florida and adds the rest: `BAREFOOT BAY`, `BRUCE`,
-`ENTERPRISE`, `INLET BEACH`, `PENSACOLA BEACH`, `PERDIDO KEY`, `WALNUT HILL`,
-`WEEKI WACHEE`).
-
-Florida's `rg-030` (`BELLVIEW`, 32526) is the case that showed the gap the
-national list opens: `BELLVIEW` is a Census place in Escambia County, but
-GeoNames names ZIP 32526 `PENSACOLA`, so the city looked wrong for its ZIP.
-`zips_observed.tsv` lists `BELLVIEW` as a place of 32526.
+The last row is why `zip_city_mismatch` stays limited to states with a curated state data:
+GeoNames names one place per ZIP, and many ZIPs are used by several. The list contains
+657 of the Florida state data's 665 places (the state data wins for Florida and adds
+`BAREFOOT BAY`, `BRUCE`, `ENTERPRISE`, `INLET BEACH`, `PENSACOLA BEACH`, `PERDIDO KEY`,
+`WALNUT HILL`, `WEEKI WACHEE`). Corpus `rg-030` shows the gap: `BELLVIEW` is a Census place
+in Escambia County, but GeoNames names its ZIP 32526 `PENSACOLA`, so `zips_observed.tsv`
+lists `BELLVIEW` as a place of 32526.

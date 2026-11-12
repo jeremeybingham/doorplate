@@ -1,9 +1,7 @@
 # Data policy
 
 What data this project uses, what may be committed, and what may be said about data
-that is not ours to publish. It applies to people and to AI agents. This library
-formats and parses; it does not validate that an address exists or can receive mail,
-and none of the data below is used to claim otherwise.
+that is not ours to publish. It applies to people and to AI agents.
 
 ## Principles
 
@@ -17,29 +15,33 @@ and none of the data below is used to claim otherwise.
    `docs/benchmark-suite.md` describes (see "The National Address Database" below).
 3. **Examples are invented.** A corpus case, a doc example or a bug report uses an
    invented address of the same shape (`CONTRIBUTING.md#sharing-messy-data`). The
-   anonymizer (`docs/anonymizing.md`) is for people sharing *their* data with us; its output keeps the shape
-   but is not anonymity, so the project's own docs and issues still use invented examples, not anonymized rows.
-4. **A person's answers are private data too.** `tools/review/` records real addresses the reviewer
-   saw; they stay in `local-data/review/`. The review tool reads harness runs of real sources, never
-   the benchmark suite or the geocode splits. **Full-text review, by the owner's decision of 2026-10-29:**
-   every source ingested into `local-data/` is a public record (or an open, published address list), so
-   the maintainer's own Claude Code session may read the real rows, the review queues, the answers and
-   the reviewer's notes in full text (`export.py --full`, the probe queues and `records.parquet`, read in
-   place). Reading a file in a session sends its text to the model provider, so the transcript is not shared
-   unedited. **The boundary does not move:** nothing from those rows (no address, street name, house number,
-   personal name, note quoting a row) is written to a commit, an issue, a pull request, a doc, a comment, a
-   corpus case, a test or any file in the repository, ever. What the session writes there stays counts,
-   shapes and invented examples (principles 2 and 3). The shape-only export (`export.py`) remains the
-   default and the only form that may leave `local-data/`; `local-data/review/full-ok.txt` lists the
-   sources `--full` writes, and an owner can still add `mask=` or `anon` to a source (`docs/tools/review.md`).
-   Having a source readable is about privacy; it does not settle its terms of use: a source whose
-   terms are not yet read (CA unclaimed property) is still not used beyond reading until they are
-   recorded (`local-data/<source>/NOTICE.md`).
+   anonymizer (`docs/anonymizing.md`) is for people sharing *their* data with us; its
+   output keeps the shape but is not anonymity, so the project's own docs and issues
+   still use invented examples, not anonymized rows.
+4. **A person's answers are private data too.** `tools/review/` records real addresses the
+   reviewer saw; they stay in `local-data/review/`. The review tool reads harness runs of
+   real sources, never the benchmark suite or the geocode splits.
+   **Full-text review (owner's decision, 2026-10-29):** every source ingested into
+   `local-data/` is a public record (or an open, published address list), so the
+   maintainer's own Claude Code session may read the real rows, the review queues, the
+   answers and the reviewer's notes in full text (`export.py --full`, the probe queues and
+   `records.parquet`, read in place). Reading a file in a session sends its text to the
+   model provider, so the transcript is not shared unedited. **The boundary does not
+   move:** nothing from those rows (no address, street name, house number, personal name,
+   note quoting a row) is written to a commit, an issue, a pull request, a doc, a comment,
+   a corpus case, a test or any file in the repository, ever. What the session writes
+   there stays counts, shapes and invented examples (principles 2 and 3). The shape-only
+   export (`export.py`) remains the default and the only form that may leave
+   `local-data/`; `local-data/review/full-ok.txt` lists the sources `--full` writes, and
+   an owner can still add `mask=` or `anon` to a source (`docs/tools/review.md`). A
+   readable source is not a licensed one: a source whose terms are not yet read (CA
+   unclaimed property) is not used beyond reading until they are recorded
+   (`local-data/<source>/NOTICE.md`).
 5. **Do not repeat personal names** from private data in a terminal log that is pasted
-   anywhere or in an agent transcript that is shared; in a session, summarize with counts, shapes and
-   invented stand-ins. Reader errors count: DuckDB's
-   messages quote the rows they failed on, so scripts that read private files print only
-   the error's type (as `tools/ingest/ingest.py` does).
+   anywhere or in an agent transcript that is shared; summarize with counts, shapes and
+   invented stand-ins. Reader errors count: DuckDB's messages quote the rows they failed
+   on, so scripts that read private files print only the error's type (as
+   `tools/ingest/ingest.py` does).
 6. **Every addition to the shipped data cites a source** (`docs/usps-pub28-notes.md`,
    `docs/places.md`, `docs/states/`), and the source's terms allow the use.
 
@@ -55,9 +57,9 @@ and none of the data below is used to claim otherwise.
 | [Geocode benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark) (`test`, `dev`, `train`) | `local-data/geocode-benchmark/` | **No** | No license stated. Only aggregate scores ship (`docs/benchmarks.md`). |
 | [Senzing libpostal test set](https://github.com/Senzing/libpostal-data) (`test_data.csv`, v1.2.0) | `local-data/senzing-libpostal-test/` | **No** | Repository Apache-2.0, but the rows come from OpenStreetMap, OpenAddresses, libpostal's tests and customer feedback, and Senzing withheld rows over permissions. Only aggregate scores ship (`docs/benchmarks.md`). |
 | National Address Database (NAD) r24, text file | `local-data/nad-2026/`; anonymized rows in `benchmarks/suite/` | **Anonymized rows in the benchmark suite only** (see below) | Work of the US federal government, no copyright (17 U.S.C. § 105); the metadata says it is available for re-use without limitation or restriction |
-| Netsyms Address Database 2026-05 | `local-data/netsyms-2026/` | **No** (see below) | No formal license; see the next section |
+| Netsyms Address Database 2026-05 | `local-data/netsyms-2026/` | **No** (see below) | No formal license; see "The Netsyms data" |
 | Messy-address sources (2026-10-20): NC voter files (current and a labeled snapshot), FMCSA company census, Texas TDLR licenses, FCC amateur licenses, IRS exempt organizations, NY active corporations | `local-data/<source>/` | **No** (aggregates only) | Public records or open data published by the agency; each folder's `NOTICE.md` records provenance and terms. Several hold names with addresses: names are never printed |
-| [MessyStreets](https://github.com/EdGaere/MessyStreets) tiers (gold, silver, raw; web addresses from the Web Data Commons December 2024 extract, 2026-10-31) | `local-data/messy-streets/` | **No** (aggregates only) | Code MIT; data mixes ODbL 1.0 (OSM-derived fields), OpenAddresses per-source terms and WDC "research purposes only". Local, aggregate-only use accepted by the owner 2026-10-31; the authors say share-alike applies to redistributing a derived database. Gold and silver are held-out checks (rows never read); raw is the work list. Cite the paper (DOI 10.1145/3841645.3843362) with any score (#323, #395) |
+| [MessyStreets](https://github.com/EdGaere/MessyStreets) tiers (gold, silver, raw; web addresses from the Web Data Commons December 2024 extract, 2026-10-31) | `local-data/messy-streets/` | **No** (aggregates only) | Code MIT; data mixes ODbL 1.0 (OSM-derived fields), OpenAddresses per-source terms and WDC "research purposes only". Local, aggregate-only use accepted by the owner 2026-10-31; the authors say share-alike applies to redistributing a derived database. Gold and silver are held-out checks (rows never read); raw is the work list. Cite the paper (DOI 10.1145/3841645.3843362) with any score |
 | [fastaddress](https://github.com/vinvomero/fastaddress) hand-labeled sets (`eval/`: 489 distinct owner-mailing address strings from about 40 county and city open-data parcel layers, 2026-11-04) | `local-data/fastaddress-eval/` | **No** (aggregates only) | Repository MIT; the county datasets are public records whose individual terms the upstream authors did not review (`NOTICE.md` there). Contain personal names. Local scoring and aggregates only |
 | Florida exports with names, the labeled Florida sample, comparison reports | `local-data/` | **No** | Private; contain personal names or rows |
 
@@ -75,7 +77,7 @@ list, and is subject to state statutes that prohibit that use. We treat it as fo
   an address exists or can receive mail.
 - **Row-level data stays in `local-data/`.** The file is large (42 GB of text) and its
   providers are credited in its own metadata; we do not redistribute it. Aggregate counts
-  and our own fixes ship, with invented examples in corpus cases, as for the other sources.
+  and our own fixes ship, with invented examples in corpus cases.
 - **The benchmark suite is the one exception** (decided 2026-10-19, issue #75). Its records
   (`benchmarks/suite/`) take street, city, state and ZIP from NAD, which is public domain,
   and are anonymized so that no record is a real address point:
@@ -85,28 +87,20 @@ list, and is subject to state statutes that prohibit that use. We treat it as fo
   - no coordinates, source names or ids are carried over
 
   The rules are in `docs/benchmark-suite.md` ("Anonymization"). The suite is for parser
-  testing only, like the rest of our NAD use. Anything else from NAD still ships as counts
-  only, and corpus cases stay invented.
+  testing only. Anything else from NAD still ships as counts only, and corpus cases stay
+  invented.
 - **Place names:** a name found in `Uninc_Comm`, `Nbrhd_Comm` or the other place columns may
   ship when the counts show it is real and used (rows and distinct providers, cited as
   aggregates), citing NAD as the source. Because NAD is public domain, it can serve as the
   public confirming source itself; keep a threshold written down for any new rule.
-- **What we have done with it** (2026-10-19, aggregate results only; scripts in
-  `tools/harness/`, results in issue #29):
-  - *Profile:* 99,226,272 records in 47 jurisdictions (no HI, MI, MS, NH, NV or PR); fill rates
-    for each column and state; 95 `NAD_Source` values.
-  - *Place names:* 89,490 community and neighborhood names (`Uninc_Comm`, `Nbrhd_Comm`) differ
-    from the postal city outside MA and CT, but only 68 of 6,020 city names in the geocode
-    benchmark's `train` place-name gap are among them. **Nothing from NAD ships in the place
-    data**; the gap is area words and neighborhood labels no address database holds (the area-word
-    rule, #62, came from that triage instead).
-  - *Scorecard:* a 1,000,000-row random sample scored against NAD's labeled parts
-    (`tools/harness/nad_score.py`). It confirmed the parser against labeled data and found one
-    bug, fixed with corpus `rg-207` to `rg-211`: a trailing directional equal to the city's first
-    word (`MAIN ST WEST` / `WEST POINT`) was dropped as a copy of the city.
-  - *Evaluated and not used:* NAD's `Addr_Type`, `AddrClass`, `Lifecycle` and `DeliverTyp`
-    (mostly `Unknown`, empty or unnormalized), and the GNIS populated-places file (#52: about a tenth
-    of the place-name gap, so nothing shipped).
+- **Used so far** (aggregates; scripts in `tools/harness/`, results in issue #29): a profile
+  of all columns; a 1,000,000-row sample scored against NAD's labeled parts
+  (`tools/harness/nad_score.py`), which found one bug (a trailing directional equal to the
+  city's first word was dropped, fixed with corpus `rg-207` to `rg-211`). **Nothing from NAD
+  ships in the place data:** its 89,490 community and neighborhood names cover only 68 of the
+  6,020 city names in the geocode benchmark's `train` place-name gap. Evaluated and not used:
+  `Addr_Type`, `AddrClass`, `Lifecycle` and `DeliverTyp` (mostly `Unknown`, empty or
+  unnormalized), and the GNIS populated-places file (#52, about a tenth of the gap).
 - **If anything derived ships**, cite NAD in `docs/places.md`, the state data doc or
   `docs/benchmark-suite.md`, whichever uses it, and in `NOTICE`.
   The metadata's credit line asks for acknowledgment of the Department of Transportation,
@@ -118,21 +112,19 @@ The Florida Department of Business and Professional Regulation publishes license
 each profession (https://www2.myfloridalicense.com/instant-public-records/). They are public
 record (Chapter 119, Florida Statutes) and contain personal names with mailing and location
 addresses, so they stay in the git-ignored `local-data/florida-dbpr/`; only city, ZIP and
-street-key aggregates are used, and no name is printed or committed. What we have done with
-them (2026-10-19, aggregate results only):
+street-key aggregates are used, and no name is printed or committed. Used so far (aggregates,
+2026-10-19):
 
-- *Profile:* 293 CSVs, 245 of them with addresses (many have no header row; the address
-  columns were inferred from the data): 4,092,224 address rows, 1,794,538 distinct Florida
-  street addresses with a city.
-- *Parser scoring:* 94.8% of 1.96M distinct records parse with no warning. The leftovers are
-  mostly business and building names on line 2 and 3; two unit gaps (two units in one value,
-  a business name after a unit) became a rule (PR #66).
-- *Florida state data 2026.10.5:* 26 communities, 37 spellings and 123 observed ZIP pairs by the
-  state data's existing rules (PR #67, `docs/states/fl.md`).
-- *A one-line check* (`tools/compare/oneline_fl.py`): the records rendered as one line with no
-  commas, with the true city known. It showed that a rule tuned on the geocode benchmark alone
-  (compass words as city heads) broke spelled-out postdirectionals, because the benchmark
-  writes them abbreviated; the rule was corrected in #29.
+- *Profile:* 245 of the 293 CSVs have addresses (many have no header row; the columns were
+  inferred): 4,092,224 address rows, 1,794,538 distinct Florida street addresses with a city.
+- *Parser scoring:* 94.8% of 1.96M distinct records parse with no warning; the leftovers are
+  mostly business and building names on line 2 and 3. Two unit gaps became a rule (PR #66).
+- *Florida state data 2026.10.5:* 26 communities, 37 spellings and 123 observed ZIP pairs
+  (PR #67, `docs/states/fl.md`).
+- *One-line check* (`tools/compare/oneline_fl.py`): the records rendered as one line with no
+  commas, with the true city known. It showed that a rule tuned on the geocode benchmark
+  alone (compass words as city heads) broke spelled-out postdirectionals, because the
+  benchmark writes them abbreviated (corrected in #29).
 
 ## The Netsyms data
 
@@ -157,9 +149,11 @@ viewers. We treat it as follows:
      aggregates), and
   2. a **public source confirms it**: the Census Gazetteer or reference lists, GeoNames,
      a state or USPS list, or another source whose terms allow the use.
-  The entry cites both. Netsyms is evidence of frequency, never the sole source. A state's data
-  keeps its own threshold for how many rows count as enough (the Florida state data uses 10
-  distinct addresses, `docs/states/fl.md`); write the threshold down for any new rule.
+
+  The entry cites both. Netsyms is evidence of frequency, never the sole source. A state's
+  data keeps its own threshold for how many rows count as enough (the Florida state data
+  uses 10 distinct addresses, `docs/states/fl.md`); write the threshold down for any new
+  rule.
 - **If anything derived from it ships**, add Netsyms to `NOTICE` with a link
   (https://netsyms.com/gis/addresses) and mention it in the data doc that uses it
   (`docs/places.md` or the state data doc). That honors their request without implying a
@@ -178,12 +172,12 @@ and check on `dev` (issue #29).
 
 ## How much real data the parser has been checked against
 
-doorplate is rule-based: nothing is trained on this data, and every rule cites a source. The real
-addresses are used to **test** it: the harness (`tools/harness/`) parses them, counts the warnings
-and the unparsed remainders, and ranks the failure shapes, and the labeled sources score the
-parts we return. As of 2026-10-20, about **204 million rows** have been parsed in total, from
-these public or open sources (aggregate counts only; the totals overlap, so they are an upper
-bound on distinct addresses):
+doorplate is rule-based: nothing is trained on this data, and every rule cites a source. The
+real addresses are used to **test** it: the harness (`tools/harness/`) parses them, counts
+the warnings and the unparsed remainders, and ranks the failure shapes, and the labeled
+sources score the parts we return. About **204 million rows** have been parsed from these
+public or open sources (aggregate counts, 2026-10-20; the totals overlap, so they are an
+upper bound on distinct addresses):
 
 | Source | Rows parsed |
 |---|---|
