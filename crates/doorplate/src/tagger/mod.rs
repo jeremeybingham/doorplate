@@ -355,6 +355,19 @@ impl<'a> Tagger<'a> {
         if letter_in_name || self.number_letter_guess {
             self.warn(Warning::AmbiguousNumberLetter);
         }
+        // `123B ELM ST`: the letter is stuck to the number, so it stays in the number and the key
+        // (`123B`) differs from `123 B ELM ST` and `123 ELM ST APT B`. Only reported (#655, #653).
+        if street_like
+            && self.tags.iter().zip(self.toks).any(|(t, tok)| {
+                let b = tok.text.as_bytes();
+                *t == Tag::StreetNumber
+                    && b.len() >= 2
+                    && matches!(b[b.len() - 1], b'A'..=b'D')
+                    && b[..b.len() - 1].iter().all(u8::is_ascii_digit)
+            })
+        {
+            self.warn(Warning::GluedNumberLetter);
+        }
         if has(&self.tags, Tag::Unparsed) {
             self.warn(Warning::UnparsedRemainder);
         }

@@ -111,7 +111,7 @@ Warnings have a stable snake_case `code()` meant for a database column:
 `non_standard_abbreviation`, `missing_city`, `missing_state`, `unknown_state`,
 `missing_zip`, `invalid_zip`, `zip_city_mismatch`, `default_state_applied`,
 `repeated_label`, `country_ignored`, `non_us_address`, `intersection_detected`, `second_line_skipped`,
-`second_line_in_street`, `second_line_building`, `repeated_text`, `zip_repaired`, `ambiguous_number_letter` and `city_is_county`. A warning is a
+`second_line_in_street`, `second_line_building`, `repeated_text`, `zip_repaired`, `ambiguous_number_letter`, `glued_number_letter` and `city_is_county`. A warning is a
 finding about the parse, not a statement that the address is wrong. What each one tells you, and how
 often rows that carry it disagree with labeled data: [`warnings.md`](warnings.md).
 
@@ -156,6 +156,9 @@ often rows that carry it disagree with labeled data: [`warnings.md`](warnings.md
   the others stay in the street name (`12 F OAK ST`). It is not raised when the
   letter is stuck to the number, is a directional, is the whole street name (`123 A ST`) or is the `U` of
   `U S ROUTE`.
+- **A letter stuck to the house number is reported too**: `123B ELM ST` keeps the letter in the number (key `123B`) and
+  raises `glued_number_letter`, because the spaced form (`123 B ELM ST`) and the unit form (`123 ELM ST APT B`) both key as
+  `123` (#653, #655). Only the letters `A` to `D`; `123E ELM ST` has no warning.
 - **Intersections have no key.** `MAIN ST & 1ST AVE` raises
   `intersection_detected`: the first street is parsed, the second stays in
   `unparsed`, and `key()` and `slug()` are `None`, because the first street alone

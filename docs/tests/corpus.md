@@ -61,7 +61,7 @@ Every parsing bug fixed gets a case here (`CONTRIBUTING.md`).
   `rt-` (repeated text and its warning, `repeated.jsonl`),
   `zr-` (a nearly right ZIP repaired, `zip-repair.jsonl`),
   `gf-` (a floor written as a plain number and the floor word, `glued-floor.jsonl`),
-  `nlt-` (a letter after the house number, `number-letter.jsonl`),
+  `nlt-` (a letter after the house number, `number-letter.jsonl`), `gnl-` (a letter stuck to the house number, `glued-number-letter.jsonl`),
   `cn-` (a compass word naming the street, `compass-street.jsonl`),
   `nn-` (`NO` for north before a street name, `no-north.jsonl`),
   `so-` (`SO` for south after a street, `so-for-south.jsonl`),
