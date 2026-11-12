@@ -45,6 +45,7 @@ k4:G|<state>|<zip5>
   the zero unnecessary. Box numbers (`BOX 04`) and PO Box numbers keep theirs: section
   282 says the ZIP+4 file marks significant box zeros. The USPS output writes the
   route as given.
+- **A letter after the house number** keys three ways (#653): `123 B ELM ST` (a spaced `A` to `D`, a unit, #487) and `123 ELM ST APT B` both key as `123`; `123B ELM ST` (the letter stuck to the number) keys as `123B`, and carries the warning `glued_number_letter`. The counts over seven sources did not separate a lettered house number from a unit written tight, and a merged key cannot be corrected once a key version is cut, so the glued form is not merged. Review the rows with the warning if your data writes units tight. Letters `E` to `Z` are never read as a unit.
 - **Queens house numbers:** when the resolved place is in Queens, NY, the hyphen of a house number of one to three
   digits, a hyphen, two digits and an optional letter is dropped, so `37-12 82ND ST` and `3712 82ND ST` (and `37-12A` and
   `3712A`) share a key. Elsewhere the hyphen stays (`20-22 W 45TH ST` in Manhattan is two numbers). The parsed

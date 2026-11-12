@@ -108,6 +108,15 @@ One letter after the house number may be a unit, the number's suffix or the firs
 
 ---
 
+### glued_number_letter
+
+The house number is written with a letter `A` to `D` stuck to it (`123B ELM ST`). The letter stays in the number (`123B`; the owner's decision of 2026-11-12, #653), so the key differs from the spaced form (`123 B ELM ST`) and the unit form (`123 ELM ST APT B`), which both key as `123` (#487). The text cannot say whether `123B` is a lettered house number (`123A`, `123B` and `123C` as separate doors) or a unit written tight; the warning lets a user find the rows and decide for their data. Not raised for the letters `E` to `Z`, a hyphenated letter (`12-B`), a box number (`PO BOX 12B`) or a spaced letter (that one has `ambiguous_number_letter`).
+
+- **Rows in NAD (of 1M):** not yet measured against the labels (`label_score.py --by-warning` has not been rerun with this code)
+- **Counts that decided it (#653, line1 text over six key-comparison sources, 146,282 rows with a glued `A` to `D`):** 13% have the bare number, the same letter as a unit or the spaced form beside them in the same source, ZIP and street; 14% sit in a run of lettered numbers (`123A`, `123B`, `123C`) with none of those; 73% have no sibling in the source (the sources are extracts). Residential NC voter rows: 35% unit-like and 26% lettered. The counts do not separate the two readings, so the key is unchanged
+
+---
+
 ### second_line_in_street
 
 Line 2 became part of the street that line 1 began (a route, a suffix, a directional).
@@ -145,7 +154,7 @@ where the number differs on 92.1%.
 `ambiguous_number_letter` is the one where **the providers disagree**: by state the NAD labels range from 98% number suffix
 (MA, NY, MD) to 40% (TX, KY), and the NC county-entered parts are 46% number suffix and 54% street name. The text alone
 cannot say, which is what the warning reports; the default for the letters `A` to `D` is a unit, the reviewers' reading
-(see the section above), not the providers' labels.
+(see the section above), not the providers' labels. `glued_number_letter` marks the other spelling, where the letter is stuck to the number and stays there.
 
 ## Informational
 

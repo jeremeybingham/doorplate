@@ -111,6 +111,7 @@ two `OccupancyIdentifier` tokens).
 A few words are labelled differently by the reference sets, and doorplate follows one reading for each. These are decisions, not parse errors.
 
 - **A letter A to D after a house number** (`123 B ELM ST`) is read three ways. The geocode reference data keeps the letter in the street name. usaddress, fastaddress and suite v1 put it in the house number (#270). doorplate puts it in the unit (#487): `123 B ELM ST` is number 123 with unit B. The owner decided #487 on reviewed cards (88% of them read it as a unit). Split street names in the geocode data (`318 D ELBERT LN` for DELBERT) are benchmark noise; see [benchmarks](benchmarks.md).
+- **A letter A to D stuck to the house number** (`123B ELM ST`) stays in the house number, as in usaddress (the number `123B`), so it differs from the spaced form (a unit); doorplate adds the warning `glued_number_letter` (#653, #655).
 - **A compass word that starts a listed city** (`S ELGIN`) stays in the city, not the pre-direction.
 - **A building name after the street** (`123 MAPLE ST BUILDING 4`) is a `BLDG` unit, labelled `BuildingName` by usaddress.
 - **`EXT` and `BUS` after a street name** (`123 MAPLE ST EXT`) stay in the street.

@@ -588,6 +588,12 @@ pub enum Warning {
     /// name; the parser guessed the name (#102). A letter that is a
     /// directional, or the whole street name (`123 A ST`), is not reported.
     AmbiguousNumberLetter,
+    /// The house number is written with its suffix letter stuck to it, `A` to `D`
+    /// (`123B ELM ST`). The parser keeps the letter in the number (`123B`), so the key
+    /// differs from the spaced form (`123 B ELM ST`) and the unit form
+    /// (`123 ELM ST APT B`), which key as `123` (#655, #653). The text cannot say whether it is
+    /// a lettered house number or a unit written tight; the warning lets a user find the rows.
+    GluedNumberLetter,
     /// The city is no place of the state but the name of one of its counties
     /// (`MIAMI DADE`, `HENNEPIN`), so [`ParsedAddress::place`] is empty. The
     /// city is kept as written and the key does not change (#113).
@@ -597,7 +603,7 @@ pub enum Warning {
 impl Warning {
     /// Every variant, in declaration order. Add new variants here too; the
     /// golden-corpus runner checks expected warning codes against this list.
-    pub const ALL: [Warning; 30] = [
+    pub const ALL: [Warning; 31] = [
         Warning::UnparsedRemainder,
         Warning::AmbiguousToken,
         Warning::Placeholder,
@@ -627,6 +633,7 @@ impl Warning {
         Warning::RepeatedText,
         Warning::ZipRepaired,
         Warning::AmbiguousNumberLetter,
+        Warning::GluedNumberLetter,
         Warning::CityIsCounty,
     ];
 
@@ -663,6 +670,7 @@ impl Warning {
             Warning::RepeatedText => "repeated_text",
             Warning::ZipRepaired => "zip_repaired",
             Warning::AmbiguousNumberLetter => "ambiguous_number_letter",
+            Warning::GluedNumberLetter => "glued_number_letter",
             Warning::CityIsCounty => "city_is_county",
         }
     }
