@@ -2558,6 +2558,33 @@ impl Tagger<'_> {
             })
     }
 
+    /// `N - M` (#612): a hyphen token at `i` with a plain house number before it and a second
+    /// number (digits and at most one letter, not an ordinal) after it, all in one segment and
+    /// followed by more street text. Only with a US state: the Canadian `unit - number` form
+    /// and an unknown state are left as they were.
+    fn spaced_hyphen_pair(&self, i: usize, hi: usize) -> bool {
+        if i < 1 || i + 2 >= hi || !self.toks[i].is_dash() || self.tags[i - 1] != Tag::StreetNumber
+        {
+            return false;
+        }
+        let (a, b) = (self.text(i - 1), self.text(i + 1));
+        let digits = b.bytes().take_while(u8::is_ascii_digit).count();
+        let tail = b.len() - digits;
+        if !all_digits(a)
+            || digits == 0
+            || tail > 1
+            || b[digits..].bytes().any(|c| !c.is_ascii_alphabetic())
+            || is_ordinal(b)
+            || (i - 1..=i + 1).any(|k| self.toks[k].seg != self.toks[i].seg)
+        {
+            return false;
+        }
+        // New York, Massachusetts and Hawaii write the pair as the house number (#313): the
+        // dash is left alone there, as before.
+        self.state_code()
+            .is_some_and(|st| !matches!(st, "NY" | "MA" | "HI"))
+    }
+
     /// A number between the house number (at `i - 1`) and a street (a name or an ordinal
     /// and a suffix): `41 12 80TH AVE`. By state (the 90 cards of #313, #501 and #502):
     /// in New York City (by ZIP) and Massachusetts a pair of one to three digits and two is the house
@@ -2567,16 +2594,22 @@ impl Tagger<'_> {
     /// digits before an ordinal street is a unit (`123 104 11TH ST`). Returns where the street starts.
     fn house_number_pair(&mut self, i: usize, hi: usize) -> usize {
         let lex = self.lex;
-        if i < 1 || i + 2 >= hi || self.tags[i - 1] != Tag::StreetNumber {
+        // A spaced hyphen between the numbers was dropped (#612): the house number is before it.
+        let p = if i >= 2 && self.tags[i - 1] == Tag::Skip && self.toks[i - 1].is_dash() {
+            i - 2
+        } else {
+            i - 1
+        };
+        if i < 1 || i + 2 >= hi || self.tags[p] != Tag::StreetNumber {
             return i;
         }
-        let (a, b) = (self.text(i - 1), self.text(i));
+        let (a, b) = (self.text(p), self.text(i));
         let digits = |t: &str| !t.is_empty() && all_digits(t);
         if !digits(a) || !digits(b) || a.len() > 5 || b.len() > 5 || b.bytes().all(|c| c == b'0') {
             return i;
         }
         let r = i + 1;
-        let one_seg = (i - 1..hi).all(|k| self.toks[k].seg == self.toks[i].seg);
+        let one_seg = (p..hi).all(|k| self.toks[k].seg == self.toks[i].seg);
         let suffix_after = (r + 1..hi).any(|k| lex.suffix(self.text(k)).is_some());
         if !one_seg || !suffix_after || self.highway_at(r, hi).is_some() {
             return i;
@@ -2776,7 +2809,13 @@ impl Tagger<'_> {
         let line_end = (k..hi)
             .find(|&e| self.toks[e].seg != self.toks[k].seg)
             .unwrap_or(hi);
-        if k < 1 || k + 2 >= line_end || !long(self.text(k - 1)) || !long(self.text(k)) {
+        // A spaced hyphen between the numbers was dropped (#612).
+        let p = if k >= 2 && self.tags[k - 1] == Tag::Skip && self.toks[k - 1].is_dash() {
+            k - 2
+        } else {
+            k.wrapping_sub(1)
+        };
+        if k < 1 || k + 2 >= line_end || !long(self.text(p)) || !long(self.text(k)) {
             return false;
         }
         let dir = longest_at(self.toks, k + 1, line_end, |s| self.lex.directional(s))
@@ -2881,6 +2920,12 @@ impl Tagger<'_> {
                     self.set(i..i + 1, Tag::StreetNumber);
                 }
                 self.decide(Decision::NumberLetter);
+                i += 1;
+            }
+            // "1900 - 938 PAVILION DR": a spaced hyphen between the house number and a second
+            // number is a separator, as a space is (#612); the second-number rules then decide.
+            if self.spaced_hyphen_pair(i, hi) {
+                self.set(i..i + 1, Tag::Skip);
                 i += 1;
             }
             // "41 12 80TH AVE": a second number before the street (#313, #501, #502).
