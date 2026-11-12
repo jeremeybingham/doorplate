@@ -23,15 +23,11 @@ that come from county exports, mailing lists, forms and old databases. If a samp
 parses badly, or you are not sure it parses well, open an issue (the template asks for
 the right details) and attach what you can.
 
-If the data is private, anonymize it first. `doorplate anonymize` (or `doorplate.Anonymizer` in Python) does the
-mechanical part, even for lines that do not parse: it replaces digits, names and unknown words with others of the same
-length and case and keeps the suffixes, directionals, unit designators, state, city and the first three ZIP digits.
-**It is obfuscation that keeps the shape, not anonymity.** It keeps every word the lexicons know (a street named
-`HARBOR` or `PARK`), the city and the ZIP prefix, and it cannot tell a name in a free-text field from any other word
-it does not know, so read the output before you send it, and drop what still identifies someone. What it changes and keeps, its
-options, and what it can leak are in [`docs/anonymizing.md`](docs/anonymizing.md). By hand, the same
-rules apply; an anonymized sample is just as useful as
-long as it keeps the *shape* of each address:
+If the data is private, anonymize it first. `doorplate anonymize` (or `doorplate.Anonymizer` in Python) replaces digits, names and unknown
+words with others of the same length and case and keeps suffixes, directionals, unit designators, state, city and the first three ZIP digits.
+**It is obfuscation that keeps the shape, not anonymity**: read the output before you send it, and drop what still identifies someone
+([`docs/anonymizing.md`](docs/anonymizing.md) says what it keeps and what it can leak). By hand, the same rules apply; an anonymized sample is just
+as useful as long as it keeps the *shape* of each address:
 
 - keep the abbreviations, punctuation, spacing, case, typos and the order of the parts;
 - replace personal and business names, and house numbers, with invented ones of the same
@@ -49,19 +45,9 @@ rows come back with each warning.
 
 ## Building and testing
 
-```sh
-cargo fmt --check
-cargo clippy --workspace --all-targets --all-features -- -D warnings
-cargo test --workspace --all-features
-(cd fuzz && cargo +nightly check --bins)   # outside the workspace: check it after a change to a public type
-
-# Python (in a virtualenv with maturin and pytest; `uv venv` and `uv pip install` are fine)
-cd crates/doorplate-py && maturin develop --release && cd ../..
-pytest crates/doorplate-py/tests
-pytest tools/ingest tools/harness tools/review tools/compare   # the ingest tool (Python 3.11+), the harness, the review tool and the key comparison
-```
-
-Rust 1.80 or later; the Python extension needs 1.83. Plain `cargo test` needs no Python. Nothing here is limited to a number of cores or an amount of memory; only the benchmark suite's runner pins its reference profile (4 CPUs, 8 GB, `docs/running-benchmarks.md`). CI also reports line coverage of the Rust code to Codecov (a separate, informational job; `codecov.yml` lists what is left out): read it as a map of code the tests do not reach, not as a gate.
+The commands (`cargo fmt`, `clippy`, `cargo test`, `maturin develop` and `pytest`) are in [`AGENTS.md`](AGENTS.md#build-and-test). Rust 1.80 or
+later; the Python extension needs 1.83. Plain `cargo test` needs no Python. Only the benchmark suite's runner pins a reference profile
+(4 CPUs, 8 GB; [`docs/running-benchmarks.md`](docs/running-benchmarks.md)). Codecov line coverage is informational: a map of code the tests do not reach, not a gate.
 
 ## Fixing a parsing bug
 
@@ -88,48 +74,28 @@ to a Pub 28 table should be checked with `tools/pub28/verify.py`.
 
 ## Package pages and READMEs
 
-Four READMEs are shown on package pages and must not drift apart: `README.md`
-(GitHub), `crates/doorplate/README.md` and `crates/doorplate-cli/README.md`
-(crates.io), and `crates/doorplate-py/README.md` (PyPI). Each is selected by the
-`readme` key in its `Cargo.toml` or `pyproject.toml`. If your change affects the API,
-CLI options, install instructions, feature flags, minimum Rust or Python versions,
-warning codes, the key format, benchmark figures, or the alpha and help-wanted
-notices, update every README it touches in the same pull request. Use absolute
-links in the three crate READMEs, since crates.io and PyPI do not resolve relative
-ones, and keep the statement that the library does not validate deliverability and the
-Disclaimer section.
-
-The READMEs are short on purpose. The tours live in `docs/` (`getting-started.md`, `python.md`,
-`command-line.md`, `rust.md`, `dataframes.md`, and the guides on custom layers, anonymizing and usaddress): put the detail
-there and have a README link to it instead of copying it. A README keeps its install lines, a quickstart and a two-row
-headline of figures (copied from `docs/benchmarks.md`).
+Four READMEs are shown on package pages and must not drift apart: `README.md` (GitHub), `crates/doorplate/README.md` and
+`crates/doorplate-cli/README.md` (crates.io), and `crates/doorplate-py/README.md` (PyPI). If your change affects the API, CLI options, install
+steps, features, minimum Rust or Python versions, warning codes, the key format, figures, or the alpha and help-wanted notices, update every README it
+touches in the same pull request. Links in the three crate READMEs are absolute (crates.io and PyPI do not resolve relative ones), and each keeps the
+statement that the library does not validate deliverability and the Disclaimer section. They are short on purpose: the detail lives in the tours in
+`docs/`, and a README keeps its install lines, a quickstart and a two-row headline of figures copied from [`docs/benchmarks.md`](docs/benchmarks.md).
 
 ## Documentation
 
-`docs/README.md` indexes all the documentation by topic, and `docs/change-checklist.md` is a table of what to
-check when you change something: a parse rule, a key, a warning code, the API or a CLI
-option, a figure, the layout, the build commands, a version number. Before you open a pull
-request, find your change in that table and update every page in its row in the same pull
-request; the pull request checklist asks for it. If you add, rename or remove a page,
-update the index (and the table in `AGENTS.md`) too, and the `nav` in `mkdocs.yml` for a page in `docs/`. To check the
-site locally: `pip install -r docs/requirements.txt && mkdocs build --strict` (it fails on a broken link, a missing
-anchor or a page missing from the nav; links from a page to a file outside `docs/` are rewritten to GitHub by
-`tools/docs/links.py`, so write them as ordinary relative links).
+Find your change in [`docs/change-checklist.md`](docs/change-checklist.md) and update every page in its row in the same pull request;
+[`docs/README.md`](docs/README.md) indexes all the pages. Adding, renaming or removing a page also updates the index, the table in `AGENTS.md` and the
+`nav` in `mkdocs.yml`. Check the site with `pip install -r docs/requirements.txt && mkdocs build --strict` (it fails on a broken link, a missing anchor
+or a page missing from the nav; write links to files outside `docs/` as ordinary relative links, `tools/docs/links.py` rewrites them).
+New public API also gets an example in `examples/` (the notebook, a pipeline script or `crates/doorplate/examples/`), run by
+`crates/doorplate-py/tests/test_examples.py`. If your change alters the build commands, the rules that must hold, the layout or the documentation
+links, update [`AGENTS.md`](AGENTS.md) (the tool-neutral agent guide; `CLAUDE.md` imports it) in the same pull request.
 
-## Agent instructions
-
-`AGENTS.md` is the tool-neutral guide for AI coding agents (it is also useful as a map of
-the repository); `CLAUDE.md` imports it and adds our own process for Claude Code. If your
-change alters the build commands, the rules that must hold, the layout or the
-documentation links, update `AGENTS.md` in the same pull request.
-
-## Examples
-
-New public API (a function, a method, a CLI flag or an output form) also gets an
-example in `examples/` (the notebook, a pipeline script, or
-`crates/doorplate/examples/` for Rust) in the same pull request. Use invented
-addresses. `crates/doorplate-py/tests/test_examples.py` runs the scripts and the
-notebook, so they cannot go stale silently.
+**Writing docs.** Keep pages short. Each fact lives on one page and the others link to it (figures: `benchmarks.md` and `speed-and-size.md`; warnings:
+`warnings.md`; label conventions: `usaddress-compat.md`; rule sources: `usps-pub28-notes.md`; data rules: `data-policy.md`). Start a page with the
+answer, not a description of the page. Leave build history, commit hashes and "decided on DATE" to `CHANGELOG.md`, the issues and git; give figures
+one line, `Figures: 0.6.0 (abc1234), measured 2026-11-NN.` Name an issue only where a reader would follow it (an open issue, or the source of a rule).
+Use invented examples only.
 
 ## Rules for the code
 
@@ -142,12 +108,12 @@ notebook, so they cannot go stale silently.
 
 ## Releasing
 
-Maintainers only. The release issue for a version is the checklist. A 0.5.x patch is cut from the `release/0.5.x` branch (started from `v0.5.1`), not from `main`, which carries `0.6.0-dev` and the unreleased key changes: cherry-pick the fix there, run the steps below on that branch, and port the CHANGELOG entry back to `main`. The steps, in order:
+Maintainers only. The release issue for a version is the checklist. A 0.5.x patch is cut from `release/0.5.x`, not from `main` (which carries the unreleased key changes): cherry-pick the fix there, run the steps below, and port the CHANGELOG entry back to `main`. In order:
 
-1. **Figures.** If the parser or the tables changed since the figures were taken, rerun `benchmarks/suite.py all` (and `benchmarks/suite.py compare --suite local-data/benchsuite/twin` for the private twin), `benchmarks/accuracy.py` and the speed and size scripts, and update the figures in `docs/benchmarks.md` and in the package READMEs that quote them (`CLAUDE.md` lists the four READMEs). The suite's `v1` files are never edited; a rebuilt suite is `v2`.
+1. **Figures.** If the parser or the tables changed since the figures were taken, rerun `benchmarks/suite.py all` (and `benchmarks/suite.py compare --suite local-data/benchsuite/twin` for the private twin), `benchmarks/accuracy.py` and the speed and size scripts, and update the figures in `docs/benchmarks.md`, `docs/speed-and-size.md` and the READMEs that quote them. The suite's `v1` files are never edited; a rebuilt suite is `v2`.
 2. **Checks on private data.** One full Netsyms run on the release commit, compared with the previous one (`docs/tools/harness.md`), and `tools/compare/oneline_fl.py` and `tools/harness/nad_score.py` as regression checks. Ask before extracting the database or starting the run.
-3. **CHANGELOG.** Rename `[Unreleased]` to the version and the date, add an empty `[Unreleased]` above it, and say when keys changed (store the key prefix, re-parse to re-key). Bring `docs/roadmap.md` and `docs/backlog.md` up to date in the same pull request (the "Released" and "Next" parts, the milestone table, the "Last reviewed" line) and tick the boxes of the tracker, the same as after any batch of closed issues, and run `python tools/docs/issue_states.py` to see what no longer fits (`docs/backlog.md`, "Keeping it current").
-4. **One pull request for the references, made last.** The workspace version and the `doorplate` dependency version in `Cargo.toml` (and `Cargo.lock`, with `cargo update -w`; `main` carries the next patch version with a `-dev` suffix (`0.5.1-dev` after 0.5.0) until this pull request sets the release version, which the tag must equal), the "Alpha release" notice in the four READMEs, and the docs that say which version is current. Leave history alone (older CHANGELOG entries, the `k1` notes in `docs/key-format.md`). CI and the wheel builds must be green on the merge commit. Optionally start the "Benchmark suite" workflow from the Actions tab, and run "Release crates.io" (a dry run: it packages `doorplate` and stops) and "Release PyPI" (it builds the wheels and the sdist and stops) by hand first.
+3. **CHANGELOG.** Rename `[Unreleased]` to the version and the date, add an empty `[Unreleased]` above it, and say when keys changed (store the key prefix, re-parse to re-key). Bring `docs/roadmap.md` and `docs/backlog.md` up to date in the same pull request and tick the tracker (`docs/backlog.md`, "Keeping it current"); `python tools/docs/issue_states.py` shows what no longer fits.
+4. **One pull request for the references, made last.** The workspace version and the `doorplate` dependency version in `Cargo.toml` (and `Cargo.lock`, with `cargo update -w`; `main` carries a `-dev` suffix until this pull request sets the release version, which the tag must equal), the "Alpha release" notice in the four READMEs, and the docs that say which version is current. Leave history alone (older CHANGELOG entries, the version table in `docs/key-format.md`). CI and the wheel builds must be green on the merge commit. Run "Release crates.io" and "Release PyPI" by hand first as dry runs (they package and stop).
 5. **Tag.** Tag the merge commit `vX.Y.Z`; the tag must equal the workspace version, and the crates.io job fails if it does not. Pushing a `v*` tag runs both release workflows. The `crates-io` and the `pypi` environments each need a manual approval before anything is published. crates.io gets `doorplate`, then `doorplate-cli` (the repository secret `CARGO_REGISTRY_TOKEN`); PyPI gets the abi3 wheels and the sdist through trusted publishing (no token).
 6. **After.** Check the crates.io and PyPI pages and install the new version in a clean environment. Then the documentation site: activate the new tag's version on Read the Docs, check that `stable` builds, and change the opening of `docs/python-api.md`, which says it describes `main`, to say it describes the release.
 

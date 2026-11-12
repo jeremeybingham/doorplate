@@ -21,11 +21,10 @@ imply otherwise in docs or code comments.
 | Runnable examples (notebook, pandas and Polars pipelines, Rust) | [`examples/README.md`](examples/README.md) |
 | What the match key is and when it changes | [`docs/key-format.md`](docs/key-format.md) |
 | Output fields | [`docs/reso-mapping.md`](docs/reso-mapping.md), `to_usps()`, `to_display()`, `to_long()` |
-| The public API surface and the decisions behind each name | [`docs/api-surface.md`](docs/api-surface.md) |
+| The public API surface and what is promised about it | [`docs/api-surface.md`](docs/api-surface.md) |
 | Coming from usaddress | [`docs/usaddress-compat.md`](docs/usaddress-compat.md) |
 | Sharing messy data without sharing the data (`doorplate anonymize`) | [`docs/anonymizing.md`](docs/anonymizing.md) |
-| How the figures moved between versions, and the release tolerance | [`docs/benchmarks.md`](docs/benchmarks.md#reading-the-figures-across-versions), [`docs/change-checklist.md`](docs/change-checklist.md#release-tolerance-for-the-benchmarks) |
-| Accuracy and speed, and how to rerun them | [`docs/benchmarks.md`](docs/benchmarks.md), [`docs/running-benchmarks.md`](docs/running-benchmarks.md) (every benchmark and which to run) |
+| Accuracy, speed and size (the only pages that hold figures), and how to rerun them | [`docs/benchmarks.md`](docs/benchmarks.md), [`docs/speed-and-size.md`](docs/speed-and-size.md), [`docs/running-benchmarks.md`](docs/running-benchmarks.md); the release tolerance: [`docs/change-checklist.md`](docs/change-checklist.md#release-tolerance-for-the-benchmarks) |
 | The benchmark suite: what it holds and the rules that keep it fair (it is not a work list) | [`docs/benchmark-suite.md`](docs/benchmark-suite.md); data in [`benchmarks/suite/`](benchmarks/suite/README.md) |
 | How the parser works | [`docs/how-it-works.md`](docs/how-it-works.md) |
 | What is planned and what is not | [`docs/roadmap.md`](docs/roadmap.md); how issues are organized: [`docs/backlog.md`](docs/backlog.md) |
@@ -46,17 +45,12 @@ changes, and the rules for code. The golden corpus
 ([`docs/tests/corpus.md`](docs/tests/corpus.md)) is the regression suite; every
 parsing bug fixed gets a case. Open issues are the backlog (organized as `docs/backlog.md` says).
 
-**Documentation.** [`docs/README.md`](docs/README.md) indexes all the documentation by topic, and
-[`docs/change-checklist.md`](docs/change-checklist.md) is the table of what to check when you change something. Look at the
-table before you finish a change: find the thing you changed in it and update every page in its row in the
-same change (a rule, a key, a warning code, an API or CLI option, a figure, the layout or
-the build commands all have related pages). When you add, rename or remove a page, update
-the index and the table above, and the navigation in `mkdocs.yml` when the page is in `docs/` (the documentation
-site is built on Read the Docs; CI runs `pip install -r docs/requirements.txt && mkdocs build --strict`, which fails on a
-broken link, a missing anchor or a page that is in `docs/` but not in the nav). The Python reference
-(`docs/python-api.md`) is generated from the docstrings in `crates/doorplate-py/python/doorplate/__init__.pyi`, so a new
-Python name gets a docstring there and a `:::` entry on that page, and a new CLI option gets a line in `docs/cli.md`;
-`pytest tools/docs` checks both.
+**Documentation.** [`docs/README.md`](docs/README.md) indexes the pages by topic. Before you finish a change, find it in
+[`docs/change-checklist.md`](docs/change-checklist.md) and update every page in its row in the same change. Adding, renaming or removing a page
+also updates the index, the table above and the `nav` in `mkdocs.yml` (CI runs `pip install -r docs/requirements.txt && mkdocs build --strict`).
+The Python reference (`docs/python-api.md`) comes from the docstrings in `crates/doorplate-py/python/doorplate/__init__.pyi`, so a new Python name gets a
+docstring there and a `:::` entry on that page, and a new CLI option gets a line in `docs/cli.md`; `pytest tools/docs` checks both. Figures live only on
+the benchmark pages: link to them, do not copy them. The "Writing docs" rules are in [`CONTRIBUTING.md`](CONTRIBUTING.md#documentation).
 
 ## Build and test
 

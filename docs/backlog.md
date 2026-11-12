@@ -1,61 +1,36 @@
 # The backlog: how issues are organized
 
-How the open issues are sorted, what the labels and milestones mean, and how work moves from an issue to a
-release. The current plan is in [`roadmap.md`](roadmap.md); this page is the rules. It replaces the
-definitions that lived in the body of issue #103 (the backlog review), which now only holds its history.
-**Last reviewed 2026-11-11 (the major review of the away run, #586 step B7, on top of the `k5` rerank of 2026-11-04), against the issues up to #617.**
+The rules for sorting issues, the labels and milestones, and how work moves from an issue to a release. The current plan is
+in [`roadmap.md`](roadmap.md). **Last reviewed 2026-11-12.**
 
 ## The release plan
 
-One release, 0.4.0, in two phases (decided 2026-10-23: the `k3`, planned as 0.5.0, is folded into 0.4.0 because the
-project has no users and the foundation went quickly; it saves a version and a release cycle). **0.4.0 was released on
-2026-10-25**; the plan after it is the 0.4.x milestone, which becomes the 0.4.1 release (decided 2026-10-27), and the 0.5.0 milestone below.
+| Milestone | What it is |
+|---|---|
+| **0.6.0** | The `k5`, the next key-changing release: the `version:K` issues measured at P2 or above, plus the short curated place list; the list is on [`roadmap.md`](roadmap.md). Tracker #416 |
+| **0.6.x** | Point releases with no key change: tooling, documentation and performance |
+| **Later** | Wanted or known, not planned: new API surface, parse rules below the P2 line, anything waiting on demand or a decision. The list by kind is on [`roadmap.md`](roadmap.md), "Waiting" |
+| **Tooling** | Tooling not planned for a release (harness, review tool, benchmarks and CI items waiting for a rule or a decision): never shipped, never closed |
+| **Won't Do** | Decided against, with the reason: tracker #417 |
 
-| Milestone | What it is | Gate |
-|---|---|---|
-| **0.4.0** | **Phase 1, the foundation:** the architecture (state data folded into the core, an extension-ready lexicon) and the breaking API cleanup, with the key unchanged (`k2`) and no parsing changes. **Phase 2, the `k3`:** the parser rules already listed in #138, key-affecting or not (warnings and diagnostics included), cut together; the list is closed (see "Scope" below) | Phase 1 ends at the **checkpoint**: zero key differences with 0.3.1 over the large sources, and those keys frozen as the baseline. The release: the measured before and after against that baseline, in [`key-format.md`](key-format.md) ("Changing the key"). The checkpoint passed on 2026-10-23 (commit `1819acd`: zero differences over 36.9M rows) |
-| **0.4.x** | **Tooling, documentation and extensibility**, no key change, released as **0.4.1** (decided 2026-10-27): the custom layer (#3), the anonymizer (#105), `doorplate.compat` (#36), faster columns (#24), harness scorers (#112), review tool v2 (#132), per-state counts (#53), the documentation site (#107, #229) and coverage (#211): all done and released as 0.4.1 on 2026-10-28 (the site, #107 and #229, was closed 2026-10-28; what follows the release is #252). Milestone closed after #252 |  Tracker #200; the release checklist in `CONTRIBUTING.md` |
-| **0.5.0** | The key-changing release, the `k4`: the parser rules that change keys, from the reviews of real rows and the harness counts; **released 2026-10-31** (the list was closed once #247 merged; the rules and their counts are in the changelog). Milestone closed after the release | Tracker #201 (closed with the release); the measured before and after against the `k3` keys, the probes and the full Netsyms run on 0.4.1 and on the cut |
-| **0.5.x** | **Tooling, documentation and performance point releases**, no key change (decided 2026-10-31): the performance round (about half the time per parse of 0.4.1, keys unchanged; [`speed-and-size.md`](speed-and-size.md)) is done; what is left is the docs edit pass (#399, with #277) | Tracker #402 |
-| **0.6.0** | The `k5`, the next key-changing release: the `version:K` issues measured at P2 or above on the queue round and the re-probes of 2026-11-03, plus the short curated place list; the list and the order are on [`roadmap.md`](roadmap.md), "Next: 0.6.0". Opens with the rerank of every probed issue by rows affected | Tracker #416 |
-| **Later** | Wanted or known, not planned for a release: new API surface, parse rules below the P2 line, review data and trackers, anything waiting on demand or a decision. The list by kind is in [`roadmap.md`](roadmap.md), "Waiting" | |
-| **Tooling** | Tooling that is not planned for a release (the harness, review tool, benchmarks and CI items waiting for a rule or a decision): never shipped, never closed. Now holds #323 (MessyStreets); #434 (the Try page) is in review | |
+Earlier releases are in [`CHANGELOG.md`](../CHANGELOG.md). `main` is the 0.6 line and carries a `-dev` version until the release pull request
+sets the release version; 0.5.x patches, if any, are cut from `release/0.5.x` and ported back. The project has few users, so a patch release
+needs a good reason: a wrong key or a panic on valid input, a security or supply-chain problem, or a broken published artifact.
 
-`main` is the 0.6 line (started 2026-11-03, for the key-breaking rules); 0.5.x patches, if any, are cut from `release/0.5.x` (from `v0.5.1`) and ported back. Before that it was the 0.5 line, and it carried the next patch version with a `-dev` suffix (`0.5.1-dev` until the 0.5.1 release, then `0.5.2-dev`; decided 2026-10-31) until the release pull request sets the release version, so a build from `main` reports a version no release has used (it said the last release until 2026-10-31). There is no 0.3.2. The project has no users, so a release is not made for a minor
-fix. **A 0.3.x patch needs a very good reason:** a correctness bug in shipped output that matters (a wrong key, a panic
-on valid input: the never-panic rule), a security or supply-chain problem, or a broken published artifact (a wheel that
-does not install, a crate that does not build). It goes on a `release/0.3` branch cut from the `v0.3.1` tag, with the
-full release checklist. The tracker (`tracker` label) lists the order: #138 for 0.4.0 (closed; #139, the `k3` tracker,
-was merged into it), #200 for 0.4.x and #201 for 0.5.0. #225 is a different kind of tracker: the record of which sources have been
-hand-reviewed and the queues to come.
+**Key-affecting rules merge to `main` unreleased**, as ordinary pull requests, each measured against the frozen keys of the last key release with
+`tools/compare/key_diff.py diff`, by source and role, for the sources its issue names (the loop is in [`tools/harness.md`](tools/harness.md)).
+A rule that only reads or moves a unit changes no property-level key, so dump both builds with `--unit` and read the unit-level counts too.
 
-**Scope of phase 2** (decided 2026-10-23, issue #138). The list of rules is closed: phase 2 works the issues that are in the 0.4.0 milestone and does not go looking for new rules, so the backlog does not grow faster than it is worked. In practice:
-
-- A finding that surfaces while working an issue is filed under **Later**, unless the issue cannot be fixed correctly without it (then it is part of that issue).
-- Tooling is built **just in time**, for a rule that is in the list (as the checkpoint tool was), and not as a standing evidence phase. Tooling that only finds new things (the review tool's comparison mode, #132) or that no listed rule needs (#112, #53) waited in the **Tooling** milestone (moved to 0.4.x after the release, #200).
-- The state-dependent rules and the reading that feeds them (#8, #11, #29, #92) are in **Later**; #110, the small architectural fix, stays.
-
-**The checkpoint.** Until it is passed, no parsing change merges, so that the comparison with 0.3.1 can be zero
-and any difference is the refactor's. It is one run, `tools/compare/checkpoint.py` (it prints a plan and needs
-`--confirm`): every records file is parsed with the released build and the current build, the keys are compared row
-by row, and the current build's dumps are kept in `local-data/keycompare/checkpoint-<commit>` with a `FROZEN.md`
-note. After it, `version:K` and other parsing work merges to `main` as ordinary pull requests (and stays unreleased
-until the release); each key-affecting one is measured against the frozen keys with `key_diff.py diff`, by source
-and role, for the sources its issue names. The release does the full before and after over all of them once more.
-
-**The comparison.** Install the released version in a throwaway environment, parse whole records files with both
-builds (`parse_fields_many`) and compare `a.key()` row by row, by source. `tools/compare/key_diff.py` does it: `dump`
-in each environment (`dump-all` does every source in `local-data/keycompare/sources.txt` in one call), then `diff` (counts only, never street text); the dumps record the commit as well as the version, because between releases `main` still reports the last release's version. "Key-neutral" is a claim about this
-comparison, not about warnings or flagged rows: #97 was called key-neutral from warning counts and then changed
-8.7% of the IRS file's keys (the 0.3.1 record in `key-format.md`). A rule pull request that says its keys do
-not change includes the count.
-A rule that only reads or moves a unit changes no property-level key, so dump both builds with `--unit` and read the "unit level" counts (the unit-level key and the unit fields, by source and role) as well.
+**"Key-neutral" is a claim about that comparison**, not about warnings or flagged rows: #97 was called key-neutral from warning counts and then
+changed 8.7% of the IRS file's keys (the 0.3.1 record in [`key-format.md`](key-format.md)). The comparison parses whole records files with both builds
+(`parse_fields_many`) and compares `a.key()` row by row; the dumps record the commit as well as the version, because between releases `main` still
+reports the last release's version. A pull request that says its keys do not change includes the count (counts only, never street text).
 
 ## Labels
 
 | Label | Meaning |
 |---|---|
-| `research` | An issue whose first output is a measurement or a decision, not code (#131, #203, #215, #236). It says what outcome would close it |
+| `research` | An issue whose first output is a measurement or a decision, not code . It says what outcome would close it |
 | `size:S` / `M` / `L` / `D` | Hours; a day or two; several pull requests or a design; a decision with no code |
 | `version:K` | Changes a key (the number, directionals, street name, suffix, state, ZIP or unit; place data that moves the street/city split). Held for the next key release (the `k5`, tracker #416); it can merge to `main` unreleased, measured row by row against the frozen keys |
 | `version:B` | Breaks an API: removes or renames a public thing |
@@ -74,38 +49,31 @@ project**. An issue that is `version:K` is in the 0.6.0 milestone (the `k5`) onc
 
 ## Where an issue comes from
 
-- **A misparse report** (the issue template) or a finding from a harness run goes through the rule loop in
-  [`docs/tools/harness.md`](tools/harness.md): reproduce with an invented address, find a source, add a
-  corpus case, measure before and after.
-- **A review of real rows** ([`docs/tools/review.md`](tools/review.md)) produces a tracker with the
-  counts (#125 was the first) and then one issue per finding, labeled as above. Examples in issues are invented
-  from scratch, never real rows ([`data-policy.md`](data-policy.md)).
+- **A misparse report** or a finding from a harness run goes through the rule loop in [`tools/harness.md`](tools/harness.md): reproduce with an
+  invented address, find a source, add a corpus case, measure before and after.
+- **A review of real rows** ([`tools/review.md`](tools/review.md)) produces a tracker with the counts and then one issue per finding, labeled as above.
+  Examples in issues are invented from scratch, never real rows ([`data-policy.md`](data-policy.md)).
 - **A decision** is `size:D` and says what outcome would close it.
-- **A new issue gets its labels and a milestone when it is filed** (`version:`, `priority:`, `size:`, `area:`, and a milestone; a research issue also
-  `research`), so that none sits outside the plan. The second review of real rows (#245) filed each finding that way and added the key-changing ones to the
-  0.5.0 tracker.
+- **A new issue gets its labels and a milestone when it is filed** (`version:`, `priority:`, `size:`, `area:`, a milestone; a research issue also
+  `research`), so that none sits outside the plan.
 
 ## Ordering by how common
 
-The issues of a release are ordered by a score, not by feel (#298): `rows affected x harm / effort`.
+The issues of a release are ordered by a score, not by feel: `rows affected x harm / effort`.
 
-- **Rows affected**: the probe's matches over the large sources (`tools/harness/probes.py`, [`docs/tools/harness.md`](tools/harness.md)), multiplied by the
-  precision when a review has measured it (the share of matches that are really the pattern and really wrong; 1 until then). A full Netsyms run adds
-  `agg_probes` over all 146.6M rows.
+- **Rows affected**: the probe's matches over the large sources (`tools/harness/probes.py`), multiplied by the precision when a review has
+  measured it (1 until then). The denominator is the unsampled probe scan (289M rows); name it whenever a threshold is quoted.
 - **Harm**: 3 for a wrong key with no warning, 2 for a wrong key with a warning, 1 for a warning or a component only.
-- **Effort**: the size label, S 1, M 2, L 4, D (a decision) 2.
-- **Priority from the rows affected** (since the `k5` rerank, #416, 2026-11-04): the measured rows over the unsampled probe scan (289M rows, the scan's matches times the review precision, weighted by source), not a share of the pooled sources. **P1 from 25,000 rows (about 0.01% of the scan); P2 from 2,000 rows; P3 below.** The old cut-offs (P1 above 0.1%, P2 above 0.01%, set for the k4 against the 36.9M-row pool of seven sources) put the whole measured tail at P3. A new finding above 25,000 rows is P1 by definition. The promotion rule is unchanged: only an issue measured P2 or above leaves `Later`. A review queue's share is larger than the rows share (a comparison queue holds only the rows the two parsers disagree on), so both are looked at; the stay conditions of #298 (about 50% wrong on reviewed cards) no longer decide a promotion, because a broad probe has a low precision and a large count (#320: 6% of 1.5M matches).
+- **Effort**: the size label, S 1, M 2, L 4, D 2.
+- **Priority from the rows affected:** P1 from 25,000 rows (about 0.01% of the scan); P2 from 2,000 rows; P3 below. A new finding above 25,000 rows is P1
+  by definition. Only an issue measured P2 or above leaves `Later`. A review queue's share is larger than the rows share (a comparison queue holds
+  only the rows the two parsers disagree on), so both are looked at.
 
-Refresh the numbers after each batch of rules (the same probes are the before and after of a rule PR, next to `key_diff.py`) and when a source is added.
+Refresh the numbers after each batch of rules (the same probes are the before and after of a rule PR) and when a source is added.
 
 ## Keeping it current
 
-- At each release, refresh the milestones: move what slipped, close the finished milestone, and update
-  [`roadmap.md`](roadmap.md) from them.
-- **Also after a batch of issues closes**, not only at a release (this page and the roadmap were a week behind after the 0.4.x work merged, #237): tick the
-  boxes of the open tracker (#402 for 0.5.x), update the "Released" and "Next" parts of the roadmap, move what no longer fits a milestone, and change the
-  "Last reviewed" line at the top of both pages. The label descriptions on GitHub (`gh label list`) follow the table above. `python tools/docs/issue_states.py` (needs `gh`; run by hand) lists what
-  no longer fits: a closed issue in a planned part, an issue in the wrong milestone, an open issue neither page mentions, and a tracker box that disagrees with the
-  issue.
-- #103 (closed 2026-10-25) holds the history of the first review (2026-10-20); a new full review is only needed if the structure
-  here stops fitting.
+After a batch of issues closes, and at each release: tick the boxes of the open tracker, update the "Next" part of the roadmap, move what no longer
+fits a milestone, and change the "Last reviewed" line on both pages. The label descriptions on GitHub (`gh label list`) follow the table above.
+`python tools/docs/issue_states.py` (needs `gh`; run by hand) lists what no longer fits: a closed issue in a planned part, an issue in the wrong
+milestone, an open issue neither page mentions, and a tracker box that disagrees with the issue.
