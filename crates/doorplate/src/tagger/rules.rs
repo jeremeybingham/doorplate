@@ -36,9 +36,9 @@ use super::{Decision, PlaceCtx, Tag, Tagger};
 use crate::classify::{
     all_digits, has_digit, house_number, is_bare_unit, is_cut_designator, is_fraction,
     is_glued_ordinal, is_grid_number, is_letter, is_lettered_route, is_ordinal, is_route_value,
-    is_slash_pair, is_unit_pair, is_unit_value, is_unit_word, join, longest_at, longest_ending,
-    spelled_number, spelled_ordinal, zero_zip_state, zip_parts, zip_repair, NumberShape,
-    ORDINAL_SUFFIXES,
+    is_slash_pair, is_unit_pair, is_unit_value, is_unit_word, join, join_ref, longest_at,
+    longest_ending, spelled_number, spelled_ordinal, zero_zip_state, zip_parts, zip_repair,
+    NumberShape, ORDINAL_SUFFIXES,
 };
 use crate::lexicon::{MatchKind, Special, MAX_PLACE_WORDS};
 use crate::tokenize::Token;
@@ -170,7 +170,7 @@ impl Tagger<'_> {
                             r.start > lo + w
                                 && self
                                     .lex
-                                    .place(code, &join(&toks[r.start - w..r.start]))
+                                    .place(code, &join_ref(&toks[r.start - w..r.start]))
                                     .is_some()
                         })
                 })
@@ -221,7 +221,7 @@ impl Tagger<'_> {
         // APO / FPO / DPO with a military state code takes the city's place.
         let military_state = state.as_ref().is_some_and(|r| {
             self.lex
-                .state(&join(&toks[r.clone()]))
+                .state(&join_ref(&toks[r.clone()]))
                 .is_some_and(|l| l.value.kind() == StateKind::Military)
         });
         if military_state && ll_start > lo {
@@ -319,7 +319,10 @@ impl Tagger<'_> {
             .and_then(|k| zip_parts(self.text(k)))
             .and_then(|(z5, _)| self.lex.zip_places(z5));
         let (state, hinted) = match state {
-            Some(r) => (self.lex.state(&join(&self.toks[r]))?.value.code(), false),
+            Some(r) => (
+                self.lex.state(&join_ref(&self.toks[r]))?.value.code(),
+                false,
+            ),
             None => match zip {
                 Some(z) => (z.main().state(), false),
                 // No state and no known ZIP: the parser's hint, if any.
@@ -341,7 +344,7 @@ impl Tagger<'_> {
             && self.lex.suffix(self.text(hi - 1)).is_some()
             && self
                 .lex
-                .place(ctx.state, &join(&self.toks[lo..hi]))
+                .place(ctx.state, &join_ref(&self.toks[lo..hi]))
                 .is_none()
     }
 
@@ -361,7 +364,7 @@ impl Tagger<'_> {
             if run.iter().any(|t| has_digit(&t.text) || t.is_hash()) {
                 continue;
             }
-            let Some(hit) = self.lex.place(ctx.state, &join(run)) else {
+            let Some(hit) = self.lex.place(ctx.state, &join_ref(run)) else {
                 continue;
             };
             let agrees = ctx.zip.is_some_and(|z| z.contains(&hit.value));
@@ -388,7 +391,7 @@ impl Tagger<'_> {
     fn state_span(&self, s: usize, e: usize) -> Range<usize> {
         if e > s + 1
             && self.text(s) == "WASHINGTON"
-            && self.lex.state(&join(&self.toks[s + 1..e])).is_some()
+            && self.lex.state(&join_ref(&self.toks[s + 1..e])).is_some()
         {
             s + 1..e
         } else {
@@ -744,8 +747,12 @@ impl Tagger<'_> {
         }
         let seg_start = self.seg_start(start - 1).max(lo);
         let (_, w) = longest_ending(toks, seg_start, start, |s| self.state_ok(s, true))?;
-        let code = self.lex.state(&join(&toks[start - w..start]))?.value.code();
-        let (_, _, repaired) = zip_repair(&join(&toks[start..hi]), zero_zip_state(code))?;
+        let code = self
+            .lex
+            .state(&join_ref(&toks[start - w..start]))?
+            .value
+            .code();
+        let (_, _, repaired) = zip_repair(&join_ref(&toks[start..hi]), zero_zip_state(code))?;
         Some((start, repaired))
     }
 
@@ -782,7 +789,7 @@ impl Tagger<'_> {
                     .join(" "),
             )
             .map(|l| l.value.code())?;
-        let (_, _, repaired) = zip_repair(&join(&self.toks[r.clone()]), zero_zip_state(code))?;
+        let (_, _, repaired) = zip_repair(&join_ref(&self.toks[r.clone()]), zero_zip_state(code))?;
         Some(repaired)
     }
 
@@ -844,11 +851,11 @@ impl Tagger<'_> {
             .filter(|&i| self.tags[i] == Tag::State)
             .map(|i| self.toks[i].clone())
             .collect();
-        let Some(tagged) = code(&join(&field)) else {
+        let Some(tagged) = code(&join_ref(&field)) else {
             return hi;
         };
         match longest_ending(self.toks, lo + 1, hi, |s| self.state_ok(s, false)) {
-            Some((_, w)) if code(&join(&self.toks[hi - w..hi])) == Some(tagged) => {
+            Some((_, w)) if code(&join_ref(&self.toks[hi - w..hi])) == Some(tagged) => {
                 if w == 1 && (self.completes_street(lo, hi) || self.floor_word(lo, hi)) {
                     return hi;
                 }
@@ -1188,7 +1195,7 @@ impl Tagger<'_> {
                 && lex.special(t).is_none()
                 && !lex.is_placeholder(t)
         });
-        if plain && !lex.is_placeholder(&join(&self.toks[l2.clone()])) {
+        if plain && !lex.is_placeholder(&join_ref(&self.toks[l2.clone()])) {
             self.set(l2.clone(), Tag::Attention);
         }
     }
@@ -1348,7 +1355,7 @@ impl Tagger<'_> {
     pub(super) fn country_street_line(&mut self, lo: usize, hi: usize) -> bool {
         if lo >= hi
             || !(lo..hi).all(|k| self.toks[k].seg == self.toks[lo].seg)
-            || !self.lex.is_country(&join(&self.toks[lo..hi]))
+            || !self.lex.is_country(&join_ref(&self.toks[lo..hi]))
         {
             return false;
         }
@@ -1373,7 +1380,7 @@ impl Tagger<'_> {
         // "PO BOX" with no number: a box word, not a street name (#130). It
         // stays in `unparsed`.
         if (lo..hi).all(|k| self.toks[k].seg == self.toks[lo].seg)
-            && (self.lex.is_bare_box_word(&join(&self.toks[lo..hi]))
+            && (self.lex.is_bare_box_word(&join_ref(&self.toks[lo..hi]))
                 || longest_at(self.toks, lo, self.special_hi(lo, hi), |s| {
                     self.lex.special(s).filter(|l| l.value == Special::PoBox)
                 })
@@ -1394,7 +1401,7 @@ impl Tagger<'_> {
         }
         // "N/A - MAGNOLIA AVE": a placeholder prefix before a dash.
         if let Some(d) = (lo..hi).find(|&k| self.toks[k].is_dash()) {
-            if d > lo && self.lex.is_placeholder(&join(&self.toks[lo..d])) {
+            if d > lo && self.lex.is_placeholder(&join_ref(&self.toks[lo..d])) {
                 let rest = &self.toks[d + 1..hi];
                 // "NO ADDRESS - 061S311301002007": a trailing parcel code.
                 if rest.len() == 1 && has_digit(&rest[0].text) {
@@ -1446,7 +1453,7 @@ impl Tagger<'_> {
                 .iter()
                 .all(|t| !has_digit(&t.text) && !t.is_hash() && !t.is_dash())
                 && !word(a)
-                && !lex.is_placeholder(&join(&self.toks[a..b]))
+                && !lex.is_placeholder(&join_ref(&self.toks[a..b]))
         };
         let mut e = self.seg_end(lo, hi);
         if e >= hi || !plain_segment(lo, e) {
@@ -2192,7 +2199,7 @@ impl Tagger<'_> {
     }
 
     fn placeholder(&mut self, lo: usize, hi: usize) -> bool {
-        if self.lex.is_placeholder(&join(&self.toks[lo..hi])) {
+        if self.lex.is_placeholder(&join_ref(&self.toks[lo..hi])) {
             self.set(lo..hi, Tag::Skip);
             self.warn(Warning::Placeholder);
             return true;
@@ -2388,7 +2395,7 @@ impl Tagger<'_> {
         // is a PO Box (#305). `PO RD 5` and `PO 12 MAIN ST` have more after.
         for w in [1, 2] {
             if lo + w < hi
-                && self.lex.is_bare_box_word(&join(&self.toks[lo..lo + w]))
+                && self.lex.is_bare_box_word(&join_ref(&self.toks[lo..lo + w]))
                 && self.toks[lo..lo + w]
                     .iter()
                     .all(|t| t.seg == self.toks[lo].seg)
@@ -2955,7 +2962,7 @@ impl Tagger<'_> {
             // A single letter stays a route (`COUNTY ROAD N 1234`).
             let county = self
                 .lex
-                .highway(&join(&self.toks[h.prefix.clone()]))
+                .highway(&join_ref(&self.toks[h.prefix.clone()]))
                 .is_some_and(|l| matches!(l.value.standard(), "COUNTY ROAD" | "COUNTY HIGHWAY"));
             let route = self.text(h.route);
             if county
@@ -2983,7 +2990,7 @@ impl Tagger<'_> {
             if hinted
                 && self
                     .lex
-                    .highway(&join(&self.toks[h.prefix.clone()]))
+                    .highway(&join_ref(&self.toks[h.prefix.clone()]))
                     .is_none()
             {
                 self.decide(Decision::DefaultState);
@@ -4096,7 +4103,7 @@ impl Tagger<'_> {
                     if let Some((ty, _)) = found.last() {
                         let again = ty.start == j
                             && lex
-                                .unit(&join(&self.toks[ty.clone()]))
+                                .unit(&join_ref(&self.toks[ty.clone()]))
                                 .is_some_and(|l| l.value.abbr() == u.value.abbr());
                         if again {
                             self.set(j - w..j, Tag::Skip);

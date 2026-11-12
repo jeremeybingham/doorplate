@@ -472,7 +472,7 @@ pub(crate) fn tag_fields(
     // dropped as a placeholder instead of being read as a unit or leftover.
     if !l2.is_empty()
         && !l1.is_empty()
-        && lex.is_no_data_line(&crate::classify::join(&toks[l2.clone()]))
+        && lex.is_no_data_line(&crate::classify::join_ref(&toks[l2.clone()]))
     {
         t.set(l2.clone(), Tag::Skip);
         line = l1.clone();

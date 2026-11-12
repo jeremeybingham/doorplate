@@ -59,7 +59,7 @@ pub(crate) fn assemble(
     }
 
     // Runs of equal tags.
-    let mut runs: Vec<(Tag, &[Token])> = Vec::new();
+    let mut runs: Vec<(Tag, &[Token])> = Vec::with_capacity(toks.len());
     let mut start = 0;
     for k in 1..=toks.len() {
         if k == toks.len() || tags[k] != tags[start] {
@@ -71,6 +71,7 @@ pub(crate) fn assemble(
     }
 
     // The address's own state; with none, the parser's `default_state`.
+    addr.source.spans.reserve(toks.len() + 1);
     let own_state = address_state(&runs, lex);
     let state = own_state.or(hint);
     let hinted = own_state.is_none() && hint.is_some();
@@ -83,7 +84,11 @@ pub(crate) fn assemble(
     let mut military_box = None;
     let mut suffix_text = None;
     for (tag, run) in runs {
-        let text = join(run);
+        let text: std::borrow::Cow<'_, str> = match run {
+            [] => std::borrow::Cow::Borrowed(""),
+            [one] => std::borrow::Cow::Borrowed(one.text.as_str()),
+            _ => std::borrow::Cow::Owned(join(run)),
+        };
         let span = run_span(run);
         let record = |addr: &mut ParsedAddress, c: Component| {
             if let Some(s) = span {
@@ -120,7 +125,7 @@ pub(crate) fn assemble(
                             {
                                 format!("{}{}", n.text, l.text)
                             }
-                            _ => text,
+                            _ => text.into_owned(),
                         };
                         set_once(&mut addr.street_number, text);
                     }
@@ -151,7 +156,7 @@ pub(crate) fn assemble(
                     {
                         format!("{} ROAD {}", w.text, n.text)
                     }
-                    _ => text,
+                    _ => text.into_owned(),
                 };
                 let text = us_highway_spelled(run).unwrap_or(text);
                 set_once(&mut addr.street_name, text);
@@ -210,7 +215,7 @@ pub(crate) fn assemble(
                     addr.highway.get_or_insert(Highway {
                         state,
                         prefix,
-                        route: text,
+                        route: text.into_owned(),
                     });
                     record(addr, Component::Highway);
                 }
@@ -242,24 +247,24 @@ pub(crate) fn assemble(
                     _ => text,
                 };
                 if n == 0 {
-                    set_once(&mut addr.unit_number, text);
+                    set_once(&mut addr.unit_number, text.into_owned());
                     record(addr, Component::UnitNumber);
                 } else {
-                    set_once(&mut addr.second_unit_number, text);
+                    set_once(&mut addr.second_unit_number, text.into_owned());
                     record(addr, Component::SecondUnitNumber);
                 }
             }
             Tag::PoBox => record(addr, Component::PoBox),
             Tag::Attention => {
-                set_once(&mut addr.attention, text);
+                set_once(&mut addr.attention, text.into_owned());
                 record(addr, Component::Attention);
             }
             Tag::Building => {
-                set_once(&mut addr.building, text);
+                set_once(&mut addr.building, text.into_owned());
                 record(addr, Component::Building);
             }
             Tag::PoBoxNumber => {
-                set_once(&mut addr.po_box, text);
+                set_once(&mut addr.po_box, text.into_owned());
                 record(addr, Component::PoBox);
             }
             Tag::Route => {
@@ -274,7 +279,7 @@ pub(crate) fn assemble(
                 if let Some(kind) = route_kind.take() {
                     addr.rural_route.get_or_insert(RuralRoute {
                         kind,
-                        route: text,
+                        route: text.into_owned(),
                         box_number: None,
                     });
                     record(addr, Component::RuralRoute);
@@ -282,7 +287,7 @@ pub(crate) fn assemble(
             }
             Tag::BoxNumber => {
                 if let Some(r) = &mut addr.rural_route {
-                    r.box_number.get_or_insert(text);
+                    r.box_number.get_or_insert(text.into_owned());
                     record(addr, Component::RuralRoute);
                 }
             }
@@ -307,7 +312,7 @@ pub(crate) fn assemble(
                 if let Some(kind) = military_kind.take() {
                     addr.military.get_or_insert(MilitaryBox {
                         kind,
-                        number: text,
+                        number: text.into_owned(),
                         box_number: military_box.take(),
                     });
                     record(addr, Component::Military);
@@ -315,9 +320,9 @@ pub(crate) fn assemble(
             }
             Tag::MilitaryBoxNumber => {
                 if let Some(m) = &mut addr.military {
-                    m.box_number.get_or_insert(text);
+                    m.box_number.get_or_insert(text.into_owned());
                 } else {
-                    military_box = Some(text);
+                    military_box = Some(text.into_owned());
                 }
                 record(addr, Component::Military);
             }
@@ -331,7 +336,7 @@ pub(crate) fn assemble(
             // `missing_city` follows, and the key never held a city (#468).
             Tag::City if lex.is_city_placeholder_phrase(&normalize_key(&text)) => {}
             Tag::City => {
-                set_once(&mut addr.city, text);
+                set_once(&mut addr.city, text.into_owned());
                 record(addr, Component::City);
             }
             Tag::State => {
