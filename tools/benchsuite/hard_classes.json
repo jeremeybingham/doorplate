@@ -1,5 +1,5 @@
 {
- "about": "Hard-stratum classes and quotas from the step 2 inventory (docs/benchmark-suite.md, Step 2 results); building names excluded",
+ "about": "Hard-stratum classes and quotas from the step 2 inventory (docs/benchmark-suite.md, "How the mix was chosen"); building names excluded",
  "records": 200000,
  "classes": [
   {

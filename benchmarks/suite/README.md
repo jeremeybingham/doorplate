@@ -1,38 +1,8 @@
 # The benchmark suite: data
 
-`v1/` is the data of the benchmark suite: a fixed, versioned set of labeled US addresses. **How to run it**,
-the two tracks, the strata and the resource profile are in
-[`docs/running-benchmarks.md`](../../docs/running-benchmarks.md#the-benchmark-suite); the specification, the sources and the rules that
-keep it fair are in [`docs/benchmark-suite.md`](../../docs/benchmark-suite.md). Read the fairness rules before
-using a result to decide what to change: the suite is not a work list.
+`v1/` holds the records (`compare.jsonl.gz`, `doorplate.jsonl.gz`, `MANIFEST.md` with counts and checksums), and `v2/` holds
+a scoring file that reuses them. Run it with `python benchmarks/suite.py all` from the repository root
+([how to run it](../../docs/running-benchmarks.md#the-benchmark-suite)); the specification and the fairness rules are in
+[`docs/benchmark-suite.md`](../../docs/benchmark-suite.md). A published version is never edited.
 
-This library formats and parses; it does not validate deliverability. Nothing here says an address exists or
-can receive mail, and no record is a real address point.
-
-```sh
-python benchmarks/suite.py all          # from the repository root
-```
-
-## What is in `v1/`
-
-| File | What |
-|---|---|
-| `compare.jsonl.gz` | The comparison track: an input string and its gold token labels, in usaddress's label set |
-| `doorplate.jsonl.gz` | The doorplate-only track: the same ids, with fields input, several styles of the same record, Pub 28 components and USPS lines |
-| `MANIFEST.md` | Composition counts, the build commit, checksums, the hard classes with their quotas and what was built |
-
-The two tracks share record ids and are reported apart: no figure from the doorplate-only track appears in a
-doorplate-versus-usaddress table. `v1` is never edited after it was published; `v2` is its scoring with the
-letter convention, and later label errors would go into a version of their own.
-
-## What is in `v2/`
-
-No data: `scoring.json` points at the records of `v1` and turns on the letter convention (a letter A to D after the house
-number is right as the number's suffix or as a unit; `MANIFEST.md` has the rule and what it moves). `python benchmarks/suite.py compare --suite benchmarks/suite/v2`
-scores it; `--suite` defaults to `v1` until the release notes move to `v2`.
-
-## Rebuilding it
-
-Maintainers only: `tools/benchsuite/build.py` needs the private data in `local-data/` (the National Address
-Database as Parquet, the TIGER feature names, GeoNames postal codes) and prints its plan before it does
-anything. The hand-labeled shapes are in `tools/benchsuite/hand/`.
+Rebuilding (maintainers only): `tools/benchsuite/build.py` reads the private data in `local-data/` and prints its plan first.

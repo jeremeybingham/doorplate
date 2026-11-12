@@ -9,7 +9,7 @@ names and numbers, and real city, state and ZIP combinations from the NAD sample
 the template, never from a parser. Output records are checked three ways: the labeled tokens must be the
 tokens `usaddress.tokenize` finds in the string, the string must not appear in any exclusion file (the same
 files as the generator's), and no string may repeat. `--check` prints one expansion of every shape instead
-of writing, for the second reading of the labels (docs/benchmark-suite.md, step 4).
+of writing, for the second reading of the labels (docs/benchmark-suite.md, "The hand stratum").
 
 This library formats and parses; it does not validate that an address exists.
 """
