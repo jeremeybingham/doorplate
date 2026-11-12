@@ -3343,6 +3343,17 @@ impl Tagger<'_> {
                 }
             }
         }
+        // `84 ELMHURST PL SO`: `SO` for SOUTH as the last word, right after a
+        // suffix or a grid number, is the postdirectional (#269). Not `SO` in a
+        // name (`SO CAROLINA`, `SO ST`): only the last word, after a suffix.
+        if j >= i + 2 && self.text(j - 1) == "SO" {
+            let prev = self.text(j - 2);
+            let grid = j >= i + 3 && (prev.bytes().all(|c| c.is_ascii_digit()) || is_ordinal(prev));
+            if lex.suffix(prev).is_some() || grid {
+                self.set(j - 1..j, Tag::PostDir);
+                j -= 1;
+            }
+        }
         // Suffix, when a name is left before it.
         let mut suffix_taken = false;
         if j >= i + 2 && lex.suffix(self.text(j - 1)).is_some() {

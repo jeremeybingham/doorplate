@@ -64,6 +64,7 @@ Every parsing bug fixed gets a case here (`CONTRIBUTING.md`).
   `nlt-` (a letter after the house number, `number-letter.jsonl`),
   `cn-` (a compass word naming the street, `compass-street.jsonl`),
   `nn-` (`NO` for north before a street name, `no-north.jsonl`),
+  `so-` (`SO` for south after a street, `so-for-south.jsonl`),
   `nw-` (null words: a bracketed `<NULL>`, and `NaN` or `undefined` as a city, state or ZIP field, `null-words.jsonl`),
   `pz-` (a PO Box or unit number equal to the ZIP, `pobox-zip.jsonl`),
   `bx-` (BOX and a number after a name with no suffix, `box-bare-name.jsonl`),
@@ -481,3 +482,7 @@ Ids `pg-001` to `pg-016` (#291, #516). A parenthesized group at the end of a lin
 ### `no-north.jsonl`
 
 Ids `nn-001` to `nn-011` (#470). `NO` right after the house number and before a plain word or an ordinal is north (`464 NO MAPLE AVE`, `88 NO BROADWAY`, `7 No Eccles St`, `1200 NO 2ND ST`, with a fraction or a postdirectional); the phrases that name a street keep `NO` (`NO NAME RD`, `NO BOTTOM RD`, `NO PONE VALLEY RD NW`, `NO MAN'S LAND RD`) and so does a bare number (`NO 5 RD`). `nu-009` (`1234 NO 52ND ST`) moved from the name to north with the rule.
+
+### `so-for-south.jsonl`
+
+Ids `so-001` to `so-007` (#269). `SO` as the last word of the street, right after a suffix or a grid number (`84 ELMHURST PL SO`, `640 E 3780 SO`), with or without a unit after it, is the postdirectional south; `SO` that opens the name (`SO CAROLINA AVE`), sits inside it (`MAIN SO ST`) or is followed by a name word (`CARY ST SO FLEISHER`) stays in the name (`so-007` records the current result, which is not a claim that it is right).

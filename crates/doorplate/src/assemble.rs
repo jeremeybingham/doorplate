@@ -168,8 +168,15 @@ pub(crate) fn assemble(
                 }
             }
             Tag::PostDir => {
-                if let Some(l) = lex.directional(&text) {
-                    addr.street_dir_suffix.get_or_insert(l.value);
+                // `SO` for SOUTH is tagged by the tagger only after a suffix
+                // or a grid number (#269); it is not in the directional table.
+                let value = if text == "SO" {
+                    Some(crate::types::Directional::S)
+                } else {
+                    lex.directional(&text).map(|l| l.value)
+                };
+                if let Some(v) = value {
+                    addr.street_dir_suffix.get_or_insert(v);
                     record(addr, Component::StreetDirSuffix);
                 }
             }
