@@ -1,16 +1,11 @@
-# API surface audit
+# API surface
 
-Every public name and shape of the Rust crate, the Python package and the command-line tool, with the decision for
-each (keep, changed in 0.4.0, hidden, or later). The audit was made at the start of 0.4.0 and its decisions were made in
-that release; the rest follow from rules that already exist.
-
-The public Rust items were listed from `cargo +nightly rustdoc -p doorplate --all-features -- -Z unstable-options
---output-format json` (59 public items in the crate root, `lexicon` and `corpus`); the Python names from
-`__init__.pyi`; the command line from `doorplate --help` and a run of each form.
+The public names of the Rust crate, the Python package and the command line, how they line up, and what is promised about them. The audit
+behind them is #135 and its pull requests.
 
 ## How the surfaces line up
 
-One name should mean one thing in every language. The mapping, as it stands and as it stays:
+One name means one thing in every language. The names follow Pub 28's words (no `zip` / `zip5` or `unit` / `occupancy` renames).
 
 | Concept | Rust | Python | CLI JSON (`components`) | CSV (`addr_`) | RESO |
 |---|---|---|---|---|---|
@@ -25,207 +20,31 @@ One name should mean one thing in every language. The mapping, as it stands and 
 | Diagnostics | `diagnostics.warnings`, `.unparsed` | `warnings`, `unparsed` | `warnings`, `unparsed` | `warnings`, `unparsed` | |
 | Provenance | `diagnostics.library_version`, `.state_data_version` | `library_version`, `state_data_version` | `provenance.*` | none | |
 
-The names agree; the differences are deliberate (RESO uses its own Data Dictionary names; Rust returns enums and
-structs where Python returns strings and dicts). Decision: **keep all of these names**. No `zip` / `zip5` or
-`unit` / `occupancy` renames: a rename costs every example and doc, and the existing names follow Pub 28's
-words. The mapping above goes into the documentation as the reference.
+The differences are deliberate: RESO uses its own Data Dictionary names, and Rust returns enums and structs where Python returns strings and dicts.
 
-## Rust (`doorplate`)
+## What each surface promises
 
-### Findings
+- **Rust.** Result structs and the enums that can grow are `#[non_exhaustive]` (a `match` needs a `_` arm); `Fields` is built by callers and stays open;
+  `ParseOptions` has builder methods; the tagger's predicates are crate-private. `corpus` is behind a feature and has no semver promise.
+  Errors: only `EmptyInput` and `UnknownDefaultState`; parsing never fails on odd input.
+- **Python.** `__all__` lists the public names; the helper modules `doorplate.pandas`, `.polars`, `.duckdb` and `doorplate.compat` are not re-exported at
+  the top level. `parse` raises `ParseError`; the batch calls return `None` for an empty cell so one empty cell does not stop a batch. The type stubs
+  (`__init__.pyi`) change in the same change as the API.
+- **Command line.** Subcommands, flags and JSON keys are stable; exit codes are 0 success, 1 a usage error, 2 an empty address. The CSV has no
+  `addr_usps_line2` (it would always be empty). JSON key order is not a promise beyond "`input` first".
+- **Warning codes** are stable snake_case strings and `Warning` is `#[non_exhaustive]`: new codes may be added in a minor release, so consumers must not treat
+  the set as closed ([`warnings.md`](warnings.md)).
+- **The key** is versioned ([`key-format.md`](key-format.md)); the slug is for display, not for matching.
+- **Output shapes** (`place`, `usps`, `reso`, the usaddress tags, the highway and rural-route dicts): [`reso-mapping.md`](reso-mapping.md) and
+  [`usaddress-compat.md`](usaddress-compat.md).
 
-1. **Only two types are `#[non_exhaustive]`** (`Component` and `Warning`). Every result struct has all fields
-   public and no `#[non_exhaustive]`, so adding a field is a breaking change for anyone who builds one with a
-   struct literal or matches it exhaustively. This already happened once: #7 added `Diagnostics::state_data_version`.
-   The result types are built by the parser, never by callers, so they can be closed without cost.
-2. **Enums that can grow are closed:** `AddressType`, `ParseError` and `OptionsError` (one variant each),
-   `MatchKind`, `PlaceKind`, `PlaceSource`, `StateKind`, `Special`.
-3. **Inputs are different from results.** `Fields` (five fixed parts of an address) is built by callers and
-   stays open. `ParseOptions` (one field, `default_state`) will grow (the custom layer). `KeyOptions` will not
-   in practice: a new key option changes the key, which is a new key version.
-4. **`Lexicons` had 28 public methods**, including helpers that exist for the tagger (`is_number_marker`,
-   `is_no_data_line`, `is_city_head`, `is_area_word`, `is_building_word`, `is_placeholder`, `is_country`,
-   `place_key`). They were public by accident; they are now crate-private.
-5. **`corpus` is public behind a feature** (`Corpus`, `Report`, `Comparison`, `Case`, `load`, `baseline_path`,
-   `read_baseline`, `write_baseline`): test infrastructure for this repository and `doorplate corpus test`.
-6. `lexicon::{normalize_key, MAX_FORM_WORDS, MAX_PLACE_WORDS}` are public for the build script and the layer.
-7. The Cargo features: `places-us` (default), `rayon`, `corpus`. No feature per state.
+## Deprecation
 
-### Decisions
-
-| Surface | Decision |
-|---|---|
-| Result types: `ParsedAddress`, `Diagnostics`, `SourceInfo`, `DisplayAddress`, `UspsAddress`, `ResoAddress`, `PlaceMatch`, `Highway`, `RuralRoute`, `MilitaryBox`, `ComponentSpan`, `UsaddressTag` | **Done: `#[non_exhaustive]`** (0.4.0, breaking). Fields stay public: reading them is the API |
-| Open enums: `AddressType`, `ParseError`, `OptionsError`, `MatchKind`, `PlaceKind`, `PlaceSource`, `StateKind`, `RouteKind`, `Special` | **Done: `#[non_exhaustive]`** (0.4.0, breaking): a `match` needs a `_` arm |
-| Closed enums: `Directional` (8 compass points), `MilitaryKind`, `MilitaryPostOffice`, `RouteKind` (fixed by USPS), `FieldName` (the five `Fields`), `InputKind` | **Keep closed** |
-| `Fields`, `Span` | **Keep open** (callers build `Fields`; `Span` is two offsets and a field name) |
-| `ParseOptions` | **Done: `#[non_exhaustive]` with builder methods** (`ParseOptions::new().default_state("FL")`); it will grow with the custom layer |
-| `KeyOptions` | **Keep open**: its constructors `property()` and `unit()` are how it is built, and a new option would change the key |
-| `Lexicons` helpers | **Done: the tagger's predicates (`is_*`, `place_key`) are crate-private**; the typed lookups, the place functions and the iterators stay public as the layer interface ([`how-it-works.md`](how-it-works.md), "What a layer can extend") |
-| `corpus` module | **Keep behind its feature, documented as unstable** (no semver promise) |
-| `lexicon::{normalize_key, MAX_*}` | **Keep** (needed by `build.rs`, which includes the same file) |
-| `VERSION` | **Keep** |
-| Features | **Keep** as listed |
-| Error messages | **Keep** (`EmptyInput` and `UnknownDefaultState` are the only errors; parsing never fails on odd input) |
-
-## Python (`doorplate`)
-
-### Findings
-
-1. `__all__` lists exactly the names of `_core` that are public: `ParsedAddress`, `ParseError`, `Parser`, `parse`,
-   `parse_fields`, `parse_many`, `parse_fields_many`, `parse_tokens`, `tag`, `address_type`, `__version__`. The
-   helper modules `doorplate.pandas`, `.polars` and `.duckdb` each export `AVAILABLE_COLUMNS`, `DEFAULT_COLUMNS`
-   and `parse_column` (DuckDB also `register`). `doorplate.compat` is the usaddress-shaped module (`parse`, `tag`,
-   `RepeatedLabelError`); it is not re-exported at the top level.
-2. `ParsedAddress.confidence` is gone; `library_version` and `state_data_version` are properties, also in
-   `to_dict()["provenance"]`.
-3. `repeated_labels()` is a method of `ParsedAddress` in Python and of `TaggedAddress` in Rust. It describes the
-   usaddress-shaped `tag()` output, so it belongs with it.
-4. `parse_many` and `parse_fields_many` return `None` for an empty input, where Rust returns `Err(EmptyInput)`.
-   `parse` raises `ParseError`.
-5. `parse_tokens` cut tokens differently from `usaddress.parse` (`#value`, commas) (fixed in 0.4.0). The difference was in the
-   emitter, not the tokenizer, so no key changed.
-6. `key(unit=False)` in Python is `key(KeyOptions)` in Rust.
-7. `to_usps()` returns `line1`, `line2`, `last_line`; the helper columns are `usps_line1`, `usps_line2`,
-   `usps_last_line`.
-
-### Decisions
-
-| Surface | Decision |
-|---|---|
-| Module names, `__all__`, `Parser(default_state)` | **Keep** |
-| `ParsedAddress` attributes and methods | **Keep** |
-| `repeated_labels()` | **Keep** (a convenience beside `tag()`; moving it would break Python for no gain) |
-| `None` for an empty input in the batch calls | **Keep, document** (the batch must not stop at one empty cell) |
-| `parse_tokens` | **Done: cuts the input into the tokens of `usaddress.tokenize`** (0.4.0, breaking for code that relied on the old cuts; no key or parse change) |
-| Helper columns and the `addr_` prefix | **Keep** (names match the attributes; the prefix keeps columns apart) |
-| Type stubs | **Keep in step**: any change above updates `__init__.pyi` in the same change |
-
-## Command line (`doorplate`)
-
-### Findings
-
-1. Subcommands: `parse` (one address, `--line1`.. fields, or stdin), `parse-file`, `anonymize` (0.4.x: stdin lines or named CSV columns, `--seed`), `corpus test`, `--version`,
-   `--help`. Exit codes: 0 success, 1 a usage error (unknown command or flag), 2 an empty address.
-2. The JSON record: `input`, `components`, `warnings`, `unparsed`, `key`, `key_unit`, `slug`, `usps`, `reso`,
-   `place`, `provenance` (`library_version`, `state_data_version`). `components` carries only the parts present.
-3. The CSV adds `addr_`-prefixed columns after the input columns. It has `addr_usps_line1` and
-   `addr_usps_last_line` but no `addr_usps_line2`. That loses nothing today: `to_usps()` fills `line2` only when
-   it is asked to wrap long lines (`max_line`), which the command line never does, so `line2` is always empty
-   there (the unit stays on `line1`).
-4. `--usps`, `--display`, `--long`, `--usaddress` and `--tag` choose one output form instead of the JSON record.
-
-### Decisions
-
-| Surface | Decision |
-|---|---|
-| Subcommands, flags, JSON keys | **Keep** |
-| Exit codes | **Keep, document**: 0, 1, 2 as above |
-| CSV: no `addr_usps_line2` | **Keep**: the column would always be empty. Revisit if the command line ever gets a line-length option |
-| CLI JSON key order | **Keep**; it is not a promise beyond "`input` first" |
-
-## Warning codes
-
-The 26 codes are stable snake_case strings from `Warning::code`, and `Warning` is `#[non_exhaustive]`: new codes
-may be added in a minor release, and consumers must not treat the set as closed. How reliable each
-code is, measured: [`warnings.md`](warnings.md). New codes come with the parser rules of 0.4.0's second phase. **Keep** the names.
-
-## The key and the slug
-
-The key is `k4:` plus pipe-separated parts (the format and when it changes are in
-[`key-format.md`](key-format.md)); `KeyOptions` has one switch, `include_unit` (`KeyOptions::property()` is the
-property-level key, `KeyOptions::unit()` the unit-level key, which carries the unit numbers). The slug is for display, not for
-matching. **Keep** both; the `ParseOptions` builder above is the only change.
-
-## Output shapes
-
-`place` (name, state, county, kind, source), `usps`, `reso`, the usaddress-shaped tags, and the highway and
-rural-route dicts are documented in [`reso-mapping.md`](reso-mapping.md), [`usaddress-compat.md`](usaddress-compat.md)
-and the READMEs. **Keep.** The result structs become `#[non_exhaustive]`, so a field added later is not a break.
-
-## What a deprecation looks like after 0.4.0
-
-With users, a rename or removal is announced one release ahead: the old name stays and works, the CHANGELOG says
-what replaces it and when it goes, and Python raises a `DeprecationWarning` where the language allows (Rust uses
-`#[deprecated]`). A change that alters a key is never a deprecation: it is a new key version (`k4`, then `k5`). Before 0.4.0
-none of this applies, which is why the breaking changes above are made now and without shims.
-
-## What changes in 0.4.0 and what waits
-
-- **In 0.4.0 (done):** the `#[non_exhaustive]` additions and the `ParseOptions` builder (Rust, breaking, no output
-  change). The key comparison with 0.3.1 must show zero
-  differences after them.
-- **Decided elsewhere:** `confidence` and the state data version (both done).
-- **0.4.0, phase 2 (the parser rules):** anything that alters a key.
+A rename or removal is announced one release ahead: the old name stays and works, the changelog says what replaces it and when it goes, Python raises
+a `DeprecationWarning` where the language allows and Rust uses `#[deprecated]`. A change that alters a key is never a deprecation: it is a new key version.
+While the project is an alpha, names may change before 1.0 with a note in the changelog.
 
 ## Is it stable enough for a beta?
 
-Not yet. The Rust, Python and CLI surfaces above are settled for 0.5.x, but the `k4` key is new in 0.5.0 and has only been checked on
-the project's own data, and a `k5` is planned for an eventual 0.6.0 release. The alpha notice in the four READMEs stays until
-then: a beta that changes its key afterwards is not a beta.
-
-## Added in 0.4.x: the anonymizer
-
-New public API, additive (`version:O`; no key change): Rust `Anonymizer` (`new`, `with_seed`, `seed`, `anonymize`) and
-`Anonymized { text, faithful }`; Python `Anonymizer(seed=None)` (`seed`, `anonymize`, `anonymize_many`), `Anonymized`
-(`text`, `faithful`) and `anonymize(text, seed=None) -> str`; the command `doorplate anonymize`. Decisions (owner chose the
-public form; the rest are the implementer's, open to overruling):
-
-| Question | Decision |
-|---|---|
-| Where it lives | Public API in the core, the Python package and the CLI (owner) |
-| Replacement words | Invented pronounceable words of the same length and case (consonant, vowel, ...), never a lexicon word and never the original |
-| Consistency | The same value gives the same replacement for one seed (duplicates stay duplicates, so a dedupe still works); the default seed is random per run, so the mapping cannot be recomputed from a guess, and `--seed` repeats a run |
-| Names in free text | Strict: every word of two letters or more that is not in a lexicon is replaced (`ATTN`, `C/O` and `PO BOX` stay; names go) |
-| City and ZIP | The city and state the parser finds stay, and so do the first three ZIP digits; the rest of a ZIP is replaced. Swapping a city within its state needs place data for every state and would change the split the parser makes |
-| The check | Each value is parsed before and after; `faithful` is true when the address type, warnings, suffix, directionals, unit designators, state and city are equal and the number, name, unit number and leftover text have the same shape |
-| Errors | The CLI says what went wrong, never a row (`docs/data-policy.md`, principle 4) |
-
-## Added in 0.4.x: the custom layer, part 1 (#3)
-
-New public API, additive (`version:O`); a parse with no layer is unchanged. Rust, behind the `custom-layer` cargo feature (one
-new dependency, `toml`): `CustomLayer` (`from_sources`, `info`), `LayerSources` (`new`, `aliases`, `overrides`; `#[non_exhaustive]`),
-`LayerError` (`problems`). Always present: `LayerInfo { name, version, fingerprint }` (`#[non_exhaustive]`),
-`ParseOptions::custom_layer`, and `Diagnostics::custom_layer`. The command line and Python follow in the next parts. Decisions
-(the implementer's, open to overruling):
-
-| Question | Decision |
-|---|---|
-| How a layer reaches the lookups | `Lexicons` stays `Copy`: it holds `Option<&'static Layer>`, the layer is leaked once and deduplicated by content, and `Lexicons::builtin()` is unchanged. A parser without a layer pays one `Option` check (parse speed measured equal) |
-| Strings | A layer maps spellings onto existing shipped rows, so those lookups need no new strings; only the layer's own name, version and fingerprint are leaked |
-| TOML at run time | A cargo feature, off by default, so the default build keeps no dependencies; the CLI and Python enable it. The core takes text; files are read by the callers |
-| Entry keys | `abbr`/`code`/`standard` name a shipped row; `spellings` lists the new spellings; `kind` is `observed` (default) or `variant`; `form` names a special word's kind; `evidence` or `note` is required on every entry |
-| Conflicts | A shipped spelling or word, a duplicate, an unknown row, an unknown key and a missing `evidence` are load errors, all listed together. Only `overrides.toml` replaces a base reading, and not one the shipped state data already gives |
-| Provenance | `Diagnostics::custom_layer` carries the name, version and an FNV-1a 64 fingerprint of the files' bytes; it is `None` without a layer |
-| A layer is not "state data" | It does not turn on `has_state_data`, so it does not enable the ZIP-city mismatch warning for a state |
-
-### Part 2: places and ZIPs (#3)
-
-`LayerSources::places` and `::zips` (additive; `LayerSources` is `#[non_exhaustive]`). `Lexicons::place`, `is_place`, `is_county`,
-`zip_places` and `places` see a layer's places, counties and ZIPs after the shipped ones. Decisions (the implementer's):
-
-| Question | Decision |
-|---|---|
-| File format | Tab-separated with a header, columns in any order; `places.tsv`: `state`, `name`, `evidence` required, `county`, `kind`, `variants` optional; `zips.tsv`: `zip`, `state`, `place`, `evidence` required, `shared` optional. The state is a column because a layer, unlike a state folder, can span states |
-| Place keys | A layer place is keyed with the layer's own suffix and directional spellings, the way a lookup computes it, so a layer alias (`HGTZ` as `HEIGHTS`) works inside a place name |
-| Conflicts | A key the national list or the shipped state data already has is an error, as is a ZIP the shipped list has; the layer adds, never replaces |
-| ZIP places | A ZIP names its main place (from the national list, the shipped state data or the layer) and optional shared places; `ZipPlaces` now holds either shipped rows or a layer's places |
-| State data | Still not created by a layer: `zip_city_mismatch` is checked only for states with shipped state data |
-| Place length | A name longer than `MAX_PLACE_WORDS` is an error, because the tokenizer would never find it |
-
-### Part 3: the command line and Python (#3)
-
-New public API, additive. Rust: `CustomLayer::from_dir` and `counts`. Command line: `--custom-layer DIR` on `parse`, `parse-file` and
-`corpus test`; `doorplate layer check DIR`; `provenance.custom_layer` in the JSON (`null` without a layer). Python: `load_layer(path)`,
-`CustomLayer` (`name`, `version`, `fingerprint`, `counts()`), `LayerError` (a `ValueError`), `custom_layer=` on `Parser` and every
-module function, `ParsedAddress.custom_layer`, `to_dict()["provenance"]["custom_layer"]`, and the `custom_layer` argument of the
-pandas, Polars and DuckDB helpers. Decisions (the implementer's):
-
-| Question | Decision |
-|---|---|
-| Who reads the files | The core, in `from_dir`, so the command line and Python share one reader and one set of messages (the issue sketched the callers reading them; the core still takes text in `from_sources`) |
-| Folder rules | `layer.toml` required; a `.toml` or `.tsv` file with another name is an error (a misspelled `alias.toml` must not be silently unused); other files are ignored |
-| Errors | One `LayerError` message listing every problem, in Rust, Python (`ValueError`) and the command line (exit 2); a read error names the file and the error kind, never file contents |
-| Python argument | A `CustomLayer` or a folder path (loaded on the spot); the DuckDB helpers load a path once at registration |
-| Provenance in output | `provenance.custom_layer` is always present in the JSON and `to_dict()`, `null` without a layer, so the schema does not change shape |
-| `corpus test` | Takes `--custom-layer` so a layer's author can run their own cases; the project's corpus is for the shipped tables |
+Not yet. The three surfaces are settled, but the key has changed in every key release so far and the `k5` is next. The alpha notice in the four
+READMEs stays until a key has held through a release: a beta that changes its key afterwards is not a beta.

@@ -4,7 +4,7 @@
     python tools/compare/checkpoint.py --baseline-python ../venv031/bin/python                  # the plan
     python tools/compare/checkpoint.py --baseline-python ../venv031/bin/python --confirm        # run it
 
-The release plan (docs/backlog.md) folds the `k3` into 0.4.0 in two phases. The foundation phase must leave every key
+The 0.4.0 release plan folded the `k3` into 0.4.0 in two phases. The foundation phase must leave every key
 unchanged, and this is the single run that shows it: it parses every records file with the released build and with
 the current build (`tools/compare/key_diff.py dump`, each in its own interpreter) and compares the keys row by row
 (`key_diff.py diff`). The current build's dump is then **frozen** as the baseline the `k3` rules are measured
