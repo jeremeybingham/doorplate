@@ -255,13 +255,56 @@ fn any_place_search(key: &str) -> bool {
 
 /// A ZIP's main place row and shared place rows.
 fn find_zip(zip5: &str) -> Option<(u32, &'static [u32])> {
-    let index = tables::ZIP_INDEX;
-    let at = search(index.len() / ZIP_LEN, |n| {
-        Some(record(index, ZIP_LEN, n)?.get(..5)?.cmp(zip5.as_bytes()))
-    })?;
-    let main = le32(record(index, ZIP_LEN, at)?, 5)?;
+    let at = zip_row(zip5.as_bytes())?;
+    let main = le32(record(tables::ZIP_INDEX, ZIP_LEN, at)?, 5)?;
     let shared = find(tables::ZIP_SHARED, zip5).copied().unwrap_or(&[]);
     Some((main, shared))
+}
+
+/// The row of `zip5` in the sorted ZIP index: the index of the 1,000 three-digit prefixes
+/// gives one small bucket to search (#672 B1). Without the index (a record that is not
+/// digits, or a key that is not five bytes) it searches the whole table.
+fn zip_row(b: &[u8]) -> Option<usize> {
+    let index = tables::ZIP_INDEX;
+    let n = index.len() / ZIP_LEN;
+    // Where each three-digit prefix starts in the sorted index; empty when a record is not digits.
+    static STARTS: OnceLock<Vec<u32>> = OnceLock::new();
+    let starts = STARTS.get_or_init(|| {
+        let mut starts = vec![0u32; 1001];
+        for k in 0..n {
+            match record(index, ZIP_LEN, k).and_then(prefix3) {
+                Some(p) => starts[p + 1] += 1,
+                None => return Vec::new(),
+            }
+        }
+        for i in 1..1001 {
+            starts[i] += starts[i - 1];
+        }
+        starts
+    });
+    match (prefix3(b), starts.len(), b.len()) {
+        (Some(p), 1001, 5) => {
+            let lo = starts[p] as usize;
+            let hi = starts[p + 1] as usize;
+            let tail = [b[3], b[4]];
+            let k = search(hi - lo, |k| {
+                let r = record(index, ZIP_LEN, lo + k)?;
+                Some([*r.get(3)?, *r.get(4)?].cmp(&tail))
+            })?;
+            Some(lo + k)
+        }
+        _ => search(n, |k| Some(record(index, ZIP_LEN, k)?.get(..5)?.cmp(b))),
+    }
+}
+
+/// The first three bytes as a number, when they are digits.
+fn prefix3(b: &[u8]) -> Option<usize> {
+    let d = |i: usize| {
+        b.get(i)
+            .filter(|c| c.is_ascii_digit())
+            .map(|c| usize::from(c - b'0'))
+    };
+    Some(d(0)? * 100 + d(1)? * 10 + d(2)?)
 }
 
 /// The places a ZIP belongs to: its main place, and any place it shares with
@@ -2154,6 +2197,22 @@ mod tests {
         );
         assert!(find_zip("63101").is_some());
         assert!(find_zip("6310").is_none() && find_zip("631011").is_none());
+        // The prefix index finds every row the full search finds, and nothing else (#672 B1).
+        let n = tables::ZIP_INDEX.len() / ZIP_LEN;
+        for k in 0..n {
+            let zip = &record(tables::ZIP_INDEX, ZIP_LEN, k).unwrap()[..5];
+            assert_eq!(zip_row(zip), Some(k));
+        }
+        for miss in ["00000", "99999", "63100", "6310a", "abcde", "", "631"] {
+            let full = search(n, |k| {
+                Some(
+                    record(tables::ZIP_INDEX, ZIP_LEN, k)?
+                        .get(..5)?
+                        .cmp(miss.as_bytes()),
+                )
+            });
+            assert_eq!(zip_row(miss.as_bytes()), full, "{miss}");
+        }
         // ... and lookups read every state.
         let stl = LEX.place("MO", "ST LOUIS").unwrap();
         assert_eq!(
