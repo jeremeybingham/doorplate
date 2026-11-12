@@ -347,18 +347,38 @@ pub(crate) fn longest_at<T>(
         .iter()
         .take_while(|t| t.seg == seg && !t.is_hash() && !t.is_dash())
         .count();
-    let mut joined = String::with_capacity(run[..n].iter().map(|t| t.text.len() + 1).sum());
-    let mut cut = [0usize; MAX_FORM_WORDS];
-    for (k, t) in run[..n].iter().enumerate() {
-        if k > 0 {
-            joined.push(' ');
-        }
-        joined.push_str(&t.text);
-        cut[k] = joined.len();
+    if n == 1 {
+        return f(&run[0].text).map(|v| (v, 1));
     }
-    (1..=n)
-        .rev()
-        .find_map(|w| f(&joined[..cut[w - 1]]).map(|v| (v, w)))
+    with_buf(|joined| {
+        let mut cut = [0usize; MAX_FORM_WORDS];
+        for (k, t) in run[..n].iter().enumerate() {
+            if k > 0 {
+                joined.push(' ');
+            }
+            joined.push_str(&t.text);
+            cut[k] = joined.len();
+        }
+        (1..=n)
+            .rev()
+            .find_map(|w| f(&joined[..cut[w - 1]]).map(|v| (v, w)))
+    })
+}
+
+/// Run `g` with an empty string buffer kept per thread, so joining a run allocates nothing once
+/// the buffer has grown. A nested call (`f` calling a matcher again) finds the buffer taken and
+/// gets a buffer of its own.
+fn with_buf<R>(g: impl FnOnce(&mut String) -> R) -> R {
+    thread_local! {
+        static BUF: std::cell::RefCell<String> = const { std::cell::RefCell::new(String::new()) };
+    }
+    BUF.with(|b| match b.try_borrow_mut() {
+        Ok(mut s) => {
+            s.clear();
+            g(&mut s)
+        }
+        Err(_) => g(&mut String::new()),
+    })
 }
 
 /// Longest run of tokens ending just before `end` (and starting at or after
@@ -381,18 +401,22 @@ pub(crate) fn longest_ending<T>(
         .take_while(|t| t.seg == seg && !t.is_hash() && !t.is_dash())
         .count();
     let run = &run[max - n..];
-    let mut joined = String::with_capacity(run.iter().map(|t| t.text.len() + 1).sum());
-    let mut at = [0usize; MAX_FORM_WORDS];
-    for (k, t) in run.iter().enumerate() {
-        if k > 0 {
-            joined.push(' ');
-        }
-        at[k] = joined.len();
-        joined.push_str(&t.text);
+    if n == 1 {
+        return f(&run[0].text).map(|v| (v, 1));
     }
-    (1..=n).rev().find_map(|w| {
-        let from = if w == n { 0 } else { at[n - w] };
-        f(&joined[from..]).map(|v| (v, w))
+    with_buf(|joined| {
+        let mut at = [0usize; MAX_FORM_WORDS];
+        for (k, t) in run.iter().enumerate() {
+            if k > 0 {
+                joined.push(' ');
+            }
+            at[k] = joined.len();
+            joined.push_str(&t.text);
+        }
+        (1..=n).rev().find_map(|w| {
+            let from = if w == n { 0 } else { at[n - w] };
+            f(&joined[from..]).map(|v| (v, w))
+        })
     })
 }
 
@@ -426,6 +450,50 @@ pub(crate) fn is_cut_designator(t: &str, lex: &Lexicons) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::types::Span;
+
+    fn toks(words: &[&str]) -> Vec<Token> {
+        words
+            .iter()
+            .map(|w| Token {
+                text: (*w).to_string(),
+                span: Span {
+                    field: None,
+                    start: 0,
+                    end: 0,
+                },
+                seg: 0,
+                paren: false,
+                group: false,
+            })
+            .collect()
+    }
+
+    #[test]
+    fn longest_runs_join_without_a_shared_buffer_leak() {
+        let t = toks(&["A", "B", "C"]);
+        let any = |s: &str| (!s.is_empty()).then(|| s.to_string());
+        // One-word run, longest first, and the same from the end.
+        assert_eq!(longest_at(&t, 0, 1, any), Some(("A".to_string(), 1)));
+        assert_eq!(longest_at(&t, 0, 3, any), Some(("A B C".to_string(), 3)));
+        assert_eq!(
+            longest_ending(&t, 0, 3, any),
+            Some(("A B C".to_string(), 3))
+        );
+        assert_eq!(
+            longest_ending(&t, 0, 3, |s| (s == "B C").then(|| s.to_string())),
+            Some(("B C".to_string(), 2))
+        );
+        // A nested call from inside `f` gets a buffer of its own and leaves the outer one intact.
+        let got = longest_at(&t, 0, 3, |s| {
+            let inner = longest_ending(&t, 0, 3, |x| (x == "B C").then(|| x.to_string()));
+            assert_eq!(inner, Some(("B C".to_string(), 2)));
+            (s == "A B").then(|| s.to_string())
+        });
+        assert_eq!(got, Some(("A B".to_string(), 2)));
+        // Called again afterwards, the buffer starts empty.
+        assert_eq!(longest_at(&t, 1, 3, any), Some(("B C".to_string(), 2)));
+    }
 
     #[test]
     fn shapes() {
