@@ -20,7 +20,7 @@ the same pull request. The pull request template asks for it.
 | The output fields (components, key, warnings) or a comparison with libpostal (what libpostal's labels map to, the Senzing model, the measured figures) | [`libpostal-compat.md`](libpostal-compat.md) (the mapping table lists doorplate's field names; the figures, once measured, go in [`benchmarks.md`](benchmarks.md) and [`speed-and-size.md`](speed-and-size.md)) |
 | The RESO output | [`reso-mapping.md`](reso-mapping.md) (the table and the choices) and `tests/corpus/reso.jsonl` |
 | Accuracy or speed figures, or the benchmark scripts | [`benchmarks.md`](benchmarks.md); [`docs/running-benchmarks.md`](running-benchmarks.md); the figures in the four READMEs that quote them; [`CHANGELOG.md`](../CHANGELOG.md). The suite's `v1` files are never edited: a fix is a `v2` |
-| A release, or a change that moves a geocode or fastaddress figure | The release tolerance below; [`version-comparison.md`](version-comparison.md) (a new run is a new section, not an edit of an old one) |
+| A release, or a change that moves a geocode or fastaddress figure | The release tolerance below; the per-build geocode table and "Reading the figures across versions" in [`benchmarks.md`](benchmarks.md#reading-the-figures-across-versions) (a new build is a new column, not an edit of an old one) |
 | The benchmark suite (its generator, scoring or composition) | [`benchmark-suite.md`](benchmark-suite.md); [`docs/running-benchmarks.md`](running-benchmarks.md); [`benchmarks/suite/README.md`](../benchmarks/suite/README.md); [`benchmarks.md`](benchmarks.md) |
 | Place data or state data | [`places.md`](places.md) or [`states/fl.md`](states/fl.md); [`data-policy.md`](data-policy.md); [`NOTICE`](../NOTICE) when a source needs credit; [`how-it-works.md`](how-it-works.md) (the lexicon layers) |
 | How private data is used, or what leaves `local-data/` | [`data-policy.md`](data-policy.md); [`docs/tools/harness.md`](tools/harness.md); [`docs/tools/ingest.md`](tools/ingest.md); [`docs/tools/review.md`](tools/review.md) |
@@ -43,8 +43,8 @@ v0.4.1 or between v0.5.0 and v0.5.1), so this is a policy, not a noise margin. B
 
 1. List the strings that changed on the geocode `dev` and `test` splits and on the five fastaddress files between the last
    release and the candidate.
-2. Attribute each lost string to the pull request that made it (`bisect.py`, as in the review of #586;
-   see [`version-comparison.md`](version-comparison.md)).
+2. Attribute each lost string to the pull request that made it (`bisect.py`, as in the review of #586, which holds the
+   run's record).
 3. **The release is blocked** if geocode `dev` loses more than **60 strings net** (0.1 point of 60,522) that are not attributed to a
    decided convention or a recorded, paid trade-off, or if **any** fastaddress `clean` string is lost without an attribution.
 

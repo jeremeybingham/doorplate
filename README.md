@@ -205,22 +205,15 @@ what the input said; the place found is reported beside it. Sources and licenses
 [`docs/places.md`](docs/places.md) and [`docs/states/fl.md`](docs/states/fl.md).
 
 ## Benchmarks
-| | doorplate | usaddress |
+| 0.5.1 | doorplate | usaddress |
 |---|---|---|
-| Whole address right, [benchmark suite](docs/running-benchmarks.md), `natural` stratum (16,001 addresses written in five styles) | 98.5% | 96.1% |
+| Whole address right, [benchmark suite](docs/benchmark-suite.md), `natural` stratum (16,001 addresses written in five styles) | 98.5% | 96.1% |
 | Whole address right, [geocode benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark) dev split (60,522 one-line addresses) | 94.3% | 88.1% |
-| Addresses per second from Python, one thread (suite inputs) | about 43,400 | about 9,300 |
+| Addresses per second from Python, one thread (suite inputs, 4 CPUs) | about 43,400 | about 9,300 |
 
-[usaddress](https://github.com/datamade/usaddress) is DataMade's widely used Python library that labels the parts of a US address with a statistical model.
-
-The geocode benchmark is by Yin, Li and Goldberg: *Is ChatGPT a game changer for geocoding -- a benchmark for geocoding
-address parsing techniques* ([arXiv:2310.14360](https://arxiv.org/abs/2310.14360), 2023).
-
-The suite is 19,586 labeled addresses neither library was made from; it keeps both libraries' blind spots on purpose, so read
-its `natural` stratum as the estimate for ordinary input. Speed is on 4 CPUs, 8 GB (read the ratios). These are measurements on
-a few data sets, not promises for yours. The method, every other figure and the caveats are in
-[accuracy](docs/benchmarks.md) and [speed, size and memory](docs/speed-and-size.md); how to rerun each benchmark is in
-[running the benchmarks](docs/running-benchmarks.md).
+Measured against [usaddress](https://github.com/datamade/usaddress) on a few data sets (the geocode benchmark is Yin, Li and
+Goldberg, [arXiv:2310.14360](https://arxiv.org/abs/2310.14360)), not promises for yours; every figure by build, the
+caveats and how to rerun them: [benchmarks](docs/benchmarks.md) and [speed, size and memory](docs/speed-and-size.md).
 
 ## What it does not do
 

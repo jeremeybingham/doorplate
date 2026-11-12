@@ -76,15 +76,15 @@ tour is [`examples/quickstart.rs`](https://github.com/jeremeybingham/doorplate/b
 
 ## Accuracy and speed
 
-| | doorplate | usaddress |
+| 0.5.1 | doorplate | usaddress |
 |---|---|---|
-| Whole address right, benchmark suite, `natural` stratum (16,001 addresses written in five styles) | 98.5% | 96.1% |
+| Whole address right, [benchmark suite](https://doorplate.readthedocs.io/en/latest/benchmark-suite/), `natural` stratum (16,001 addresses written in five styles) | 98.5% | 96.1% |
 | Whole address right, [geocode benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark) dev split (60,522 one-line addresses) | 94.3% | 88.1% |
-| One address in Rust (median of the corpus shapes, criterion; `cargo bench -p doorplate --bench parse`) | 5 to 12 µs | |
+| One address in Rust (median of the corpus shapes, criterion) | 4 to 11 µs | |
 
-The suite and the geocode benchmark are run from Python (the table compares with the Python library usaddress); see the
-[accuracy](https://doorplate.readthedocs.io/en/latest/benchmarks/) and [speed](https://doorplate.readthedocs.io/en/latest/speed-and-size/) pages for the method and caveats, and [running the benchmarks](https://doorplate.readthedocs.io/en/latest/running-benchmarks/) to rerun them. These are
-measurements on a few data sets, not promises for yours.
+Measured against the Python library [usaddress](https://github.com/datamade/usaddress) on a few data sets, not promises for
+yours; every figure by build, the caveats and how to rerun them: [benchmarks](https://doorplate.readthedocs.io/en/latest/benchmarks/)
+and [speed, size and memory](https://doorplate.readthedocs.io/en/latest/speed-and-size/).
 
 ## The match key
 

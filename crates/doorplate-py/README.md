@@ -123,15 +123,15 @@ The same calls under doorplate's own names are `parse_tokens(s)` and `tag(s)`. T
 
 ## Accuracy and speed
 
-| | doorplate | usaddress |
+| 0.5.1 | doorplate | usaddress |
 |---|---|---|
-| Whole address right, benchmark suite, `natural` stratum (16,001 addresses written in five styles) | 98.5% | 96.1% |
+| Whole address right, [benchmark suite](https://doorplate.readthedocs.io/en/latest/benchmark-suite/), `natural` stratum (16,001 addresses written in five styles) | 98.5% | 96.1% |
 | Whole address right, [geocode benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark) dev split (60,522 one-line addresses) | 94.3% | 88.1% |
-| Addresses per second, one thread (suite inputs) | about 43,400 | about 9,300 |
+| Addresses per second from Python, one thread (suite inputs, 4 CPUs) | about 43,400 | about 9,300 |
 
-The suite is 19,586 labeled addresses that neither library was made from; it also holds both libraries' known blind spots
-on purpose, so read its `natural` stratum as the estimate for ordinary input. Speed is on 4 CPUs, 8 GB. These are measurements on a few data sets, not promises for yours. Method and every other figure:
-[accuracy](https://doorplate.readthedocs.io/en/latest/benchmarks/) and [speed and size](https://doorplate.readthedocs.io/en/latest/speed-and-size/); how to rerun them: [running the benchmarks](https://doorplate.readthedocs.io/en/latest/running-benchmarks/).
+Measured against the Python library [usaddress](https://github.com/datamade/usaddress) on a few data sets, not promises for
+yours; every figure by build, the caveats and how to rerun them: [benchmarks](https://doorplate.readthedocs.io/en/latest/benchmarks/)
+and [speed, size and memory](https://doorplate.readthedocs.io/en/latest/speed-and-size/).
 
 ## Disclaimer
 

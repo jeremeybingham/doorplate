@@ -16,8 +16,9 @@ some, see [Sharing messy data](../CONTRIBUTING.md#sharing-messy-data).
   are likely as the parser improves. Store the version prefix with the keys.
 - **API and warning codes.** Names may change before 1.0, with a note in the changelog.
 - **Accuracy and speed** are measured on a few datasets ([`benchmarks.md`](benchmarks.md))
-  and are not guaranteed for yours. How the figures moved from 0.3.1 to `main`, and the release tolerance, are on
-  [`version-comparison.md`](version-comparison.md).
+  and are not guaranteed for yours. How the figures moved between versions is in
+  [`benchmarks.md`](benchmarks.md#reading-the-figures-across-versions); the release tolerance is in
+  [`change-checklist.md`](change-checklist.md#release-tolerance-for-the-benchmarks).
 
 ## Released
 
@@ -30,7 +31,7 @@ are in [`CHANGELOG.md`](../CHANGELOG.md); the `k4` against the frozen `k3` keys 
 
 The release was proved with probes and a full run: one probe per open issue (35 of 35 open rule issues have a probe or a written reason), counted on 0.4.1 and
 on the cut over 146.6 million Netsyms rows and the seven large sources; the suite's whole-address score rises from 92.3% to 93.4%, the Florida one-line
-check and the geocode `city_diff` do not move, and `parse` was 8 to 12% slower ([`benchmarks.md`](benchmarks.md), "0.4.1 to 0.5.0"); the 0.5.1 round below won that back.
+check and the geocode `city_diff` do not move, and `parse` was 8 to 12% slower ([`speed-and-size.md`](speed-and-size.md#speed-by-version)); the 0.5.1 round below won that back.
 
 **0.4.1 (2026-10-28)**, decided 2026-10-27: everything done in 0.4.x, with **no key change and no parse-rule change** (a custom layer changes parsing only when one is loaded): tooling, documentation and extensibility (tracker #200).
 
@@ -112,7 +113,7 @@ Puerto Rico street-first forms wait for the Puerto Rico research issue. Nothing 
     the docs site move off Material for MkDocs (#233), further performance leads (#418), the post on how rule changes are tested (#491, 0.6.x), and an architecture idea, shape-first parsing (#490).
 - **0.6.x:** the post on how rule and performance changes are tested (#491) moved out of 0.6.0 on 2026-11-05: revisit it with 0.6.1, the speed and performance release, when the release-cycle chart spans more releases and there is another round of improvements to show.
 - **Tooling** (never shipped, never closed): evaluating MessyStreets (#323); the Try page (#434) is in review; the ny-corps CEO ingest (#609, from the major review); the version-comparison follow-ups, per-rule progression and regression scans (#566); the parser showdown repository (#616); benchmarks from a look at fastaddress (#511: a warning-versus-error AUC, a speed column, about 540 labeled messy rows).
-- **Major review follow-ups** (#586, milestone *major review*): the geocode benchmark down 0.1 to 0.2 points since v0.3.1 (#581, answered by `version-comparison.md`; closes with its PR) and the 194,045 warning changes in the NAD sample from PR 494 (#583, answered by B1 and B5; open until the owner closes it).
+- **Major review follow-ups** (#586, milestone *major review*): the geocode benchmark down 0.1 to 0.2 points since v0.3.1 (#581, answered on #586 and in `benchmarks.md`; closes with its PR) and the 194,045 warning changes in the NAD sample from PR 494 (#583, answered by B1 and B5; open until the owner closes it).
 - **More shapes and rules** not tied to a state, known and not yet an issue: named buildings without a building word (`THE GARRETT`, `UPTOWN SQUARE`);
   highway modifiers before a city on one line
   (`NORTH HIGHWAY 71 BUSINESS LOWELL`); a comma after a directional (`3324 N, ANDREWS AVE`); a PO box on line 2 beside a street with no number; a unit
