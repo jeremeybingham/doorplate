@@ -167,6 +167,13 @@ data they were made from. The two checks that would show it, the held-out split 
 - **Fuzzing:** 7,287,243 runs in 7,201 seconds on the parser, 0 crash artifacts.
 - **Changed-rows queue:** 319,008 rows changed between v0.5.1 and `main` in key, unit or warnings; 191,702 were excluded as the
   `missing_city` diagnostic and 30,433 as the letter move, leaving 96,873 for review (#583).
+- **The changed-rows review (read 2026-11-11):** a person judged a 150-card sample of the 319,008 rows (54 `key`, 48 `unit`, 48
+  `warnings`, drawn across seven sources with no source above 40%), the new reading against v0.5.1's. **112 of 150 (75%) were
+  the new reading right.** Of the key and unit cards, 90 of 102 were. The `key` stratum was 53 of 54; the `unit` stratum 37 of 48
+  (3 both wrong, 2 dual, 4 labeled, 2 checked on a map); the `warnings` stratum 22 of 48, with 18 cards the page could not decide
+  (`insufficient`: FMCSA 6, New York corporations 5, IRS 3), 2 junk, 5 labeled and 1 map-checked. These are rates for the sample,
+  not for the 319,008 (NAD has 14 of the 150 cards). The 3 both-wrong unit cards and the labeled cards are the regression candidates; they are grouped by
+  shape and filed as issues in the review of the run (away-run #16), not here.
 
 ## What was decided
 
