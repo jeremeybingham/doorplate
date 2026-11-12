@@ -9,11 +9,12 @@ change to what an input produces needs a new key version.
 
 ### Changed
 
-- **Speed: four measured cuts, no output change** (#672 B6, B5, B3, B2; no key change, no parsing change). Each was checked on the survey's recipe (the first 4,000 `natural` suite inputs, callgrind, release build with frame pointers), with the `ParsedAddress` of all 76,421 public suite inputs byte-identical and 0 keys, warnings or unit keys changed on the seven key-comparison sources. The figures are each step against the one before it:
+- **Speed: five measured cuts, no output change** (#672 B6, B5, B3, B2, B1; no key change, no parsing change). Each was checked on the survey's recipe (the first 4,000 `natural` suite inputs, callgrind, release build with frame pointers), with the `ParsedAddress` of all 76,421 public suite inputs byte-identical and 0 keys, warnings or unit keys changed on the seven key-comparison sources. The figures are each step against the one before it:
   - `longest_at` and `longest_ending` build no heap `String`: a one-word run passes the token text as it is, a longer run joins in a per-thread buffer, and a nested call gets its own buffer (#677). −4.94% instructions, 85.9 to 65.2 allocations per parse.
   - `tokenize` sizes its piece and token lists up front and keeps the words that follow each piece in one shared list, not a `Vec` per piece (#678). −2.47%, 65.2 to 58.7 allocations.
   - `state_base` reads a two-letter spelling from a 26×26 table; longer spellings and a custom layer's states use the lookup as before (#679). −3.91%.
   - `country::strip_trailing` first asks whether any country name can end with the last token (a list of the last words of the names), and joins candidates only if so; with a custom layer loaded the check always says yes, because a layer can add country names (#672 B2). −2.48% instructions, 58.7 to 53.2 allocations.
+  - `find_zip` looks the ZIP's three-digit prefix up in an index of 1,000 starts and searches only that bucket of the sorted ZIP table; a key that is not five digits uses the full search (#672 B1). −0.96% instructions, allocations unchanged (53.2).
 
 ## [0.6.0] - 2026-11-12
 
