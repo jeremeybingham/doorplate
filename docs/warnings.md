@@ -164,9 +164,9 @@ No ZIP in the input.
 
 ### missing_city
 
-No city in the input. `missing_state` is the same for the state; the two are measured together.
+No city in the input, or a city that is a placeholder or null word (`Not stated`, `Unknown`; #468, #419): the city is left empty and the input stays in the original text, so anyone who needs to tell `Not stated` from blank can. `missing_state` is the same for the state; the two are measured together. The name stays `missing_city` (#610): it is the same rule as for the other null words, and a separate placeholder warning would drop the key.
 
-- **Rows in NAD (of 1M):** 66
+- **Rows in NAD (of 1M):** about 195,000 (9,747 of the 50,000-row sample, #583). Most have no ZIP either, so the key is partial, which is the right result
 - **Measured (both codes):** NAD: too few rows. NC voter (308 `missing_city` and 259 `missing_state` rows): number 95.1% and 100%, the one-line form is short of its own number
 
 ---
