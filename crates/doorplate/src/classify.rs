@@ -420,6 +420,14 @@ pub(crate) fn longest_ending<T>(
     })
 }
 
+/// `join`, but a one-token run is borrowed, not copied (#672 B8).
+pub(crate) fn join_ref(run: &[Token]) -> std::borrow::Cow<'_, str> {
+    match run {
+        [one] => std::borrow::Cow::Borrowed(one.text.as_str()),
+        _ => std::borrow::Cow::Owned(join(run)),
+    }
+}
+
 pub(crate) fn join(run: &[Token]) -> String {
     let mut s = String::with_capacity(run.iter().map(|t| t.text.len() + 1).sum());
     for t in run {
