@@ -69,6 +69,7 @@ Every parsing bug fixed gets a case here (`CONTRIBUTING.md`).
   `pz-` (a PO Box or unit number equal to the ZIP, `pobox-zip.jsonl`),
   `bx-` (BOX and a number after a name with no suffix, `box-bare-name.jsonl`),
   `ub-` (a bare BOX after a unit, `unit-then-box.jsonl`),
+  `br-` (street words after a box number, the road the box is on, `box-road.jsonl`),
   `nb-` (PO BOX with no number at the end of a street, `bare-po-box.jsonl`),
   `nm-` (words only on line 2 under a PO Box, `name-after-box.jsonl`),
   `hu-` (a `#` before a unit designator, `hash-before-designator.jsonl`),
@@ -384,6 +385,10 @@ Ids `ub-001` to `ub-006` (#300). A bare `BOX` and its number after a unit (`STE 
 ### `bare-po-box.jsonl`
 
 Ids `nb-001` to `nb-005` (#301). `PO BOX` with no number at the end of a street line is left unparsed, not part of the street name (`90 NE 5 AVE PO BOX`), a unit before it is still read; and the cases that stay (a box with a number, line 2).
+
+### `box-road.jsonl`
+
+Ids `br-001` to `br-006` (#366). Two to four plain words ending in a street suffix after a box number (`PO BOX 190 ELM RD`) are the road the box is on: street name and suffix are filled, `missing_street_number` is raised, and the key stays the box's (`address_type` `po_box`); and the cases that stay unparsed (a repeated suffix, a route number, a word with a digit).
 
 ### `name-after-box.jsonl`
 

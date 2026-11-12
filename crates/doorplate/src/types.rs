@@ -790,7 +790,7 @@ impl ParsedAddress {
     /// Whether the record holds a street address and a PO Box (Pub 28
     /// section 215).
     pub(crate) fn is_dual(&self) -> bool {
-        self.po_box.is_some() && self.has_street()
+        self.po_box.is_some() && self.has_street() && self.street_number.is_some()
     }
 }
 

@@ -1971,7 +1971,7 @@ impl Tagger<'_> {
             // The street needs its house number: `PO BOX 3163` / `GRAND
             // CENTRAL STATION` is a box with a postal station, not a street.
             if !(rest + 1 < hi && house_number(self.text(rest)).is_some()) {
-                return false;
+                return self.road_after_box(m, hi);
             }
             for (r, tag) in m.tags {
                 self.set(r, tag);
@@ -1998,6 +1998,34 @@ impl Tagger<'_> {
             return true;
         }
         false
+    }
+
+    /// `PO BOX 190 ELM RD` (#366): street words after the box number, with no
+    /// house number, are the road the box is on. The box is tagged and the
+    /// words are read as a street; the key stays the box's. Only two to four
+    /// plain words ending in a street suffix, to the end of the line, count:
+    /// a repeated suffix (`CHURCH ST ST`, a station name, `MONITOR STA-392`) or a word with a
+    /// digit is left unparsed as before. Returns whether the line was one.
+    fn road_after_box(&mut self, m: SpecialMatch, hi: usize) -> bool {
+        let rest = m.end;
+        let n = hi - rest;
+        let word = |i: usize| {
+            let t = self.text(i);
+            t.bytes().all(|c| c.is_ascii_alphabetic())
+        };
+        let last = hi - 1;
+        if !(2..=4).contains(&n)
+            || (rest..hi).any(|k| !word(k) || self.toks[k].seg != self.toks[rest - 1].seg)
+            || self.lex.suffix(self.text(last)).is_none()
+            || self.text(last) == self.text(last - 1)
+        {
+            return false;
+        }
+        for (r, tag) in m.tags {
+            self.set(r, tag);
+        }
+        self.street_from(rest, hi);
+        true
     }
 
     /// Whether a designator and its value end right before token `k`

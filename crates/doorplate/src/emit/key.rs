@@ -81,7 +81,7 @@ impl ParsedAddress {
         let mut segs: Vec<String> = Vec::new();
         // A dual address (street and PO Box, Pub 28 section 215) keys on the
         // street.
-        let po_box = self.po_box.as_ref().filter(|_| !self.has_street());
+        let po_box = self.po_box.as_ref().filter(|_| !self.is_dual());
         let form = if let Some(po) = po_box {
             segs.push(esc(po));
             'P'
