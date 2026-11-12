@@ -30,7 +30,7 @@ the same pull request. The pull request template asks for it.
 | A batch of issues closes, an issue is filed, or a release is cut | [`roadmap.md`](roadmap.md) ("Next", the lists, "Last reviewed"); [`backlog.md`](backlog.md); the boxes of the trackers; every open issue has a milestone and labels; then `python tools/docs/issue_states.py`. A new `area:rules` issue also gets a probe in [`tools/harness/probes.py`](../tools/harness/probes.py) or a reason in `NO_PROBE` (`probes.py --coverage` must exit 0) |
 
 The four READMEs are the project README and the three package pages. Links in the three crate READMEs are absolute, and each keeps the
-not-a-validator statement and the Disclaimer section ([`CONTRIBUTING.md`](../CONTRIBUTING.md), "Package pages and READMEs").
+Disclaimer section ([`CONTRIBUTING.md`](../CONTRIBUTING.md), "Package pages and READMEs").
 
 ## Release tolerance for the benchmarks
 
