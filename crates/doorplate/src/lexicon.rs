@@ -477,6 +477,27 @@ macro_rules! find_raw_in {
     }};
 }
 
+/// Slot of a two-letter spelling in [`two_letter_states`] (the bytes must be ASCII letters).
+fn two_letter_slot(a: u8, b: u8) -> usize {
+    usize::from(a.to_ascii_uppercase() - b'A') * 26 + usize::from(b.to_ascii_uppercase() - b'A')
+}
+
+/// The two-letter keys of `STATE_INDEX` as a 26 x 26 table: the entry is the index plus one, 0 for none.
+fn two_letter_states() -> &'static [u16] {
+    static TWO: OnceLock<Vec<u16>> = OnceLock::new();
+    TWO.get_or_init(|| {
+        let mut t = vec![0u16; 26 * 26];
+        for (n, (k, _)) in tables::STATE_INDEX.iter().enumerate() {
+            if let [a, b] = *k.as_bytes() {
+                if a.is_ascii_uppercase() && b.is_ascii_uppercase() {
+                    t[two_letter_slot(a, b)] = n as u16 + 1;
+                }
+            }
+        }
+        t
+    })
+}
+
 /// Access to the compiled lexicon tables. Cheap to copy, `Send + Sync`.
 ///
 /// Every lookup normalizes its input with [`normalize_key`] first, so
@@ -630,7 +651,19 @@ impl Lexicons {
     }
 
     fn state_base(&self, s: &str) -> Option<Lookup<StateCode>> {
-        let (i, kind) = *find_raw_in!(tables::STATE_INDEX, s)?;
+        // A two-letter spelling (most state lookups that hit) is read from a table of the
+        // two-letter keys: no normalizing, no hash, no search (#672 B3). Two bytes that are not
+        // both ASCII letters cannot normalize to a two-letter key (checked by a test over
+        // `STATE_INDEX`), so they are a miss.
+        let (i, kind) = if let [a, b] = *s.as_bytes() {
+            if !(a.is_ascii_alphabetic() && b.is_ascii_alphabetic()) {
+                return None;
+            }
+            let n = usize::from(*two_letter_states().get(two_letter_slot(a, b))?).checked_sub(1)?;
+            tables::STATE_INDEX.get(n)?.1
+        } else {
+            *find_raw_in!(tables::STATE_INDEX, s)?
+        };
         let row = tables::STATES.get(usize::from(i))?;
         Some(Lookup {
             value: StateCode {
@@ -1918,6 +1951,28 @@ mod tests {
             }
         }
         assert!(checked > 10_000, "{checked}");
+    }
+
+    /// The two-letter state table (#672 B3) holds every two-byte key of `STATE_INDEX`, no such key has a
+    /// non-letter, and the lookup agrees with the general path on every two-byte ASCII input.
+    #[test]
+    fn two_letter_state_table_matches_general_lookup() {
+        for (k, _) in tables::STATE_INDEX.iter().filter(|(k, _)| k.len() == 2) {
+            assert!(k.bytes().all(|b| b.is_ascii_uppercase()), "{k}");
+        }
+        let mut hits = 0;
+        for a in 0u8..128 {
+            for b in 0u8..128 {
+                let s = String::from_utf8(vec![a, b]).unwrap();
+                let general =
+                    find_in!(tables::STATE_INDEX, &normalize_key(&s)).map(|(i, k)| (*i, *k));
+                let fast = LEX.state_base(&s).map(|l| (l.value.code, l.kind));
+                let want = general.map(|(i, k)| (tables::STATES[usize::from(i)].code, k));
+                assert_eq!(fast, want, "{s:?}");
+                hits += usize::from(fast.is_some());
+            }
+        }
+        assert!(hits >= 50, "{hits}");
     }
 
     /// The first-word tests of the highway, directional and state tables (#438) never say no to a word
