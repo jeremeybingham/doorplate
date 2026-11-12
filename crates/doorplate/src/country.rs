@@ -27,6 +27,10 @@ const MAX_WORDS: usize = 4;
 /// precede the country.
 pub(crate) fn strip_trailing(toks: &mut Vec<Token>, own_field: bool, lex: &Lexicons) -> bool {
     let n = toks.len();
+    // Every candidate ends at the last token: skip joining text when no country name can end there.
+    if n == 0 || !lex.country_may_end(&toks[n - 1].text) {
+        return false;
+    }
     for words in (1..=MAX_WORDS.min(n)).rev() {
         let k = n - words;
         let tail = &toks[k..];
