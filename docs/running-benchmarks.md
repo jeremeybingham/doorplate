@@ -1,16 +1,9 @@
 # Benchmarks: how to run them
 
-Every way this repository measures doorplate, in one place. The results are in
-[`docs/benchmarks.md`](benchmarks.md); the specification of the standard suite and the rules that
-keep it fair are in [`docs/benchmark-suite.md`](benchmark-suite.md). The overview with the headline
-numbers is in the [project README](../README.md#benchmarks).
-
-This library formats and parses; it does not validate deliverability, and none of these numbers say an
-address exists.
+Results: [`benchmarks.md`](benchmarks.md). The suite's specification and fairness rules:
+[`benchmark-suite.md`](benchmark-suite.md).
 
 ## Which one do I run?
-
-There are three kinds of measure here, and they answer different questions.
 
 | I want to know | Run | Needs |
 |---|---|---|
@@ -53,11 +46,8 @@ machine, the versions and the input, and changes nothing in the repository.
 
 ## The benchmark suite
 
-`benchmarks/suite/v1/` holds 19,586 labeled US addresses and `suite.py` scores doorplate and usaddress on
-them. It is the standard benchmark: a fixed set that ships in the repository, with gold labels that come from
-the source field of each token and not from either parser, a mix fixed before either parser ran on it, and
-one resource profile. It holds both libraries' known blind spots on purpose, so neither is expected to reach
-100%.
+`suite.py` scores doorplate and usaddress on the 19,586 records in `benchmarks/suite/v1/`. What it holds and why
+it is fair: [`benchmark-suite.md`](benchmark-suite.md).
 
 ```sh
 python benchmarks/suite.py all --out suite-report.md       # every track and speed
@@ -77,29 +67,12 @@ right as the number's suffix or as a unit; a rebuilt copy; or the private twin),
 records (a quick test), `--min-group N` changes the smallest group a breakdown prints, `--out FILE` also
 writes the Markdown.
 
-**Two tracks, never mixed.** The comparison track (`compare.jsonl.gz`) gives both libraries the same
-strings and scores their token labels, in usaddress's label set, by character span. The doorplate-only track
-(`doorplate.jsonl.gz`) measures what usaddress cannot do: `parse_fields` on pre-split fields against Pub 28
-components, the `to_usps` lines, whether the same record in several styles gives one `k4` key, and whether
-a wrong parse raises a warning. No figure from the second track appears in a doorplate-versus-usaddress
-table.
+The runner prints the `natural` stratum first and the whole suite after it; read a stratum, not only the blend. It applies
+the resource profile itself (4 logical CPUs, 8 GB, Linux; its header prints what it got), and `suite.py --no-profile`
+runs unpinned for quick development checks (do not quote its speed). On macOS and Windows, run it in Docker with
+`--cpus=4 --memory=8g`; the `workflow_dispatch` job `.github/workflows/suite.yml` runs it on a real runner.
 
-**Four strata.** `natural` (16,001, a random draw by state population) is the estimate for ordinary input.
-`hard` (2,585) holds, for each blind-spot class of either library, the records that fall in it, so it is low
-for both by design. `hand` (1,000) is 90 hand-labeled shapes of messy real forms. The runner prints the
-`natural` rows first and the whole-suite rows after them; read a stratum, not only the blend.
-
-**The resource profile** is **4 logical CPUs and 8 GB of memory, on Linux**, which a GitHub-hosted
-`ubuntu-latest` runner on a public repository and an ordinary laptop both match. The runner applies it itself
-(CPU affinity, `RAYON_NUM_THREADS=4`, an 8 GB address-space limit) and its header prints what it got. Speed is
-reported on 1 thread and on 4, never on all cores, and leads with ratios; accuracy does not depend on the
-profile. On macOS and Windows, run it in Docker with `--cpus=4 --memory=8g`. The `workflow_dispatch` job
-`.github/workflows/suite.yml` runs it on a real runner. The profile belongs to benchmark runs only: builds,
-tests, the harness and the other tools use all the cores and memory of the machine, and `suite.py --no-profile`
-runs the suite unpinned for quick development checks (do not quote its speed).
-
-**What is in `v1/`, and rebuilding it:** [`suite/README.md`](../benchmarks/suite/README.md). `v1` is never edited after it
-was published; `v2` is the same records with the letter convention ([`benchmark-suite.md`](benchmark-suite.md#versions)).
+Data and rebuilding: [`suite/README.md`](../benchmarks/suite/README.md). Versions: [`benchmark-suite.md`](benchmark-suite.md#versions).
 
 ## The geocode benchmark and `accuracy.py`
 

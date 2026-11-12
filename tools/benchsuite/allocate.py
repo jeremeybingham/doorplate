@@ -5,7 +5,7 @@
 
 Every class above 1 in 10,000 records (the two libraries' counts added) gets a floor of 50; the rest of the
 3,000 is shared in proportion to the classes above the floor, working again until none falls under it.
-Building-name classes are left out (docs/benchmark-suite.md, decision 2). Prints the table of the spec.
+Building-name classes are left out (docs/benchmark-suite.md, "How the mix was chosen"). Prints the table of quotas.
 """
 import argparse
 import collections
@@ -43,7 +43,7 @@ def main():
             "doorplate_per_10k": round(t[1] / n * 1e4, 2), "usaddress_per_10k": round(t[2] / n * 1e4, 2)} for t in rows]
     out[0]["quota"] += args.total - sum(o["quota"] for o in out)
     (HERE / "hard_classes.json").write_text(json.dumps(
-        {"about": "Hard-stratum classes and quotas from the step 2 inventory (docs/benchmark-suite.md, Step 2 results); "
+        {"about": "Hard-stratum classes and quotas from the step 2 inventory (docs/benchmark-suite.md, "How the mix was chosen"); "
                   "building names excluded", "records": n, "classes": out}, indent=1))
     for o in out:
         if o["quota"] > args.floor:
