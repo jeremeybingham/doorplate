@@ -7,7 +7,7 @@ The roadmap and the backlog name issues by number (`#236`). They fall behind whe
 week of drift). This reads the numbers in the prose, asks GitHub for every issue's state and milestone once, and
 prints what no longer fits:
 
-- an issue in a *planned* part of the roadmap (Next: 0.6.0, Waiting, Researched) or in the 0.6.0, Later or Tooling row of the
+- an issue in a *planned* part of the roadmap (Next: 0.6.x, Planned: 0.7.0, Waiting, Researched) or in the 0.6.x, 0.7.0, Later or Tooling row of the
   backlog's milestone table that is closed (unless the line says it is done), or whose milestone is another;
 - an open issue that neither page mentions;
 - a tracker (#200, #201) box that is ticked for an open issue, or unticked for a closed one.
@@ -21,15 +21,15 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-TRACKERS = (200, 201, 416)
+TRACKERS = (200, 201, 416, 673)
 DONE = re.compile(r"\b(done|closed|merged|shipped|released|fixed)\b", re.I)
 ISSUE = re.compile(r"(?<![\w/&#\[`-])#(\d{1,4})\b")
 CODE = re.compile(r"(```.*?```|`[^`\n]*`)", re.S)
 # roadmap section heading (start of it) -> the milestone its issues belong to (None: open is enough)
-ROADMAP_SECTIONS = {"Next: 0.6.0": "0.6.0", "Waiting": None, "Researched": None}
+ROADMAP_SECTIONS = {"Next: 0.6.x": "0.6.x", "Planned: 0.7.0": "0.7.0", "Waiting": None, "Researched": None}
 # a bullet in "Waiting" that names a milestone
 WAITING_BULLETS = {"- **Later**": "Later", "- **Tooling**": "Tooling"}
-BACKLOG_ROWS = {"| **0.6.0** |": "0.6.0", "| **Later** |": "Later", "| **Tooling** |": "Tooling"}
+BACKLOG_ROWS = {"| **0.6.x** |": "0.6.x", "| **0.7.0** |": "0.7.0", "| **Later** |": "Later", "| **Tooling** |": "Tooling"}
 
 
 def numbers(text):
