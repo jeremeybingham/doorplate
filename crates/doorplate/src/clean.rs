@@ -164,4 +164,66 @@ mod tests {
     fn dashes_and_quotes() {
         assert_eq!(clean("N/A – Main’s").text, "N/A - MAIN'S");
     }
+
+    /// `clean` before the ASCII branch (#672 C8): every character through the general path.
+    fn clean_general(input: &str) -> Cleaned {
+        let mut text = String::new();
+        let mut src = Vec::new();
+        let mut pending_space = false;
+        for (i, c) in input.char_indices() {
+            let range = (i, i + c.len_utf8());
+            if c.is_whitespace() || c.is_control() {
+                pending_space = !text.is_empty();
+                continue;
+            }
+            if pending_space {
+                text.push(' ');
+                src.push((range.0, range.0));
+                pending_space = false;
+            }
+            let mut push = |s: &str| {
+                src.extend(std::iter::repeat(range).take(s.len()));
+                text.push_str(s);
+            };
+            match fold(c) {
+                Some(s) => push(s),
+                None => {
+                    for u in c.to_uppercase() {
+                        let mut buf = [0u8; 4];
+                        push(u.encode_utf8(&mut buf));
+                    }
+                }
+            }
+        }
+        Cleaned { text, src }
+    }
+
+    /// The ASCII branch gives the text and the source map of the general path, on every
+    /// ASCII byte and on mixes with non-ASCII and spacing characters.
+    #[test]
+    fn the_ascii_branch_matches_the_general_path() {
+        let all: String = (0u8..=127).map(char::from).collect();
+        let pool = [
+            "a", "Z", "7", " ", "\t", "\u{7f}", "\u{0}", ",", "#", "é", "ß", "\u{a0}", "ǅ", "–",
+        ];
+        let mut x: u64 = 0x9E37_79B9_7F4A_7C15;
+        let mut next = move || {
+            x ^= x << 13;
+            x ^= x >> 7;
+            x ^= x << 17;
+            x
+        };
+        let mut inputs = vec![all, String::new(), " ".into()];
+        for _ in 0..20_000 {
+            let mut s = String::new();
+            for _ in 0..(next() % 8) {
+                s.push_str(pool[(next() >> 8) as usize % pool.len()]);
+            }
+            inputs.push(s);
+        }
+        for s in inputs {
+            let (a, b) = (clean(&s), clean_general(&s));
+            assert_eq!((a.text, a.src), (b.text, b.src), "{s:?}");
+        }
+    }
 }

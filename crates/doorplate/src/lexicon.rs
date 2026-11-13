@@ -2374,4 +2374,58 @@ mod tests {
         assert_eq!(normalize_key("\tNew\nYork"), "NEW YORK");
         assert_eq!(normalize_key("..."), "");
     }
+
+    /// The pair reject on a key (#672 C2) never hides a key of the table: every key is found,
+    /// and a lookup of any short string agrees with a plain search.
+    #[test]
+    fn the_pair_reject_keeps_every_key_and_agrees_with_a_plain_search() {
+        for (k, _) in tables::SUFFIX_INDEX {
+            assert!(LEX.suffix(k).is_some(), "{k}");
+        }
+        for (k, _) in tables::UNIT_INDEX {
+            assert!(LEX.unit(k).is_some(), "{k}");
+        }
+        let mut x: u64 = 0x2545_F491_4F6C_DD1D;
+        let mut next = move || {
+            x ^= x << 13;
+            x ^= x >> 7;
+            x ^= x << 17;
+            x
+        };
+        for _ in 0..30_000 {
+            let n = 1 + next() % 6;
+            let s: String = (0..n)
+                .map(|_| char::from(b'A' + (next() % 26) as u8))
+                .collect();
+            assert_eq!(
+                LEX.suffix(&s).is_some(),
+                find(tables::SUFFIX_INDEX, &s).is_some(),
+                "{s}"
+            );
+        }
+    }
+
+    /// `is_known_word` is the six lookups one after another (#672 C5).
+    #[test]
+    fn is_known_word_is_the_six_lookups() {
+        let mut words: Vec<String> = [
+            "ST", "AVE", "STE", "N", "FL", "PO", "HWY", "MAIN", "X", "12", "", "Ste.", "p.o.",
+            "n.e.",
+        ]
+        .iter()
+        .map(|s| s.to_string())
+        .collect();
+        words.extend(tables::SUFFIX_INDEX.iter().map(|(k, _)| k.to_string()));
+        words.extend(tables::UNIT_INDEX.iter().map(|(k, _)| k.to_string()));
+        words.extend(tables::HIGHWAY_INDEX.iter().map(|(k, _)| k.to_string()));
+        for w in words {
+            let six = LEX.suffix(&w).is_some()
+                || LEX.unit(&w).is_some()
+                || LEX.directional(&w).is_some()
+                || LEX.state(&w).is_some()
+                || LEX.special(&w).is_some()
+                || LEX.highway(&w).is_some();
+            assert_eq!(LEX.is_known_word(&w), six, "{w:?}");
+        }
+    }
 }

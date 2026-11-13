@@ -67,3 +67,52 @@ where
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// `place_key_into` before the ASCII branch (#672 C1a).
+    fn general(s: &str) -> String {
+        let mut out = String::new();
+        for word in s.split(|c: char| c.is_whitespace() || c == '-' || c == '/') {
+            let start = out.len();
+            for c in word.chars().filter(|c| c.is_alphanumeric()) {
+                out.extend(c.to_uppercase());
+            }
+            let r = match &out[start..] {
+                "" => continue,
+                "ST" => Some("SAINT"),
+                "FT" => Some("FORT"),
+                "MT" => Some("MOUNT"),
+                _ => None,
+            };
+            if let Some(full) = r {
+                out.truncate(start);
+                out.push_str(full);
+            }
+        }
+        out
+    }
+
+    #[test]
+    fn the_ascii_branch_matches_the_general_loop() {
+        let pool = [
+            "st", "Ft.", "mt", "a", "Z9", " ", "-", "/", ".", "é", "ß", "ǅ", "'", "\u{a0}",
+        ];
+        let mut x: u64 = 0x2545_F491_4F6C_DD1D;
+        let mut next = move || {
+            x ^= x << 13;
+            x ^= x >> 7;
+            x ^= x << 17;
+            x
+        };
+        for _ in 0..20_000 {
+            let mut s = String::new();
+            for _ in 0..(next() % 8) {
+                s.push_str(pool[(next() >> 8) as usize % pool.len()]);
+            }
+            assert_eq!(place_key(&s, |_| None::<&str>), general(&s), "{s:?}");
+        }
+    }
+}
