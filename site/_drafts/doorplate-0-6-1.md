@@ -1,0 +1,173 @@
+---
+layout: post
+title: "doorplate 0.6.1: faster again, and what the benchmarks can no longer tell me"
+description: "doorplate 0.6.1 parses an address in about 27% less time than 0.6.0 with no output changed. How I keep rule changes and speed changes apart, why the accuracy benchmarks have stopped moving, and why I am building a separate, hand-labeled comparison of address parsers."
+date: 2026-11-XX
+tags: [python, rust, address-parsing, performance, benchmarks, open-source]
+---
+
+<!--
+REVIEW NOTES (delete before moving to _posts/)
+- Speed figures are main at 159b3dc (the #684 wall-time retake, 2026-11-12). D1 (#688, -1.89%) and D2 (#689, -1.39%)
+  landed after it, so the release build should be a few percent faster again. Retake at the release commit and replace
+  every [CHECK] figure; the callgrind counts in #672 do not add up cleanly across bases (1,273M at 58d4614,
+  1,295.8M at 159b3dc), so quote the release measurement, not a sum.
+- Accuracy figures are 0.6.0 (a6a7df4). Main's ParsedAddress output is byte-identical to 0.6.0 on all 76,421 suite
+  inputs and 0 keys changed on the seven sources (CHANGELOG [Unreleased]), so they carry over to 0.6.1 unchanged.
+- No real rows anywhere; all example addresses below are invented (taken from the changelog's invented cases).
+-->
+
+![GRAPHIC 1 (hero): doorplate 0.6.1 — 7.95 µs per parse, 27% less than 0.6.0 and 2.7x faster than 0.4.1 on one pinned CPU; no key, warning or unit changed; 98.7% of everyday addresses right]({{ site.baseurl }}/assets/doorplate-0-6-1.png)
+
+[doorplate](https://github.com/jeremeybingham/doorplate) 0.6.1 is out. It is still an alpha: an open-source US address parser written in Rust, with a
+[Python package](https://pypi.org/project/doorplate/) and a [command-line tool](https://crates.io/crates/doorplate-cli). It is a speed release: the
+parser does the same work as 0.6.0 in about 27% less time, and nothing it returns has changed. The `k5` key from 0.6.0 stays.
+
+That makes this a good moment to write down two things I have been doing without explaining: how I keep a rule change and a speed change from
+getting mixed up, and why the accuracy numbers on the benchmarks page have barely moved for three releases even though each release reads
+hundreds of thousands more real addresses correctly. The second one is why I have started a separate project, more on that at the end.
+
+*doorplate parses and formats addresses. It does not validate that an address exists or can receive mail.*
+
+## What changed since 0.6.0
+
+- **About 27% less time per parse** [CHECK at release]. On the benchmark suite's everyday addresses, one pinned CPU, a parse took 10.9 µs in 0.6.0 and
+  takes 7.95 µs now: about 125,700 parses a second against 91,600. Counted in instructions it is about 27.6% fewer [CHECK]. Fourteen separate changes, listed in the
+  [changelog](https://github.com/jeremeybingham/doorplate/blob/main/CHANGELOG.md).
+- **Nothing else.** Every `ParsedAddress` for the 76,421 public suite inputs is byte-identical to 0.6.0's, and over 36.9 million rows from seven public
+  data sets not one key, warning or unit field differs. Stored `k5` keys stay valid.
+
+## Two kinds of change, two rules
+
+Every change to doorplate is one of two kinds, and each has its own rule.
+
+**A rule change** makes the parser read some input differently: `464 NO MAPLE AVE` should be *north* Maple, not a street called "No Maple". A rule
+can change keys, so rules only ship in a key release (`k4` was 0.5.0, `k5` was 0.6.0), and each one is measured row by row against the frozen keys of
+the release before it, over the seven large sources. Each one also needs an invented test case in the corpus and a line in the ledger saying where the
+evidence came from ([`docs/change-checklist.md`](https://github.com/jeremeybingham/doorplate/blob/main/docs/change-checklist.md)).
+
+**A speed change** must change nothing. Keys, warnings and unit fields have to be identical to the previous build over all 36.9 million rows, and the
+change is kept only if it saves about 2% of the instructions, or less if it is exact and cheap. I count instructions with callgrind rather than
+timing, because instruction counts repeat exactly and wall time on my machine moves by 10% to 60% from one day to the next. Since 0.6.0 a CI job runs
+that count on every pull request and fails when it rises more than 1%; it would have caught the 1.3% that the 0.6.0 rules quietly added.
+
+Keeping them apart is what makes the release cycle look the way it does:
+
+![GRAPHIC 2 (the cycle): accuracy and time per parse from 0.3.1 to 0.6.1. Whole-suite accuracy (v1) 92.2, 92.3, 92.3, 93.4, 93.4, 94.4, 94.4%; time per parse rises at each x.0 release and falls at each point release ...]({{ site.baseurl }}/assets/doorplate-0-6-1-cycle.png)
+
+A `0.x.0` release adds rules: accuracy goes up and the parser gets a little slower, because the new rules ask more questions of every input (0.5.0 was 7% to
+9% slower than 0.4.1). The point release after it wins the time back without touching a key. 0.5.1 halved the time per parse; 0.6.1 takes another quarter
+off.
+
+### Where the time went this round
+
+The 0.5.1 lesson held: cut the number of calls and the work nobody uses, rather than rewriting a hot function.
+
+- **Stop building strings nobody keeps.** Looking up a run of words in a table built a heap `String` every time; now a one-word run passes its text as it
+  is and a longer one joins into a reused buffer. With a few similar changes in the tokenizer and the assembler, allocations fell from about 87 to about 42
+  per parse.
+- **Answer common questions from a small table.** A two-letter state is read from a 26-by-26 table; a ZIP is found from its first three digits; the key
+  normalizer classifies bytes with a 256-entry table.
+- **Take the ASCII path first.** Almost every input is plain ASCII, so the character cleanup and the place-name keys check for it before doing full
+  Unicode case mapping.
+- **Skip checks that cannot match.** One pass over the tokens records whether any word could start a highway or a box; when none can, those readers return
+  at once.
+
+And what did not work: a per-token cache of lookups (slower, again; the tagger asks about each token about once), and storing short token text inline
+(a 1.5% gain that needed the core crate's first `unsafe`, so I left it out).
+
+## How a rule earns its place
+
+This is the part that matters for the next section. A rule does not start from a benchmark failure. It starts from a **probe**: a text pattern for a
+suspected problem (say, "a number after `COUNTY ROAD` and a compass pair"), counted over the 36.9 million rows. Then I review 20 to 50 matching rows by hand
+and mark each one: really wrong, ambiguous, some other problem, or a convention the parser reads on purpose. Rows affected is the match count times the
+share that is really wrong. That number, not a benchmark score, decides whether a rule is written, and rules that measure at zero are closed.
+
+The benchmarks come after: the suite, the geocode benchmark (with the splits I never read while writing rules), and held-out sets I have not looked at.
+They are there to catch a rule that breaks something, and to give an outside reader a number. "It improves the benchmark score" is never a reason for a rule.
+
+## The benchmarks have stopped moving
+
+Here is what the accuracy pages show across releases (whole address right, coarse labels, usaddress for comparison):
+
+| | 0.3.1 | 0.4.1 | 0.5.1 | 0.6.0 / 0.6.1 | usaddress |
+|---|---|---|---|---|---|
+| Suite, everyday addresses (`natural`, 16,001) | 98.3% | 98.3% | 98.5% | 98.5% (v2: 98.7%) | 96.1% |
+| Suite, whole (19,586) | 92.2% | 92.3% | 93.4% | 94.4% (v2: 95.6%) | 85.5% |
+| Geocode benchmark, `dev` (60,522) | 94.4% | 94.5% | 94.3% | 94.4% | 88.1% |
+
+![GRAPHIC 3 (the plateau): the same three series as small multiples, 0.3.1 to 0.6.1, each against a band showing its 95% interval; beside them, rows changed in the seven sources per key release ...]({{ site.baseurl }}/assets/doorplate-0-6-1-plateau.png)
+
+The everyday number has moved two tenths of a point in four releases. The geocode number has not moved at all. Meanwhile the `k5` release alone changed
+how doorplate reads hundreds of thousands of real rows: 319,542 NAD rows with a bare number before a unit on line 2, 72,119 Netsyms rows whose first line
+already holds the city, state and ZIP, 15,136 ZIP+4s cut short, 2,593 county roads followed by a compass pair and a unit. On the benchmark suite, the
+0.6.0 rules gained **3 records and lost none**. The 1.1-point jump in the whole suite for 0.6.0 is not those rules at all; it is a label (the
+`W` in `W 615 ELM ST`) that doorplate now reports the way usaddress does.
+
+That is not a sign the benchmarks are bad. It is a sign of where doorplate is. Above about 95%, what is left in a benchmark is mostly three things:
+
+1. **Conventions, not mistakes.** Is the `B` in `123 B ELM ST` part of the house number or a unit? The suite's labels say one thing, the geocode benchmark's
+   another, and doorplate a third (a unit, because 88% of reviewed real rows read it that way, and because `123 B ELM ST` then shares a key with
+   `123 ELM ST APT B`). One letter accounts for all 212 records doorplate "lost" on the suite in 0.6.0, and for most of what the geocode `dev` split lost
+   since 0.4.1. I added a suite `v2` that accepts either reading so the convention stops looking like a regression, but the point stands: at this level
+   a score is partly a vote on whose labels you agree with.
+2. **Input that cannot be read.** Half the geocode addresses carry a deliberately injected error: a dropped city, a misspelled street, a road type written
+   twice. Of the roughly 3,450 `dev` addresses doorplate gets wrong, about 2,400 are those injected errors and about 570 are a "city" that is really a
+   neighborhood no place list holds. Only about 130 are parser errors with a shape I could name. The ceiling is not 100%.
+3. **Shapes too rare to sample.** A rule that fixes 2,593 rows in 99 million NAD rows fixes about one record in 38,000. A random sample of 16,001 everyday
+   addresses will contain none of them, and the 95% interval on 98.5% is already about plus or minus 0.2 points. The suite cannot see the rules I am
+   writing now, and a bigger random sample would not fix that.
+
+So the existing benchmarks still tell me something useful (nothing broke) and stopped telling me the thing I most want to know (is the parser getting
+better at real addresses, and by how much?). The probes and the hand review answer the second question for doorplate, but they are my own counts on my
+own labels, and nobody else can rerun them on another parser.
+
+## Why I am building a parser showdown
+
+That gap is why I started [address-parser-showdown](https://github.com/jeremeybingham/address-parser-showdown) [CHECK: still private; link or name only],
+a separate repository that compares US address parsers on equal terms: doorplate, usaddress and libpostal to start with, and any other parser that
+writes a small adapter. What it does differently from the benchmarks above:
+
+- **A new golden set, labeled by hand.** About 1,500 addresses, sampled and anonymized from public records, written from templates of real shapes, and a
+  share of plain ordinary ones, each one labeled by me with every parser's output hidden. Nothing in it is copied from any parser's tests or training data,
+  or from the suite or the geocode benchmark.
+- **Conventions written down before scoring.** Where two readings are both reasonable (that letter after the house number, `EXT` after a street, a compass
+  word that starts a city), the gold label lists both, with a source for each, and the list is fixed before any parser is run. A convention stops being an
+  error for anyone.
+- **Scored by character spans, not tokens,** so how a parser splits text does not decide its score, and only on what every parser claims to do. Finer labels
+  are a separate track.
+- **The formula fixed first.** The combined Parser Score is merged before the first scored run, and every prediction file is published, so anyone can check the result.
+- **Conflict of interest stated plainly.** I wrote doorplate and I am building the comparison. Blind labeling, a pre-registered formula, a private twin of
+  the golden set (to catch tuning to the public one) and published predictions are the mitigations; the rest is up to readers.
+
+To be clear about what it will not do: 1,500 records cannot tell 98.5% from 98.7% either; near 95% the interval is about a point each way. Its value is
+not resolution. It is that the labels are checked, the conventions are explicit, and the same set runs the same way on every parser, so a gap between
+two parsers means a difference in reading and not a difference in labeling. The rare-shape question stays with the probes, where the denominator is
+36.9 million rows.
+
+The schema and three adapters are done; the golden set is next. Results will go in a report there, and the doorplate benchmark pages will link to it.
+
+## Mistakes that changed the process
+
+A few things went wrong along the way, and each one added a check:
+
+- **The 0.5.0 slowdown was found by the release measurement, not by any pull request.** Each rule cost a little; together they cost 7% to 9%. That is why
+  the CI instruction-count guard now exists.
+- **A comparison figure was copied from a page instead of measured.** Both sides of every A/B are now measured in the same session, and a figure on a page
+  names its build.
+- **A rename missed a CI workflow.** CI caught it; a rename now means a search over every tracked file, including `.github`.
+- **A rule tuned on one benchmark broke spelled-out postdirectionals.** The geocode benchmark abbreviates them, so it could not see the damage. A one-line
+  check on 300,000 Florida records with a known city now runs beside it.
+
+## What this does not prove
+
+The accuracy figures are measured on particular datasets, not promises about yours. The reviewed rows behind each rule are one person's labels. The
+[benchmarks page](https://github.com/jeremeybingham/doorplate/blob/main/docs/benchmarks.md) and the
+[speed page](https://github.com/jeremeybingham/doorplate/blob/main/docs/speed-and-size.md) have every figure here, with its build and method.
+
+Still wanted most: real, messy addresses. `doorplate anonymize` keeps the shape of an address and changes the digits and names, so you can send some
+without sending the addresses.
+
+```sh
+pip install -U doorplate
+```
