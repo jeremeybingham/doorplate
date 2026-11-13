@@ -9,13 +9,20 @@ change to what an input produces needs a new key version.
 
 ### Changed
 
-- **Speed: six measured cuts, no output change** (#672 B6, B5, B3, B2, B1, B4+B7+B8; no key change, no parsing change). Each was checked on the survey's recipe (the first 4,000 `natural` suite inputs, callgrind, release build with frame pointers), with the `ParsedAddress` of all 76,421 public suite inputs byte-identical and 0 keys, warnings or unit keys changed on the seven key-comparison sources. The figures are each step against the one before it:
+- **Speed: twelve measured cuts, no output change** (#672 B6, B5, B3, B2, B1, B4+B7+B8, C6, C2, C1, C5, C8, C10; no key change, no parsing change). Each was checked on the survey's recipe (the first 4,000 `natural` suite inputs, callgrind, release build with frame pointers), with the `ParsedAddress` of all 76,421 public suite inputs byte-identical and 0 keys, warnings or unit keys changed on the seven key-comparison sources. The figures are each step against the one before it:
   - `longest_at` and `longest_ending` build no heap `String`: a one-word run passes the token text as it is, a longer run joins in a per-thread buffer, and a nested call gets its own buffer (#677). −4.94% instructions, 85.9 to 65.2 allocations per parse.
   - `tokenize` sizes its piece and token lists up front and keeps the words that follow each piece in one shared list, not a `Vec` per piece (#678). −2.47%, 65.2 to 58.7 allocations.
   - `state_base` reads a two-letter spelling from a 26×26 table; longer spellings and a custom layer's states use the lookup as before (#679). −3.91%.
   - `country::strip_trailing` first asks whether any country name can end with the last token (a list of the last words of the names), and joins candidates only if so; with a custom layer loaded the check always says yes, because a layer can add country names (#672 B2). −2.48% instructions, 58.7 to 53.2 allocations.
   - `find_zip` looks the ZIP's three-digit prefix up in an index of 1,000 starts and searches only that bucket of the sorted ZIP table; a key that is not five digits uses the full search (#672 B1). −0.96% instructions, allocations unchanged (53.2).
   - `assemble` and the tagger borrow the text of a one-token run (`Cow`, and `join_ref` at the 21 tagger sites that only read it) and allocate only where a field keeps the text; `assemble` also sizes its run list and span list up front (#672 B4, B7, B8). −5.68% instructions (1,516,123,655 to 1,429,950,845), 53.2 to 44.6 allocations, 2,949 to 2,878 bytes per parse.
+  - Section C of #672, measured on main at `58d4614` (1,429,950,959 to 1,273,333,285 instructions for the six together, −10.95%; 44.6 to 42.6 allocations and 2,878 to 2,849 bytes per parse; 0 keys, warnings or unit keys changed on the seven sources). Each test compares the fast path with the code it replaced:
+    - `normalize_key_cow` classifies bytes with a 256-entry table in one branch-free pass (#672 C6). −4.22%.
+    - `find_filtered` rules out a key from its first two bytes before hashing it (#672 C2). −0.65%.
+    - `place_key_into` takes an ASCII branch per character before the general case-mapping (#672 C1). −1.93%.
+    - `known_word` normalizes its word once for the suffix and directional tables (#672 C5). −0.30%.
+    - `clean` takes an ASCII branch per character (#672 C8). −3.89%.
+    - The placeholder tests in `assemble` and `is_placeholder` borrow the key when it is already one (#672 C10). −0.42%, two allocations fewer per parse.
 
 ## [0.6.0] - 2026-11-12
 
