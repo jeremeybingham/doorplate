@@ -145,6 +145,17 @@ measured on 0.5.1 (`c68760e`):
 than the engine does, because the Python object work around a parse is not part of the parser. Wall time on this machine varies
 10% to 60% between days, so these ratios come from alternating builds in one session, best of five.
 
+Wall-time retake, 2026-11-12 (#672): `main` at `159b3dc` (after sections B and C) against the release tags, one session, one pinned CPU
+(`taskset -c 2`), the first 4,000 inputs of the `natural` mix (`profile_loop`, 20 repetitions, best of five), three alternating rounds that
+agreed within about 1%. This input file is not the one behind the 0.5.1 column above, so the two tables do not compare:
+
+| | 0.4.1 | 0.5.0 | 0.6.0 | `main` (`159b3dc`) |
+|---|---|---|---|---|
+| Wall time per parse (µs, rounds 1 to 3) | 20.91, 21.09, 21.18 | 22.78, 22.81, 22.69 | 10.91, 11.00, 10.89 | 7.96, 7.95, 7.84 |
+| Parses per second (median round) | about 47,400 | about 43,900 | about 91,600 | about 125,700 |
+
+`main` takes 27% less time than 0.6.0 (1.37x the parses per second), which matches the callgrind figure (−27.6%). 0.5.1 was not built for this run.
+
 Every build in one session (the release tags, and a 0.6.0 pre-release build at `4b07638`; Python unpinned on a quiet machine):
 
 | | 0.3.1 | 0.4.0 | 0.4.1 | 0.5.0 | 0.5.1 | 0.6.0 pre-release |
