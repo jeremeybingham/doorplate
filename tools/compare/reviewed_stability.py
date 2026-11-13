@@ -159,7 +159,7 @@ def report(doorplate, cards):
     if same_version["cards"]:
         out += [
             f"Of the {same_version['cards']:,} cards stored under this same version string, {same_version['changed']:,} read differently now "
-            "(a development version string such as `0.6.0-dev` is not one build: rules land under it, so some change is expected).", "",
+            "(a development version string such as `0.6.2-dev` is not one build: rules land under it, so some change is expected).", "",
         ]  # fmt: skip
     out += ["### Does the parser flag the rows a person judged wrong? (warning or unparsed text now; comparable cards)", "",
             "| Verdict group | Cards | With a warning | Without |", "|---|---|---|---|"]  # fmt: skip
