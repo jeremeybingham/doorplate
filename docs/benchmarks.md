@@ -13,7 +13,7 @@ Why these figures have barely moved since 0.4.1 while the rules kept changing re
 | [Geocode benchmark](#geocode-benchmark-one-line-no-commas), `dev` split (60,522), whole address right, coarse | 0.6.0 (`a6a7df4`) | 94.4% | 88.1% |
 | Addresses per second, one thread, suite inputs (`parse_tokens` / `usaddress.parse`) | 0.6.1 (`c0976c7`) | 82,331 | 8,880 |
 | Addresses per second, `parse_many` on 4 threads (usaddress has no batch call) | 0.6.1 (`c0976c7`) | 324,740 | |
-| One address in Rust (criterion, median of the corpus shapes) | 0.5.1 (`c68760e`) | 4 to 11 µs | |
+| One address in Rust (criterion, median of the corpus shapes) | 0.6.1 (`9f2418b`) | 2 to 6 µs | |
 | Installed size (wheel / package and dependencies); import time | 0.6.1 (`c0976c7`) | 2.1 MB; 1 ms | 4.8 MB; 10 ms |
 
 Read the suite's `natural` stratum as the estimate for ordinary input, and the geocode `dev` split for one-line street

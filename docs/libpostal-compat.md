@@ -108,7 +108,8 @@ nothing out. `tools/compare/test_libpostal_provider.py` tests the mapping on inv
 ## Measured so far (2026-11-07; one run, before the release)
 
 One run: libpostal commit `25099c5`, the Senzing 1.2.0 parser (data checksum `7afb91d6ef19`), and doorplate on a 0.6.0 pre-release build (`main` on that
-date; libpostal was not re-run for the release). Accuracy is the share of records right (whole address, on the fields both have), with common labels, and the suite's
+date; the accuracy rows were not re-run for the release). The two speed rows are a later run of all three in one session, on
+0.6.1 (`9f2418b`, the same parser code as the tag) on 2026-11-13, usaddress from its cache. Accuracy is the share of records right (whole address, on the fields both have), with common labels, and the suite's
 intervals are 95% Wilson. Speed is the best-of-N method on an otherwise idle machine, with the suite's 4-CPU, 8 GB profile. Timings
 on this machine vary by 10 to 60% from run to run, so read ratios, not absolute figures; the model load time is left out of
 every timing and reported apart.
@@ -125,8 +126,8 @@ every timing and reported apart.
 | Geocode benchmark `dev` (60,522) | 94.3% | 88.1% | 80.0% |
 | libpostal's own US tests (53 cases) | 86.8% | 90.6% | 96.2% |
 | Senzing's test set, US rows (2,233) | 97.6% | 90.0% | 98.6% |
-| Strings per second, suite, one thread | 63,708 (`parse_tokens`); 82,399 (`parse_many`) | 9,297 | 15,546 (one process) |
-| Strings per second, suite, four workers | 265,523 (`parse_many`, four threads) | n/a | 58,230 (four processes) |
+| Strings per second, suite, one thread | 76,748 (`parse_tokens`); 105,293 (`parse_many`) | 9,297 | 14,337 (one process) |
+| Strings per second, suite, four workers | 304,753 (`parse_many`, four threads) | n/a | 46,524 (four processes) |
 | Memory after loading | 17 MB | n/a | 2,950 MB per process |
 
 How to read it:
@@ -147,11 +148,11 @@ How to read it:
 - **Senzing's test set.** It is the nearest thing to held-out data, but nearly all of it is OpenStreetMap address tags written out as
   one line: clean, uniform input, close to what libpostal was trained on. libpostal leads doorplate there by one point, with intervals
   that overlap at the edges. Senzing's own US failure rate (4.58% in v1.2.0) uses a definition of failure that is not stated.
-- **Cost.** On one thread doorplate takes about a quarter of libpostal's time, and on four threads or processes it is about 4.6 times
-  as fast (the speed figures are from one run). libpostal's README claims 10 to 30 thousand
-  addresses per second per thread; this is inside that range. The Senzing model is about 3 GB per process and loads in about 4 s; the
+- **Cost.** On one thread doorplate (`parse_tokens`) takes about a fifth of libpostal's time, and on four threads or processes it is
+  about 6.5 times as fast (0.6.1; the speed figures are from one run). libpostal's README claims 10 to 30 thousand
+  addresses per second per thread; this is inside that range. The Senzing model is about 3 GB per process and loads in 4 to 6 s; the
   default model (1.8 GB of data) was not measured. libpostal runs in its own processes, because a `parse_address` call holds the
-  Python GIL, and each process loads its own copy of the model: four workers took 11,764 MB together against 253 MB for doorplate's
+  Python GIL, and each process loads its own copy of the model: four workers took about 11,760 MB together against 253 MB for doorplate's
   `parse_many` on all threads of one process.
 
 ## What a fair comparison needs

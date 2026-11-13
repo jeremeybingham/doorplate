@@ -1,7 +1,7 @@
 # Speed, size and memory
 
-Figures: 0.6.1 (`c0976c7`), measured 2026-11-13, unless a table names another build (the criterion, command-line,
-DataFrame, DuckDB and fastaddress figures were not re-run for the release); one machine (Intel Core i9-9900K, Linux on WSL2), so read
+Figures: 0.6.1 (`c0976c7`), measured 2026-11-13, unless a table names another build (the command-line, DataFrame and DuckDB
+figures were not re-run for the release); one machine (Intel Core i9-9900K, Linux on WSL2), so read
 the ratios. Accuracy is on [Benchmarks: accuracy](benchmarks.md); how to rerun these scripts and profile the engine is in
 [Running the benchmarks](running-benchmarks.md).
 
@@ -9,26 +9,26 @@ the ratios. Accuracy is on [Benchmarks: accuracy](benchmarks.md); how to rerun t
 
 ### Rust (criterion, `crates/doorplate/benches/parse.rs`)
 
-0.5.1 (`c68760e`), not re-run for 0.6.0. Median of a measurement run, one thread unless noted, unpinned (it varies by several percent from run to run).
+0.6.1 (`9f2418b`, the same parser code as the tag), 2026-11-13. Median of a measurement run, one thread unless noted, unpinned (it varies by several percent from run to run).
 
 | Benchmark | Time |
 |---|---|
-| `parse`, street only (`1305 SUNWOOD DR`) | 4.1 µs |
-| `parse`, PO box | 7.5 µs |
-| `parse`, military | 6.0 µs |
-| `parse`, highway | 7.7 µs |
-| `parse_fields` (street, city, state, ZIP) | 10.7 µs |
-| `parse`, unit and ZIP+4 | 10.6 µs |
-| `parse`, full one line | 10.8 µs |
-| The corpus inputs, one by one | 12.4 ms |
-| The same, `parse_many` (rayon, 14 threads) | 2.7 ms |
-| `to_usps` | 0.60 µs |
-| `to_reso` | 1.13 µs |
-| `key` | 0.44 µs |
-| `slug` | 1.21 µs |
+| `parse`, street only (`1305 SUNWOOD DR`) | 2.3 µs |
+| `parse`, PO box | 4.2 µs |
+| `parse`, military | 3.3 µs |
+| `parse`, highway | 4.3 µs |
+| `parse_fields` (street, city, state, ZIP) | 6.0 µs |
+| `parse`, unit and ZIP+4 | 5.6 µs |
+| `parse`, full one line | 6.0 µs |
+| The corpus inputs, one by one | 9.6 ms |
+| The same, `parse_many` (rayon, 14 threads) | 2.1 ms |
+| `to_usps` | 0.62 µs |
+| `to_reso` | 1.20 µs |
+| `key` | 0.34 µs |
+| `slug` | 0.84 µs |
 
-Parsing is by far the biggest cost; the emitters are about a tenth of a parse
-or less, and a `ParsedAddress` builds them only when asked.
+Parsing is the biggest cost; each emitter takes 0.3 to 1.2 µs against 2 to 6 µs
+for a parse, and a `ParsedAddress` builds them only when asked.
 
 The command-line tool: `doorplate parse-file` over 440,288 distinct Florida
 addresses (line 1, line 2, city, state and ZIP columns, a random sample of the
@@ -62,21 +62,22 @@ the boundary is not the bottleneck. usaddress 0.5.16 was run live.
 #### Against fastaddress
 
 [`fastaddress`](https://github.com/vinvomero/fastaddress) (MIT, 0.1.0) runs usaddress's trained model in Rust with the
-same Python API, so it is the fairer speed baseline. One run on a 0.6.0 pre-release build (`48206ef`, not re-run for the release), pinned to 4 CPUs, 100,000
-addresses, best of five; the usaddress rows from the cache:
+same Python API, so it is the fairer speed baseline. One run on 0.6.1 (`9f2418b`, the same parser code as the tag), 2026-11-13,
+pinned to 4 CPUs, 100,000 addresses, best of five; usaddress run live:
 
 | | Corpus inputs | Geocode addresses |
 |---|---|---|
-| doorplate `parse` (a `ParsedAddress`) | 9.9 µs | 11.9 µs |
-| doorplate `parse_tokens` (labels, the shape of `usaddress.parse`) | 12.5 µs | 14.7 µs |
-| doorplate `parse_many` (4 threads) | 3.5 µs | 4.0 µs |
-| fastaddress `parse` (labels) | 9.3 µs | 11.0 µs |
-| fastaddress `tag` (a dict) | 9.7 µs | 11.2 µs |
-| usaddress `parse` | 88.0 µs | 93.4 µs |
-| usaddress `tag` | 96.4 µs | 97.8 µs |
+| doorplate `parse` (a `ParsedAddress`) | 8.4 µs | 9.5 µs |
+| doorplate `parse_tokens` (labels, the shape of `usaddress.parse`) | 11.2 µs | 12.3 µs |
+| doorplate `parse_many` (4 threads) | 2.7 µs | 3.4 µs |
+| fastaddress `parse` (labels) | 9.6 µs | 11.8 µs |
+| fastaddress `tag` (a dict) | 9.9 µs | 11.8 µs |
+| usaddress `parse` | 90.4 µs | 97.1 µs |
+| usaddress `tag` | 97.2 µs | 102.1 µs |
 
-Like for like (labels), fastaddress takes 0.75x the time of `parse_tokens`; doorplate `parse` returns the whole
-`ParsedAddress` in about the time fastaddress takes for the labels, and `parse_many` is the only batch call of the three.
+Like for like (labels), fastaddress takes 0.86x the time of `parse_tokens` on the corpus inputs and 0.96x on the geocode
+addresses (0.75x on a 0.6.0 pre-release build); doorplate `parse` returns the whole `ParsedAddress` in less time than
+fastaddress takes for the labels, and `parse_many` is the only batch call of the three.
 fastaddress gave exactly usaddress's output on every input tried, so its accuracy is usaddress's.
 
 Building DataFrames (`crates/doorplate-py/benchmarks/bench_batch.py`, 100,000
@@ -145,18 +146,7 @@ measured on 0.5.1 (`c68760e`):
 than the engine does, because the Python object work around a parse is not part of the parser. Wall time on this machine varies
 10% to 60% between days, so these ratios come from alternating builds in one session, best of five.
 
-Wall-time retake, 2026-11-12 (#672): `main` at `159b3dc` (after sections B and C) against the release tags, one session, one pinned CPU
-(`taskset -c 2`), the first 4,000 inputs of the `natural` mix (`profile_loop`, 20 repetitions, best of five), three alternating rounds that
-agreed within about 1%. This input file is not the one behind the 0.5.1 column above, so the two tables do not compare:
-
-| | 0.4.1 | 0.5.0 | 0.6.0 | `main` (`159b3dc`) |
-|---|---|---|---|---|
-| Wall time per parse (µs, rounds 1 to 3) | 20.91, 21.09, 21.18 | 22.78, 22.81, 22.69 | 10.91, 11.00, 10.89 | 7.96, 7.95, 7.84 |
-| Parses per second (median round) | about 47,400 | about 43,900 | about 91,600 | about 125,700 |
-
-`main` takes 27% less time than 0.6.0 (1.37x the parses per second), which matches the callgrind figure (−27.6%). 0.5.1 was not built for this run.
-
-Every release tag in one session, 2026-11-13, at the release (`v0.6.1`, `5a72a70`): the same recipe as the retake (`profile_loop` from
+Every release tag in one session, 2026-11-13, at the release (`v0.6.1`, `5a72a70`): one pinned CPU (`profile_loop` from
 `v0.6.1` built into each tag with frame pointers, `taskset -c 2`, the first 4,000 `natural` inputs, 20 repetitions, best of five, three
 alternating rounds that agreed within about 2%), and callgrind on the same binaries (one pass of five loops over the 4,000 inputs,
 divided by 20,000 parses). These are the figures in the [0.6.1 blog post](https://jeremeybingham.github.io/doorplate/2026/11/13/doorplate-0-6-1.html):
@@ -171,17 +161,19 @@ divided by 20,000 parses). These are the figures in the [0.6.1 blog post](https:
 the #672 steps on their own bases. The rule releases cost time: 0.5.0 took 10% longer than 0.4.1, 0.6.0 6% longer than 0.5.1 (4% more
 instructions).
 
-Every build in one session (the release tags, and a 0.6.0 pre-release build at `4b07638`; Python unpinned on a quiet machine):
+Python `parse` for every release tag in one session, 2026-11-13 (each tag built with `maturin develop --release`; the
+golden-corpus inputs of `main` repeated to 100,000, best of five, the median of three alternating rounds that agreed within
+about 2%; unpinned on a quiet machine), with each release's size (from earlier runs, not re-measured in this session):
 
-| | 0.3.1 | 0.4.0 | 0.4.1 | 0.5.0 | 0.5.1 | 0.6.0 pre-release |
-|---|---|---|---|---|---|---|
-| Python `parse`, golden-corpus inputs, per second | 54,788 | 66,611 | 65,311 | 57,489 | 104,870 | 103,030 |
-| Instructions for 4,000 inputs (callgrind, millions) | | 3,094 | 3,117 | 3,395 | 1,706 | 1,728 |
-| CLI binary, release as built / stripped (MB) | 5.0 / 4.4 | 5.5 / 4.6 | 6.1 / 5.1 | 6.2 / 5.2 | 5.2 / 5.0 | 5.2 / 5.0 |
-| Wheel (MB) | 2.0 | 2.0 | 2.0 | 2.0 | 2.0 | 2.0 |
+| | 0.3.1 | 0.4.0 | 0.4.1 | 0.5.0 | 0.5.1 | 0.6.0 | 0.6.1 |
+|---|---|---|---|---|---|---|---|
+| Python `parse`, golden-corpus inputs, per second | 53,710 | 66,037 | 64,734 | 57,333 | 107,380 | 101,919 | 134,761 |
+| CLI binary, release as built / stripped (MB) | 5.0 / 4.4 | 5.5 / 4.6 | 6.1 / 5.1 | 6.2 / 5.2 | 5.2 / 5.0 | 5.2 / 5.0 | 5.2 / 5.0 |
+| Wheel (MB) | 2.0 | 2.0 | 2.0 | 2.0 | 2.0 | 2.1 | 2.1 |
 
-The 0.6.0 release run (`a6a7df4`; a different session, so not comparable with the table above) gave 97,769 per second for
-Python `parse` on the same inputs; the 0.6.1 run (`c0976c7`, the Python table above) gives 123,826 per second, unpinned. The 0.6.1 build has a 5.2 / 5.0 MB CLI binary and a 2.1 MB wheel.
+From Python, 0.6.1 makes 1.32x the parses per second of 0.6.0 (24% less time per call), less than the engine's 27% because
+the Python object work around a parse did not change. The [Python table](#python) above (a different run, 123,826 per
+second for the same row) is the one with the other calls.
 
 The benchmark suite's own `speed` command on 0.6.1 (`c0976c7`, 2026-11-13; the 19,586 inputs, the 4-CPU profile, best of 3; peak memory 158 MB
 with usaddress loaded, 155 MB for doorplate alone; usaddress run live, so its rate differs from the 9,297 of the 0.6.0 run, cached from 2026-10-31):
