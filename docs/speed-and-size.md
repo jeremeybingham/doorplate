@@ -156,6 +156,21 @@ agreed within about 1%. This input file is not the one behind the 0.5.1 column a
 
 `main` takes 27% less time than 0.6.0 (1.37x the parses per second), which matches the callgrind figure (−27.6%). 0.5.1 was not built for this run.
 
+Every release tag in one session, 2026-11-13, at the release (`v0.6.1`, `5a72a70`): the same recipe as the retake (`profile_loop` from
+`v0.6.1` built into each tag with frame pointers, `taskset -c 2`, the first 4,000 `natural` inputs, 20 repetitions, best of five, three
+alternating rounds that agreed within about 2%), and callgrind on the same binaries (one pass of five loops over the 4,000 inputs,
+divided by 20,000 parses). These are the figures in the [0.6.1 blog post](https://jeremeybingham.github.io/doorplate/2026/11/13/doorplate-0-6-1.html):
+
+| | 0.3.1 | 0.4.0 | 0.4.1 | 0.5.0 | 0.5.1 | 0.6.0 | 0.6.1 |
+|---|---|---|---|---|---|---|---|
+| Wall time per parse (µs, median round) | 25.75 | 21.08 | 21.01 | 23.16 | 10.56 | 11.18 | 8.10 |
+| Parses per second (median round) | 38,831 | 47,428 | 47,604 | 43,179 | 94,661 | 89,436 | 123,453 |
+| Instructions per parse (callgrind) | about 187,200 | about 156,500 | about 157,500 | about 171,600 | about 86,200 | about 89,700 | about 62,700 |
+
+0.6.1 takes 27% less time than 0.6.0 (1.38x the parses per second) and 30% fewer instructions; the changelog's −27.6% is the sum of
+the #672 steps on their own bases. The rule releases cost time: 0.5.0 took 10% longer than 0.4.1, 0.6.0 6% longer than 0.5.1 (4% more
+instructions).
+
 Every build in one session (the release tags, and a 0.6.0 pre-release build at `4b07638`; Python unpinned on a quiet machine):
 
 | | 0.3.1 | 0.4.0 | 0.4.1 | 0.5.0 | 0.5.1 | 0.6.0 pre-release |
