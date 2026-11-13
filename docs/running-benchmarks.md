@@ -141,6 +141,13 @@ Judge engine speed by instruction counts, which repeat exactly; wall time on a s
    of calls before rewriting a hot function.
 5. Quote wall time only from alternating builds in one session on one pinned CPU, best of five.
 
+**The CI guard (#672).** Every pull request runs `tools/perf/callgrind_guard.sh BASE_REF` (the `perf-guard` job in
+`.github/workflows/ci.yml`): it builds `profile_loop` at the base and at the head, counts instructions under callgrind
+on the first 4,000 inputs of the `natural` mix (5 passes, 20,000 parses) and fails when the head executes more than 1%
+more. Both builds run in the same job, so a compiler update cannot trip it, and the counts repeat to within a few instructions. A rule that
+costs more on purpose (the 0.6.0 rules added +1.3%) says why in the pull request and takes the label `perf-ok`, which
+skips the job. Run it locally with the same command (needs `valgrind`; a few minutes).
+
 Allocations per parse: `crates/doorplate/examples/profile_alloc.rs` (a counting allocator) and `benchmarks/profile_heap.py`
 (groups a `heaptrack` run by the innermost `doorplate::` frame). `benchmarks/profile_fold.py` folds a `perf record -g`
 profile into tables by function and by stage, where `perf` can resolve symbols.
