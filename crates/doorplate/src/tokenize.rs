@@ -651,7 +651,7 @@ impl Piece<'_> {
             return;
         }
         // Split around '#'.
-        if inner.contains('#') {
+        if inner.as_bytes().contains(&b'#') {
             let mut s = ia;
             for (i, c) in text[ia..ib].char_indices() {
                 if c == '#' {
@@ -682,24 +682,28 @@ impl Piece<'_> {
         if s >= e {
             return;
         }
-        let t = &self.cleaned.text[s..e];
-        let t = t.trim_matches(|c| c == '-' || c == '.');
+        let full = &self.cleaned.text[s..e];
+        // Byte tests, not `&str` or closure patterns (#672 D2): `-` and `.` are ASCII, so the
+        // cuts fall on character boundaries. `t` starts with neither, so its first match in
+        // `full` is right after the leading run.
+        let lead = full.bytes().take_while(|&c| c == b'-' || c == b'.').count();
+        let t = trim_end_dash_dot(&full[lead..]);
         if t.is_empty() {
             return;
         }
-        let s2 = if t.len() == e - s {
-            s
-        } else {
-            s + self.cleaned.text[s..e].find(t).unwrap_or(0)
-        };
+        let s2 = s + lead;
         let e2 = s2 + t.len();
-        let whole = self.cleaned.text[pa..pb].trim_matches(|c: char| !c.is_alphanumeric()) == t
-            && !self.cleaned.text[pa..pb].contains('#');
-        let (sa, sb) = if whole { (pa, pb) } else { (s2, e2) };
-
         // Every reading below needs a hyphen, slash, period or colon in the token: a token of
         // letters and digits only (most of them) goes straight to the glue rules (#440).
         let plain = t.bytes().all(|c| c.is_ascii_alphanumeric());
+        let whole = if plain && pb - pa == t.len() {
+            // The piece is the token: nothing to trim, and no `#` in letters and digits.
+            true
+        } else {
+            piece_is_whole(&self.cleaned.text[pa..pb], t)
+        };
+        let (sa, sb) = if whole { (pa, pb) } else { (s2, e2) };
+
         if !plain {
             // A hyphenated route: `GA-25`, `US-385`, `CR-48`, `I-65` (Appendix F
             // writes these with a space). Only after a highway prefix or a state
@@ -786,6 +790,34 @@ impl Piece<'_> {
         }
         self.emit(normalize(t), sa, sb, paren);
     }
+}
+
+/// `t` without trailing `-` and `.` bytes.
+fn trim_end_dash_dot(t: &str) -> &str {
+    let n = t
+        .bytes()
+        .rposition(|c| c != b'-' && c != b'.')
+        .map_or(0, |i| i + 1);
+    &t[..n]
+}
+
+/// Whether the piece, trimmed of non-alphanumeric characters, is `t` and holds no `#`.
+fn piece_is_whole(piece: &str, t: &str) -> bool {
+    if piece.as_bytes().contains(&b'#') {
+        return false;
+    }
+    if piece.is_ascii() {
+        let b = piece.as_bytes();
+        let Some(first) = b.iter().position(u8::is_ascii_alphanumeric) else {
+            return t.is_empty();
+        };
+        let last = b
+            .iter()
+            .rposition(u8::is_ascii_alphanumeric)
+            .unwrap_or(first);
+        return &piece[first..=last] == t;
+    }
+    piece.trim_matches(|c: char| !c.is_alphanumeric()) == t
 }
 
 /// Drop periods except between digits; drop quotes.
@@ -1055,6 +1087,33 @@ fn known_word(t: &str, lex: &Lexicons) -> bool {
 mod tests {
     use super::*;
     use crate::clean::clean;
+
+    /// The `&str`-pattern forms the byte tests replaced (#672 D2).
+    const SAMPLES: &[&str] = &[
+        "", "-", ".", "-.", "A", "-A.", "..A-B..", "A.B", "12-3", "#5", "A#", "(A)", "-#-", "ST.",
+        "É", "-É-", "ÉA", "A.É.", "\"A\"", "1/2", "A_", "_A_", ".5.", "12 ", " 12",
+    ];
+
+    #[test]
+    fn trim_end_dash_dot_matches_trim_end_matches() {
+        for s in SAMPLES {
+            assert_eq!(
+                trim_end_dash_dot(s),
+                s.trim_end_matches(['-', '.']),
+                "{s:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn piece_is_whole_matches_the_str_form() {
+        for p in SAMPLES {
+            for t in SAMPLES {
+                let old = p.trim_matches(|c: char| !c.is_alphanumeric()) == *t && !p.contains('#');
+                assert_eq!(piece_is_whole(p, t), old, "{p:?} {t:?}");
+            }
+        }
+    }
 
     /// `glue_place` before #428: the two vetoes first, then the cut search.
     fn glue_place_vetoes_first(
