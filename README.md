@@ -27,7 +27,7 @@ receive mail. Pub 28 formatting is not deliverability, and validation needs
 postal-service-certified data; warnings such as `zip_city_mismatch` are hints about the
 input, not verdicts.
 
-> **Alpha release (0.6.0).** Expect rough edges; names in the API and the warning codes may still change before 1.0.
+> **Alpha release (0.6.1).** Expect rough edges; names in the API and the warning codes may still change before 1.0.
 > The match key is versioned (`k5:`) and later versions will probably change it, so store
 > the prefix with your keys and plan to re-key. `k5` has only been checked on the project's own data (public records). Accuracy and speed are measurements on a few datasets, not guarantees.
 >
@@ -106,7 +106,7 @@ caveats and how to rerun them: [benchmarks](docs/benchmarks.md) and [speed, size
 
 ## Where it is going
 
-An alpha; a `k5` key is planned for 0.6.0. What is planned, what depends on what and what is deliberately not
+An alpha; the `k5` key shipped with 0.6.0 and is frozen, and the next key change is a `k6` (planned for 0.7.0). What is planned, what depends on what and what is deliberately not
 planned (validation, geocoding, international addresses) is in [`docs/roadmap.md`](docs/roadmap.md).
 
 ## Documentation

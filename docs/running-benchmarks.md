@@ -92,7 +92,7 @@ python benchmarks/accuracy.py
 geocode benchmark (a part is skipped when its source is not there). Which split to believe: the rules and the
 place data were first written while reading the `test` split's errors, so `test` over-states accuracy; `dev`
 and `train` were not read for that, but `dev`'s most common error classes have since been looked at. So fix
-against `train`, check on `dev`, and use `dev` as the estimate (94.4% on the 0.6.0 release build, see [`benchmarks.md`](benchmarks.md), for data of that shape:
+against `train`, check on `dev`, and use `dev` as the estimate (94.4% on the 0.6.1 release build, see [`benchmarks.md`](benchmarks.md), for data of that shape:
 one line, US street addresses, a city and a state).
 
 ### Fixing against `train` without overfitting
