@@ -18,10 +18,9 @@ What each release changed is in [`CHANGELOG.md`](../CHANGELOG.md).
 
 Tracker #673, ranked by estimated impact. Point releases carry speed, tooling and documentation, never a key change.
 
-- **Speed:** #672 (measured cuts, one small pull request per item, each key-neutral against v0.6.0), then #418 (the release build profile first).
+- **Speed:** #672 (the one speed tracker, which holds #418 and #490: measured cuts, one small pull request per item, each key-neutral against v0.6.0; next the shape-first fast path, D1, then `Piece::sub` byte tests and buffer reuse). A CI guard fails a pull request that adds more than 1% instructions per parse (#685).
 - **Netsyms city and ZIP mismatches:** #671 (a research check first).
 - **Fixes and docs:** #652 (a letter written twice), #233 (the docs site must leave Material for MkDocs before 2027-05-05).
-- **Decide later in 0.6.x:** #490 (shape-first parsing).
 - **On hold:** #215 (libpostal comparison), #491 (the blog post).
 
 ## Planned: 0.7.0, the `k6`
