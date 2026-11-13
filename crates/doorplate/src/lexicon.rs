@@ -766,12 +766,36 @@ impl Lexicons {
             })
     }
 
+    /// Whether `first` is the first word of any special word key, one word or more (`BOX`, `PO`,
+    /// `GENERAL`): false means no special word starts here (#672).
+    pub(crate) fn special_may_occur(&self, first: &str) -> bool {
+        static FIRST: OnceLock<(Filter, Vec<&'static str>)> = OnceLock::new();
+        self.layer.is_some()
+            || may_start_any(&FIRST, first, || {
+                tables::SPECIAL_INDEX.iter().map(|(k, _)| *k).collect()
+            })
+    }
+
     /// [`Self::special_run_may_start`] for highway prefixes (`STATE ROAD`, `COUNTY HWY`), in the base
     /// table and in the state data's (`FL|STATE ROAD`) (#438).
     pub(crate) fn highway_run_may_start(&self, first: &str) -> bool {
         static FIRST: OnceLock<(Filter, Vec<&'static str>)> = OnceLock::new();
         self.layer.is_some()
             || may_start_multi(&FIRST, first, || {
+                let state = tables::STATE_HIGHWAY_INDEX
+                    .iter()
+                    .map(|(k, _)| k.split_once('|').map_or(*k, |(_, w)| w));
+                let base = tables::HIGHWAY_INDEX.iter().map(|(k, _)| *k);
+                base.chain(state).collect()
+            })
+    }
+
+    /// Whether `first` is the first word of any highway prefix key, one word or more, in the base
+    /// table or a state's (`I`, `HWY`, `COUNTY`, `SR`): false means no prefix starts here (#672).
+    pub(crate) fn highway_may_occur(&self, first: &str) -> bool {
+        static FIRST: OnceLock<(Filter, Vec<&'static str>)> = OnceLock::new();
+        self.layer.is_some()
+            || may_start_any(&FIRST, first, || {
                 let state = tables::STATE_HIGHWAY_INDEX
                     .iter()
                     .map(|(k, _)| k.split_once('|').map_or(*k, |(_, w)| w));
@@ -1486,6 +1510,32 @@ fn may_start_multi(
         (Filter::new(words.iter().copied()), words)
     });
     // The first two bytes rule out most words without normalizing (#424's test, on the first words).
+    if filter.rules_out_raw(first) {
+        return false;
+    }
+    let key = normalize_key_cow(first);
+    if key.is_empty() {
+        return true;
+    }
+    filter.may_contain(&key) && find_str(words, &key)
+}
+
+/// [`may_start_multi`] for the first word of every key, one-word keys too (the feature bits of
+/// #672 D1: a necessary condition for the table to match at or after this token).
+fn may_start_any(
+    cell: &'static OnceLock<(Filter, Vec<&'static str>)>,
+    first: &str,
+    keys: impl FnOnce() -> Vec<&'static str>,
+) -> bool {
+    let (filter, words) = cell.get_or_init(|| {
+        let mut words: Vec<&'static str> = keys()
+            .into_iter()
+            .map(|k| k.split_once(' ').map_or(k, |(w, _)| w))
+            .collect();
+        words.sort_unstable_by(|a, b| cmp_keys(a, b));
+        words.dedup();
+        (Filter::new(words.iter().copied()), words)
+    });
     if filter.rules_out_raw(first) {
         return false;
     }

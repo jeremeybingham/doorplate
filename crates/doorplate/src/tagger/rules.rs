@@ -2176,6 +2176,9 @@ impl Tagger<'_> {
     }
 
     fn box_line(&self, k: usize, hi: usize, bare: bool) -> Option<SpecialMatch> {
+        if !self.features.box_word {
+            return None;
+        }
         if let Some(m) = self.campus_box(k, hi) {
             return Some(m);
         }
@@ -3144,6 +3147,12 @@ impl Tagger<'_> {
     /// the route alone (`KENTUCKY 440`); those are tried last, so `NE HWY 5`
     /// keeps NE as the predirectional.
     fn highway_at(&self, i: usize, hi: usize) -> Option<HighwayAt> {
+        // No highway prefix anywhere in the input (#672): only the bare form (a state, then a
+        // number, at most three words of state name) is left, so look for the number first.
+        let prefixed = self.features.highway_prefix;
+        if !prefixed && !(i + 1..hi.min(i + 4)).any(|k| all_digits(self.text(k))) {
+            return None;
+        }
         let lex = self.lex;
         // A state data may add prefix spellings (`SR` in Florida).
         let state = self.places.map(|c| c.state);
@@ -3174,7 +3183,7 @@ impl Tagger<'_> {
                 route < hi && (is_route_value(r) || is_lettered_route(r) || county && letters(r));
             ok.then_some((p..p + w, route))
         };
-        if let Some((prefix, route)) = try_at(i) {
+        if let Some((prefix, route)) = prefixed.then(|| try_at(i)).flatten() {
             return Some(HighwayAt {
                 pre: i..i,
                 state: i..i,
@@ -3183,7 +3192,10 @@ impl Tagger<'_> {
             });
         }
         let dir_end = end_for(i, &|t| lex.directional_run_may_start(t));
-        if let Some((_, w)) = longest_at(self.toks, i, dir_end, |s| lex.directional(s)) {
+        if let Some((_, w)) = prefixed
+            .then(|| longest_at(self.toks, i, dir_end, |s| lex.directional(s)))
+            .flatten()
+        {
             if let Some((prefix, route)) = try_at(i + w) {
                 return Some(HighwayAt {
                     pre: i..i + w,
@@ -3196,7 +3208,7 @@ impl Tagger<'_> {
         let state_end = end_for(i, &|t| lex.state_run_may_start(t));
         let (_, w) = longest_at(self.toks, i, state_end, |s| self.highway_state(s))?;
         let state = i..i + w;
-        if let Some((prefix, route)) = try_at(i + w) {
+        if let Some((prefix, route)) = prefixed.then(|| try_at(i + w)).flatten() {
             return Some(HighwayAt {
                 pre: i..i,
                 state,

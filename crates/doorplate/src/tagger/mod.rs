@@ -148,6 +148,41 @@ pub(crate) struct Tagger<'a> {
     hint: Option<&'static str>,
     /// Whether a place found under the hint decided a tag.
     hint_used: std::cell::Cell<bool>,
+    /// Feature bits of the input, set once by one pass over the tokens (#672 D1): a rule group
+    /// whose bit is clear cannot match anywhere in the input and is skipped.
+    features: Features,
+}
+
+/// What the input could contain, as a necessary condition for a rule group to match (a bit may be
+/// set when the group then finds nothing; a clear bit means it cannot match).
+#[derive(Clone, Copy)]
+struct Features {
+    /// Some token is the first word of a highway prefix key (`HWY`, `COUNTY`, `I`, a state's
+    /// `SR`). With the bit clear, `highway_at` can only match the bare `KY 1207` form.
+    highway_prefix: bool,
+    /// Some token is the first word of a special word (`PO BOX`, `BOX`, `RR`) or a campus box
+    /// word: `box_line` can match only then.
+    box_word: bool,
+}
+
+impl Features {
+    fn of(toks: &[Token], lex: Lexicons) -> Self {
+        let (mut highway_prefix, mut box_word) = (false, false);
+        for t in toks {
+            let w = t.text.as_str();
+            highway_prefix = highway_prefix || lex.highway_may_occur(w);
+            box_word = box_word
+                || lex.special_may_occur(w)
+                || matches!(
+                    w,
+                    "BOX" | "BX" | "CPO" | "UPO" | "CPU" | "UNX" | "UNY" | "CMB" | "CB"
+                );
+        }
+        Self {
+            highway_prefix,
+            box_word,
+        }
+    }
 }
 
 /// The state whose data is used to find the city, and the ZIP's places.
@@ -181,6 +216,7 @@ impl<'a> Tagger<'a> {
             places: None,
             hint,
             hint_used: std::cell::Cell::new(false),
+            features: Features::of(toks, lex),
         }
     }
 
