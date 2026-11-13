@@ -14,7 +14,7 @@ to download.
 This library formats and parses; it **does not validate** that an address exists or
 can receive mail.
 
-> **Alpha release (0.6.0).** Expect rough edges; names in the API and the warning codes may still change before 1.0.
+> **Alpha release (0.6.1).** Expect rough edges; names in the API and the warning codes may still change before 1.0.
 > The match key is versioned (`k5:`) and later versions will probably change it, so store
 > the prefix with your keys and plan to re-key. `k5` has only been checked on the project's own data (public records). Accuracy and speed are measurements on a few datasets, not guarantees.
 >
