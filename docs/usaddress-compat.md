@@ -25,6 +25,7 @@ those runs with the one import changed ([`examples/usaddress_migration.py`](../e
 | `parse(s)` | a label for every token | `parse_tokens`: a token the parser did not place has the label `None` (code that indexes a dict by label or calls a string method on it needs a guard) |
 | `tag(s)` | `OrderedDict` and `Street Address`, `PO Box`, `Ambiguous` or `Intersection` | the same shape; never `Intersection` (intersections are not modeled: the second street goes to `unparsed`, and `doorplate.parse` raises `intersection_detected`) |
 | A label in two runs | raises `RepeatedLabelError` | joins the runs; `tag(s, strict=True)` raises `RepeatedLabelError` (`original_string`, `parsed_string`, `message`, and `repeated_label(s)`), so existing `try/except` keeps its meaning when asked. On the 8,108 in-scope strings of usaddress's test files usaddress raises on 5 and doorplate on none of them (it labels those differently); the reverse never happens |
+| A unit written twice (`123 B ELM ST B`, `STE 5` and `SUITE 5` on two lines) | no special case | `parse_tokens` labels both copies as the unit; `tag` shows the unit once, so it is not a repeated label (the parse warns `repeated_text`) |
 | `tag_mapping` | renames labels | the same; two labels sent to one name are joined when neighbours and a repeat otherwise |
 | Blank input | `[]` and `({}, "Ambiguous")` | the same (the top-level `parse_tokens` and `tag` raise `ParseError`) |
 | `tokenize`, `TAGGER`, `LABELS`, training | present | not provided: there is no model |

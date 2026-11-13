@@ -7,6 +7,10 @@ change to what an input produces needs a new key version.
 
 ## [Unreleased]
 
+### Fixed
+
+- `parse_tokens()` and `to_usaddress_tags()` label the dropped copy of a unit written twice (`123 B ELM ST B`, `STE 5` with `SUITE 5` on line 2) as the unit, where it had no label; `tag()` still shows the unit once (#652). Fields and keys are unchanged.
+
 ### Changed
 
 - **Speed: twelve measured cuts, no output change** (#672 B6, B5, B3, B2, B1, B4+B7+B8, C6, C2, C1, C5, C8, C10; no key change, no parsing change). Each was checked on the survey's recipe (the first 4,000 `natural` suite inputs, callgrind, release build with frame pointers), with the `ParsedAddress` of all 76,421 public suite inputs byte-identical and 0 keys, warnings or unit keys changed on the seven key-comparison sources. The figures are each step against the one before it:
