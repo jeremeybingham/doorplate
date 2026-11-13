@@ -53,6 +53,21 @@ jobs:
           # A missing token or a Codecov outage never fails a pull request.
           fail_ci_if_error: false
 
+  # Parse speed (#672 D4): instructions per parse under callgrind, the pull request against its base, on a fixed
+  # 4,000-input file from the public suite. Fails above +1%; the label `perf-ok` skips it for an intended increase
+  # (say why in the pull request). Counts repeat to within a few instructions, so no noise margin. Run it locally: tools/perf/callgrind_guard.sh BASE_REF.
+  perf-guard:
+    if: github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'perf-ok')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: sudo apt-get update && sudo apt-get install -y valgrind
+      - run: tools/perf/callgrind_guard.sh ${{ github.event.pull_request.base.sha }} 1.0
+
   sdist:
     runs-on: ubuntu-latest
     steps:
