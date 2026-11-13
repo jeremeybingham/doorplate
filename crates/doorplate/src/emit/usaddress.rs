@@ -158,14 +158,25 @@ impl ParsedAddress {
     /// are joined with a space in input order, the ends of each value are
     /// stripped of spaces, commas and semicolons, and tokens the parse did
     /// not place are left out. A label in two separate runs is joined and
-    /// reported ([`TaggedAddress::repeated_labels`]) instead of failing.
+    /// reported ([`TaggedAddress::repeated_labels`]) instead of failing. The
+    /// copy of a unit the parse dropped (`123 B ELM ST B`, `repeated_text`)
+    /// is labeled in [`Self::to_usaddress_tags`] but left out here (#652).
     /// Built from [`Self::to_usaddress_tags`]; it never re-parses.
     pub fn tag(&self) -> TaggedAddress {
+        let tags = self.to_usaddress_tags();
+        // Whether each token is the dropped copy of a unit; a `#` goes with the value after it.
+        let mut copy = vec![false; tags.len()];
+        for k in (0..tags.len()).rev() {
+            copy[k] = self.is_dropped_copy(&tags[k].span)
+                || tags[k].text == "#" && copy.get(k + 1).copied().unwrap_or(false);
+        }
         let mut runs: Vec<(&'static str, Vec<String>)> = Vec::new();
         let mut repeated: Vec<&'static str> = Vec::new();
         let mut last: Option<&'static str> = None;
-        for t in self.to_usaddress_tags() {
-            let Some(label) = t.label else { continue };
+        for (t, copy) in tags.into_iter().zip(copy) {
+            let Some(label) = t.label.filter(|_| !copy) else {
+                continue;
+            };
             match runs.iter_mut().find(|(l, _)| *l == label) {
                 Some((_, toks)) => {
                     if last != Some(label) && !repeated.contains(&label) {
@@ -224,6 +235,22 @@ impl ParsedAddress {
         }
         fix_unlabeled(&mut tags);
         tags
+    }
+
+    /// Whether `tok` is text of a second unit the parse dropped as a copy of the first: the
+    /// assembler keeps its spans (so its tokens are labeled as a unit) but empties the second
+    /// unit's fields (#550, #652).
+    fn is_dropped_copy(&self, tok: &Span) -> bool {
+        self.second_unit_number.is_none()
+            && self.second_unit_type.is_none()
+            && self.source.spans.iter().any(|c| {
+                matches!(
+                    c.component,
+                    Component::SecondUnitType | Component::SecondUnitNumber
+                ) && c.span.field == tok.field
+                    && c.span.start < tok.end
+                    && tok.start < c.span.end
+            })
     }
 
     /// The label of the first component span overlapping `tok`.
@@ -620,6 +647,56 @@ mod tests {
             ["OccupancyType", "OccupancyIdentifier"]
         );
         assert_eq!(t.warnings(), [crate::Warning::RepeatedLabel]);
+    }
+
+    #[test]
+    fn a_unit_written_twice_labels_both_copies() {
+        // The letter after the number is the unit written again at the end (#652): both copies
+        // are the unit, and `tag` keeps one.
+        assert_eq!(
+            labels("123 B Elm St B, Tampa FL 33601"),
+            [
+                "AddressNumber",
+                "OccupancyIdentifier",
+                "StreetName",
+                "StreetNamePostType",
+                "OccupancyIdentifier",
+                "PlaceName",
+                "StateName",
+                "ZipCode",
+            ]
+        );
+        let t = Parser::new()
+            .parse("123 B Elm St B, Tampa FL 33601")
+            .unwrap()
+            .tag();
+        assert_eq!(t.get("OccupancyIdentifier"), Some("B"));
+        assert!(t.repeated_labels().is_empty());
+        // The same unit on line 1 and line 2.
+        let t = Parser::new()
+            .parse("45 Oak Ave Apt 6, Apt 6")
+            .unwrap()
+            .tag();
+        assert_eq!(t.get("OccupancyType"), Some("Apt"));
+        assert_eq!(t.get("OccupancyIdentifier"), Some("6"));
+        assert!(t.repeated_labels().is_empty());
+        // Spelled two ways: the line-2 copy is labeled, and `tag` keeps line 1's spelling.
+        let a = Parser::new()
+            .parse_fields(&Fields {
+                line1: Some("100 Example Ave Ste 5".into()),
+                line2: Some("Suite 5".into()),
+                ..Fields::default()
+            })
+            .unwrap();
+        let labels: Vec<_> = a.to_usaddress_tags().into_iter().map(|t| t.label).collect();
+        assert_eq!(
+            &labels[5..],
+            [Some("OccupancyType"), Some("OccupancyIdentifier")]
+        );
+        let t = a.tag();
+        assert_eq!(t.get("OccupancyType"), Some("Ste"));
+        assert_eq!(t.get("OccupancyIdentifier"), Some("5"));
+        assert!(t.repeated_labels().is_empty());
     }
 
     #[test]
