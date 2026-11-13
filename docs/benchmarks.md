@@ -2,6 +2,7 @@
 
 Figures: 0.6.0 (`a6a7df4`), measured 2026-11-12, unless a table names another build (0.5.1 is `c68760e`; 0.6.1 is `c0976c7`, measured 2026-11-13: the speed and size rows only, because 0.6.1 changes no output and the accuracy runs on the suite's v1 files gave the 0.6.0 figures again); one machine (Intel Core i9-9900K, WSL2); usaddress 0.5.16.
 Speed, size and memory are on [their own page](speed-and-size.md); how to rerun each benchmark is in [`running-benchmarks.md`](running-benchmarks.md).
+Why these figures have barely moved since 0.4.1 while the rules kept changing real rows: the [0.6.1 blog post](https://jeremeybingham.github.io/doorplate/2026/11/13/doorplate-0-6-1.html).
 
 ## Summary
 
