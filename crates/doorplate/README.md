@@ -78,7 +78,7 @@ Batches, pre-split fields, PO boxes, military and general delivery, and the `Ano
 |---|---|---|
 | Whole address right, [benchmark suite](https://doorplate.readthedocs.io/en/latest/benchmark-suite/), `natural` stratum (16,001 addresses written in five styles) | 98.7% | 96.1% |
 | Whole address right, [geocode benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark) dev split (60,522 one-line addresses) | 94.4% | 88.1% |
-| One address in Rust (median of the corpus shapes, criterion) | 4 to 11 µs | |
+| One address in Rust (median of the corpus shapes, criterion) | 2 to 6 µs | |
 
 Measured against the Python library [usaddress](https://github.com/datamade/usaddress) on a few data sets, not promises for
 yours; every figure by build, the caveats and how to rerun them: [benchmarks](https://doorplate.readthedocs.io/en/latest/benchmarks/)
