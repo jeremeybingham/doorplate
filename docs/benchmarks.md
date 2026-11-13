@@ -1,6 +1,6 @@
 # Benchmarks: accuracy
 
-Figures: 0.6.0 (`a6a7df4`), measured 2026-11-12, unless a table names another build (0.5.1 is `c68760e`); one machine (Intel Core i9-9900K, WSL2); usaddress 0.5.16.
+Figures: 0.6.0 (`a6a7df4`), measured 2026-11-12, unless a table names another build (0.5.1 is `c68760e`; 0.6.1 is `c0976c7`, measured 2026-11-13: the speed and size rows only, because 0.6.1 changes no output and the accuracy runs on the suite's v1 files gave the 0.6.0 figures again); one machine (Intel Core i9-9900K, WSL2); usaddress 0.5.16.
 Speed, size and memory are on [their own page](speed-and-size.md); how to rerun each benchmark is in [`running-benchmarks.md`](running-benchmarks.md).
 
 ## Summary
@@ -10,10 +10,10 @@ Speed, size and memory are on [their own page](speed-and-size.md); how to rerun 
 | [Benchmark suite](#the-benchmark-suite), whole suite (19,586), whole address right, coarse: **v2** (v1) | 0.6.0 (`a6a7df4`) | **95.6%** (94.4%) | 85.5% |
 | Benchmark suite, `natural` stratum (16,001): **v2** (v1) | 0.6.0 (`a6a7df4`) | **98.7%** (98.5%) | 96.1% |
 | [Geocode benchmark](#geocode-benchmark-one-line-no-commas), `dev` split (60,522), whole address right, coarse | 0.6.0 (`a6a7df4`) | 94.4% | 88.1% |
-| Addresses per second, one thread, suite inputs (`parse_tokens` / `usaddress.parse`) | 0.6.0 (`a6a7df4`) | 65,044 | 9,297 |
-| Addresses per second, `parse_many` on 4 threads (usaddress has no batch call) | 0.6.0 (`a6a7df4`) | 269,596 | |
+| Addresses per second, one thread, suite inputs (`parse_tokens` / `usaddress.parse`) | 0.6.1 (`c0976c7`) | 82,331 | 8,880 |
+| Addresses per second, `parse_many` on 4 threads (usaddress has no batch call) | 0.6.1 (`c0976c7`) | 324,740 | |
 | One address in Rust (criterion, median of the corpus shapes) | 0.5.1 (`c68760e`) | 4 to 11 µs | |
-| Installed size (wheel / package and dependencies); import time | 0.6.0 (`a6a7df4`) | 2.1 MB; 1 ms | 4.8 MB; 10 ms |
+| Installed size (wheel / package and dependencies); import time | 0.6.1 (`c0976c7`) | 2.1 MB; 1 ms | 4.8 MB; 10 ms |
 
 Read the suite's `natural` stratum as the estimate for ordinary input, and the geocode `dev` split for one-line street
 addresses with input errors. Accuracy uses usaddress's labels, folded into the coarse set (`docs/usaddress-compat.md`,
@@ -229,7 +229,7 @@ Secondary sets, each with a reason it is not a headline. Only aggregates of the 
 | [Senzing's libpostal test set](https://github.com/Senzing/libpostal-data) (0.6.0) | 2,233 US rows of OpenStreetMap tags written as one line; house number, road, city, state and ZIP all right | 97.0%; with no state (554 rows) 94.0% | 89.5%; 70.0% | Clean and uniform, not messy. Not comparable with Senzing's own figure; libpostal was not run. Read once for a rule, so later scores are optimistic |
 | [MessyStreets](https://github.com/EdGaere/MessyStreets) (Gaere and von Wangenheim, SIGSPATIAL '26, DOI 10.1145/3841645.3843362) | US-like web addresses from schema.org markup; gold and silver are held out, raw is the work list (table below) | gold: city 91.7%, street name 88.3% | | Labels are page markup, not hand-checked: a miss is a question, not a bug count |
 | usaddress's own test files (0.6.0) | 2,248 addresses not in usaddress's training files | 99.1% | 100.0% | usaddress's regression tests: a compatibility check, not a contest |
-| Golden corpus (0.6.0) | 1,278 whole addresses written with the parser (`doorplate corpus test`) | 1,274 (99.7%) | | A regression set: says nothing about new data |
+| Golden corpus (0.6.1) | 1,279 whole addresses written with the parser (`doorplate corpus test`) | 1,275 (99.7%) | | A regression set: says nothing about new data |
 
 MessyStreets by field (rows with an empty label for a field are left out of it). The first figure parses the dataset's
 own `input` (0.5.0-dev, `7bc011f`), for comparison with geocoders; the second the cleaned fields joined with commas

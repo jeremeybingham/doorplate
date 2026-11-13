@@ -1,7 +1,7 @@
 # Speed, size and memory
 
-Figures: 0.6.0 (`a6a7df4`), measured 2026-11-12, unless a table names another build (the criterion, command-line,
-DataFrame and DuckDB figures were not re-run for the release); one machine (Intel Core i9-9900K, Linux on WSL2), so read
+Figures: 0.6.1 (`c0976c7`), measured 2026-11-13, unless a table names another build (the criterion, command-line,
+DataFrame, DuckDB and fastaddress figures were not re-run for the release); one machine (Intel Core i9-9900K, Linux on WSL2), so read
 the ratios. Accuracy is on [Benchmarks: accuracy](benchmarks.md); how to rerun these scripts and profile the engine is in
 [Running the benchmarks](running-benchmarks.md).
 
@@ -44,17 +44,17 @@ The suite's own `speed` command (`python benchmarks/suite.py speed`, [below](#sp
 
 | | Corpus inputs | Geocode addresses |
 |---|---|---|
-| doorplate `parse` | 10.2 µs | 12.3 µs |
-| doorplate `parse`, then `key()` and `to_usps()` | 13.7 µs | 15.9 µs |
-| doorplate `tag` | 13.2 µs | 15.4 µs |
-| doorplate `parse_tokens` | 13.1 µs | 15.2 µs |
-| doorplate `parse_many` (14 threads) | 2.0 µs | 2.2 µs |
-| usaddress `parse` | 89.0 µs | 95.9 µs |
-| usaddress `tag` | 96.3 µs | 100.2 µs |
+| doorplate `parse` | 8.1 µs | 9.5 µs |
+| doorplate `parse`, then `key()` and `to_usps()` | 11.2 µs | 13.0 µs |
+| doorplate `tag` | 10.8 µs | 12.6 µs |
+| doorplate `parse_tokens` | 10.9 µs | 12.5 µs |
+| doorplate `parse_many` (14 threads) | 1.6 µs | 1.9 µs |
+| usaddress `parse` | 91.9 µs | 99.9 µs |
+| usaddress `tag` | 99.5 µs | 104.2 µs |
 
-Call by call on one thread, `parse_tokens` is 6.8x `usaddress.parse` on the
-corpus inputs and 6.3x on the geocode addresses. `parse_many` parses on all
-the cores it is given (14 here) with the GIL released: 45x and 43x `usaddress.parse`, which is
+Call by call on one thread, `parse_tokens` is 8.5x `usaddress.parse` on the
+corpus inputs and 8.0x on the geocode addresses. `parse_many` parses on all
+the cores it is given (14 here) with the GIL released: 57x and 52x `usaddress.parse`, which is
 single-threaded (usaddress could be run in several processes; that is a
 different comparison). A Python call costs about what the Rust parse does;
 the boundary is not the bottleneck. usaddress 0.5.16 was run live.
@@ -104,7 +104,7 @@ for `parse_many` on the same strings (an older run on all 14 threads, not repeat
 |---|---|
 | `doorplate` CLI binary (release, as built) | 5.2 MB (5.0 MB stripped) |
 | `doorplate` wheel (abi3, one wheel per platform) | 2.1 MB (5.0 MB unpacked) |
-| The extension module inside it | 4.9 MB |
+| The extension module inside it | 4.8 MB |
 | `usaddress` and its dependencies, installed | 4.8 MB (the model is 0.1 MB; the rest is python-crfsuite) |
 
 The lexicon tables, the national place list and the Florida state data are compiled
@@ -122,7 +122,7 @@ Peak resident memory of a fresh Python process parsing 100,000 addresses
 | usaddress, loop of `parse`, each result dropped | 12 ms | 18 MB | 20 MB |
 | doorplate, loop of `parse`, 100,000 results kept | 1 ms | 17 MB | 159 MB |
 | usaddress, loop of `parse`, 100,000 results kept | 10 ms | 18 MB | 131 MB |
-| doorplate, `parse_many`, 100,000 results kept | 1 ms | 16 MB | 254 MB |
+| doorplate, `parse_many`, 100,000 results kept | 1 ms | 16 MB | 253 MB |
 
 The parser itself adds about 2 MB to a process either way. A `ParsedAddress`
 holds every component and its source spans (about 1.4 KB each against about
@@ -165,15 +165,15 @@ Every build in one session (the release tags, and a 0.6.0 pre-release build at `
 | CLI binary, release as built / stripped (MB) | 5.0 / 4.4 | 5.5 / 4.6 | 6.1 / 5.1 | 6.2 / 5.2 | 5.2 / 5.0 | 5.2 / 5.0 |
 | Wheel (MB) | 2.0 | 2.0 | 2.0 | 2.0 | 2.0 | 2.0 |
 
-The release run (0.6.0, `a6a7df4`; a different session, so not comparable with the table above) gives 97,769 per second for
-Python `parse` on the same inputs, a 5.2 / 5.0 MB CLI binary and a 2.1 MB wheel.
+The 0.6.0 release run (`a6a7df4`; a different session, so not comparable with the table above) gave 97,769 per second for
+Python `parse` on the same inputs; the 0.6.1 run (`c0976c7`, the Python table above) gives 123,826 per second, unpinned. The 0.6.1 build has a 5.2 / 5.0 MB CLI binary and a 2.1 MB wheel.
 
-The benchmark suite's own `speed` command on 0.6.0 (the 19,586 inputs, the 4-CPU profile, best of 3; peak memory 155 MB
-with the inputs; the usaddress timing is cached from 2026-10-31, same machine):
+The benchmark suite's own `speed` command on 0.6.1 (`c0976c7`, 2026-11-13; the 19,586 inputs, the 4-CPU profile, best of 3; peak memory 158 MB
+with usaddress loaded, 155 MB for doorplate alone; usaddress run live, so its rate differs from the 9,297 of the 0.6.0 run, cached from 2026-10-31):
 
 | | Addresses per second | Against usaddress `parse` |
 |---|---|---|
-| usaddress `parse` (1 thread, no batch call) | 9,297 | 1.0x |
-| doorplate `parse_tokens` (1 thread) | 65,044 | 7.0x |
-| doorplate `parse_many` (1 thread) | 81,987 | 8.8x |
-| doorplate `parse_many` (4 threads) | 269,596 | 29.0x |
+| usaddress `parse` (1 thread, no batch call) | 8,880 | 1.0x |
+| doorplate `parse_tokens` (1 thread) | 82,331 | 9.3x |
+| doorplate `parse_many` (1 thread) | 110,178 | 12.4x |
+| doorplate `parse_many` (4 threads) | 324,740 | 36.6x |

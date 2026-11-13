@@ -74,7 +74,7 @@ Batches, pre-split fields, PO boxes, military and general delivery, and the `Ano
 
 ## Accuracy and speed
 
-| 0.6.0 | doorplate | usaddress |
+| 0.6.1 | doorplate | usaddress |
 |---|---|---|
 | Whole address right, [benchmark suite](https://doorplate.readthedocs.io/en/latest/benchmark-suite/), `natural` stratum (16,001 addresses written in five styles) | 98.7% | 96.1% |
 | Whole address right, [geocode benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark) dev split (60,522 one-line addresses) | 94.4% | 88.1% |

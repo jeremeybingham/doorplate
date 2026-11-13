@@ -7,6 +7,15 @@ change to what an input produces needs a new key version.
 
 ## [Unreleased]
 
+## [0.6.1] - 2026-11-13
+
+A speed release with one `parse_tokens` label fix. **No key changed**: the `k5` keys of 0.6.0 stay as they are, so there is
+nothing to re-key. Every `ParsedAddress` of the 76,421 public suite inputs is byte-identical to 0.6.0's, and the row-by-row
+key comparison on the seven private key sources (36.9 million rows; release code against `v0.6.0`) found 0 differences in
+keys, unit-level keys, unit fields or warnings. About 27% less time per parse than 0.6.0 (the instruction count and the wall time agree: −27.6% and −27%,
+#672 and #684); speed, size and memory were re-measured on the release commit and are in
+[`docs/speed-and-size.md`](docs/speed-and-size.md), and accuracy, unchanged, is in [`docs/benchmarks.md`](docs/benchmarks.md).
+
 ### Fixed
 
 - `parse_tokens()` and `to_usaddress_tags()` label the dropped copy of a unit written twice (`123 B ELM ST B`, `STE 5` with `SUITE 5` on line 2) as the unit, where it had no label; `tag()` still shows the unit once (#652). Fields and keys are unchanged.

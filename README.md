@@ -85,11 +85,11 @@ cargo install doorplate-cli           # the `doorplate` command
 To build from source, see [Getting started](https://doorplate.readthedocs.io/en/latest/getting-started/#install).
 
 ## Benchmarks
-| 0.6.0 | doorplate | usaddress |
+| 0.6.1 | doorplate | usaddress |
 |---|---|---|
 | Whole address right, [benchmark suite](docs/benchmark-suite.md), `natural` stratum (16,001 addresses written in five styles) | 98.7% | 96.1% |
 | Whole address right, [geocode benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark) dev split (60,522 one-line addresses) | 94.4% | 88.1% |
-| Addresses per second from Python, one thread (suite inputs, 4 CPUs) | about 65,000 | about 9,300 |
+| Addresses per second from Python, one thread (suite inputs, 4 CPUs) | about 82,000 | about 8,900 |
 
 Measured against [usaddress](https://github.com/datamade/usaddress) on a few data sets (the geocode benchmark is Yin, Li and
 Goldberg, [arXiv:2310.14360](https://arxiv.org/abs/2310.14360)), not promises for yours; every figure by build, the
