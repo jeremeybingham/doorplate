@@ -1047,12 +1047,7 @@ fn suffix_state_confirmed(w: &str, zip: Option<&str>, lex: &Lexicons) -> bool {
 /// tokenizer leaves such a word alone when it would split or repair a token. The tagger asks the same question with a different
 /// subset in each rule (see "Word sets" in `tagger/rules.rs`, #410).
 fn known_word(t: &str, lex: &Lexicons) -> bool {
-    lex.suffix(t).is_some()
-        || lex.unit(t).is_some()
-        || lex.directional(t).is_some()
-        || lex.state(t).is_some()
-        || lex.special(t).is_some()
-        || lex.highway(t).is_some()
+    lex.is_known_word(t)
 }
 
 #[cfg(test)]

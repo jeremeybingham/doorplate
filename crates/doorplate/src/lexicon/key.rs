@@ -13,28 +13,41 @@ pub fn normalize_key(s: &str) -> String {
     normalize_key_cow(s).into_owned()
 }
 
+const CLASS: [u8; 256] = {
+    let mut t = [0u8; 256];
+    let mut i = 0;
+    while i < 256 {
+        let c = i as u8;
+        t[i] = if c == b' ' {
+            2
+        } else if c >= 0x80 || c.is_ascii_lowercase() || c == b'.' || c < b' ' {
+            1
+        } else {
+            0
+        };
+        i += 1;
+    }
+    t
+};
+
 /// [`normalize_key`], borrowing the input when it is already a key (ASCII, no
 /// lowercase letters, periods or whitespace other than single inner spaces),
 /// which is the common case for tokens of upper-case input. Lookups use this
 /// to skip an allocation per call.
 pub fn normalize_key_cow(s: &str) -> std::borrow::Cow<'_, str> {
     let b = s.as_bytes();
-    // One pass: ASCII, nothing a key would change (lowercase letters, periods,
-    // control characters), and no space at either end or next to another.
-    let mut already = !b.is_empty() && b[0] != b' ' && b[b.len() - 1] != b' ';
+    // One pass over a byte-class table: 1 marks a byte a key would change
+    // (non-ASCII, lowercase letters, periods, control characters), 2 a space.
+    // The result is bad if any byte is 1 or two spaces are adjacent, and a
+    // space at either end is bad too.
+    let mut bad = 0u8;
     let mut prev = 0u8;
     for &c in b {
-        if !c.is_ascii()
-            || c.is_ascii_lowercase()
-            || c == b'.'
-            || c < b' '
-            || (c == b' ' && prev == b' ')
-        {
-            already = false;
-            break;
-        }
-        prev = c;
+        let t = CLASS[c as usize];
+        bad |= (t & 1) | (t & prev);
+        prev = t;
     }
+    let already = bad == 0 && !b.is_empty() && b[0] != b' ' && b[b.len() - 1] != b' ';
     if already {
         return std::borrow::Cow::Borrowed(s);
     }

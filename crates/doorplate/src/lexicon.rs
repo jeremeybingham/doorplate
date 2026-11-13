@@ -13,7 +13,7 @@ mod key;
 mod place_key;
 
 pub use key::normalize_key;
-use key::normalize_key_cow;
+pub(crate) use key::normalize_key_cow;
 
 use std::collections::HashSet;
 use std::sync::OnceLock;
@@ -449,6 +449,20 @@ impl Filter {
             && self.bits[(b >> 6) as usize] >> (b & 63) & 1 != 0
     }
 
+    /// Whether `key`, already a key, cannot be in the table: it has two bytes or more, both ASCII,
+    /// and no key of the table starts with that pair (a key of one byte is never ruled out here).
+    #[inline]
+    fn rules_out_key(&self, key: &str) -> bool {
+        let [a, b, ..] = *key.as_bytes() else {
+            return false;
+        };
+        if a >= 0x80 || b >= 0x80 {
+            return false;
+        }
+        let i = pair_slot(a, b);
+        self.pairs[i >> 6] >> (i & 63) & 1 == 0
+    }
+
     /// Whether a spelling cannot normalize to a key of the table, from its first two bytes alone
     /// (no normalizing, no hash): when both are ASCII and neither is a period or a space, the key
     /// starts with them in upper case, and no key of the table does. Anything else (a shorter
@@ -481,6 +495,9 @@ fn find_filtered<'a, V>(
     key: &str,
 ) -> Option<&'a V> {
     let f = filter.get_or_init(|| Filter::new(index.iter().map(|(k, _)| *k)));
+    if f.rules_out_key(key) {
+        return None;
+    }
     if f.may_contain(key) {
         find(f.run(index, key), key)
     } else {
@@ -574,6 +591,19 @@ impl Lexicons {
     /// Street suffix: `"AVENUE"`, `"Ave."`, `"AVNUE"` -> AVE.
     pub fn suffix(&self, s: &str) -> Option<Lookup<StreetSuffix>> {
         self.suffix_key(&normalize_key_cow(s))
+    }
+
+    /// Whether `s` is in the suffix, unit, directional, state, special or highway table: the same
+    /// answer as asking each in turn, with the tables that read the raw spelling first and the
+    /// spelling normalized once for the two that need a key (#672 C5).
+    pub(crate) fn is_known_word(&self, s: &str) -> bool {
+        let key = normalize_key_cow(s);
+        self.suffix_key(&key).is_some()
+            || self.unit(s).is_some()
+            || self.directional_key(&key).is_some()
+            || self.state(s).is_some()
+            || self.special(s).is_some()
+            || self.highway(s).is_some()
     }
 
     /// [`Self::suffix`] for a spelling that is already a key (see [`normalize_key`]).
@@ -941,13 +971,13 @@ impl Lexicons {
     }
 
     pub(crate) fn is_placeholder(&self, s: &str) -> bool {
-        let key = normalize_key(s);
+        let key = normalize_key_cow(s);
         if !key.chars().any(char::is_alphanumeric) {
             return true;
         }
         let rest = match key.split_once(' ') {
             Some((zeros, rest)) if zeros.bytes().all(|b| b == b'0') => rest,
-            _ => key.as_str(),
+            _ => &*key,
         };
         if self.is_placeholder_phrase(rest) {
             return true;
@@ -2343,5 +2373,59 @@ mod tests {
         assert_eq!(normalize_key("north-west"), "NORTH-WEST");
         assert_eq!(normalize_key("\tNew\nYork"), "NEW YORK");
         assert_eq!(normalize_key("..."), "");
+    }
+
+    /// The pair reject on a key (#672 C2) never hides a key of the table: every key is found,
+    /// and a lookup of any short string agrees with a plain search.
+    #[test]
+    fn the_pair_reject_keeps_every_key_and_agrees_with_a_plain_search() {
+        for (k, _) in tables::SUFFIX_INDEX {
+            assert!(LEX.suffix(k).is_some(), "{k}");
+        }
+        for (k, _) in tables::UNIT_INDEX {
+            assert!(LEX.unit(k).is_some(), "{k}");
+        }
+        let mut x: u64 = 0x2545_F491_4F6C_DD1D;
+        let mut next = move || {
+            x ^= x << 13;
+            x ^= x >> 7;
+            x ^= x << 17;
+            x
+        };
+        for _ in 0..30_000 {
+            let n = 1 + next() % 6;
+            let s: String = (0..n)
+                .map(|_| char::from(b'A' + (next() % 26) as u8))
+                .collect();
+            assert_eq!(
+                LEX.suffix(&s).is_some(),
+                find(tables::SUFFIX_INDEX, &s).is_some(),
+                "{s}"
+            );
+        }
+    }
+
+    /// `is_known_word` is the six lookups one after another (#672 C5).
+    #[test]
+    fn is_known_word_is_the_six_lookups() {
+        let mut words: Vec<String> = [
+            "ST", "AVE", "STE", "N", "FL", "PO", "HWY", "MAIN", "X", "12", "", "Ste.", "p.o.",
+            "n.e.",
+        ]
+        .iter()
+        .map(|s| s.to_string())
+        .collect();
+        words.extend(tables::SUFFIX_INDEX.iter().map(|(k, _)| k.to_string()));
+        words.extend(tables::UNIT_INDEX.iter().map(|(k, _)| k.to_string()));
+        words.extend(tables::HIGHWAY_INDEX.iter().map(|(k, _)| k.to_string()));
+        for w in words {
+            let six = LEX.suffix(&w).is_some()
+                || LEX.unit(&w).is_some()
+                || LEX.directional(&w).is_some()
+                || LEX.state(&w).is_some()
+                || LEX.special(&w).is_some()
+                || LEX.highway(&w).is_some();
+            assert_eq!(LEX.is_known_word(&w), six, "{w:?}");
+        }
     }
 }
