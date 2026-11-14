@@ -182,11 +182,9 @@ fn search(n: usize, cmp: impl Fn(usize) -> Option<std::cmp::Ordering>) -> Option
 }
 
 /// The `STATE|key` keys of the place index, in order.
+#[cfg(test)]
 fn place_keys() -> impl Iterator<Item = &'static str> + Clone {
-    (0..tables::PLACE_INDEX.len() / KEY_LEN).filter_map(|n| {
-        let r = record(tables::PLACE_INDEX, KEY_LEN, n)?;
-        pool_str(tables::PLACE_KEYS, le32(r, 0)?, *r.get(4)?)
-    })
+    (0..tables::PLACE_INDEX.len() / KEY_LEN).filter_map(place_key_at)
 }
 
 /// The keys (without `STATE|`) that [`any_place`] searches.
@@ -205,24 +203,63 @@ fn any_place_keys() -> impl Iterator<Item = &'static str> + Clone {
 /// (a city candidate is built for every run of words), so a bit filter over the keys answers
 /// those without the search (#425).
 fn find_place(key: &str) -> Option<(u32, MatchKind)> {
-    static FILTER: OnceLock<Filter> = OnceLock::new();
-    if !FILTER
-        .get_or_init(|| Filter::new(place_keys()))
-        .may_contain(key)
-    {
-        return None;
+    let slots = place_slots();
+    let mask = slots.len() - 1;
+    let mut s = Filter::slot_of(Filter::hash(key), mask);
+    loop {
+        let e = *slots.get(s)?;
+        if e == 0 {
+            return None;
+        }
+        let at = e as usize - 1;
+        if place_key_at(at) == Some(key) {
+            return place_value(at);
+        }
+        s = (s + 1) & mask;
     }
-    find_place_search(key)
 }
 
+/// The `STATE|key` of record `n` of the place index.
+#[inline]
+fn place_key_at(n: usize) -> Option<&'static str> {
+    let r = record(tables::PLACE_INDEX, KEY_LEN, n)?;
+    pool_str(tables::PLACE_KEYS, le32(r, 0)?, *r.get(4)?)
+}
+
+/// An open-addressing hash index over the place keys, at most half full: each slot holds a record
+/// number plus one, 0 for empty (#703 G4). It replaces a bit filter and a binary search, each step
+/// of which decoded a record and compared the `ST|` prefix every key shares.
+fn place_slots() -> &'static [u32] {
+    static SLOTS: OnceLock<Box<[u32]>> = OnceLock::new();
+    SLOTS.get_or_init(|| {
+        let n = tables::PLACE_INDEX.len() / KEY_LEN;
+        let size = (n * 2).next_power_of_two().max(8);
+        let mask = size - 1;
+        let mut slots = vec![0u32; size];
+        for i in 0..n {
+            if let Some(k) = place_key_at(i) {
+                let mut s = Filter::slot_of(Filter::hash(k), mask);
+                while slots[s] != 0 {
+                    s = (s + 1) & mask;
+                }
+                slots[s] = i as u32 + 1;
+            }
+        }
+        slots.into_boxed_slice()
+    })
+}
+
+/// The reference the hash index is tested against: a binary search of the whole index.
+#[cfg(test)]
 fn find_place_search(key: &str) -> Option<(u32, MatchKind)> {
-    let index = tables::PLACE_INDEX;
-    let at = search(index.len() / KEY_LEN, |n| {
-        let r = record(index, KEY_LEN, n)?;
-        let k = pool_str(tables::PLACE_KEYS, le32(r, 0)?, *r.get(4)?)?;
-        Some(cmp_keys(k, key))
+    let at = search(tables::PLACE_INDEX.len() / KEY_LEN, |n| {
+        Some(cmp_keys(place_key_at(n)?, key))
     })?;
-    let r = record(index, KEY_LEN, at)?;
+    place_value(at)
+}
+
+fn place_value(at: usize) -> Option<(u32, MatchKind)> {
+    let r = record(tables::PLACE_INDEX, KEY_LEN, at)?;
     let kind = if *r.get(5)? == 0 {
         MatchKind::Standard
     } else {
