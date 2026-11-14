@@ -9,7 +9,7 @@ change to what an input produces needs a new key version.
 
 ## [0.6.2] - 2026-11-14
 
-A second speed release. **No key changed** (still `k5`; nothing to re-key), and no output changed: the `ParsedAddress` of all 76,421 public suite inputs is byte-identical to 0.6.1 after every step. The accuracy runs on the suite's v1 files, the geocode benchmark and the golden corpus give the 0.6.0 figures again.
+A second speed release. **No key changed** (still `k5`; nothing to re-key), and no output changed: the `ParsedAddress` of all 76,421 public suite inputs is byte-identical to 0.6.1 after every step, and the row-by-row key comparison on the seven private key sources (36.9 million rows; the release code against `v0.6.1` and against `v0.6.0`) found 0 differences in keys, unit-level keys, unit fields or warnings. The accuracy runs on the suite's v1 files, the geocode benchmark and the golden corpus give the 0.6.0 figures again.
 
 ### Changed
 
