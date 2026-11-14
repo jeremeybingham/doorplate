@@ -113,8 +113,10 @@ pub(crate) fn tokenize(
     // In a one-line parse, a `(` that is never closed (a truncated field, a pasted remark) would
     // swallow the commas after it and the ZIP with them: it is dropped (#516).
     if field.is_none() {
+        // `text[a..]` holds a `)` exactly when the last `)` of the line is at or after `a`.
+        let last_close = text.rfind(')');
         pieces.retain_mut(|(a, b, _)| {
-            if text[*a..].contains(')') {
+            if last_close.is_some_and(|c| c >= *a) {
                 return true;
             }
             while *a < *b && text[*a..].starts_with('(') {
@@ -129,20 +131,28 @@ pub(crate) fn tokenize(
     // A bracketed `<NULL>` (a database export's missing value) is not part of the address (#419).
     pieces.retain(|&(a, b, _)| &text[a..b] != "<NULL>");
 
-    // Whether each piece, trimmed to its alphanumerics, is a state or a ZIP: one lookup per piece,
-    // not one per later piece for every piece.
-    let anchors: Vec<bool> = pieces
-        .iter()
-        .map(|&(na, nb, _)| {
-            let w = text[na..nb].trim_matches(|c: char| !c.is_alphanumeric());
-            lex.state(w).is_some() || zip_parts(w).is_some()
-        })
-        .collect();
     // Every piece trimmed to its alphanumerics: the words after a piece are a slice of this.
     let words: Vec<&str> = pieces
         .iter()
-        .map(|&(na, nb, _)| text[na..nb].trim_matches(|c: char| !c.is_alphanumeric()))
+        .map(|&(na, nb, _)| trim_to_alnum(&text[na..nb]))
         .collect();
+    // Segments never go down from one piece to the next (`edge_groups` shifts a group and every
+    // segment after it by the same amount), so for each piece, one pass from the end gives the
+    // end of its segment (`seg_end`), whether the piece there is a state or a ZIP
+    // (`anchor_at`), and whether any piece from there on is one (`anchor_from`).
+    debug_assert!(pieces.windows(2).all(|w| w[0].2 <= w[1].2));
+    // One vector for the three, so this costs one allocation: `(seg_end, anchor_at, anchor_from)`.
+    let n = pieces.len();
+    let mut scan = vec![(n, false, false); n + 1];
+    for k in (0..n).rev() {
+        let at = lex.state(words[k]).is_some() || zip_parts(words[k]).is_some();
+        let seg_end = if k + 1 < n && pieces[k + 1].2 == pieces[k].2 {
+            scan[k + 1].0
+        } else {
+            k + 1
+        };
+        scan[k] = (seg_end, at, at || scan[k + 1].2);
+    }
     let mut out = Vec::with_capacity(pieces.len() + 2);
     let mut in_paren = false;
     for (k, &(a, b, seg)) in pieces.iter().enumerate() {
@@ -155,18 +165,11 @@ pub(crate) fn tokenize(
         });
         // The words after this piece in its segment, for a city glued to
         // the street.
-        let seg_end = k
-            + 1
-            + pieces[k + 1..]
-                .iter()
-                .take_while(|&&(_, _, s)| s == seg)
-                .count();
+        let seg_end = scan[k].0;
         let after = &words[k + 1..seg_end];
         // The next segment starts with a state or a ZIP: the glued city's end.
-        let later_seg = (k + 1..pieces.len())
-            .find(|&n| pieces[n].2 > seg)
-            .is_some_and(|n| anchors[n]);
-        let later_anchor = (k + 1..pieces.len()).any(|n| pieces[n].2 > seg && anchors[n]);
+        let later_seg = scan[seg_end].1;
+        let later_anchor = scan[seg_end].2;
         let first = out.len();
         let mut p = Piece {
             cleaned,
@@ -237,6 +240,16 @@ enum Edge {
 /// becomes a segment of its own, so the usual unit, box and attention rules read it (#291).
 /// A group in the middle of a segment keeps its words (`9 OAK (PINE HILL) WAY`), an unclosed `(`
 /// is left alone, and a lone number after a highway word stays in the name (`MILITARY HWY (281)`).
+/// `s` with every leading and trailing character that is not alphanumeric removed. A piece that
+/// starts and ends with an ASCII letter or digit (most of them) is returned as it is.
+fn trim_to_alnum(s: &str) -> &str {
+    let b = s.as_bytes();
+    match (b.first(), b.last()) {
+        (Some(f), Some(l)) if f.is_ascii_alphanumeric() && l.is_ascii_alphanumeric() => s,
+        _ => s.trim_matches(|c: char| !c.is_alphanumeric()),
+    }
+}
+
 fn edge_groups(text: &str, pieces: &mut [(usize, usize, usize)], lex: &Lexicons) -> Vec<Edge> {
     let mut edge = vec![Edge::No; pieces.len()];
     let orig: Vec<usize> = pieces.iter().map(|p| p.2).collect();
@@ -632,9 +645,17 @@ impl Piece<'_> {
         // in the span when it is a single token.
         // Asterisks too: Pub 28 section 354 drops them (`**Private Address**`),
         // and a stray backtick (`1719\``).
-        let trim: &[char] = &['(', ')', '-', ':', '"', '\'', '.', '[', ']', '*', '`'];
-        let lead = raw.len() - raw.trim_start_matches(trim).len();
-        let inner = raw.trim_matches(trim);
+        // Every trimmed character is ASCII, so a byte scan finds the same edges.
+        let trim = |c: &u8| {
+            matches!(
+                c,
+                b'(' | b')' | b'-' | b':' | b'"' | b'\'' | b'.' | b'[' | b']' | b'*' | b'`'
+            )
+        };
+        let rb = raw.as_bytes();
+        let lead = rb.iter().position(|c| !trim(c)).unwrap_or(rb.len());
+        let end = rb.len() - rb[lead..].iter().rev().take_while(|c| trim(c)).count();
+        let inner = &raw[lead..end];
         if inner.is_empty() {
             return;
         }
