@@ -14,7 +14,7 @@ to download.
 This library formats and parses; it **does not validate** that an address exists or
 can receive mail.
 
-> **Alpha release (0.6.1).** Expect rough edges; names in the API and the warning codes may still change before 1.0.
+> **Alpha release (0.6.2).** Expect rough edges; names in the API and the warning codes may still change before 1.0.
 > The match key is versioned (`k5:`) and later versions will probably change it, so store
 > the prefix with your keys and plan to re-key. `k5` has only been checked on the project's own data (public records). Accuracy and speed are measurements on a few datasets, not guarantees.
 >
@@ -80,11 +80,11 @@ pytest tests
 
 ## Accuracy and speed
 
-| 0.6.1 | doorplate | usaddress |
+| 0.6.2 | doorplate | usaddress |
 |---|---|---|
 | Whole address right, [benchmark suite](https://doorplate.readthedocs.io/en/latest/benchmark-suite/), `natural` stratum (16,001 addresses written in five styles) | 98.7% | 96.1% |
 | Whole address right, [geocode benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark) dev split (60,522 one-line addresses) | 94.4% | 88.1% |
-| Addresses per second from Python, one thread (suite inputs, 4 CPUs) | about 82,000 | about 8,900 |
+| Addresses per second from Python, one thread (suite inputs, 4 CPUs) | about 99,000 | about 9,200 |
 
 Measured against the Python library [usaddress](https://github.com/datamade/usaddress) on a few data sets, not promises for
 yours; every figure by build, the caveats and how to rerun them: [benchmarks](https://doorplate.readthedocs.io/en/latest/benchmarks/)
