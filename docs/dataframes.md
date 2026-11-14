@@ -19,14 +19,14 @@ versions with data of several shapes are in the [examples](https://github.com/je
 ## Batches and DataFrames
 
 `parse_many(texts)` takes a list or tuple of strings, releases the GIL, parses in parallel with Rust threads, and returns
-the results in order. On 100,000 addresses with 4 CPUs (`crates/doorplate-py/benchmarks/bench_batch.py`; more cores are faster):
+the results in order. On 100,000 addresses with 4 CPUs (`crates/doorplate-py/benchmarks/bench_batch.py`, 0.6.2; more cores are faster):
 
 | | Time | Per second | Speed-up |
 |---|---|---|---|
-| a loop of `parse` | 1.79 s | 56,000 | 1x |
-| `parse_many` | 0.62 s | 162,000 | 2.9x |
-| DuckDB, `doorplate_parse(a)` with 7 columns | 0.64 s | 157,000 | 2.8x |
-| `pandas.parse_column` / `polars.parse_column`, the 15 default columns | 0.70 to 0.83 s | 121,000 to 143,000 | 1.9x to 2.3x |
+| a loop of `parse` | 0.66 s | 152,000 | 1x |
+| `parse_many` | 0.26 s | 391,000 | 2.6x |
+| DuckDB, `doorplate_parse(a)` with 7 columns | 0.29 s | 351,000 | 2.3x |
+| `pandas.parse_column` / `polars.parse_column`, the 15 default columns | 0.40 to 0.55 s | 184,000 to 248,000 | 1.2x to 1.6x |
 
 **Helpers.** Install the extra and parse a column in one call:
 

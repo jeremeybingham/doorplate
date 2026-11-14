@@ -5,7 +5,7 @@ bring, so the more real, messy addresses it sees, the sooner the items below can
 ([Sharing messy data](../CONTRIBUTING.md#sharing-messy-data)). Labels, milestones and ordering: [`backlog.md`](backlog.md).
 What each release changed is in [`CHANGELOG.md`](../CHANGELOG.md).
 
-**Last reviewed 2026-11-13.** 0.6.1 (speed and one label fix, no key change; the `k5` is as in 0.6.0) is released. Open trackers: #417 (decided against); the 0.6.x tracker (#673) and the speed tracker (#672) are closed.
+**Last reviewed 2026-11-14.** 0.6.2 (a second speed release, no key change; the `k5` is as in 0.6.0) is being released (#713); 0.6.1 (speed and one label fix, no key change) is released. Open trackers: #417 (decided against); the 0.6.x tracker (#673) and the speed tracker (#672) are closed.
 
 ## Stability while it is an alpha
 
@@ -19,6 +19,7 @@ What each release changed is in [`CHANGELOG.md`](../CHANGELOG.md).
 No tracker is open. Point releases carry speed, tooling and documentation, never a key change. A CI guard fails a pull request that adds more than 1% instructions per parse; the speed leads left are under Waiting, below.
 
 - **Speed leads at a 0.5% bar:** #703 (tokenizer trims, a hash index for the lexicon tables, place search, allocation groups), one measured pull request per group.
+- **Shipped in 0.6.2:** the speed work of #701 and #703 G1 to G8 (about 25% less time per parse than 0.6.1, no output change); #712 keeps the leads left.
 - **Shipped in 0.6.1:** the speed cuts of #672 (B, C, and the feature bitset and `Piece::sub` byte tests of D, about 27% less time per parse than 0.6.0), #652 (a letter written twice gets a label in `parse_tokens`), and the answer to #671 (the #614 rule, not a regression).
 - **Blog post:** [doorplate 0.6.1](https://jeremeybingham.github.io/doorplate/2026/11/13/doorplate-0-6-1.html) (#491).
 
