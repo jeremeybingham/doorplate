@@ -922,14 +922,23 @@ impl Lexicons {
     /// as the state data says. Otherwise the same as [`Self::highway`].
     pub fn highway_in(&self, state: &str, s: &str) -> Option<Lookup<HighwayPrefix>> {
         let norm = normalize_key_cow(s);
-        let mut key = String::with_capacity(state.len() + 1 + norm.len());
-        key.push_str(state);
-        key.push('|');
-        key.push_str(&norm);
-        if let Some(hit) = self.layer.and_then(|l| l.state_highway.get(&key)) {
+        // `STATE|KEY` on the stack when it fits (#703 G5); a longer one takes a String.
+        let mut buf = [0u8; 64];
+        let owned;
+        let key: &str = if state.len() + 1 + norm.len() <= buf.len() {
+            let (a, rest) = buf.split_at_mut(state.len());
+            a.copy_from_slice(state.as_bytes());
+            rest[0] = b'|';
+            rest[1..=norm.len()].copy_from_slice(norm.as_bytes());
+            std::str::from_utf8(&buf[..state.len() + 1 + norm.len()]).unwrap_or("")
+        } else {
+            owned = format!("{state}|{norm}");
+            &owned
+        };
+        if let Some(hit) = self.layer.and_then(|l| l.state_highway.get(key)) {
             return Some(*hit);
         }
-        let Some(&(i, kind)) = find(tables::STATE_HIGHWAY_INDEX, &key) else {
+        let Some(&(i, kind)) = find(tables::STATE_HIGHWAY_INDEX, key) else {
             return self.highway(s);
         };
         let standard = *tables::HIGHWAYS.get(usize::from(i))?;

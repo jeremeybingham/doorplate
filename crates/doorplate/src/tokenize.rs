@@ -133,6 +133,8 @@ pub(crate) fn tokenize(
     }
 
     let edge = edge_groups(text, &mut pieces, lex);
+    // `edge` is empty when the line has no `(`: every piece is `Edge::No`.
+    let edge_at = |k: usize| edge.get(k).copied().unwrap_or(Edge::No);
 
     // A bracketed `<NULL>` (a database export's missing value) is not part of the address (#419).
     pieces.retain(|&(a, b, _)| &text[a..b] != "<NULL>");
@@ -190,7 +192,7 @@ pub(crate) fn tokenize(
         let opens = raw.starts_with('(');
         let closes = raw.ends_with(')');
         // An edge group is a segment of its own, read like any other: not marked as a group.
-        let paren = (in_paren || opens) && !matches!(edge[k], Edge::Inline | Edge::Value);
+        let paren = (in_paren || opens) && !matches!(edge_at(k), Edge::Inline | Edge::Value);
         if opens {
             in_paren = true;
         }
@@ -198,14 +200,14 @@ pub(crate) fn tokenize(
             in_paren = false;
         }
         p.piece(a, b, paren, next_starts_numeric, lex);
-        match edge[k] {
+        match edge_at(k) {
             Edge::Split => out[first..].iter_mut().for_each(|t| t.group = true),
             // `(3RD FL)` is a floor, not a state: read it as the word FLOOR.
-            Edge::Inline if edge.get(k + 1) != Some(&Edge::Inline) => {
+            Edge::Inline if edge_at(k + 1) != Edge::Inline => {
                 if let Some(t) = out[first..]
                     .iter_mut()
                     .next_back()
-                    .filter(|t| t.text == "FL" && k > 0 && edge[k - 1] == Edge::Inline)
+                    .filter(|t| t.text == "FL" && k > 0 && edge_at(k - 1) == Edge::Inline)
                 {
                     t.text = "FLOOR".to_string();
                 }
@@ -257,6 +259,9 @@ fn trim_to_alnum(s: &str) -> &str {
 }
 
 fn edge_groups(text: &str, pieces: &mut [(usize, usize, usize)], lex: &Lexicons) -> Vec<Edge> {
+    if !text.as_bytes().contains(&b'(') {
+        return Vec::new();
+    }
     let mut edge = vec![Edge::No; pieces.len()];
     let orig: Vec<usize> = pieces.iter().map(|p| p.2).collect();
     let mut shift = 0;
