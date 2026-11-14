@@ -80,11 +80,11 @@ pytest tests
 
 ## Accuracy and speed
 
-| 0.6.1 | doorplate | usaddress |
+| 0.6.2 | doorplate | usaddress |
 |---|---|---|
 | Whole address right, [benchmark suite](https://doorplate.readthedocs.io/en/latest/benchmark-suite/), `natural` stratum (16,001 addresses written in five styles) | 98.7% | 96.1% |
 | Whole address right, [geocode benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark) dev split (60,522 one-line addresses) | 94.4% | 88.1% |
-| Addresses per second from Python, one thread (suite inputs, 4 CPUs) | about 82,000 | about 8,900 |
+| Addresses per second from Python, one thread (suite inputs, 4 CPUs) | about 99,000 | about 9,200 |
 
 Measured against the Python library [usaddress](https://github.com/datamade/usaddress) on a few data sets, not promises for
 yours; every figure by build, the caveats and how to rerun them: [benchmarks](https://doorplate.readthedocs.io/en/latest/benchmarks/)
