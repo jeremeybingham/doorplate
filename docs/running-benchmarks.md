@@ -152,6 +152,8 @@ Allocations per parse: `crates/doorplate/examples/profile_alloc.rs` (a counting 
 (groups a `heaptrack` run by the innermost `doorplate::` frame). `benchmarks/profile_fold.py` folds a `perf record -g`
 profile into tables by function and by stage, where `perf` can resolve symbols.
 
+What an output costs on top of `parse` (callgrind, one run per mode, then subtract the `parse` run): `crates/doorplate/examples/profile_emit.rs` (modes `parse`, `key`, `usps`, `reso`, `display`, `usaddress`).
+
 ## Checks on private data (maintainers)
 
 These need `local-data/` and the go-aheads in `CLAUDE.md`; only aggregate numbers leave it
