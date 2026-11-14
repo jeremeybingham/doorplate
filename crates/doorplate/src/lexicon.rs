@@ -1003,6 +1003,9 @@ impl Lexicons {
     /// A word that ends a building name (`TOWER` in `EAST TOWER`).
     /// Source: `data/special.toml` `[building]`.
     pub(crate) fn is_building_word(&self, s: &str) -> bool {
+        if self.first_letter_rules_out(s, tables::BUILDING_FIRST) {
+            return false;
+        }
         self.in_words(tables::BUILDING_WORDS, &normalize_key_cow(s), |l| {
             &l.words.building
         })
@@ -1033,12 +1036,38 @@ impl Lexicons {
         self.in_words(tables::CITY_PLACEHOLDERS, key, |l| &l.words.placeholder)
     }
 
+    /// Whether `s` cannot normalize to a word of a shipped list whose first letters are `mask`
+    /// (bit 0 for A; see `first_letters` in `build.rs`), from its first byte alone (#703 G7): the
+    /// first byte that is not a period or ASCII whitespace is a digit from 1 to 9 (a street number),
+    /// or a letter that no word of the list starts with. The key starts with that byte (upper-cased),
+    /// so it is no word of the list, no placeholder after a run of zeros (the zeros are a `0`, which
+    /// is not judged), and not `UNASSIGNED LOCATION` plus a code (`U` is a first letter of the list).
+    /// Never with a layer (it may add any word), and never when a word starts with something other
+    /// than a letter (bit 31).
+    #[inline]
+    fn first_letter_rules_out(&self, s: &str, mask: u32) -> bool {
+        if self.layer.is_some() || mask >> 31 != 0 {
+            return false;
+        }
+        s.bytes()
+            .find(|&c| c != b'.' && !c.is_ascii_whitespace())
+            .is_some_and(|c| match c {
+                b'1'..=b'9' => true,
+                _ => c.is_ascii_alphabetic() && mask >> (c.to_ascii_uppercase() - b'A') & 1 == 0,
+            })
+    }
+
     /// Whether `key` is a word of a word list: the shipped list, or the layer's.
     fn in_words(&self, base: &[&str], key: &str, pick: fn(&Layer) -> &HashSet<String>) -> bool {
         find_str(base, key) || self.layer.is_some_and(|l| pick(l).contains(key))
     }
 
     pub(crate) fn is_placeholder(&self, s: &str) -> bool {
+        !self.first_letter_rules_out(s, tables::PLACEHOLDER_FIRST) && self.is_placeholder_full(s)
+    }
+
+    /// [`Lexicons::is_placeholder`] without the first-letter reject.
+    fn is_placeholder_full(&self, s: &str) -> bool {
         let key = normalize_key_cow(s);
         if !key.chars().any(char::is_alphanumeric) {
             return true;
@@ -1852,6 +1881,51 @@ mod tests {
         }
         for s in ["CANADA", "UNITED", "STATES", "USAF", ""] {
             assert!(!LEX.is_country(s), "{s:?}");
+        }
+    }
+
+    /// The first-letter reject (#703 G7) never changes an answer: every shipped word, in several
+    /// spellings with a prefix of any first byte, and random short strings, give the same result
+    /// as the lookup without the reject.
+    #[test]
+    fn the_first_letter_reject_agrees_with_the_plain_lookup() {
+        let plain_building = |s: &str| find_str(tables::BUILDING_WORDS, &normalize_key(s));
+        for w in tables::BUILDING_WORDS {
+            for s in [
+                w.to_string(),
+                w.to_lowercase(),
+                format!(" .{w}"),
+                format!("{w}."),
+            ] {
+                assert!(LEX.is_building_word(&s), "{s:?}");
+            }
+        }
+        for w in tables::PLACEHOLDERS {
+            for s in [
+                w.to_string(),
+                w.to_lowercase(),
+                format!("  {w}"),
+                format!("00 {w}"),
+            ] {
+                assert!(LEX.is_placeholder(&s), "{s:?}");
+            }
+        }
+        assert!(LEX.is_placeholder("00 UNASSIGNED LOCATION RE"));
+        let mut x: u64 = 0x9E37_79B9_7F4A_7C15;
+        let mut next = move || {
+            x ^= x << 13;
+            x ^= x >> 7;
+            x ^= x << 17;
+            x
+        };
+        let alphabet: Vec<char> = " ..0123456789ABCNPTUWZabcnptuwz-#/é".chars().collect();
+        for _ in 0..50_000 {
+            let n = 1 + next() % 8;
+            let s: String = (0..n)
+                .map(|_| alphabet[(next() % alphabet.len() as u64) as usize])
+                .collect();
+            assert_eq!(LEX.is_building_word(&s), plain_building(&s), "{s:?}");
+            assert_eq!(LEX.is_placeholder(&s), LEX.is_placeholder_full(&s), "{s:?}");
         }
     }
 

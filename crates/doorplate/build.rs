@@ -520,6 +520,12 @@ fn gen_special(t: &Table, out: &mut String, mw: &mut usize) -> Result<HighwayRow
         "pub(crate) static PLACEHOLDERS: &[&str] = &{phrases:?};\n"
     )
     .ok();
+    writeln!(
+        out,
+        "pub(crate) const PLACEHOLDER_FIRST: u32 = {};\n",
+        first_letters(&phrases)
+    )
+    .ok();
 
     let cctx = format!("{ctx} [city_placeholder]");
     let mut city_phrases = key_list(table(t, "city_placeholder", ctx)?, "phrases", &cctx, true)?;
@@ -548,7 +554,24 @@ fn gen_special(t: &Table, out: &mut String, mw: &mut usize) -> Result<HighwayRow
         "pub(crate) static BUILDING_WORDS: &[&str] = &{words:?};\n"
     )
     .ok();
+    writeln!(
+        out,
+        "pub(crate) const BUILDING_FIRST: u32 = {};\n",
+        first_letters(&words)
+    )
+    .ok();
     Ok(highway_rows)
+}
+
+/// The first letters of `keys` as a bit mask (bit 0 for A, bit 25 for Z); bit 31 is set when a key
+/// starts with anything else, which turns the first-letter reject off (#703 G7).
+fn first_letters<S: AsRef<str>>(keys: &[S]) -> u32 {
+    keys.iter().fold(0, |m, k| {
+        match k.as_ref().bytes().next().map(|b| b.to_ascii_uppercase()) {
+            Some(b @ b'A'..=b'Z') => m | 1 << (b - b'A'),
+            _ => m | 1 << 31,
+        }
+    })
 }
 
 /// An `[[array]]` of `standard` + `forms` entries whose standards form a
