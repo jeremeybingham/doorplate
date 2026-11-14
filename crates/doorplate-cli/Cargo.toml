@@ -19,6 +19,7 @@ path = "src/main.rs"
 [dependencies]
 doorplate = { workspace = true, features = ["corpus", "custom-layer"] }
 csv = "1"
+serde = "1"
 serde_json = { version = "1", features = ["preserve_order"] }
 
 [lints]

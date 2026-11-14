@@ -219,6 +219,7 @@ version = "0.6.2-dev"
 dependencies = [
  "csv",
  "doorplate",
+ "serde",
  "serde_json",
 ]
 
