@@ -53,6 +53,12 @@ pub(crate) struct Token {
     pub group: bool,
 }
 
+impl AsRef<str> for Token {
+    fn as_ref(&self) -> &str {
+        &self.text
+    }
+}
+
 impl Token {
     pub fn is_dash(&self) -> bool {
         self.text == "-"
@@ -591,17 +597,15 @@ struct Piece<'a> {
 
 impl Piece<'_> {
     /// The words before this piece in its segment, nearest last.
-    fn before(&self) -> Vec<&str> {
-        let mut words: Vec<&str> = self
+    fn before(&self) -> &[Token] {
+        let n = self
             .out
             .iter()
             .rev()
-            .take_while(|t| t.seg == self.seg)
             .take(MAX_PLACE_WORDS)
-            .map(|t| t.text.as_str())
-            .collect();
-        words.reverse();
-        words
+            .take_while(|t| t.seg == self.seg)
+            .count();
+        &self.out[self.out.len() - n..]
     }
 
     fn span(&self, a: usize, b: usize) -> Option<Span> {
@@ -770,29 +774,17 @@ impl Piece<'_> {
             }
             // `ST.CLOUD`, `FT.MYERS`: a period after two letters or more, with a
             // letter after it, ends a word.
-            if let Some(cut) =
-                word_period(t).filter(|&c| !known_word(&format!("{}{}", &t[..c], &t[c + 1..]), lex))
-            {
+            if let Some(cut) = word_period(t).filter(|&c| !joined_is_known(t, c, lex)) {
                 rule_hit!("sub:word_period");
                 self.sub(s2, s2 + cut, pa, pb, paren, next_numeric, lex);
                 self.sub(s2 + cut + 1, e2, pa, pb, paren, next_numeric, lex);
                 return;
             }
         }
-        // A value right after '#' or a unit designator is that unit's: `# 2WD`
-        // is not house number 2 and a name, `APT I4` is not highway I4.
-        let unit_value = self
-            .out
-            .last()
-            .is_some_and(|p| p.seg == self.seg && (p.is_hash() || lex.unit(&p.text).is_some()));
-        // A route right after a highway prefix may end in letters
-        // (Appendix F: `ROUTE 1150EE`).
-        let after_prefix = self
-            .out
-            .last()
-            .is_some_and(|p| p.seg == self.seg && lex.highway(&p.text).is_some());
         if plain {
-            let cut = glue_split(t, next_numeric, unit_value, after_prefix, lex).or_else(|| {
+            // `glue_split` looks at the token before only when the shape needs it.
+            let prev = self.out.last().filter(|p| p.seg == self.seg);
+            let cut = glue_split(t, next_numeric, prev, lex).or_else(|| {
                 glue_place(
                     t,
                     self.before(),
@@ -902,6 +894,20 @@ fn word_period(t: &str) -> Option<usize> {
     None
 }
 
+/// Whether `t` without the byte at `cut` (a period) is a known word (`BLV.D` is `BLVD`).
+fn joined_is_known(t: &str, cut: usize, lex: &Lexicons) -> bool {
+    let mut buf = [0u8; 48];
+    let n = t.len() - 1;
+    if n <= buf.len() {
+        buf[..cut].copy_from_slice(&t.as_bytes()[..cut]);
+        buf[cut..n].copy_from_slice(&t.as_bytes()[cut + 1..]);
+        if let Ok(joined) = std::str::from_utf8(&buf[..n]) {
+            return known_word(joined, lex);
+        }
+    }
+    known_word(&format!("{}{}", &t[..cut], &t[cut + 1..]), lex)
+}
+
 /// The index of the punctuation in `APT.1285`, `STE.200`, `APT:201`,
 /// `UNIT-4`, `BOX.2351`: a unit designator or box word, one of `.` `:` `-`,
 /// then the value; and `NO.9`, `NUM.12` (the number word, period only).
@@ -924,29 +930,28 @@ fn unit_punct(t: &str, lex: &Lexicons) -> Option<usize> {
 }
 
 /// Where to split a glued alphanumeric token, if anywhere.
-fn glue_split(
-    t: &str,
-    next_numeric: bool,
-    after_unit: bool,
-    after_prefix: bool,
-    lex: &Lexicons,
-) -> Option<usize> {
+fn glue_split(t: &str, next_numeric: bool, prev: Option<&Token>, lex: &Lexicons) -> Option<usize> {
     let digits_lead = t.bytes().take_while(u8::is_ascii_digit).count();
     let alpha_lead = t.bytes().take_while(u8::is_ascii_alphabetic).count();
     let n = t.len();
-    // A value right after a unit designator is whole (`# 2WD`, `APT I4`).
-    if after_unit && (digits_lead > 0 || alpha_lead < n) {
+    // Only a token of letters and digits both can split here; the other shapes skip the lookups.
+    let mixed = (digits_lead > 0 && digits_lead < n) || (alpha_lead > 0 && alpha_lead < n);
+    // A value right after '#' or a unit designator is that unit's: `# 2WD` is not house
+    // number 2 and a name, `APT I4` is not highway I4.
+    if mixed && prev.is_some_and(|p| p.is_hash() || lex.unit(&p.text).is_some()) {
         return None;
     }
     if digits_lead > 0 && digits_lead < n {
         let rest = &t[digits_lead..];
+        // A route right after a highway prefix may end in letters (Appendix F: `ROUTE 1150EE`).
+        let after_prefix = || prev.is_some_and(|p| lex.highway(&p.text).is_some());
         // 101BRADDOCK; not 12A, 42ND, 1ST.
         // A route after a highway prefix keeps up to two letters (`1150EE`).
         if rest.len() >= 2
-            && !(after_prefix && rest.len() <= 2)
             && rest.bytes().all(|c| c.is_ascii_alphabetic())
             && !ORDINAL_SUFFIXES.contains(&rest)
             && !is_ordinal(t)
+            && !(rest.len() <= 2 && after_prefix())
         {
             return Some(digits_lead);
         }
@@ -1023,9 +1028,9 @@ fn ordinal_ending(n: &str) -> Option<&'static str> {
 /// - the end of the segment ends it only when the next segment starts with a
 ///   state or a ZIP (`STRAND, MIAMI, FL` is not `ST` `RAND`), and the city's
 ///   last word is not a street suffix.
-fn glue_place(
+fn glue_place<B: AsRef<str>>(
     t: &str,
-    before: Vec<&str>,
+    before: &[B],
     rest: &[&str],
     later_seg: bool,
     later_anchor: bool,
@@ -1036,9 +1041,13 @@ fn glue_place(
         return None;
     }
     let after = &rest[..rest.len().min(MAX_PLACE_WORDS)];
-    // The city starting with `first`, ending before word `j` of `after`.
-    let city_at = |first: &str| {
-        (0..=after.len().min(MAX_PLACE_WORDS - 1)).any(|j| {
+    // The words after `t` that could end a city: bit `j` is set when a city may end before word
+    // `j` of `after`. It does not depend on where the city starts, so it is found once, on the
+    // first use.
+    let ends_mask = std::cell::OnceCell::new();
+    let ends_at = || -> u32 {
+        let mut mask = 0;
+        for j in 0..=after.len().min(MAX_PLACE_WORDS - 1) {
             let ends = match after.get(j) {
                 // A segment-end anchor takes no street suffix as the city's
                 // last word (`DALEWOOD WAY,` is not `DALE` `WOOD WAY`).
@@ -1055,12 +1064,25 @@ fn glue_place(
                         && suffix_state_confirmed(w, rest.get(j + 1).copied(), lex)
                 }
             };
-            let mut city = first.to_string();
-            for w in &after[..j] {
-                city.push(' ');
-                city.push_str(w);
+            if ends {
+                mask |= 1 << j;
             }
-            ends && lex.is_place(&city)
+        }
+        mask
+    };
+    // The city starting with `first`, ending before word `j` of `after`.
+    let city_at = |first: &str| {
+        let mask = *ends_mask.get_or_init(ends_at);
+        if mask == 0 {
+            return false;
+        }
+        let mut city = first.to_string();
+        (0..=after.len().min(MAX_PLACE_WORDS - 1)).any(|j| {
+            if j > 0 {
+                city.push(' ');
+                city.push_str(after[j - 1]);
+            }
+            mask & (1 << j) != 0 && lex.is_place(&city)
         })
     };
     // The answer is the first cut whose left part is a street suffix and whose right part starts
@@ -1068,9 +1090,13 @@ fn glue_place(
     // two tests only ever say no, so they run after a cut is found (most words have none).
     let cut = (2..n - 2).find(|&cut| lex.suffix(&t[..cut]).is_some() && city_at(&t[cut..]))?;
     // This word ends a place that began earlier in the segment.
+    let mut name = String::new();
     for from in 0..before.len() {
-        let mut name = before[from..].join(" ");
-        name.push(' ');
+        name.clear();
+        for w in &before[from..] {
+            name.push_str(w.as_ref());
+            name.push(' ');
+        }
         name.push_str(t);
         if lex.is_place(&name) {
             return None;
@@ -1245,7 +1271,7 @@ mod tests {
             let (later_seg, later_anchor) = (next() % 2 == 0, next() % 4 == 0);
             let want =
                 glue_place_vetoes_first(&t, before.clone(), &rest, later_seg, later_anchor, &lex);
-            let got = glue_place(&t, before, &rest, later_seg, later_anchor, &lex);
+            let got = glue_place(&t, &before, &rest, later_seg, later_anchor, &lex);
             assert_eq!(got, want, "{t} {rest:?}");
             if got.is_some() {
                 some += 1;
