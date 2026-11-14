@@ -36,9 +36,9 @@ use super::{Decision, PlaceCtx, Tag, Tagger};
 use crate::classify::{
     all_digits, has_digit, house_number, is_bare_unit, is_cut_designator, is_fraction,
     is_glued_ordinal, is_grid_number, is_letter, is_lettered_route, is_ordinal, is_route_value,
-    is_slash_pair, is_unit_pair, is_unit_value, is_unit_word, join, join_ref, longest_at,
-    longest_ending, spelled_number, spelled_ordinal, zero_zip_state, zip_parts, zip_repair,
-    NumberShape, ORDINAL_SUFFIXES,
+    is_slash_pair, is_unit_pair, is_unit_value, is_unit_word, join_ref, longest_at, longest_ending,
+    spelled_number, spelled_ordinal, zero_zip_state, zip_parts, zip_repair, NumberShape,
+    ORDINAL_SUFFIXES,
 };
 use crate::lexicon::{MatchKind, Special, MAX_PLACE_WORDS};
 use crate::tokenize::Token;
@@ -151,7 +151,7 @@ impl Tagger<'_> {
         // "12 SIMON CT 32505": on one line with no commas, a state that is
         // also a street suffix, with no city before it, is the suffix.
         if let Some(r) = state.clone() {
-            let text = join(&toks[r.clone()]);
+            let text = join_ref(&toks[r.clone()]);
             let one_line = toks[r.start].seg == toks[lo].seg;
             // "8517 CEDAR BARK CIR KY": after an abbreviated suffix it is
             // the state.
@@ -413,7 +413,7 @@ impl Tagger<'_> {
         if s < lo + 2 {
             return false;
         }
-        let text = join(&self.toks[s..e]);
+        let text = join_ref(&self.toks[s..e]);
         let Some(l) = self.lex.state(&text) else {
             return false;
         };
@@ -593,7 +593,8 @@ impl Tagger<'_> {
         city: Option<Range<usize>>,
     ) -> usize {
         let Some(city) = city else { return hi };
-        let words: Vec<&str> = self.toks[city].iter().map(|t| t.text.as_str()).collect();
+        let toks = self.toks;
+        let words = &toks[city];
         // Line 2 `CAPE CORAL` with city `CAPE CORAL`: a whole line or comma
         // segment that is the city, even when its first word is a suffix.
         let k = words.len();
@@ -602,7 +603,7 @@ impl Tagger<'_> {
             let whole_seg = self.toks[hi - k - 1].seg != tail[0].seg
                 && tail.iter().all(|t| t.seg == tail[0].seg)
                 && !self.toks.get(hi).is_some_and(|t| t.seg == tail[0].seg);
-            if whole_seg && tail.iter().zip(&words).all(|(t, w)| t.text == *w) {
+            if whole_seg && tail.iter().zip(words).all(|(t, w)| t.text == w.text) {
                 self.set(hi - k..hi, Tag::Skip);
                 return hi - k;
             }
@@ -619,7 +620,9 @@ impl Tagger<'_> {
             let after_unit = s >= lo + 2
                 && is_unit_value(self.text(s - 1))
                 && (self.toks[s - 2].is_hash() || self.lex.unit(self.text(s - 2)).is_some());
-            if after_unit && k == words.len() && tail.iter().zip(&words).all(|(t, w)| t.text == *w)
+            if after_unit
+                && k == words.len()
+                && tail.iter().zip(words).all(|(t, w)| t.text == w.text)
             {
                 self.set(s..hi, Tag::Skip);
                 return s;
@@ -648,17 +651,17 @@ impl Tagger<'_> {
             }
             // One cut-off word needs two letters or more; a lone letter is
             // more likely a unit ("DR B") than a copy of "BRADENTON".
-            if k == 1 && tail[0].text.len() < 2 && tail[0].text != words[0] {
+            if k == 1 && tail[0].text.len() < 2 && tail[0].text != words[0].text {
                 continue;
             }
             let matches = tail.iter().enumerate().all(|(n, t)| {
                 if n + 1 == k {
                     // A cut-off word is not a directional: `RD NE` before
                     // `NEW SALISBURY` is the street's postdirectional.
-                    words[n].starts_with(t.text.as_str())
-                        && (t.text == words[n] || self.lex.directional(&t.text).is_none())
+                    words[n].text.starts_with(t.text.as_str())
+                        && (t.text == words[n].text || self.lex.directional(&t.text).is_none())
                 } else {
-                    t.text == words[n]
+                    t.text == words[n].text
                 }
             });
             if matches {
@@ -680,7 +683,7 @@ impl Tagger<'_> {
             let end = &words[words.len() - k..];
             if whole_seg
                 && tail[0].text.len() >= 3
-                && tail.iter().zip(end).all(|(t, w)| t.text == *w)
+                && tail.iter().zip(end).all(|(t, w)| t.text == w.text)
             {
                 self.set(hi - k..hi, Tag::Skip);
                 return hi - k;
@@ -1322,7 +1325,7 @@ impl Tagger<'_> {
         if suffix_word && (!marked || lex.suffix(self.text(l2.end - 1)).is_some()) {
             return false;
         }
-        let text = join(&self.toks[l2.clone()]);
+        let text = join_ref(&self.toks[l2.clone()]);
         let repeat = l2.clone().all(|k| {
             (l1.clone()).any(|j| self.toks[j].text == self.toks[k].text)
                 || matches!(self.text(k), "&" | "AND")
@@ -2286,7 +2289,7 @@ impl Tagger<'_> {
                 // street words (RD, RTE, ROUTE) count only with a BOX after
                 // the route.
                 Special::RuralRoute | Special::HighwayContract => {
-                    let form = join(&self.toks[lo..lo + w]);
+                    let form = join_ref(&self.toks[lo..lo + w]);
                     let ambiguous = lex.highway(&form).is_some() || lex.suffix(&form).is_some();
                     if let Some((route, hash)) = self.value_at(lo + w, hi) {
                         let bx = self.box_part(route + 1, hi);
@@ -3221,7 +3224,7 @@ impl Tagger<'_> {
         // designator counts too (`5100 FL 40 SUITE 100`): this is the start of
         // the street, and read as a floor it would leave no street name.
         let route = i + w;
-        let word = join(&self.toks[state.clone()]);
+        let word = join_ref(&self.toks[state.clone()]);
         let bare = route < hi && all_digits(self.text(route)) && lex.directional(&word).is_none();
         bare.then_some(HighwayAt {
             pre: i..i,
@@ -3875,7 +3878,7 @@ impl Tagger<'_> {
                     (k >= floor && placed).then_some(k)
                 });
                 if let Some(k) = level {
-                    let phrase = join(&self.toks[k..j]);
+                    let phrase = join_ref(&self.toks[k..j]);
                     if lex.is_level_word(&phrase) {
                         // Two words: the first is the value, the level word is dropped.
                         if j - k == 2 {
@@ -3886,7 +3889,7 @@ impl Tagger<'_> {
                         j = k;
                         continue;
                     }
-                    if phrase == "LL" {
+                    if &*phrase == "LL" {
                         found.push((k..j, j..j));
                         j = k;
                         continue;

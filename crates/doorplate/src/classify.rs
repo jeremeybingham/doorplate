@@ -420,12 +420,56 @@ pub(crate) fn longest_ending<T>(
     })
 }
 
-/// `join`, but a one-token run is borrowed, not copied (#672 B8).
-pub(crate) fn join_ref(run: &[Token]) -> std::borrow::Cow<'_, str> {
-    match run {
-        [one] => std::borrow::Cow::Borrowed(one.text.as_str()),
-        _ => std::borrow::Cow::Owned(join(run)),
+/// A joined run of tokens that allocates nothing when the text is short
+/// (#703 G5): one token is borrowed, and up to `INLINE` bytes are built in
+/// place. Only a longer run takes a `String`. It derefs to `str`.
+pub(crate) enum Joined<'a> {
+    Borrowed(&'a str),
+    Inline(usize, [u8; Joined::INLINE]),
+    Owned(String),
+}
+
+impl Joined<'_> {
+    const INLINE: usize = 64;
+}
+
+impl std::ops::Deref for Joined<'_> {
+    type Target = str;
+    fn deref(&self) -> &str {
+        match self {
+            Joined::Borrowed(s) => s,
+            Joined::Inline(n, buf) => std::str::from_utf8(&buf[..*n]).unwrap_or(""),
+            Joined::Owned(s) => s,
+        }
     }
+}
+
+/// `join`, but a one-token run is borrowed and a short one is built on the
+/// stack, not copied to the heap (#672 B8, #703 G5).
+pub(crate) fn join_ref(run: &[Token]) -> Joined<'_> {
+    if let [one] = run {
+        return Joined::Borrowed(one.text.as_str());
+    }
+    let need = run
+        .iter()
+        .map(|t| t.text.len() + 1)
+        .sum::<usize>()
+        .saturating_sub(1);
+    if need > Joined::INLINE {
+        return Joined::Owned(join(run));
+    }
+    let mut buf = [0u8; Joined::INLINE];
+    let mut n = 0;
+    for t in run {
+        if n > 0 {
+            buf[n] = b' ';
+            n += 1;
+        }
+        let b = t.text.as_bytes();
+        buf[n..n + b.len()].copy_from_slice(b);
+        n += b.len();
+    }
+    Joined::Inline(n, buf)
 }
 
 pub(crate) fn join(run: &[Token]) -> String {
