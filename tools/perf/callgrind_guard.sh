@@ -24,9 +24,11 @@ trap cleanup EXIT
 python3 "$root/benchmarks/profile_inputs.py" "$work/in" >/dev/null
 head -n 4000 "$work/in/mix.txt" >"$work/inputs.txt"
 
+# One target directory per build: both checkouts have the same package path inside their workspace, so a shared
+# directory made the head reuse the base's build-script output when a change touched build.rs (found in #703 G6).
 build() { # SRC_DIR OUT_BINARY
-	(cd "$1" && cargo build --release -q -p doorplate --example profile_loop --target-dir "$work/target")
-	cp "$work/target/release/examples/profile_loop" "$2"
+	(cd "$1" && cargo build --release -q -p doorplate --example profile_loop --target-dir "$2.target")
+	cp "$2.target/release/examples/profile_loop" "$2"
 }
 count() { # BINARY -> instructions
 	valgrind --tool=callgrind --callgrind-out-file="$work/cg.out" "$1" "$work/inputs.txt" 1 >/dev/null 2>&1
