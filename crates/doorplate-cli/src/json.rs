@@ -2,15 +2,17 @@
 //! formats what the parser produced and never re-parses it.
 
 use doorplate::{Highway, KeyOptions, ParsedAddress, PlaceKind, UsaddressTag};
-use serde_json::{json, Map, Value};
+use serde::ser::{SerializeMap, Serializer};
+use serde::Serialize;
+use serde_json::{json, Value};
 
 /// Parsed components, by `ParsedAddress` field name. Components the parse
 /// did not find are left out.
-fn components(a: &ParsedAddress) -> Map<String, Value> {
-    let mut m = Map::new();
-    let mut put = |k: &str, v: Option<String>| {
+fn components(a: &ParsedAddress) -> Vec<(&'static str, String)> {
+    let mut m = Vec::with_capacity(12);
+    let mut put = |k: &'static str, v: Option<String>| {
         if let Some(v) = v {
-            m.insert(k.to_string(), Value::String(v));
+            m.push((k, v));
         }
     };
     put("street_number", a.street_number.clone());
@@ -74,54 +76,141 @@ fn warning_codes(a: &ParsedAddress) -> Vec<&'static str> {
     a.diagnostics.warnings.iter().map(|w| w.code()).collect()
 }
 
-/// The full record printed by `doorplate parse`.
-pub fn record(a: &ParsedAddress) -> Value {
-    let usps = a.to_usps();
-    let reso: Map<String, Value> = a
-        .to_reso()
-        .fields()
-        .into_iter()
-        .map(|(k, v)| (k.to_string(), Value::String(v)))
-        .collect();
-    json!({
-        "input": a.source.original,
-        "components": components(a),
-        "warnings": warning_codes(a),
-        "unparsed": a.diagnostics.unparsed,
-        "key": a.key(KeyOptions::property()),
-        "key_unit": a.key(KeyOptions::unit()),
-        "slug": a.slug(),
-        "usps": {
-            "line1": usps.line1,
-            "line2": usps.line2,
-            "last_line": usps.last_line(),
-        },
-        "reso": reso,
-        "place": a.place.map(|m| json!({
-            "name": m.place.name(),
-            "state": m.place.state(),
-            "county": m.place.county(),
-            "kind": match m.place.kind() {
+/// The full record printed by `doorplate parse`. It serializes straight to the
+/// writer: no `Value` tree is built (the tree was about half of the CLI's cost).
+pub struct Record<'a>(pub &'a ParsedAddress);
+
+pub fn record(a: &ParsedAddress) -> Record<'_> {
+    Record(a)
+}
+
+/// A map written from pairs, in order.
+struct Pairs<'a>(&'a [(&'static str, String)]);
+
+impl Serialize for Pairs<'_> {
+    fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+        let mut m = s.serialize_map(Some(self.0.len()))?;
+        for (k, v) in self.0 {
+            m.serialize_entry(k, v)?;
+        }
+        m.end()
+    }
+}
+
+struct PlaceJson<'a>(&'a doorplate::PlaceMatch);
+
+impl Serialize for PlaceJson<'_> {
+    fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+        let m = self.0;
+        let mut o = s.serialize_map(Some(5))?;
+        o.serialize_entry("name", m.place.name())?;
+        o.serialize_entry("state", &m.place.state())?;
+        o.serialize_entry("county", &m.place.county())?;
+        o.serialize_entry(
+            "kind",
+            match m.place.kind() {
                 PlaceKind::Municipality => "municipality",
                 PlaceKind::Place => "place",
                 PlaceKind::Subdivision => "subdivision",
                 // A kind added later reads as the generic one until it has a name here.
                 _ => "place",
             },
-            "source": m.source.code(),
-        })),
+        )?;
+        o.serialize_entry("source", &m.source.code())?;
+        o.end()
+    }
+}
+
+impl Serialize for Record<'_> {
+    fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+        let a = self.0;
+        let usps = a.to_usps();
+        let reso = a.to_reso().fields();
+        let mut m = s.serialize_map(Some(11))?;
+        m.serialize_entry("input", &a.source.original)?;
+        m.serialize_entry("components", &Pairs(&components(a)))?;
+        m.serialize_entry("warnings", &warning_codes(a))?;
+        m.serialize_entry("unparsed", &a.diagnostics.unparsed)?;
+        m.serialize_entry("key", &a.key(KeyOptions::property()))?;
+        m.serialize_entry("key_unit", &a.key(KeyOptions::unit()))?;
+        m.serialize_entry("slug", &a.slug())?;
+        m.serialize_entry(
+            "usps",
+            &UspsJson {
+                line1: &usps.line1,
+                line2: &usps.line2,
+                last_line: usps.last_line(),
+            },
+        )?;
+        m.serialize_entry("reso", &Pairs(&reso))?;
+        m.serialize_entry("place", &a.place.as_ref().map(PlaceJson))?;
         // Which release, which state data and which custom layer (#3) produced this
         // record. A group, not bare keys.
-        "provenance": {
-            "library_version": a.diagnostics.library_version,
-            "state_data_version": a.diagnostics.state_data_version,
-            "custom_layer": a.diagnostics.custom_layer.map(|l| json!({
-                "name": l.name,
-                "version": l.version,
-                "fingerprint": l.fingerprint,
-            })),
-        },
-    })
+        m.serialize_entry(
+            "provenance",
+            &ProvenanceJson {
+                library_version: a.diagnostics.library_version,
+                state_data_version: a.diagnostics.state_data_version,
+                custom_layer: a.diagnostics.custom_layer.as_ref(),
+            },
+        )?;
+        m.end()
+    }
+}
+
+struct UspsJson<'a> {
+    line1: &'a Option<String>,
+    line2: &'a Option<String>,
+    last_line: String,
+}
+
+impl Serialize for UspsJson<'_> {
+    fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+        let mut m = s.serialize_map(Some(3))?;
+        m.serialize_entry("line1", self.line1)?;
+        m.serialize_entry("line2", self.line2)?;
+        m.serialize_entry("last_line", &self.last_line)?;
+        m.end()
+    }
+}
+
+struct ProvenanceJson<'a> {
+    library_version: &'a str,
+    state_data_version: Option<&'a str>,
+    custom_layer: Option<&'a doorplate::LayerInfo>,
+}
+
+impl Serialize for ProvenanceJson<'_> {
+    fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+        let mut m = s.serialize_map(Some(3))?;
+        m.serialize_entry("library_version", self.library_version)?;
+        m.serialize_entry("state_data_version", &self.state_data_version)?;
+        m.serialize_entry(
+            "custom_layer",
+            &self.custom_layer.map(|l| LayerJson {
+                name: l.name,
+                version: l.version,
+                fingerprint: l.fingerprint,
+            }),
+        )?;
+        m.end()
+    }
+}
+
+struct LayerJson<'a> {
+    name: &'a str,
+    version: &'a str,
+    fingerprint: &'a str,
+}
+
+impl Serialize for LayerJson<'_> {
+    fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+        let mut m = s.serialize_map(Some(3))?;
+        m.serialize_entry("name", self.name)?;
+        m.serialize_entry("version", self.version)?;
+        m.serialize_entry("fingerprint", self.fingerprint)?;
+        m.end()
+    }
 }
 
 /// The record printed by `doorplate parse --usaddress`: each token as
@@ -196,7 +285,11 @@ pub const COLUMNS: [&str; 30] = [
 pub fn row(a: &ParsedAddress) -> Vec<String> {
     let c = components(a);
     let usps = a.to_usps();
-    let get = |k: &str| c.get(k).and_then(Value::as_str).unwrap_or("").to_string();
+    let get = |k: &str| {
+        c.iter()
+            .find(|(n, _)| *n == k)
+            .map_or(String::new(), |(_, v)| v.clone())
+    };
     COLUMNS
         .iter()
         .map(|&col| match col {
@@ -255,9 +348,9 @@ mod tests {
         }
         let mut seen = std::collections::BTreeSet::new();
         for a in &parsed {
-            for k in components(a).keys() {
-                assert!(COLUMNS.contains(&k.as_str()), "no column for `{k}`");
-                seen.insert(k.clone());
+            for (k, _) in components(a) {
+                assert!(COLUMNS.contains(&k), "no column for `{k}`");
+                seen.insert(k);
             }
             assert_eq!(row(a).len(), COLUMNS.len());
         }

@@ -78,7 +78,7 @@ fn spans(a: &ParsedAddress) -> Vec<Value> {
 fn record(result: Result<ParsedAddress, ParseError>, input: &str) -> String {
     let v = match result {
         Ok(a) => {
-            let mut v = json::record(&a);
+            let mut v = serde_json::to_value(json::record(&a)).unwrap_or(Value::Null);
             if let Value::Object(m) = &mut v {
                 m.insert("spans".into(), Value::Array(spans(&a)));
             }
@@ -334,7 +334,7 @@ mod tests {
         let mut v = parsed(input);
         v.as_object_mut().unwrap().remove("spans");
         let a = Parser::new().parse(input).unwrap();
-        assert_eq!(v, json::record(&a));
+        assert_eq!(v, serde_json::to_value(json::record(&a)).unwrap());
     }
 
     #[test]

@@ -219,6 +219,7 @@ version = "0.6.2-dev"
 dependencies = [
  "csv",
  "doorplate",
+ "serde",
  "serde_json",
 ]
 
@@ -235,6 +236,7 @@ name = "doorplate-wasm"
 version = "0.6.2-dev"
 dependencies = [
  "doorplate",
+ "serde",
  "serde_json",
 ]
 

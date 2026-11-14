@@ -305,19 +305,32 @@ fn print_parsed(out: &mut impl Write, a: &ParsedAddress, o: &Opts) -> io::Result
         }
         return Ok(());
     }
+    let pretty = o.has("--pretty");
+    fn text<T: serde::Serialize>(v: &T, pretty: bool) -> serde_json::Result<String> {
+        if pretty {
+            serde_json::to_string_pretty(v)
+        } else {
+            serde_json::to_string(v)
+        }
+    }
+    if !o.has("--usaddress") && !o.has("--tag") {
+        // Straight to the writer: the record is never built as a `Value` tree.
+        // One buffer, one write: stdout is line-buffered and a record is one line.
+        let mut buf = Vec::with_capacity(2048);
+        if pretty {
+            serde_json::to_writer_pretty(&mut buf, &json::record(a))?;
+        } else {
+            serde_json::to_writer(&mut buf, &json::record(a))?;
+        }
+        buf.push(b'\n');
+        return out.write_all(&buf);
+    }
     let v = if o.has("--usaddress") {
         json::usaddress_record(&a.source.original, &a.to_usaddress_tags())
-    } else if o.has("--tag") {
+    } else {
         json::tag_record(&a.source.original, Some(a))
-    } else {
-        json::record(a)
     };
-    let text = if o.has("--pretty") {
-        serde_json::to_string_pretty(&v)
-    } else {
-        serde_json::to_string(&v)
-    };
-    writeln!(out, "{}", text.map_err(io::Error::other)?)
+    writeln!(out, "{}", text(&v, pretty).map_err(io::Error::other)?)
 }
 
 fn parse_file_cmd(args: &[String]) -> Result<ExitCode, CliError> {
