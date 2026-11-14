@@ -7,6 +7,10 @@ change to what an input produces needs a new key version.
 
 ## [Unreleased]
 
+### Changed
+
+- **Speed:** `suffix_in` returns the plain suffix reading at once when no custom layer is loaded and the state-scoped suffix table is empty, instead of building a `STATE|KEY` string to search an empty table (#701). −1.40% instructions (1,232,075,526 to 1,214,859,639) and 41.6 to 39.3 allocations per parse on the survey mix; output hash unchanged, no key change.
+
 ## [0.6.1] - 2026-11-13
 
 A speed release with one `parse_tokens` label fix. **No key changed**: the `k5` keys of 0.6.0 stay as they are, so there is
