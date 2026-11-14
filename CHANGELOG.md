@@ -9,6 +9,7 @@ change to what an input produces needs a new key version.
 
 ### Changed
 
+- **Speed:** the tokenizer trims each piece with byte scans instead of char-pattern searches, trims a piece to its alphanumerics once instead of twice, and finds each piece's segment end and the later state or ZIP in one pass from the end instead of a scan of the later pieces for every piece (#703 G1). −5.50% instructions (1,214,596,099 to 1,147,732,984) on the survey mix, 39.3 allocations per parse unchanged; output hash unchanged, no key change.
 - **Speed:** `suffix_in` returns the plain suffix reading at once when no custom layer is loaded and the state-scoped suffix table is empty, instead of building a `STATE|KEY` string to search an empty table (#701). −1.40% instructions (1,232,075,526 to 1,214,859,639) and 41.6 to 39.3 allocations per parse on the survey mix; output hash unchanged, no key change.
 
 ## [0.6.1] - 2026-11-13

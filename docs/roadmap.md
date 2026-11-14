@@ -18,6 +18,7 @@ What each release changed is in [`CHANGELOG.md`](../CHANGELOG.md).
 
 No tracker is open. Point releases carry speed, tooling and documentation, never a key change. A CI guard fails a pull request that adds more than 1% instructions per parse; the speed leads left are under Waiting, below.
 
+- **Speed leads at a 0.5% bar:** #703 (tokenizer trims, a hash index for the lexicon tables, place search, allocation groups), one measured pull request per group.
 - **Shipped in 0.6.1:** the speed cuts of #672 (B, C, and the feature bitset and `Piece::sub` byte tests of D, about 27% less time per parse than 0.6.0), #652 (a letter written twice gets a label in `parse_tokens`), and the answer to #671 (the #614 rule, not a regression).
 - **Blog post:** [doorplate 0.6.1](https://jeremeybingham.github.io/doorplate/2026/11/13/doorplate-0-6-1.html) (#491).
 
