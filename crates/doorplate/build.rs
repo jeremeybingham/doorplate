@@ -16,6 +16,9 @@ use std::{env, fs};
 
 use toml::{Table, Value};
 
+#[path = "src/lexicon/hash.rs"]
+mod hash;
+
 #[path = "src/lexicon/key.rs"]
 mod key;
 use key::normalize_key;
@@ -1174,6 +1177,12 @@ fn le8(v: usize, what: &str) -> Result<u8> {
 ///   state.
 /// - `zip_index.bin`, 9 bytes per ZIP: the 5 ASCII digits, main place row
 ///   u32. Sorted by ZIP. `ZIP_SHARED` lists the few ZIPs with shared places.
+/// - `zip_starts.bin`, 1,001 little-endian u32: where each three-digit ZIP
+///   prefix starts in `zip_index.bin` (the last is the ZIP count).
+/// - `place_slots.bin`, `place_any_slots.bin`: open-addressing hash indexes
+///   (`src/lexicon/hash.rs`) of little-endian u32 slots, each a position plus
+///   one (0 empty), over the keys of `place_keys.txt` and over the keys of
+///   `place_any.bin` without `STATE|`.
 fn emit_places(
     states: &[String],
     versions: &[(String, String)],
@@ -1231,6 +1240,11 @@ fn emit_places(
         keys.push_str(k);
     }
 
+    // Open-addressing hash indexes over the place keys and the any-state keys, probed at run time
+    // with the same hash (`src/lexicon/hash.rs`); building them at startup cost 15M instructions
+    // for each process (#703 G6).
+    let slot_bytes =
+        |slots: Vec<u32>| -> Vec<u8> { slots.into_iter().flat_map(u32::to_le_bytes).collect() };
     let mut any: Vec<(&str, usize)> = t
         .index
         .iter()
@@ -1239,15 +1253,24 @@ fn emit_places(
         .map(|(n, (k, _))| (&k[3..], n))
         .collect();
     any.sort_unstable();
+    let any_slots = slot_bytes(hash::build_slots(any.iter().map(|(k, _)| *k)));
     let any: Vec<u8> = any
         .into_iter()
         .map(|(_, n)| le32(n, "key number"))
         .collect::<Result<Vec<_>>>()?
         .concat();
 
+    let place_slots = slot_bytes(hash::build_slots(t.index.keys().map(String::as_str)));
     let mut zips = Vec::new();
     let mut shared = Vec::new();
+    let mut zip_starts = vec![0u32; 1001];
     for (z, (main, others)) in &t.zips {
+        let prefix = z
+            .get(..3)
+            .and_then(|p| p.parse::<usize>().ok())
+            .filter(|_| z.len() == 5 && z.bytes().all(|b| b.is_ascii_digit()))
+            .ok_or_else(|| format!("place tables: ZIP {z:?} is not five digits"))?;
+        zip_starts[prefix + 1] += 1;
         zips.extend(z.bytes());
         zips.extend(le32(*main, "row number")?);
         if !others.is_empty() {
@@ -1261,6 +1284,12 @@ fn emit_places(
     write("place_index.bin", &index)?;
     write("place_any.bin", &any)?;
     write("zip_index.bin", &zips)?;
+    for i in 1..1001 {
+        zip_starts[i] += zip_starts[i - 1];
+    }
+    write("zip_starts.bin", &slot_bytes(zip_starts))?;
+    write("place_slots.bin", &place_slots)?;
+    write("place_any_slots.bin", &any_slots)?;
 
     writeln!(out, "/// States with curated data compiled in.").ok();
     writeln!(
@@ -1306,6 +1335,9 @@ fn emit_places(
         ("PLACE_INDEX", "place_index.bin"),
         ("PLACE_ANY", "place_any.bin"),
         ("ZIP_INDEX", "zip_index.bin"),
+        ("ZIP_STARTS", "zip_starts.bin"),
+        ("PLACE_SLOTS", "place_slots.bin"),
+        ("PLACE_ANY_SLOTS", "place_any_slots.bin"),
     ] {
         writeln!(
             out,

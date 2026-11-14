@@ -9,6 +9,7 @@
 //! in here: it adds spellings that resolve to the same Pub 28 entries, so
 //! the value types keep pointing at the base tables.
 
+mod hash;
 mod key;
 mod place_key;
 
@@ -188,26 +189,20 @@ fn place_keys() -> impl Iterator<Item = &'static str> + Clone {
 }
 
 /// The keys (without `STATE|`) that [`any_place`] searches.
+#[cfg(test)]
 fn any_place_keys() -> impl Iterator<Item = &'static str> + Clone {
-    (0..tables::PLACE_ANY.len() / 4).filter_map(|n| {
-        let r = record(
-            tables::PLACE_INDEX,
-            KEY_LEN,
-            usize::try_from(le32(tables::PLACE_ANY, n * 4)?).ok()?,
-        )?;
-        pool_str(tables::PLACE_KEYS, le32(r, 0)?, *r.get(4)?)?.get(3..)
-    })
+    (0..tables::PLACE_ANY.len() / 4).filter_map(any_place_key)
 }
 
 /// The row and spelling kind for a `STATE|key` place key. Most keys asked for are not places
 /// (a city candidate is built for every run of words), so a bit filter over the keys answers
 /// those without the search (#425).
 fn find_place(key: &str) -> Option<(u32, MatchKind)> {
-    let slots = place_slots();
-    let mask = slots.len() - 1;
-    let mut s = Filter::slot_of(Filter::hash(key), mask);
+    let slots = tables::PLACE_SLOTS;
+    let mask = (slots.len() / 4).checked_sub(1)?;
+    let mut s = hash::slot_of(hash::hash(key), mask);
     loop {
-        let e = *slots.get(s)?;
+        let e = slot_at(slots, s)?;
         if e == 0 {
             return None;
         }
@@ -226,27 +221,11 @@ fn place_key_at(n: usize) -> Option<&'static str> {
     pool_str(tables::PLACE_KEYS, le32(r, 0)?, *r.get(4)?)
 }
 
-/// An open-addressing hash index over the place keys, at most half full: each slot holds a record
-/// number plus one, 0 for empty (#703 G4). It replaces a bit filter and a binary search, each step
-/// of which decoded a record and compared the `ST|` prefix every key shares.
-fn place_slots() -> &'static [u32] {
-    static SLOTS: OnceLock<Box<[u32]>> = OnceLock::new();
-    SLOTS.get_or_init(|| {
-        let n = tables::PLACE_INDEX.len() / KEY_LEN;
-        let size = (n * 2).next_power_of_two().max(8);
-        let mask = size - 1;
-        let mut slots = vec![0u32; size];
-        for i in 0..n {
-            if let Some(k) = place_key_at(i) {
-                let mut s = Filter::slot_of(Filter::hash(k), mask);
-                while slots[s] != 0 {
-                    s = (s + 1) & mask;
-                }
-                slots[s] = i as u32 + 1;
-            }
-        }
-        slots.into_boxed_slice()
-    })
+/// The slot of `table` (little-endian `u32`s written by build.rs): a record number plus one, 0 for
+/// empty. The table is half full at most, so a probe ends at an empty slot.
+#[inline]
+fn slot_at(table: &'static [u8], s: usize) -> Option<u32> {
+    le32(table, s.checked_mul(4)?)
 }
 
 /// The reference the hash index is tested against: a binary search of the whole index.
@@ -269,25 +248,44 @@ fn place_value(at: usize) -> Option<(u32, MatchKind)> {
 }
 
 /// Whether a key (without its `STATE|`) is the standard name of a place in
-/// any state (behind a bit filter like [`find_place`], #425).
+/// any state, by the hash index build.rs writes over those keys (#703 G6; a bit filter and a
+/// binary search before, #425).
 fn any_place(key: &str) -> bool {
-    static FILTER: OnceLock<Filter> = OnceLock::new();
-    FILTER
-        .get_or_init(|| Filter::new(any_place_keys()))
-        .may_contain(key)
-        && any_place_search(key)
+    let slots = tables::PLACE_ANY_SLOTS;
+    let Some(mask) = (slots.len() / 4).checked_sub(1) else {
+        return false;
+    };
+    let mut s = hash::slot_of(hash::hash(key), mask);
+    loop {
+        match slot_at(slots, s) {
+            None | Some(0) => return false,
+            Some(e) => {
+                if any_place_key(e as usize - 1) == Some(key) {
+                    return true;
+                }
+            }
+        }
+        s = (s + 1) & mask;
+    }
 }
 
+/// The key (without `STATE|`) of entry `n` of the any-state list.
+fn any_place_key(n: usize) -> Option<&'static str> {
+    let r = record(
+        tables::PLACE_INDEX,
+        KEY_LEN,
+        usize::try_from(le32(tables::PLACE_ANY, n.checked_mul(4)?)?).ok()?,
+    )?;
+    pool_str(tables::PLACE_KEYS, le32(r, 0)?, *r.get(4)?)?.get(3..)
+}
+
+/// The reference the hash index is tested against: a binary search of the sorted list.
+#[cfg(test)]
 fn any_place_search(key: &str) -> bool {
-    let at = |n: usize| {
-        let r = record(
-            tables::PLACE_INDEX,
-            KEY_LEN,
-            usize::try_from(le32(tables::PLACE_ANY, n * 4)?).ok()?,
-        )?;
-        pool_str(tables::PLACE_KEYS, le32(r, 0)?, *r.get(4)?)?.get(3..)
-    };
-    search(tables::PLACE_ANY.len() / 4, |n| Some(cmp_keys(at(n)?, key))).is_some()
+    search(tables::PLACE_ANY.len() / 4, |n| {
+        Some(cmp_keys(any_place_key(n)?, key))
+    })
+    .is_some()
 }
 
 /// A ZIP's main place row and shared place rows.
@@ -304,27 +302,14 @@ fn find_zip(zip5: &str) -> Option<(u32, &'static [u32])> {
 fn zip_row(b: &[u8]) -> Option<usize> {
     let index = tables::ZIP_INDEX;
     let n = index.len() / ZIP_LEN;
-    // Where each three-digit prefix starts in the sorted index; empty when a record is not digits.
-    static STARTS: OnceLock<Vec<u32>> = OnceLock::new();
-    let starts = STARTS.get_or_init(|| {
-        let mut starts = vec![0u32; 1001];
-        for k in 0..n {
-            match record(index, ZIP_LEN, k).and_then(prefix3) {
-                Some(p) => starts[p + 1] += 1,
-                None => return Vec::new(),
-            }
-        }
-        for i in 1..1001 {
-            starts[i] += starts[i - 1];
-        }
-        starts
-    });
+    // Where each three-digit prefix starts in the sorted index (1,001 numbers written by build.rs).
+    let starts = tables::ZIP_STARTS;
     match (prefix3(b), starts.len(), b.len()) {
-        (Some(p), 1001, 5) => {
-            let lo = starts[p] as usize;
-            let hi = starts[p + 1] as usize;
-            let tail = [b[3], b[4]];
-            let k = search(hi - lo, |k| {
+        (Some(p), 4004, 5) => {
+            let lo = le32(starts, p * 4)? as usize;
+            let hi = le32(starts, p * 4 + 4)? as usize;
+            let tail = [*b.get(3)?, *b.get(4)?];
+            let k = search(hi.checked_sub(lo)?, |k| {
                 let r = record(index, ZIP_LEN, lo + k)?;
                 Some([*r.get(3)?, *r.get(4)?].cmp(&tail))
             })?;
@@ -425,33 +410,18 @@ impl Filter {
     /// The FNV-1a hash of a key, the one the two probes are cut from.
     #[inline]
     fn hash(key: &str) -> u64 {
-        let mut h: u64 = 0xcbf2_9ce4_8422_2325;
-        for &c in key.as_bytes() {
-            h = (h ^ u64::from(c)).wrapping_mul(0x0000_0100_0000_01b3);
-        }
-        h
+        hash::hash(key)
     }
 
     #[inline]
     fn slot_of(h: u64, mask: usize) -> usize {
-        ((h >> 32) ^ h) as usize & mask
+        hash::slot_of(h, mask)
     }
 
     /// Builds the hash index over `keys` (the table's keys, in table order), at most half full, so a
     /// lookup of a key that is not in the table usually ends at the first empty slot.
     fn with_slots<'a>(mut self, keys: impl Iterator<Item = &'a str> + Clone) -> Self {
-        let n = keys.clone().count();
-        let size = (n * 2).next_power_of_two().max(8);
-        let mask = size - 1;
-        let mut slots = vec![0u32; size];
-        for (i, k) in keys.enumerate() {
-            let mut s = Self::slot_of(Self::hash(k), mask);
-            while slots[s] != 0 {
-                s = (s + 1) & mask;
-            }
-            slots[s] = i as u32 + 1;
-        }
-        self.slots = slots.into_boxed_slice();
+        self.slots = hash::build_slots(keys).into_boxed_slice();
         self
     }
 
