@@ -628,6 +628,10 @@ impl Lexicons {
     /// a spelling as another suffix, always as [`MatchKind::Observed`]. Otherwise the same as
     /// [`Self::suffix`].
     pub fn suffix_in(&self, state: &str, s: &str) -> Option<Lookup<StreetSuffix>> {
+        // Nothing state-scoped to search: skip building the `STATE|KEY` string.
+        if self.layer.is_none() && tables::STATE_SUFFIX_INDEX.is_empty() {
+            return self.suffix(s);
+        }
         let key = format!("{state}|{}", normalize_key(s));
         if let Some(hit) = self.layer.and_then(|l| l.state_suffix.get(&key)) {
             return Some(*hit);
