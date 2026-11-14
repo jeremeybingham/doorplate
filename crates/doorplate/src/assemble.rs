@@ -24,7 +24,7 @@ fn address_state(runs: &[(Tag, &[Token])], lex: &Lexicons) -> Option<&'static st
     let text_of = |tag: Tag| {
         runs.iter()
             .find(|(t, _)| *t == tag)
-            .map(|(_, run)| join(run))
+            .map(|(_, run)| crate::classify::join_ref(run))
     };
     if let Some(l) = text_of(Tag::State).and_then(|t| lex.state(&t)) {
         return Some(l.value.code());
