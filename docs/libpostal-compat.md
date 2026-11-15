@@ -5,7 +5,9 @@ anywhere in the world with a statistical model. `doorplate` is a US-only parser 
 also standardizes, builds a key and reports diagnostics. This page compares the two: what each does, where the outputs
 line up, and the first measurements (one run, 2026-11-07, to be repeated).
 
-The figures in "Measured so far" are notes from that first run, not the published figures; the published ones will go in
+The figures in "Measured so far" are notes from that first run, not the published figures. The published three-way
+comparison (doorplate 0.6.0, usaddress and libpostal with the Senzing model, on one neutral schema with a hand-labeled
+golden set) is [the address-parser-showdown report](https://github.com/jeremeybingham/address-parser-showdown/blob/main/report/REPORT.md); this library's own figures are in
 [`benchmarks.md`](benchmarks.md) and [`speed-and-size.md`](speed-and-size.md). The facts about libpostal come from its
 README and from Senzing's model repository, read on 2026-11-07; what those pages do not say is marked as not stated.
 Examples are invented. This library formats and parses; it does not validate that an address exists or can receive mail.
@@ -165,7 +167,8 @@ How to read it:
 - Cost beside accuracy: install effort, model size, load time, memory and addresses per second, with the load time apart from the
   per-address speed. Defaults only: no retraining of either side.
 
-The plan for a full comparison, with a hand-labeled golden set, is in issue [#616](https://github.com/jeremeybingham/doorplate/issues/616).
+The full comparison, with a hand-labeled golden set (planned in issue [#616](https://github.com/jeremeybingham/doorplate/issues/616)), is
+[the address-parser-showdown report](https://github.com/jeremeybingham/address-parser-showdown/blob/main/report/REPORT.md): its method, results, error analysis by shape and threats to validity.
 
 ## Sources
 
