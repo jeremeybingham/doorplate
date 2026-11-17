@@ -232,6 +232,7 @@ One row per `tests/corpus/*.jsonl`; a new file gets a row here and an id prefix 
 | `us-highway-spelled.jsonl` | `ush-` | `UNITED STATES HIGHWAY 27` and `U S HIGHWAY 27` read as the US highway, like `US HWY 27` |
 | `warnings.jsonl` | `wn-` | A letter after the number read into the street name warns that it may be the number's suffix or an initial |
 | `zip-repair.jsonl` | `zr-` | A nearly right ZIP is repaired |
+| `zip-spaced.jsonl` | `zs-` | A ZIP+4 with spaces around its hyphen; a unit after the ZIP (#733) |
 
 Notes on single files:
 
