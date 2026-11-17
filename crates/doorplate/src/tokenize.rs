@@ -235,6 +235,22 @@ pub(crate) fn tokenize(
     out
 }
 
+/// The last token of `before` is a suffix word that follows a name after an earlier suffix
+/// (`9 HEDGE LN WALNUT GROVE`: `GROVE` ends a city, not the street).
+fn suffix_before_name(before: &[Token], lex: &Lexicons) -> bool {
+    let Some((last, rest)) = before.split_last() else {
+        return false;
+    };
+    let seg = last.seg;
+    let mut seg_rest = rest.iter().rev().take_while(|t| t.seg == seg);
+    // The word before the last one may be a suffix too (`100 PARK AVE`): skip it.
+    seg_rest.next();
+    seg_rest.any(|t| {
+        lex.suffix(&t.text)
+            .is_some_and(|l| l.kind != MatchKind::Observed)
+    })
+}
+
 /// A spaced dash is a comma (`12 OAK AVE - TULSA, OK 74103`, `TOWER, 12 OAK AVE - TULSA OK
 /// 74103`) when a state and a ZIP come after it (#736). The dash goes and what follows starts a
 /// new segment. Not when a unit, a box or a number follows it (`ST - 2210`, `OK - 74103`) or a
@@ -288,9 +304,10 @@ fn dash_separator(out: &mut Vec<Token>, lex: &Lexicons) {
         let prev_ends_street = lex.state(&out[k + 1].text).is_some()
             || prev.text.bytes().any(|c| c.is_ascii_digit())
             || lex.directional(&prev.text).is_some()
-            || lex
+            || (lex
                 .suffix(&prev.text)
-                .is_some_and(|l| l.kind != MatchKind::Observed);
+                .is_some_and(|l| l.kind != MatchKind::Observed)
+                && !suffix_before_name(&out[..k], lex));
         if same
             && state_near
             && !prev_unit
