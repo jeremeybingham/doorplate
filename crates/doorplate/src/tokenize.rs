@@ -229,7 +229,71 @@ pub(crate) fn tokenize(
     });
     pass("join_unit_hyphen", &mut out, |o| join_unit_hyphen(o, lex));
     pass("join_zip_hyphen", &mut out, |o| join_zip_hyphen(o, lex));
+    if field.is_none() {
+        pass("dash_separator", &mut out, |o| dash_separator(o, lex));
+    }
     out
+}
+
+/// A spaced dash is a comma (`12 OAK AVE - TULSA, OK 74103`, `TOWER, 12 OAK AVE - TULSA OK
+/// 74103`) when a state and a ZIP come after it (#736). The dash goes and what follows starts a
+/// new segment. Not when a unit, a box or a number follows it (`ST - 2210`, `OK - 74103`) or a
+/// unit designator or box word comes before it (`APT - B`): those are read elsewhere. A hyphen
+/// with no spaces never reaches here, it is part of its token.
+fn dash_separator(out: &mut Vec<Token>, lex: &Lexicons) {
+    let mut k = 1;
+    while k + 1 < out.len() {
+        if !out[k].is_dash() {
+            k += 1;
+            continue;
+        }
+        let same = out[k - 1].seg == out[k].seg && out[k].seg == out[k + 1].seg;
+        let zip_at = out[k + 1..]
+            .iter()
+            .position(|t| zip_parts(&t.text).is_some())
+            .map(|p| p + k + 1);
+        // The state sits in the dash's own segment, or starts the next one: a city after the
+        // dash with another city before the state (`9 OAK RD - PINE TWP, ALBANY NY 12207`)
+        // is left alone.
+        let state_near = zip_at.is_some_and(|z| {
+            (k + 1..z)
+                .rev()
+                .find(|&i| out[i].seg == out[z].seg && lex.state(&out[i].text).is_some())
+                .is_some_and(|i| {
+                    out[i].seg == out[k].seg
+                        || (out[i].seg == out[k].seg + 1 && out[i - 1].seg != out[i].seg)
+                })
+        });
+        let prev = &out[k - 1];
+        let prev_unit = prev.is_hash()
+            || prev.is_dash()
+            || lex
+                .unit(&prev.text)
+                .is_some_and(|l| l.kind != MatchKind::Observed)
+            || lex.is_bare_box_word(&prev.text);
+        // A house number after a building name (`TOWER - 12 OAK AVE`): nothing with a digit
+        // before it in the segment, a street word after it, and no suffix before the dash.
+        let street_start = out[k + 1].text.bytes().all(|c| c.is_ascii_digit())
+            && out.get(k + 2).is_some_and(|t| t.seg == out[k].seg)
+            && out[..k]
+                .iter()
+                .rev()
+                .take_while(|t| t.seg == out[k].seg)
+                .all(|t| !t.text.bytes().any(|c| c.is_ascii_digit()))
+            && lex
+                .suffix(&prev.text)
+                .map_or(true, |l| l.kind == MatchKind::Observed);
+        if same && state_near && !prev_unit && (street_start || !unit_like(&out[k + 1].text, lex)) {
+            out.remove(k);
+            // What follows starts a new segment; every later segment moves up by one too, so
+            // the numbering stays in order.
+            for t in out[k..].iter_mut() {
+                t.seg += 1;
+            }
+        } else {
+            k += 1;
+        }
+    }
 }
 
 /// A ZIP+4 written with spaces around its hyphen (`74103 - 2373`, `74103- 2373`) is the one
