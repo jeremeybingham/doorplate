@@ -78,11 +78,13 @@ impl Tagger<'_> {
     /// Returns the end of the tokens the last line is read in.
     fn zip_tail_start(&mut self) -> usize {
         let n = self.toks.len();
-        let Some(z) = (1..n.saturating_sub(1))
-            .rev()
-            .take(4)
-            .find(|&z| zip_parts(self.text(z)).is_some() && !self.toks[z].paren)
-        else {
+        let Some(z) = (1..n.saturating_sub(1)).rev().take(4).find(|&z| {
+            // Every ZIP form starts with a digit: most tokens fail on this byte, before any parsing.
+            let t = self.text(z);
+            t.as_bytes().first().is_some_and(u8::is_ascii_digit)
+                && zip_parts(t).is_some()
+                && !self.toks[z].paren
+        }) else {
             return n;
         };
         let tail = z + 1..n;
@@ -122,8 +124,8 @@ impl Tagger<'_> {
             let second = self.tags[..lo]
                 .iter()
                 .any(|t| matches!(t, Tag::UnitNumber(1)));
-            for i in lo..hi {
-                self.tags[i] = match (self.tags[i], second) {
+            for tag in &mut self.tags[lo..hi] {
+                *tag = match (*tag, second) {
                     (Tag::UnitType(0), false) => Tag::UnitType(1),
                     (Tag::UnitNumber(0), false) => Tag::UnitNumber(1),
                     (Tag::UnitType(_) | Tag::UnitNumber(_), _) => Tag::Unparsed,
