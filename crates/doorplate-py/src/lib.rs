@@ -426,7 +426,7 @@ impl PyParsedAddress {
         display_dict(py, &self.inner.to_long())
     }
 
-    /// RESO Data Dictionary 2.0 fields by name; a field with no value is left
+    /// RESO Data Dictionary 2.0 and 2.1 fields by name; a field with no value is left
     /// out.
     fn to_reso<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyDict>> {
         let d = PyDict::new(py);
