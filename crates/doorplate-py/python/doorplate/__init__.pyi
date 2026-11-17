@@ -209,7 +209,7 @@ class ParsedAddress:
     def to_long(self) -> Display:
         """Mixed case with directionals, suffixes and units spelled out, `123 North Main Street Apartment 4`. Same keys as `to_display`."""
     def to_reso(self) -> dict[str, str]:
-        """RESO Data Dictionary 2.0 fields by name; a field with no value is left out."""
+        """RESO Data Dictionary 2.0 and 2.1 fields by name; a field with no value is left out."""
     def to_usaddress_tags(self) -> list[tuple[str, str | None]]:
         """Every input token with the label usaddress would give it: `[(token, label)]`; `label` is `None` for a token the parse did not place."""
     def tag(self) -> tuple[dict[str, str], str]:

@@ -1,4 +1,4 @@
-//! RESO Data Dictionary 2.0 output. Field names, types, maximum lengths and
+//! RESO Data Dictionary 2.0 and 2.1 output. Field names, types, maximum lengths and
 //! lookups are from the Property resource, group Location / Address; the
 //! mapping rules and their sources are in `docs/reso-mapping.md`.
 //!
@@ -8,7 +8,7 @@
 use super::usps::{join, plain};
 use crate::types::{ParsedAddress, UnitType};
 
-/// Address fields of the RESO Data Dictionary 2.0 Property resource.
+/// Address fields of the RESO Data Dictionary 2.0 and 2.1 Property resource.
 ///
 /// A field the parse did not find is `None`. Values are uppercase, in the
 /// same forms as [`UspsAddress`](crate::UspsAddress). Field names in
@@ -91,7 +91,7 @@ impl ResoAddress {
     }
 }
 
-/// Suggested maximum lengths, Data Dictionary 2.0 Property fields.
+/// Suggested maximum lengths, Data Dictionary 2.0 and 2.1 Property fields.
 fn max_length(field: &str) -> Option<usize> {
     Some(match field {
         "StreetNumber" | "StreetSuffix" | "UnitNumber" => 25,
@@ -107,7 +107,7 @@ fn max_length(field: &str) -> Option<usize> {
 }
 
 impl ParsedAddress {
-    /// The address as RESO Data Dictionary 2.0 Property address fields.
+    /// The address as RESO Data Dictionary 2.0 and 2.1 Property address fields.
     /// Components the parse did not find are `None`;
     /// [`Diagnostics`](crate::Diagnostics) says what was missing or unparsed.
     pub fn to_reso(&self) -> ResoAddress {

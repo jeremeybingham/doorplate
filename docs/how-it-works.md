@@ -7,7 +7,7 @@
 1. **Components** (street number, directionals, street name, suffix, units, city,
    state, ZIP and the less common shapes below), each with its position in the
    original text.
-2. **Normalized output** in USPS Publication 28 form and RESO Data Dictionary 2.0
+2. **Normalized output** in USPS Publication 28 form and RESO Data Dictionary 2.0 and 2.1
    field names, mixed-case and spelled-out display forms for showing an address to a
    person (not Pub 28 forms), and usaddress-shaped labels.
 3. **Identifiers for databases**: a stable match key and a URL-safe slug.

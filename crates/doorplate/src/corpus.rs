@@ -185,7 +185,7 @@ const OPTIONAL_FIELDS: [&str; 8] = [
     "tag",
 ];
 
-/// Data Dictionary 2.0 names a case's `reso` object may use.
+/// Data Dictionary 2.0 and 2.1 names a case's `reso` object may use.
 const RESO_FIELDS: [&str; 12] = [
     "StreetNumber",
     "StreetNumberNumeric",

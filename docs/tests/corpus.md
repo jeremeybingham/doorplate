@@ -83,7 +83,7 @@ Emitter expectations are optional record keys, checked only when present
   standard name and the `PlaceSource::code()` (`"WEST PALM BEACH (name)"`,
   `"FERNANDINA BEACH (completed)"`, `"PENSACOLA (zip)"`), or `"none"`.
   These cases need the state data, which is always built in.
-- `reso`: an object of Data Dictionary 2.0 field names to the expected
+- `reso`: an object of Data Dictionary 2.0 and 2.1 field names to the expected
   `to_reso()` values (`{"StreetName": "MAIN", "City": "MIAMI"}`). A field not
   listed must be empty. Names are checked against the Data Dictionary address
   fields; `StreetNumberNumeric` is written as its decimal text. Write expected

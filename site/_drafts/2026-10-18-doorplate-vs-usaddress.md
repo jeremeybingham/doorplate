@@ -25,7 +25,7 @@ a = doorplate.parse("123 north main street apt 4, Miami FL 33101")
 a.street_name, a.unit_number      # ("MAIN", "4")
 a.to_usps()["line1"]              # "123 N MAIN ST APT 4"       (USPS Pub 28)
 a.to_display()["line1"]           # "123 N Main St Apt 4"       (mixed case, display only)
-a.to_reso()                       # RESO Data Dictionary 2.0 fields
+a.to_reso()                       # RESO Data Dictionary 2.0 and 2.1 fields
 a.key()                           # "k1:S|123|N|MAIN|ST||FL|33101"
 a.warnings                        # []
 ```
@@ -33,7 +33,7 @@ a.warnings                        # []
 - **Components** for one line or pre-split fields: street number, directionals, name,
   suffix, units, city, state, ZIP, plus PO boxes, rural and highway routes, and military
   and general-delivery forms.
-- **USPS Publication 28** and **RESO Data Dictionary 2.0** output.
+- **USPS Publication 28** and **RESO Data Dictionary 2.0 and 2.1** output.
 - A **canonical match key** that uses the street, state and ZIP (not the city), and is
   versioned (`k1:`) so a changed key never silently replaces an old one.
 - **Warnings** with stable codes (`missing_zip`, `unparsed_remainder`, ...) so you can
