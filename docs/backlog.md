@@ -1,7 +1,7 @@
 # The backlog: how issues are organized
 
 The rules for sorting issues, the labels and milestones, and how work moves from an issue to a release. The current plan is
-in [`roadmap.md`](roadmap.md). **Last reviewed 2026-11-16.**
+in [`roadmap.md`](roadmap.md). **Last reviewed 2026-11-17.**
 
 ## The release plan
 
@@ -65,8 +65,11 @@ The issues of a release are ordered by a score, not by feel: `rows affected x ha
   measured it (1 until then). The denominator is the unsampled probe scan (289M rows); name it whenever a threshold is quoted.
 - **Harm**: 3 for a wrong key with no warning, 2 for a wrong key with a warning, 1 for a warning or a component only.
 - **Effort**: the size label, S 1, M 2, L 4, D 2.
-- **Priority from the rows affected:** P1 from 25,000 rows (about 0.01% of the scan); P2 from 2,000 rows; P3 below. A new finding above 25,000 rows is P1
-  by definition. Only an issue measured P2 or above leaves `Later`. A review queue's share is larger than the rows share (a comparison queue holds
+- **Priority from the rows affected** (thresholds changed 2026-11-17, #724; the 2026-11-04 values were 25,000 and 2,000): **P1 from 2,500 rows** (about 0.00086% of the scan); **P2 from 200 rows**; P3 below 200 or not measured. A new finding above 2,500 rows is P1
+  by definition. Rows affected are the probe matches times the reviewed miss share, weighted by source where the evidence ledger has it. Two guards: an estimate resting on
+  fewer than 5 misses among the reviewed cards is placed one band below its raw band until a larger queue confirms it; an issue with 200 or more probe matches and no reviewed
+  miss share is "unmeasured" and waits for a queue, not a guessed band. An issue whose probe matches are under 200 is P3 for good. Only an issue measured P2 or above leaves `Later`,
+  except by the owner's priorities (the 0.7.0 order on #724 promotes rules in the owner's focus areas, and the other members of their groups, below the line). A review queue's share is larger than the rows share (a comparison queue holds
   only the rows the two parsers disagree on), so both are looked at.
 
 Refresh the numbers after each batch of rules (the same probes are the before and after of a rule PR) and when a source is added.

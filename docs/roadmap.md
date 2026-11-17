@@ -5,7 +5,7 @@ bring, so the more real, messy addresses it sees, the sooner the items below can
 ([Sharing messy data](../CONTRIBUTING.md#sharing-messy-data)). Labels, milestones and ordering: [`backlog.md`](backlog.md).
 What each release changed is in [`CHANGELOG.md`](../CHANGELOG.md).
 
-**Last reviewed 2026-11-16.** 0.7.0 is planned as the first **beta** (below). 0.6.2 (a second speed release, no key change; the `k5` is as in 0.6.0) is released; 0.6.1 (speed and one label fix, no key change) is released. Open trackers: #417 (decided against); the 0.6.x tracker (#673) and the speed tracker (#672) are closed.
+**Last reviewed 2026-11-17.** 0.7.0 is planned as the first **beta** (below). 0.6.2 (a second speed release, no key change; the `k5` is as in 0.6.0) is released; 0.6.1 (speed and one label fix, no key change) is released. Open trackers: #417 (decided against); the 0.6.x tracker (#673) and the speed tracker (#672) are closed.
 
 ## Stability: alpha now, beta from 0.7.0
 
@@ -43,23 +43,32 @@ The goals of 0.7.0, in the order they ship:
    The beta needs 1 and 3 done and the `k6` measured on the private sources; item 2 does not have to be finished (a Puerto Rico rule that
    misses the release moves to 0.8).
 
-- **Units:** #289, #375 and the `SP` part of #471, as one data-only change (misspelled and odd designators).
-- **House numbers and street names:** #311, #360, #538.
-- **Puerto Rico:** #332 (research first), #319, #318, #92, and #314 (the guard for the Puerto Rico rules).
+Working order (tracker #724; each group is one batch, unit rules one after another): **before the rules,** #700, then Puerto Rico (#332, #314, #318, #319, #92). Then the rules:
+
+- **E. ZIP form:** #519.
+- **A. Designator and suffix spellings (data only):** #289, #375, #471, #321 (the residual), #725 (misspelled suffix and unit words).
+- **C. House-number letter shapes:** #311, #360, and the decision #312.
+- **B. Boxes and routes:** #538, #304 with #307, #598.
+- **D. Repeated, glued and multi-part units:** the decision #656, then #693 with #499, then #294.
+- **F. Names beside the street:** #310, #351, #589, #341, shaped by #726 (named buildings with no building word).
+- **G. Parentheses left after #291:** #644 (a warning), #645.
+- **H. Other P2 rules:** #498, #274, #327, #357, #244, #272.
+
+Issues below the P2 line are in on the owner's priorities or as members of a group; the list may be cut later.
 
 ## Waiting, on data or demand
 
-One line per kind. Every open issue here is in the **Later** milestone (or **Tooling**, where noted); none is at the P2 line.
+One line per kind. Every open issue here is in the **Later** milestone (or **Tooling**, where noted); none is at the P2 line (200 rows; 2,500 for P1), and none is in a 0.7.0 group.
 
-- **Units:** #243, #272, #290, #294, #295, #321, #327, #345, #351, #238, #498, #499, #559, #534, #531, #558.
-- **Boxes and routes:** #304, #307, #358.
-- **House numbers and street names:** #693, #274, #310, #312, #341, #589, #594, #656, #643, #560, #617.
-- **City field and line 2:** #244, #357, #367, #480, #482, #483, #553, #596, #597, #644, #645.
-- **ZIP forms and odd text:** #519, #598, #601, #602.
+- **Units:** #243, #290, #295, #345, #238, #559, #534, #531, #558.
+- **Boxes and routes:** #358.
+- **House numbers and street names:** #594, #643, #560, #617.
+- **City field and line 2:** #367, #480, #482, #483, #553, #596, #597.
+- **ZIP forms and odd text:** #601, #602.
 - **Parsing ideas:** #397, #435.
 - **Review data and tooling:** #222, #225, #395, #403; the Tooling milestone (never shipped, never closed): #323, #609, and the parser showdown (its own repository).
 - **Data, API, docs and speed:** #692, #233, #213, #11 (Won't Do), #88, #253.
-- **Not yet issues:** named buildings without a building word (`THE GARRETT`), a highway modifier before a city on one line, a comma
+- **Not yet issues:** a highway modifier before a city on one line, a comma
   after a directional, a PO box on line 2 beside a street with no number, a unit followed by business words, and
   `possibly_truncated` firing on some complete units.
 - **A public Arrow result and a Polars expression namespace** only if there is demand.
