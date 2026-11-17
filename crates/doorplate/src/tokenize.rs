@@ -283,7 +283,19 @@ fn dash_separator(out: &mut Vec<Token>, lex: &Lexicons) {
             && lex
                 .suffix(&prev.text)
                 .map_or(true, |l| l.kind == MatchKind::Observed);
-        if same && state_near && !prev_unit && (street_start || !unit_like(&out[k + 1].text, lex)) {
+        // The dash follows the end of a street: a suffix, a directional or a value with a digit.
+        // A state after it is enough. A name before it (`HISTORIC DISTRICT - NORTH GA 31401`, a place with a dash) is not.
+        let prev_ends_street = lex.state(&out[k + 1].text).is_some()
+            || prev.text.bytes().any(|c| c.is_ascii_digit())
+            || lex.directional(&prev.text).is_some()
+            || lex
+                .suffix(&prev.text)
+                .is_some_and(|l| l.kind != MatchKind::Observed);
+        if same
+            && state_near
+            && !prev_unit
+            && (street_start || (prev_ends_street && !unit_like(&out[k + 1].text, lex)))
+        {
             out.remove(k);
             // What follows starts a new segment; every later segment moves up by one too, so
             // the numbering stays in order.
