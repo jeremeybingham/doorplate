@@ -106,7 +106,7 @@ caveats and how to rerun them: [benchmarks](docs/benchmarks.md) and [speed, size
 
 ## Where it is going
 
-An alpha; the `k5` key shipped with 0.6.0 and is frozen, and the next key change is a `k6` (planned for 0.7.0). What is planned, what depends on what and what is deliberately not
+An alpha; the `k5` key shipped with 0.6.0 and is frozen. 0.7.0 is planned as the first beta, with the `k6` key, the removal of the state packs, Puerto Rico improvements and better accuracy generally. What is planned, what depends on what and what is deliberately not
 planned (validation, geocoding, international addresses) is in [`docs/roadmap.md`](docs/roadmap.md).
 
 ## Documentation

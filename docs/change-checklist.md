@@ -26,7 +26,7 @@ the same pull request. The pull request template asks for it.
 | How private data is used, or what leaves `local-data/` | [`data-policy.md`](data-policy.md); [`docs/tools/harness.md`](tools/harness.md); [`docs/tools/ingest.md`](tools/ingest.md); [`docs/tools/review.md`](tools/review.md) |
 | The golden corpus format or the way it runs | [`docs/tests/corpus.md`](tests/corpus.md); [`repository.md`](repository.md) ("Testing") |
 | Build commands, the repository layout, the CI jobs or the release steps | [`AGENTS.md`](../AGENTS.md); [`CLAUDE.md`](../CLAUDE.md); [`CONTRIBUTING.md`](../CONTRIBUTING.md); [`repository.md`](repository.md) ("Repository layout" and "Testing") |
-| A version number, the alpha notice or the disclaimer | The four READMEs; `Cargo.toml`; [`CHANGELOG.md`](../CHANGELOG.md); the references pull request in [`CONTRIBUTING.md`](../CONTRIBUTING.md) ("Releasing") |
+| A version number, the alpha or beta notice (also `docs/index.md`, `SECURITY.md`, the PyPI classifier) or the disclaimer | The four READMEs; `Cargo.toml`; [`CHANGELOG.md`](../CHANGELOG.md); the references pull request in [`CONTRIBUTING.md`](../CONTRIBUTING.md) ("Releasing") |
 | A batch of issues closes, an issue is filed, or a release is cut | [`roadmap.md`](roadmap.md) ("Next", the lists, "Last reviewed"); [`backlog.md`](backlog.md); the boxes of the trackers; every open issue has a milestone and labels; then `python tools/docs/issue_states.py`. A new `area:rules` issue also gets a probe in [`tools/harness/probes.py`](../tools/harness/probes.py) or a reason in `NO_PROBE` (`probes.py --coverage` must exit 0) |
 
 The four READMEs are the project README and the three package pages. Links in the three crate READMEs are absolute, and each keeps the

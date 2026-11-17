@@ -6,9 +6,9 @@ The key is versioned, and a given version is a contract: stored keys must keep
 meaning the same thing, so any change to what an input produces needs a new version
 prefix (`k6:`) and an update here. `k5` is never edited in place.
 
-**This is an alpha release.** Expect new key versions as the parser improves: the
-parser's behavior is still settling, and every fix that changes how an input is read
-changes its key. If you store keys, store the version prefix with them (it is part of
+**This is an alpha release (a beta from 0.7.0, the `k6`).** Expect new key versions as the parser improves: every
+fix that changes how an input is read changes its key. From the beta on, a new version comes only in a minor release,
+never in a patch. If you store keys, store the version prefix with them (it is part of
 the key) and plan to re-key when a new version appears. Keys of different versions
 are never equal. To re-key, parse the original addresses again: a stored key cannot be
 converted.
