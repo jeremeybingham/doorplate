@@ -93,7 +93,9 @@ impl Tagger<'_> {
             || (is_ordinal(self.text(tail.start))
                 && tail.len() == 2
                 && self.starts_unit(tail.start + 1, n));
-        if self.toks[z - 1].is_hash() || !one_segment || !unit_first {
+        // A second ZIP in the tail means this one belongs to the street (`12 OAK ST 33401 BAY HARBOR 33154`).
+        let another_zip = tail.clone().any(|i| zip_parts(self.text(i)).is_some());
+        if self.toks[z - 1].is_hash() || !one_segment || !unit_first || another_zip {
             return n;
         }
         self.zip_tail = Some(tail);
