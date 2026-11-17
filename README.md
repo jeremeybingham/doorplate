@@ -8,7 +8,7 @@
 [![doorplate-cli downloads](https://img.shields.io/crates/d/doorplate-cli.svg?label=doorplate-cli%20downloads)](https://crates.io/crates/doorplate-cli)
 [![docs.rs](https://docs.rs/doorplate/badge.svg)](https://docs.rs/doorplate)
 [![PyPI](https://img.shields.io/pypi/v/doorplate.svg)](https://pypi.org/project/doorplate/)
-[![PyPI Stats](/api/badges/doorplate?period=month)](/packages/doorplate)
+[![PyPI Downloads](https://static.pepy.tech/personalized-badge/doorplate?period=weekly&units=INTERNATIONAL_SYSTEM&left_color=BLACK&right_color=GREEN&left_text=downloads%2Fweek)](https://pepy.tech/projects/doorplate)
 [![Wheels](https://github.com/jeremeybingham/doorplate/actions/workflows/wheels.yml/badge.svg)](https://github.com/jeremeybingham/doorplate/actions/workflows/wheels.yml)
 [![License: MIT OR Apache-2.0](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue.svg)](#license)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](crates/doorplate-py/README.md)
