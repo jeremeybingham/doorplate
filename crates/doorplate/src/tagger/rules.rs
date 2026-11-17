@@ -68,7 +68,71 @@ impl Tagger<'_> {
     /// Tag the last line of a single-line input. Returns the end of the
     /// delivery-line tokens and the city's tokens, if any.
     pub(super) fn last_line(&mut self) -> (usize, Option<Range<usize>>) {
-        self.last_line_in(0, self.toks.len())
+        let hi = self.zip_tail_start();
+        self.last_line_in(0, hi)
+    }
+
+    /// A unit written after the ZIP (`OK 74103 ROOM 900`, #733): the last line ends at the ZIP and
+    /// the tail is read as a unit by [`Self::claim_zip_tail`]. Only a short tail in one segment that
+    /// starts with a unit designator, or is an ordinal and a designator (`8TH FLOOR`), counts.
+    /// Returns the end of the tokens the last line is read in.
+    fn zip_tail_start(&mut self) -> usize {
+        let n = self.toks.len();
+        let Some(z) = (1..n.saturating_sub(1)).rev().take(4).find(|&z| {
+            // Every ZIP form starts with a digit: most tokens fail on this byte, before any parsing.
+            let t = self.text(z);
+            t.as_bytes().first().is_some_and(u8::is_ascii_digit)
+                && zip_parts(t).is_some()
+                && !self.toks[z].paren
+        }) else {
+            return n;
+        };
+        let tail = z + 1..n;
+        let one_segment = tail
+            .clone()
+            .all(|i| self.toks[i].seg == self.toks[tail.start].seg);
+        let unit_first = self.starts_unit(tail.start, n)
+            || (is_ordinal(self.text(tail.start))
+                && tail.len() == 2
+                && self.starts_unit(tail.start + 1, n));
+        // A second ZIP in the tail means this one belongs to the street (`12 OAK ST 33401 BAY HARBOR 33154`).
+        let another_zip = tail.clone().any(|i| zip_parts(self.text(i)).is_some());
+        if self.toks[z - 1].is_hash() || !one_segment || !unit_first || another_zip {
+            return n;
+        }
+        self.zip_tail = Some(tail);
+        z + 1
+    }
+
+    /// Read the tail after the ZIP as a unit, after the street (it is the second unit when the
+    /// street has one). A tail that is not a unit stays unparsed, and says so.
+    pub(super) fn claim_zip_tail(&mut self) {
+        let Some(tail) = self.zip_tail.take() else {
+            return;
+        };
+        let (lo, hi) = (tail.start, tail.end);
+        if is_ordinal(self.text(lo)) && hi - lo == 2 {
+            // `8TH FLOOR`: the value first.
+            self.tags[lo] = Tag::UnitNumber(0);
+            self.tags[lo + 1] = Tag::UnitType(0);
+        } else if self.units(lo, lo, hi, false) > lo {
+            // Not all of it read: what is left stays unparsed.
+        }
+        let slot = |t: Tag| matches!(t, Tag::UnitType(_) | Tag::UnitNumber(_));
+        let taken = self.tags[..lo].iter().any(|t| slot(*t));
+        if taken {
+            let second = self.tags[..lo]
+                .iter()
+                .any(|t| matches!(t, Tag::UnitNumber(1)));
+            for tag in &mut self.tags[lo..hi] {
+                *tag = match (*tag, second) {
+                    (Tag::UnitType(0), false) => Tag::UnitType(1),
+                    (Tag::UnitNumber(0), false) => Tag::UnitNumber(1),
+                    (Tag::UnitType(_) | Tag::UnitNumber(_), _) => Tag::Unparsed,
+                    (t, _) => t,
+                };
+            }
+        }
     }
 
     /// [`Self::last_line`] over tokens `lo..hi`.

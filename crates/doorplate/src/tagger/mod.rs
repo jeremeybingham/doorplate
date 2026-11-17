@@ -130,6 +130,8 @@ pub(crate) struct Tagger<'a> {
     /// A token where the input looks cut off, if any.
     incomplete: Option<usize>,
     zero_number: bool,
+    /// The tokens after the ZIP that start a unit (`OK 74103 ROOM 900`, #733), read after the street.
+    zip_tail: Option<Range<usize>>,
     /// A lone letter after the house number was read as its suffix on the strength of the letter
     /// alone (`46 A LINDEN AVE`, #270): the text cannot say, so `ambiguous_number_letter` stays.
     number_letter_guess: bool,
@@ -209,6 +211,7 @@ impl<'a> Tagger<'a> {
             lex,
             incomplete: None,
             zero_number: false,
+            zip_tail: None,
             number_letter_guess: false,
             letter_unit: None,
             country_street: false,
@@ -452,6 +455,7 @@ pub(crate) fn tag_line(
     }
     let street_end = c;
     t.delivery(lo, street_end);
+    t.claim_zip_tail();
     t.finish()
 }
 

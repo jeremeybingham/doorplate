@@ -228,7 +228,49 @@ pub(crate) fn tokenize(
         drop_unit_separators(o, lex)
     });
     pass("join_unit_hyphen", &mut out, |o| join_unit_hyphen(o, lex));
+    pass("join_zip_hyphen", &mut out, |o| join_zip_hyphen(o, lex));
     out
+}
+
+/// A ZIP+4 written with spaces around its hyphen (`74103 - 2373`, `74103- 2373`) is the one
+/// token `74103-2373` (#733). Both parts are all digits, five then four, in one segment, and the
+/// four digits end the segment or come before a unit designator (`74103 - 2373 ROOM 900`):
+/// `12345 - 6789 OAK ST` keeps its two numbers.
+fn join_zip_hyphen(out: &mut Vec<Token>, lex: &Lexicons) {
+    let digits =
+        |t: &Token, n: usize| t.text.len() == n && t.text.bytes().all(|c| c.is_ascii_digit());
+    let mut k = 0;
+    while k + 1 < out.len() {
+        if !digits(&out[k], 5) {
+            k += 1;
+            continue;
+        }
+        // `74103 - 2373` (a hyphen token between) or `74103- 2373` (the hyphen kept on the first).
+        let dash = k + 2 < out.len() && out[k + 1].is_dash();
+        let at = k + 1 + usize::from(dash);
+        let spaced_hyphen = dash || out[k].span.end > out[k].span.start + 5;
+        let ends = out.get(at + 1).map_or(true, |t| {
+            t.seg != out[at].seg
+                || lex
+                    .unit(&t.text)
+                    .is_some_and(|l| l.kind != MatchKind::Observed)
+        });
+        if spaced_hyphen
+            && at < out.len()
+            && digits(&out[at], 4)
+            && out[at].seg == out[k].seg
+            && ends
+        {
+            let last = out.remove(at);
+            if dash {
+                out.remove(k + 1);
+            }
+            out[k].text.push('-');
+            out[k].text.push_str(&last.text);
+            out[k].span.end = last.span.end;
+        }
+        k += 1;
+    }
 }
 
 /// How a parenthesized group at the end of a segment is read (#291).
@@ -1292,6 +1334,22 @@ mod tests {
             .into_iter()
             .map(|t| t.text)
             .collect()
+    }
+
+    #[test]
+    fn a_zip_plus_four_with_spaces_around_its_hyphen_is_one_token() {
+        for s in ["OK 74103 - 2373", "OK 74103- 2373"] {
+            assert_eq!(toks(s), ["OK", "74103-2373"], "{s}");
+        }
+        assert_eq!(
+            toks("OK 74103 - 2373 ROOM 900"),
+            ["OK", "74103-2373", "ROOM", "900"]
+        );
+        // Two numbers with a dash before a street are not a ZIP+4.
+        assert_eq!(
+            toks("12345 - 6789 OAK ST"),
+            ["12345", "-", "6789", "OAK", "ST"]
+        );
     }
 
     #[test]
