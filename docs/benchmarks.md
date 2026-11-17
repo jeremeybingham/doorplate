@@ -2,6 +2,9 @@
 
 Figures: 0.6.0 (`a6a7df4`), measured 2026-11-12, unless a table names another build (0.5.1 is `c68760e`; 0.6.2 is `041c38d`, measured 2026-11-14: the speed and size rows, and the v1 suite, geocode and corpus runs, which gave the 0.6.0 figures again, because 0.6.1 and 0.6.2 change no output); one machine (Intel Core i9-9900K, WSL2); usaddress 0.5.16.
 Speed, size and memory are on [their own page](speed-and-size.md); how to rerun each benchmark is in [`running-benchmarks.md`](running-benchmarks.md).
+A three-way comparison with usaddress and libpostal on one neutral schema, with a hand-labeled golden set, a
+pre-registered score, every prediction file and the threats to validity (this library's author built it):
+[the address-parser-showdown report](https://github.com/jeremeybingham/address-parser-showdown/blob/main/report/REPORT.md). Its figures are its own; they are not copied here.
 Why these figures have barely moved since 0.4.1 while the rules kept changing real rows: the [0.6.1 blog post](https://jeremeybingham.github.io/doorplate/2026/11/13/doorplate-0-6-1.html).
 
 ## Summary
