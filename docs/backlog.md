@@ -1,14 +1,14 @@
 # The backlog: how issues are organized
 
 The rules for sorting issues, the labels and milestones, and how work moves from an issue to a release. The current plan is
-in [`roadmap.md`](roadmap.md). **Last reviewed 2026-11-13.**
+in [`roadmap.md`](roadmap.md). **Last reviewed 2026-11-16.**
 
 ## The release plan
 
 | Milestone | What it is |
 |---|---|
 | **0.6.x** | Point releases with no key change: speed, tooling and documentation. No tracker is open (#673 closed with 0.6.1) |
-| **0.7.0** | The `k6`, the next key-changing release: the `version:K` issues measured at P2 or above (including the Puerto Rico rules); the list is on [`roadmap.md`](roadmap.md) |
+| **0.7.0** | The first beta and the `k6`: the removal of the state packs (#700), the Puerto Rico rules, and the `version:K` issues measured at P2 or above; the list is on [`roadmap.md`](roadmap.md) |
 | **Later** | Wanted or known, not planned: new API surface, parse rules below the P2 line, anything waiting on demand or a decision. The list by kind is on [`roadmap.md`](roadmap.md), "Waiting" |
 | **Tooling** | Tooling not planned for a release (harness, review tool, benchmarks and CI items waiting for a rule or a decision): never shipped, never closed |
 | **Won't Do** | Decided against, with the reason: tracker #417 |

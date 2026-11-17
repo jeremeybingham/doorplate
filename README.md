@@ -8,6 +8,7 @@
 [![doorplate-cli downloads](https://img.shields.io/crates/d/doorplate-cli.svg?label=doorplate-cli%20downloads)](https://crates.io/crates/doorplate-cli)
 [![docs.rs](https://docs.rs/doorplate/badge.svg)](https://docs.rs/doorplate)
 [![PyPI](https://img.shields.io/pypi/v/doorplate.svg)](https://pypi.org/project/doorplate/)
+[![PyPI Downloads](https://static.pepy.tech/personalized-badge/doorplate?period=weekly&units=INTERNATIONAL_SYSTEM&left_color=BLACK&right_color=GREEN&left_text=downloads%2Fweek)](https://pepy.tech/projects/doorplate)
 [![Wheels](https://github.com/jeremeybingham/doorplate/actions/workflows/wheels.yml/badge.svg)](https://github.com/jeremeybingham/doorplate/actions/workflows/wheels.yml)
 [![License: MIT OR Apache-2.0](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue.svg)](#license)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](crates/doorplate-py/README.md)
@@ -106,7 +107,7 @@ caveats and how to rerun them: [benchmarks](docs/benchmarks.md) and [speed, size
 
 ## Where it is going
 
-An alpha; the `k5` key shipped with 0.6.0 and is frozen, and the next key change is a `k6` (planned for 0.7.0). What is planned, what depends on what and what is deliberately not
+An alpha; the `k5` key shipped with 0.6.0 and is frozen. 0.7.0 is planned as the first beta, with the `k6` key, the removal of the state packs, Puerto Rico improvements and better accuracy generally. What is planned, what depends on what and what is deliberately not
 planned (validation, geocoding, international addresses) is in [`docs/roadmap.md`](docs/roadmap.md).
 
 ## Documentation

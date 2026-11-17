@@ -1,18 +1,25 @@
 # Roadmap
 
-What is planned, what waits, and what is not planned. `doorplate` is an alpha: priorities follow the data people
+What is planned, what waits, and what is not planned. `doorplate` is an alpha until 0.7.0, which is planned as the first beta: priorities follow the data people
 bring, so the more real, messy addresses it sees, the sooner the items below can happen
 ([Sharing messy data](../CONTRIBUTING.md#sharing-messy-data)). Labels, milestones and ordering: [`backlog.md`](backlog.md).
 What each release changed is in [`CHANGELOG.md`](../CHANGELOG.md).
 
-**Last reviewed 2026-11-14.** 0.6.2 (a second speed release, no key change; the `k5` is as in 0.6.0) is being released (#713); 0.6.1 (speed and one label fix, no key change) is released. Open trackers: #417 (decided against); the 0.6.x tracker (#673) and the speed tracker (#672) are closed.
+**Last reviewed 2026-11-16.** 0.7.0 is planned as the first **beta** (below). 0.6.2 (a second speed release, no key change; the `k5` is as in 0.6.0) is released; 0.6.1 (speed and one label fix, no key change) is released. Open trackers: #417 (decided against); the 0.6.x tracker (#673) and the speed tracker (#672) are closed.
 
-## Stability while it is an alpha
+## Stability: alpha now, beta from 0.7.0
+
+0.6.x is an alpha:
 
 - **Keys.** The match key is versioned and each version is a contract ([`key-format.md`](key-format.md)), but expect new
   versions: a parser fix that changes what an input produces changes its key. Store the version prefix with the keys.
 - **API and warning codes.** Names may change before 1.0, with a note in the changelog.
 - **Accuracy and speed** are measured on a few datasets ([`benchmarks.md`](benchmarks.md)), not on yours.
+
+From 0.7.0 (the beta; the plan is below) the three API surfaces and the warning codes are stable: a rename or removal is
+announced one release ahead ([`api-surface.md`](api-surface.md), "Deprecation"). The `k6` is the key of the beta. Later rules that
+change what an input produces still get a new key version, but only in a minor release (0.8 and later), never in a patch, and
+the changelog says so. Nothing else in the API is planned to change.
 
 ## Next: 0.6.x, no key change
 
@@ -23,9 +30,18 @@ No tracker is open. Point releases carry speed, tooling and documentation, never
 - **Shipped in 0.6.1:** the speed cuts of #672 (B, C, and the feature bitset and `Piece::sub` byte tests of D, about 27% less time per parse than 0.6.0), #652 (a letter written twice gets a label in `parse_tokens`), and the answer to #671 (the #614 rule, not a regression).
 - **Blog post:** [doorplate 0.6.1](https://jeremeybingham.github.io/doorplate/2026/11/13/doorplate-0-6-1.html) (#491).
 
-## Planned: 0.7.0, the `k6`
+## Planned: 0.7.0, the first beta and the `k6`
 
-Key-affecting rules measured at P2 or above, each against the frozen `k5` keys before it merges.
+The goals of 0.7.0, in the order they ship:
+
+1. **Remove the state packs (#700, the last API break).** Florida's rows fold into the ordinary place list and base tables; `state_data_version`
+   leaves `Diagnostics`, Python and the JSON provenance. No key and no parse output changes. After it, no break is planned.
+2. **Puerto Rico improvements:** the rules below, researched first (#332).
+3. **Better accuracy generally:** the key-affecting rules below, measured at P2 or above, each against the frozen `k5` keys before it merges.
+4. **Beta:** the release pull request changes the "Alpha release" notice in the four READMEs, `docs/index.md`, `SECURITY.md` and the
+   PyPI classifier (`Development Status :: 4 - Beta`) to a beta, and the key rules of the stability section above start to apply.
+   The beta needs 1 and 3 done and the `k6` measured on the private sources; item 2 does not have to be finished (a Puerto Rico rule that
+   misses the release moves to 0.8).
 
 - **Units:** #289, #375 and the `SP` part of #471, as one data-only change (misspelled and odd designators).
 - **House numbers and street names:** #311, #360, #538.

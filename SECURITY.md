@@ -2,7 +2,7 @@
 
 ## Supported versions
 
-doorplate is an alpha. Security fixes go into the latest release only (see
+doorplate is an alpha (0.7.0 is planned as the first beta). Security fixes go into the latest release only (see
 [`CHANGELOG.md`](CHANGELOG.md)); please upgrade before reporting an issue you found in
 an older version.
 
