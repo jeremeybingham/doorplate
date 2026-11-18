@@ -823,6 +823,14 @@ PROBES = [
     ("unit-before-city", "732", "a unit or PO Box right before the city with no comma between them (12 OAK AVE, SUITE 100 TULSA, OK 74103)", rf",\s*(?:{UN}|P\.? ?O\.? BOX) [A-Z0-9-]+ +[A-Z][A-Z .]*,\s*[A-Z]{{2}}\s+[0-9]{{5}}\b", "S", 2),
     # 0.7.0 rule issues that had no probe (#724, 2026-11-18).
     (
+        "glued-paren-place-line1",
+        "741",
+        "a parenthesized place glued to the end of the street line, for a row with no city (7 OAK AVE(SPRINGFIELD)); the scan sees only the lines, so the missing city is not tested",
+        r"^[0-9]+[A-Z]? [^|(]*[A-Z.]\([A-Z][A-Z .'-]*\)(?: \||$)",
+        "S",
+        3,
+    ),
+    (
         "box-after-unnumbered-line",
         "734",
         "a PO Box after a line or segment with no house number (ELM PLAZA | PO BOX 77; ACME CORP, PO BOX 77): the box is lost",
@@ -882,6 +890,7 @@ NO_PROBE = {
     534: "research: the line-2 rules do not run on a comma-separated segment of a one-line string; measured on labeled one-line corpora (2 of 1,702 strings), not a text shape of the scan's field-form rows",
     549: "a suffix-word street name with a direction (55 BOULEVARD EAST): counted by the USPS round-trip scan (shape_scan.py --mode roundtrip), not a scan text shape",
     550: "the same unit written on both lines: counted by the USPS round-trip scan (shape_scan.py --mode roundtrip); the shape needs both lines compared, not one pattern",
+    742: "line 2 text the unit rules cannot place (a name, a number plus a building name, a glued APTA): overlaps name-line-under-street (#726) and the glued word has no counted shape; banded from the #726 ca-unclaimed -b queues",
     486: "a curated list of neighborhood city names: counted by city values in the sources (#485), not a text shape",
     410: "research: naming the known-word chains and where the tokenizer and tagger differ; a reading task, not a shape",
     596: "one-line input (a pre-direction, a suffix-word name, an unlisted city): sized on one-line data by tools/compare/oneline_fl.py, not a field-form text shape (#586 R7 row 11)",

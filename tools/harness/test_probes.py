@@ -492,6 +492,11 @@ def test_last_line_in_line1_probe(line1, state, hit):
         ("MARTIN (LUTHER KING BLVD", None, "paren-inside-name", True),
         ("12 ELM ST (OLD MILL)", None, "paren-inside-name", False),
         ("12 ELM ST", None, "paren-inside-name", False),
+        ("7 OAK AVE(SPRINGFIELD)", None, "glued-paren-place-line1", True),
+        ("517 HIGH ST(OLD TOWN)", "SUITE 4", "glued-paren-place-line1", True),
+        ("7 OAK AVE (SPRINGFIELD)", None, "glued-paren-place-line1", False),
+        ("7 OAK AVE(APT 4)", None, "glued-paren-place-line1", False),
+        ("7 OAK AVE", "(SPRINGFIELD)", "glued-paren-place-line1", False),
     ],
 )
 def test_the_follow_up_probes_for_643_to_645(line1, line2, expect, hit):
