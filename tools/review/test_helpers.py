@@ -43,24 +43,45 @@ def test_one_line_matches_the_python_one():
 
 
 @node
-def test_unchanged_ignores_spacing_only():
-    r = ROWS[0]
-    assert js(f"H.unchanged({json.dumps(r)}, {json.dumps(one_line(r) + '  ')})") is True
-    assert js(f"H.unchanged({json.dumps(r)}, {json.dumps(one_line(r).replace(', ', ',  '))})") is True
-    assert js(f"H.unchanged({json.dumps(r)}, 'something else')") is False
+def test_words_leave_out_trailing_commas():
+    assert js("H.words('20 OAK ST, MIAMI , X;')") == [[0, 2], [3, 6], [7, 9], [11, 16], [19, 20]]
 
 
 @node
-def test_tokens_runs_and_labels_from_spans():
-    assert js("H.tokens('20 OAK ST, MIAMI')") == [
-        {"start": 0, "end": 2, "text": "20"}, {"start": 3, "end": 6, "text": "OAK"},
-        {"start": 7, "end": 10, "text": "ST,"}, {"start": 11, "end": 16, "text": "MIAMI"}]
+def test_initial_labels_start_from_the_parser_and_mark_what_it_left_out():
+    text = "20 OAK ST, MIAMI"
     spans = [{"start": 0, "end": 2, "component": "StreetNumber"}, {"start": 3, "end": 10, "component": "StreetName"}]
-    labs = js(f"H.labelsFromSpans('20 OAK ST, MIAMI', {json.dumps(spans)})")
-    assert [l["component"] for l in labs] == ["StreetNumber", "StreetName", "StreetName", "Unparsed"]
-    runs = js(f"H.runs(H.labelsFromSpans('20 OAK ST, MIAMI', {json.dumps(spans)}))")
-    assert runs == [{"start": 0, "end": 2, "component": "StreetNumber"}, {"start": 3, "end": 10, "component": "StreetName"},
-                    {"start": 11, "end": 16, "component": "Unparsed"}]
+    assert js(f"H.initialLabels({json.dumps(text)}, {json.dumps(spans)})") == [
+        {"start": 0, "end": 2, "component": "StreetNumber"}, {"start": 3, "end": 9, "component": "StreetName"},
+        {"start": 11, "end": 16, "component": "Unparsed"}]
+    # a span may cut inside a word: the rest of the glued word is not placed; overlapping spans are dropped
+    spans = [{"start": 0, "end": 2, "component": "StreetNumber"}, {"start": 1, "end": 2, "component": "City"}]
+    assert js(f"H.initialLabels('12B OAK', {json.dumps(spans)})") == [
+        {"start": 0, "end": 2, "component": "StreetNumber"}, {"start": 2, "end": 3, "component": "Unparsed"},
+        {"start": 4, "end": 7, "component": "Unparsed"}]
+
+
+@node
+def test_set_and_clear_labels_cut_inside_a_word():
+    labs = [{"start": 0, "end": 3, "component": "StreetNumber"}, {"start": 4, "end": 7, "component": "StreetName"}]
+    got = js(f"H.setLabel({json.dumps(labs)}, 2, 3, 'UnitNumber')")
+    assert got == [{"start": 0, "end": 2, "component": "StreetNumber"}, {"start": 2, "end": 3, "component": "UnitNumber"},
+                   {"start": 4, "end": 7, "component": "StreetName"}]
+    assert js(f"H.clearRange({json.dumps(labs)}, 1, 5)") == [
+        {"start": 0, "end": 1, "component": "StreetNumber"}, {"start": 5, "end": 7, "component": "StreetName"}]
+
+
+@node
+def test_merged_joins_neighbours_of_one_part_and_same_labels_compares_after_merging():
+    text = "OAK HILL RD"
+    split = [{"start": 0, "end": 3, "component": "StreetName"}, {"start": 4, "end": 8, "component": "StreetName"},
+             {"start": 9, "end": 11, "component": "StreetSuffix"}]
+    whole = [{"start": 0, "end": 8, "component": "StreetName"}, {"start": 9, "end": 11, "component": "StreetSuffix"}]
+    assert js(f"H.merged({json.dumps(text)}, {json.dumps(split)})") == whole
+    assert js(f"H.sameLabels({json.dumps(text)}, {json.dumps(split)}, {json.dumps(whole)})") is True
+    assert js(f"H.sameLabels({json.dumps(text)}, {json.dumps(split)}, {json.dumps(whole[:1])})") is False
+    # parts separated by a comma stay apart
+    assert len(js(f"H.merged('A, B', {json.dumps([{'start': 0, 'end': 1, 'component': 'City'}, {'start': 3, 'end': 4, 'component': 'City'}])})")) == 2
 
 
 QUEUE = [{"seq": 1, "id": "inv|site|1", "source": "inv", "role": "site", "record_id": "1", **ROWS[0],

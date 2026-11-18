@@ -23,8 +23,7 @@ For each row the page shows the parse and the warnings, and you choose a verdict
 - `puerto_rico`: a Puerto Rico address; the row is also copied, in queue format, to `puerto-rico-queue.jsonl` beside the answers
   (`--pr-queue` to change it), the queue for the Puerto Rico epic (#332). An undo takes it out again;
 - on a rule queue (`tools/review/rule_queue.py`, #524) the card also shows the reading with one rule switched off, and the verdicts are
-  `rule_right` (doorplate as it is), `rule_off_right` (the reading without the rule), `both_right` and `both_wrong` (with a corrected
-  string), plus the others above;
+  `rule_right` (doorplate as it is), `rule_off_right` (the reading without the rule), `both_right` and `both_wrong` (with labels), plus the others above;
 - `map_checked`: looked up on a real map and judged understandable but not fixable by a rule: a misspelled street name that collides with
   a street suffix, or numbers out of order that no logic can parse (you have to see the map). Labels are kept as for `labeled` (to the
   best of the reviewer's ability; optional) and `map_reason` says which kind (`name_suffix`, `numbers_out_of_order`, `other`);
@@ -33,25 +32,26 @@ For each row the page shows the parse and the warnings, and you choose a verdict
   `usaddress_right: "full"` (usaddress's whole reading equals the labels) or `"mostly"` (basically right, one part differs): the
   labels are kept and the row counts as `usaddress_right` in the comparison tables (#461).
 
-Whatever the verdict, text left in the correction box that differs from the original is kept as `draft` (with
-`draft_parse`): an attempt at a fix on a row you could not fix ("I can't tell"), or on a row where you judged
-usaddress right but had typed a better string. It is not a correction and is never scored as one; the note is
+A correction (`corrected`, `both_wrong`, `usaddress_right` with a correction) is the labels on the one-line string since the
+labeler replaced the correction box (2026-11-18): `labeled_text`, `labels`, `parser_labels` and `corrected_parse` (the parse of the
+fields built from the labels). Older answers hold a typed `corrected` string instead, and may hold `draft` (text left in the box
+under another verdict, with `draft_parse`) and `attempts`; both are still accepted and never scored as a correction. The note is
 always kept.
 
-A correction whose string is the unchanged one-line original is refused (it almost always means "the
-parse is right"; send `unchanged_ok` to keep it). The page asks first.
+A correction that is the unchanged original (the one-line string, or labels equal to `parser_labels`) is refused (it almost always
+means "the parse is right"; send `unchanged_ok` to keep it). The page asks first.
 
 A comparison queue (`tools/review/compare_sample.py`, issue #132) shows doorplate's parse beside
 usaddress's, and the verdicts are `doorplate_right`, `usaddress_right`, `both_right` (a different
-convention, both fine), `both_wrong` (with a corrected string, as for `corrected`), and the
-`unclear`, `junk`, `dual`, `insufficient`, `noise` and `skip` above. `usaddress_right` can also carry a corrected string (the button
-"usaddress right + save correction", key `0`): usaddress's reading was right and there is a better string for doorplate; it is kept as
-`corrected` and the verdict is still scored as `usaddress_right`.
+convention, both fine), `both_wrong` (with labels, as for `corrected`), and the
+`unclear`, `junk`, `dual`, `insufficient`, `noise` and `skip` above. `usaddress_right` can also carry a correction (the button
+"usaddress right + save labels", key `0`): usaddress's reading was right and the labels say what doorplate should read; the verdict is
+still scored as `usaddress_right`.
 
 (`noise` and `skip` are no longer offered on the page; older answers keep them.) Besides the verdict, an answer records context
 for the later machine read: `original_line` (the row as one line), `oneline_parse` (the parse of that line, next to `parse`, which is
-the parse as the harness read the row), `attempts` (the strings tried in the box, with key and warnings), `elapsed_ms` on the card and,
-for `labeled`, `parser_labels` (what the parser gave before the person changed it).
+the parse as the harness read the row), `elapsed_ms` on the card and, with labels,
+`parser_labels` (what the parser gave before the person changed it).
 
 Every answer is appended to the answers file, one JSON object per line; an undo appends a
 marker, so the file is never rewritten. Answers already given are not shown again, so a session
@@ -196,18 +196,30 @@ class Review:
         if verdict == "right" and warning not in WARNING_VERDICTS:
             raise ValueError("a right parse needs a warning verdict: fair or noise")
         corrected = (body.get("corrected") or "").strip()
-        # usaddress was right and there is also a better string for doorplate: the verdict stays `usaddress_right`
-        # (so it is scored as before) and the correction is kept as for the verdicts that are corrections.
-        with_corr = verdict == "usaddress_right" and bool(corrected)
-        if verdict in ("corrected", "both_wrong") and not corrected:
-            raise ValueError("a corrected answer needs the corrected string")
-        if (verdict in ("corrected", "both_wrong") or with_corr) and not body.get("unchanged_ok") and \
+        # A correction is labels on the original line (the page since the labeler replaced the box) or, in older
+        # answers, a retyped string. usaddress was right and there is also a correction for doorplate: the verdict
+        # stays `usaddress_right` (so it is scored as before) and the correction is kept as for the other corrections.
+        has_labels = bool(body.get("labels"))
+        with_corr = verdict == "usaddress_right" and (bool(corrected) or has_labels)
+        is_corr = verdict in ("corrected", "both_wrong") or with_corr
+        if verdict in ("corrected", "both_wrong") and not corrected and not has_labels:
+            raise ValueError("a corrected answer needs labels or the corrected string")
+        if is_corr and corrected and not body.get("unchanged_ok") and \
                 " ".join(corrected.split()) == " ".join(one_line(item).split()):
             raise ValueError("the correction is the unchanged original: if the parse is right, answer that; "
                              "otherwise confirm with unchanged_ok")
         labels = None
-        if verdict == "labeled" or (verdict == "map_checked" and body.get("labels")):
+        if verdict == "labeled" or (has_labels and (verdict == "map_checked" or is_corr)):
             labels = self._labels(body)
+        parser_labels = None
+        if labels is not None and body.get("parser_labels"):
+            try:
+                parser_labels = self._labels({"labeled_text": labels[0], "labels": body["parser_labels"]})[1]
+            except ValueError:
+                pass  # context only: a bad one is dropped, not an error
+        if is_corr and not corrected and labels is not None and labels[1] == parser_labels and not body.get("unchanged_ok"):
+            raise ValueError("the labels are the parser's unchanged reading: if the parse is right, answer that; "
+                             "otherwise confirm with unchanged_ok")
         reason = body.get("map_reason") if verdict == "map_checked" else None
         if verdict == "map_checked" and reason is not None and reason not in MAP_REASONS:
             raise ValueError("map_reason is name_suffix, numbers_out_of_order or other")
@@ -228,7 +240,7 @@ class Review:
             rec["compare"] = item["compare"]
         if "alt" in item:
             rec["alt"] = {k: v for k, v in item["alt"].items() if k != "changed_by_source"}
-        if verdict in ("corrected", "both_wrong") or with_corr:
+        if is_corr and corrected:
             rec["corrected"] = corrected[:1000]
         if labels is not None:
             rec["labeled_text"], rec["labels"] = labels
@@ -251,11 +263,8 @@ class Review:
         ms = body.get("elapsed_ms")
         if isinstance(ms, int) and not isinstance(ms, bool) and 0 <= ms < 86_400_000:
             rec["elapsed_ms"] = ms
-        if labels is not None and body.get("parser_labels"):
-            try:
-                rec["parser_labels"] = self._labels({"labeled_text": labels[0], "labels": body["parser_labels"]})[1]
-            except ValueError:
-                pass  # context only: a bad one is dropped, not an error
+        if parser_labels is not None:
+            rec["parser_labels"] = parser_labels
         self._append(rec)
         if verdict == "puerto_rico":
             self._add_pr(item)
