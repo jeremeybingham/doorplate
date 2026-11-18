@@ -268,7 +268,8 @@ fn dash_separator(out: &mut Vec<Token>, lex: &Lexicons) {
             .iter()
             .position(|t| zip_parts(&t.text).is_some())
             .map(|p| p + k + 1);
-        // The state sits in the dash's own segment, or starts the next one: a city after the
+        // The state comes right after the dash, or starts the next segment (a comma before it, so
+        // the city's start is known: `12 OAK AVE - 2ND FL TULSA OK` is not cut): a city after the
         // dash with another city before the state (`9 OAK RD - PINE TWP, ALBANY NY 12207`)
         // is left alone.
         let state_near = zip_at.is_some_and(|z| {
@@ -276,8 +277,7 @@ fn dash_separator(out: &mut Vec<Token>, lex: &Lexicons) {
                 .rev()
                 .find(|&i| out[i].seg == out[z].seg && lex.state(&out[i].text).is_some())
                 .is_some_and(|i| {
-                    out[i].seg == out[k].seg
-                        || (out[i].seg == out[k].seg + 1 && out[i - 1].seg != out[i].seg)
+                    i == k + 1 || (out[i].seg == out[k].seg + 1 && out[i - 1].seg != out[i].seg)
                 })
         });
         let prev = &out[k - 1];
@@ -299,10 +299,13 @@ fn dash_separator(out: &mut Vec<Token>, lex: &Lexicons) {
             && lex
                 .suffix(&prev.text)
                 .map_or(true, |l| l.kind == MatchKind::Observed);
-        // The dash follows the end of a street: a suffix, a directional or a value with a digit.
+        // The dash follows the end of a street: a suffix, a directional or a value with a digit that is not the first word of its segment
+        // (`123 - FOO ST`: a house number).
         // A state after it is enough. A name before it (`HISTORIC DISTRICT - NORTH GA 31401`, a place with a dash) is not.
         let prev_ends_street = lex.state(&out[k + 1].text).is_some()
-            || prev.text.bytes().any(|c| c.is_ascii_digit())
+            || (prev.text.bytes().any(|c| c.is_ascii_digit())
+                && k >= 2
+                && out[k - 2].seg == prev.seg)
             || lex.directional(&prev.text).is_some()
             || (lex
                 .suffix(&prev.text)
