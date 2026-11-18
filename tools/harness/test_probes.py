@@ -541,3 +541,24 @@ def test_the_follow_up_probes_for_643_to_645(line1, line2, expect, hit):
 )
 def test_the_pudl_and_0_7_0_probes(line1, line2, expect, hit):
     assert (expect in probes.hits(line1, line2, None)) is hit
+
+
+@pytest.mark.parametrize(
+    "line1, expect, hit",
+    [
+        ("A-17 CALLE AMAPOLA", "pr-lettered-number", True),
+        ("CALLE 19 BLQ 199 CASA 31", "pr-lettered-number", True),
+        ("A17 CALLE 1", "pr-lettered-number", False),
+        ("12 OAK ST", "pr-lettered-number", False),
+        ("APARTADO 825", "pr-spanish-box-route", True),
+        ("RUTA RURAL 3 BUZON 12000", "pr-spanish-box-route", True),
+        ("RR 3 BOX 12000", "pr-spanish-box-route", False),
+        ("COND GARDEN HILLS PLAZA TORRE 2 APT 905", "pr-condo-building-line", True),
+        ("RES LAS MARGARITAS EDIF 1 APT 104", "pr-condo-building-line", True),
+        ("1 COND VERDE APT 1120", "pr-condo-building-line", False),
+        ("BO PUEBLO CARR 2 KM 14.5", "decimal-kilometer", True),
+        ("BO PUEBLO CARR 2 KM 145", "decimal-kilometer", False),
+    ],
+)
+def test_the_puerto_rico_epic_probes(line1, expect, hit):
+    assert (expect in probes.hits(line1, None, None)) is hit

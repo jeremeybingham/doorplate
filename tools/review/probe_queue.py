@@ -14,8 +14,8 @@ For each probe it takes the matches in the order of the scan's seeded hash `rk` 
 random draw of the matches), in turns across the sources (the same number of turns for each, whatever its size), with no source above `--max-source-share` of the queue: a
 large source such as Netsyms or NAD otherwise fills a queue and says nothing of the others. Each card names its
 source, so a precision can be weighted back. A row is skipped when its string repeats one already taken, when a
-previous review already holds its id (`--exclude-answers`), and when it looks like Puerto Rico (the Puerto Rico epic,
-#332, has its own queue). The class of a card (silent, give-up, control) is the one of `compare_sample.py`; rows where
+previous review already holds its id (`--exclude-answers`), and, by default, when it looks like Puerto Rico; `--pr only`
+builds the Puerto Rico epic's queue (#332) from those rows alone (file `queue-PROBE-pr.jsonl`), `--pr include` keeps them with the rest. The class of a card (silent, give-up, control) is the one of `compare_sample.py`; rows where
 usaddress agrees are kept, since a precision needs them.
 
 The queues are real addresses: they stay under `local-data/` (docs/data-policy.md). Counts only on stdout; an error
@@ -53,6 +53,8 @@ def parse_args(argv=None):
     ap.add_argument("--exclude-answers", default="local-data/review/answers*.jsonl")
     ap.add_argument("--out-dir", type=Path, default=ROOT / "local-data" / "review" / "probe-queues")
     ap.add_argument("--flagged-only", action="store_true", help="draw only from the matches the parser flags (a warning or a partial key)")
+    ap.add_argument("--pr", choices=("exclude", "only", "include"), default="exclude",
+                    help="Puerto Rico rows (probes.is_puerto_rico): leave out (default), draw only these (the #332 queue), or keep with the rest")
     ap.add_argument("--confirm", action="store_true")
     return ap.parse_args(argv)
 
@@ -177,7 +179,7 @@ def main(argv=None):
             if len(queue) >= args.n:
                 break
             r = rows.get((inputs[c[0]]["kind"], c[0], str(c[3])))
-            if r is None or probes.is_puerto_rico(r):
+            if r is None or (args.pr == "exclude" and probes.is_puerto_rico(r)) or (args.pr == "only" and not probes.is_puerto_rico(r)):
                 continue
             s = cs.one_line(r)
             key = " ".join(s.lower().split())
@@ -193,7 +195,7 @@ def main(argv=None):
         by_src = collections.Counter(q["source"] for q in queue)
         by_cls = collections.Counter(q["compare"]["class"] for q in queue)
         agree = sum(1 for q in queue if not q["compare"]["differs"])
-        out = args.out_dir / f"queue-{probe}.jsonl"
+        out = args.out_dir / f"queue-{probe}{'-pr' if args.pr == 'only' else ''}.jsonl"
         out.write_text("\n".join(json.dumps(q, ensure_ascii=False) for q in queue) + ("\n" if queue else ""), encoding="utf-8")
         print(f"{probe:<28} {len(queue):>3} cards  {dict(by_cls)}  agree {agree}  sources {dict(by_src)}")
     return 0
