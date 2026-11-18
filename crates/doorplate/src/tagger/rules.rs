@@ -308,7 +308,12 @@ impl Tagger<'_> {
             if !first_seg {
                 // `12 OAK AVE, SUITE 100 TULSA, OK 74103`: a unit or PO Box that starts
                 // the city's segment with no comma after it is not part of the city (#732).
-                let c = self.unit_or_box_end(cs, ll_start).unwrap_or(cs);
+                // A one-word segment (the usual city) has nothing to cut.
+                let c = if cs + 1 < ll_start {
+                    self.unit_or_box_end(cs, ll_start).unwrap_or(cs)
+                } else {
+                    cs
+                };
                 Some((c, Decision::CityByComma))
             } else if self.looks_like_city(cs, ll_start) && !self.known_street(cs, ll_start) {
                 // `ONE ELM PLAZA TULSA, OK 74103`: words before a place the list knows for the
