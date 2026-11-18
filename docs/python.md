@@ -13,7 +13,7 @@ a.to_display()["line1"]  # "123 N Main St Apt 4" (to_long(): "123 North Main Str
 a.key()                # "k5:S|123|N|MAIN|ST||FL|33101"
 a.slug()               # "123-n-main-st-apt-4-miami-fl-33101"
 a.to_reso()            # RESO Data Dictionary 2.0 and 2.1 fields
-a.to_dict()            # everything above as plain Python values, and provenance (`library_version`, `state_data_version`)
+a.to_dict()            # everything above as plain Python values, and provenance (`library_version`)
 
 dp.parse_fields(line1="THE COVE", line2="1111 ASBURY WAY",
                 city="Orlando", state="FL", zip="32801")

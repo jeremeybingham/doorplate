@@ -355,12 +355,6 @@ impl PyParsedAddress {
         self.inner.diagnostics.library_version
     }
 
-    /// The version of the curated data for the address's state, or `None`.
-    #[getter]
-    fn state_data_version(&self) -> Option<&'static str> {
-        self.inner.diagnostics.state_data_version
-    }
-
     /// The custom layer the parse used, as `{name, version, fingerprint}`, or `None`. A layer can
     /// change a key: keep the fingerprint with stored keys.
     #[getter]
@@ -511,7 +505,6 @@ impl PyParsedAddress {
         // The same group the command-line JSON carries (#85).
         let provenance = PyDict::new(py);
         provenance.set_item("library_version", a.inner.diagnostics.library_version)?;
-        provenance.set_item("state_data_version", a.inner.diagnostics.state_data_version)?;
         provenance.set_item(
             "custom_layer",
             layer_dict(py, a.inner.diagnostics.custom_layer)?,

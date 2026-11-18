@@ -121,7 +121,7 @@ def main():
 
         for row in libpostal_size_rows(_libpostal.C.libpostal_home(lp_home)):
             print(row)
-    print("\nThe lexicon tables, the national place list and the Florida state data are compiled into the binary\n"
+    print("\nThe lexicon tables, the national place list and the Florida curated rows are compiled into the binary\n"
           "(`docs/places.md` sizes the place list); there is no model or data file to load.\n")
 
     # Import time and memory.

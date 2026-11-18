@@ -2,11 +2,11 @@
 //!
 //! Runs after assembly. Names the place the city stands for, from the place
 //! lists compiled into [`Lexicons`] (the national list for every state, with
-//! curated state data above it), or the ZIP's main place when there is no
+//! curated rows above it), or the ZIP's main place when there is no
 //! city. [`ParsedAddress::city`] is never changed: the match is reported in
 //! [`ParsedAddress::place`], beside it. A city the list knows whose ZIP the
 //! list does not give it gets [`Warning::ZipCityMismatch`], but only in a state
-//! with curated state data: the national list names one place per ZIP, and many
+//! with curated rows: the national list names one place per ZIP, and many
 //! ZIPs are used by several, so the warning would fire too often elsewhere.
 //! A city that is no place but names a county of the state (`HENNEPIN`) gets
 //! [`Warning::CityIsCounty`]; `place` stays empty and nothing else changes.
@@ -90,7 +90,7 @@ fn resolve_place(addr: &mut ParsedAddress, lex: &Lexicons, hint: Option<&'static
                 })
         });
     if let (Some(m), Some(z)) = (found, zip) {
-        if lex.has_state_data(state) && !z.contains(&m.place) {
+        if lex.checks_zip_city(state) && !z.contains(&m.place) {
             addr.diagnostics.warn(Warning::ZipCityMismatch);
         }
     }
@@ -193,7 +193,7 @@ mod tests {
             place("WINGATE ST 32507"),
             Some(("PENSACOLA", PlaceSource::Zip))
         );
-        // The national list covers a state with no state data; with no city and
+        // The national list covers a state with no curated rows; with no city and
         // no ZIP there is nothing to name.
         assert_eq!(
             place("1 MAIN ST, ATLANTA, GA 30301"),

@@ -66,10 +66,9 @@ class LayerInfoDict(TypedDict):
     fingerprint: str
 
 class Provenance(TypedDict):
-    """Which release, which state data and which custom layer produced the result."""
+    """Which release and which custom layer produced the result."""
 
     library_version: str
-    state_data_version: str | None
     custom_layer: LayerInfoDict | None
 
 class ParsedAddressDict(TypedDict):
@@ -190,9 +189,6 @@ class ParsedAddress:
     @property
     def library_version(self) -> str:
         """The doorplate version that produced the result."""
-    @property
-    def state_data_version(self) -> str | None:
-        """The version of the curated data for the address's state, or `None`."""
     @property
     def custom_layer(self) -> LayerInfoDict | None:
         """The custom layer the parse used, as `{name, version, fingerprint}`, or `None`. A layer can change a key: keep the fingerprint with stored keys."""

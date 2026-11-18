@@ -18,7 +18,7 @@ use crate::types::{
 };
 
 /// The state of the address before it is assembled: the tagged state, else
-/// the main place's state for the tagged ZIP. A state data reads some
+/// the main place's state for the tagged ZIP. The curated rows read some
 /// spellings differently (`SR` is STATE ROAD in Florida).
 fn address_state(runs: &[(Tag, &[Token])], lex: &Lexicons) -> Option<&'static str> {
     let text_of = |tag: Tag| {
@@ -190,7 +190,7 @@ pub(crate) fn assemble(
                 record(addr, Component::Highway);
             }
             Tag::HighwayPrefix => {
-                // A state data may add prefix spellings (`SR` in Florida).
+                // The curated rows may add prefix spellings (`SR` in Florida).
                 let l = match state {
                     Some(st) => lex.highway_in(st, &text),
                     None => lex.highway(&text),
@@ -366,7 +366,7 @@ pub(crate) fn assemble(
     if !unparsed.is_empty() {
         addr.diagnostics.unparsed = Some(unparsed.join(" "));
     }
-    // A state data may read the suffix spelling differently (`CR` is
+    // The curated rows may read the suffix spelling differently (`CR` is
     // CIRCLE in Florida). The state written on the address wins; with none,
     // the ZIP's.
     if let Some(text) = suffix_text {

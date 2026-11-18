@@ -11,7 +11,7 @@ crates/
   doorplate/                pure Rust, no Python dependency
     build.rs                compiles data/ into static tables
     data/                   suffixes, directionals, units, states, special (.toml);
-                            places/ (national list) and states/fl/ (Florida)
+                            places/ (national list and Florida's curated rows)
     src/                    clean, tokenize, classify, tagger/, assemble, parser, input,
                             place, lexicon, country, intersection, types,
                             emit/{key,usps,reso,slug,display,usaddress}, anonymize, layer, corpus

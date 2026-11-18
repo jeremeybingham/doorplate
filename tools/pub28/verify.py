@@ -158,8 +158,8 @@ def check_states(cache):
 # Appendix F examples that this library deliberately does not standardize.
 F_SKIP = {
     # SR is STATE ROAD or STATE ROUTE (Appendix F maps it to both), so the base
-    # tables leave it to state data (docs/usps-pub28-notes.md).
-    "SR MM": "SR is left to state data",
+    # tables leave it to curated rows (docs/usps-pub28-notes.md).
+    "SR MM": "SR is left to the curated rows",
 }
 
 

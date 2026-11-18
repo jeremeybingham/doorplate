@@ -97,8 +97,6 @@ nav:
   - Data:
       - Data policy: data-policy.md
       - Places: places.md
-      - State data: states/README.md
-      - Florida: states/fl.md
       - Notice and licenses: https://github.com/jeremeybingham/doorplate/blob/main/NOTICE
   - Development:
       - When you change something: change-checklist.md

@@ -178,9 +178,8 @@ impl fmt::Display for StateCode {
     }
 }
 
-/// A city, town or community from the national place list (`data/places/`,
-/// `docs/places.md`) or a curated state data (`data/states/`,
-/// `docs/states/`). Obtain one with [`crate::Lexicons::place`] or
+/// A city, town or community from the national place list or the curated rows
+/// (`data/places/`, `docs/places.md`). Obtain one with [`crate::Lexicons::place`] or
 /// [`crate::Lexicons::zip_places`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Place {
@@ -236,7 +235,7 @@ pub enum PlaceSource {
     /// The city matches the place's name (case, punctuation and
     /// abbreviations aside: `W PALM BCH` is WEST PALM BEACH).
     Name,
-    /// The city is a spelling the state data lists for the place, usually a typo
+    /// The city is a spelling the curated rows list for the place, usually a typo
     /// (`BOCA RATOM`).
     Variant,
     /// The city looks cut off, and exactly one place for the ZIP starts that
@@ -533,7 +532,7 @@ pub enum Warning {
     /// to it. A disagreement with the data, not a finding that the address
     /// is wrong.
     ///
-    /// Only raised in a state with curated state data (`Lexicons::has_state_data`;
+    /// Only raised in a state with collected shared ZIP places (`Lexicons::checks_zip_city`;
     /// Florida today). The national list names one place per ZIP and many
     /// ZIPs are used by several, so elsewhere the warning would fire on
     /// addresses that are fine. `ParsedAddress::place` is
@@ -688,11 +687,6 @@ pub struct Diagnostics {
     pub warnings: Vec<Warning>,
     pub unparsed: Option<String>,
     pub library_version: &'static str,
-    /// The version of the curated data for the parse's state (`state.toml`,
-    /// `Lexicons::state_data_version`), or `None` when the state has none.
-    /// With `library_version` it ties a stored parse to the data that
-    /// produced it.
-    pub state_data_version: Option<&'static str>,
     /// The custom layer the parse used (#3), if any: its name, version and content
     /// fingerprint. A layer can change a key, so keep this with stored keys.
     pub custom_layer: Option<crate::LayerInfo>,
@@ -729,7 +723,6 @@ impl Default for Diagnostics {
             warnings: Vec::new(),
             unparsed: None,
             library_version: VERSION,
-            state_data_version: None,
             custom_layer: None,
             decisions: Vec::new(),
         }
@@ -778,8 +771,8 @@ pub struct ParsedAddress {
     pub building: Option<String>,
     /// The city as the input wrote it.
     pub city: Option<String>,
-    /// The place the city stands for, from the state data, or the ZIP's
-    /// main place when there is no city. `None` when no state data covers the
+    /// The place the city stands for, from the curated rows, or the ZIP's
+    /// main place when there is no city. `None` when no curated rows cover the
     /// state or nothing matched. Not part of any emitted address.
     pub place: Option<PlaceMatch>,
     pub state: Option<StateCode>,

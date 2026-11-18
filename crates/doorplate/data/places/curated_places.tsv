@@ -1,0 +1,728 @@
+state	name	county	kind	variants	evidence
+FL	ALACHUA	ALACHUA	municipality		sources:original;census;geonames
+FL	ALFORD	JACKSON	municipality		sources:original;census;geonames
+FL	ALTAMONTE SPRINGS	SEMINOLE	municipality	ALTAMONTE SPEINGS;ALTAMONTE SPGS;ALTAMONTE SPRING;ALTAMONTE SPRINGS FL;ALTAMONTE SPRINSG;ALTAMOTNE SPRINGS;ALTIMONTE SPRINGS;ALTMONTE SPRINGS;ALTOMONTE SPRINGS	sources:original;census;geonames
+FL	ALTHA	CALHOUN	municipality		sources:original;census;geonames
+FL	ALTOONA	LAKE	place		sources:geonames
+FL	ALTURAS	POLK	place		sources:geonames
+FL	ALVA	LEE	place		sources:geonames
+FL	ANNA MARIA	MANATEE	municipality	ANNA MARIA ISLAND	sources:original;census;geonames variants:ANNA MARIA ISLAND=13
+FL	ANTHONY	MARION	place		sources:geonames
+FL	APALACHICOLA	FRANKLIN	municipality		sources:original;census;geonames
+FL	APOLLO BEACH	HILLSBOROUGH	place		sources:geonames
+FL	APOPKA	ORANGE	municipality	APOKA;APOPA;APOPK	sources:original;census;geonames
+FL	ARCADIA	DESOTO	municipality		sources:original;census;geonames
+FL	ARCHER	ALACHUA	municipality		sources:original;census;geonames
+FL	ARGYLE	WALTON	place		sources:geonames
+FL	ARIPEKA	PASCO	place		sources:geonames
+FL	ASTATULA	LAKE	municipality	ASHTABULA	sources:original;census;geonames
+FL	ASTOR	LAKE	place		sources:geonames
+FL	ATLANTIC BEACH	DUVAL	municipality	ATLANTA BEACH;ATLANTIC BCH	sources:original;census;geonames
+FL	ATLANTIS	PALM BEACH	municipality		sources:original;census
+FL	AUBURNDALE	POLK	municipality	ABURNDALE;AUBERNDALE;AUBUNRDALE;AUBURDALE;AURBUNDALE	sources:original;census;geonames
+FL	AVENTURA	DADE	municipality	ADVENTURA;ADVENTURE;AVANTURA;AVENTRA;AVENTRUA;AVENTURE;AVENTURW;AVENURA;AVENUTRA;AVERNTURA;AVETURA;AVNTURA;VENTURA	sources:original;census;observed
+FL	AVON PARK	HIGHLANDS	municipality		sources:original;census;geonames
+FL	BABSON PARK	POLK	place		sources:geonames
+FL	BAGDAD	SANTA ROSA	place		sources:geonames
+FL	BAKER	OKALOOSA	place		sources:geonames
+FL	BAL HARBOUR	DADE	municipality	BAL HABOUR;BAL HARBOR;BALL HARBOUR;BAY HARBOR;BAY HARBOUR;BEL HARBOR	sources:original;census;observed
+FL	BALDWIN	DUVAL	municipality	BALLWIN	sources:original;census;observed
+FL	BALM	HILLSBOROUGH	place		sources:geonames
+FL	BARBERVILLE	VOLUSIA	place		sources:geonames
+FL	BAREFOOT BAY	BREVARD	place		sources:observed
+FL	BARTOW	POLK	municipality		sources:original;census;geonames
+FL	BASCOM	JACKSON	municipality		sources:original;census;geonames
+FL	BAY HARBOR ISLANDS	DADE	municipality	BAL HARBOR ISLANDS;BAL HARBOUR ISLANDS;BAY HABOR ISLANDS;BAY HARBOR ISLAND;BAY HARBOUR ISLAND;BAY HARBOUR ISLANDS	sources:original;census
+FL	BAY LAKE	ORANGE	municipality		sources:original;census
+FL	BAY PINES	PINELLAS	place		sources:geonames
+FL	BELL	GILCHRIST	municipality	BELLS	sources:original;census;geonames
+FL	BELLE GLADE	PALM BEACH	municipality	BALLE GLADE;BELLE GLAE	sources:original;census;geonames
+FL	BELLE ISLE	ORANGE	municipality	BELLA ISLE;BELLE ISLES	sources:original;census
+FL	BELLEAIR	PINELLAS	municipality	BELAIR;BELL AIRE;BELLAIR;BELLEAIRE	sources:original;census
+FL	BELLEAIR BEACH	PINELLAS	municipality	BELLEAIR BCH;BELLEIAR BEACH	sources:original;census;geonames
+FL	BELLEAIR BLUFFS	PINELLAS	municipality	BELLAIRE BLUFFS;BELLEAIR BLUFF;BELLEAIRE BLUFFS;BELLEIAR BLUFFS	sources:original;census
+FL	BELLEAIR SHORE	PINELLAS	municipality		sources:census
+FL	BELLEVIEW	MARION	municipality		sources:original;census;geonames
+FL	BEVERLY BEACH	FLAGLER	municipality		sources:original;census
+FL	BEVERLY HILLS	CITRUS	place		sources:geonames
+FL	BIG PINE KEY	MONROE	place		sources:geonames
+FL	BISCAYNE PARK	DADE	municipality	BISCAINE PARK;BISCAYNE PRK	sources:original;census;observed
+FL	BLOUNTSTOWN	CALHOUN	municipality		sources:original;census;geonames
+FL	BOCA GRANDE	LEE	place		sources:geonames
+FL	BOCA RATON	PALM BEACH	municipality	BOCA ARTON;BOCA RAON;BOCA RAOTN;BOCA RARTON;BOCA RATO;BOCA RATOM;BOCA RATON F;BOCA RATON FL;BOCA RATONE;BOCA ROTON;BOCA RTAON;BOCARAPON;BOCCA RATON;ROCA RATON	sources:original;census;geonames
+FL	BOKEELIA	LEE	place		sources:geonames
+FL	BONIFAY	HOLMES	municipality		sources:original;census;geonames
+FL	BONITA SPRINGS	LEE	municipality	BENITA SPRINGS;BOINTA SPRINGS;BONIT SPRINGS;BONITA SPGS;BONITA SPRING;BONITA SPRINGS FL;BONITA SPRINS;BONITA SPRINTS;BONITA SRINGS;BONTIA SPRINGS;BONTITA SPRINGS	sources:original;census;geonames
+FL	BOSTWICK	PUTNAM	place		sources:geonames
+FL	BOWLING GREEN	HARDEE	municipality		sources:original;census;geonames
+FL	BOYNTON BEACH	PALM BEACH	municipality	BOYNTN BEACH;BOYNTON BACH;BOYNTON BCH;BOYNTON BEACH FL;BOYNTON NEACH;BOYTNON BEACH;BOYTON BEACH;POYNTON BEACH	sources:original;census;geonames
+FL	BRADENTON	MANATEE	municipality	BRABENTON;BRADENDON;BRADENTOM;BRADENTON FL;BRADETON;BRAEDENTON;BRANDENTON;BRADINGTON	sources:original;census;geonames variants:BRADINGTON=10
+FL	BRADENTON BEACH	MANATEE	municipality	BRADENTON BCH	sources:original;census;geonames
+FL	BRADLEY	POLK	place		sources:geonames
+FL	BRANDON	HILLSBOROUGH	place		sources:geonames
+FL	BRANFORD	SUWANNEE	municipality	CRANFORD	sources:original;census;geonames
+FL	BRINY BREEZES	PALM BEACH	municipality		sources:original;census
+FL	BRISTOL	LIBERTY	municipality	BRISTOW	sources:original;census;geonames
+FL	BRONSON	LEVY	municipality	BRANSON;BRINSON	sources:original;census;geonames
+FL	BROOKER	BRADFORD	municipality		sources:original;census;geonames
+FL	BROOKSVILLE	HERNANDO	municipality	BROOKESVILLE;BROOKEVILLE;BROOKSIVLLE;BROOKSVILE;BROOKSVILLS;BROOKVILLE;BROOSKVILLE	sources:original;census;geonames
+FL	BRUCE	WALTON	place		sources:original
+FL	BRYCEVILLE	NASSAU	place		sources:geonames
+FL	BUNNELL	FLAGLER	municipality	BUNNEL;VUNNELL	sources:original;census;geonames
+FL	BUSHNELL	SUMTER	municipality		sources:original;census;geonames
+FL	CALLAHAN	NASSAU	municipality		sources:original;census;geonames
+FL	CALLAWAY	BAY	municipality	CALLOWAY	sources:original;census
+FL	CAMPBELLTON	JACKSON	municipality		sources:original;census;geonames
+FL	CANAL POINT	PALM BEACH	place		sources:geonames
+FL	CANDLER	MARION	place		sources:geonames
+FL	CANTONMENT	ESCAMBIA	place		sources:geonames
+FL	CAPE CANAVERAL	BREVARD	municipality	CAPE CANAVAERAL;CAPE CANAVERL;CAPE CANEVERAL	sources:original;census;geonames
+FL	CAPE CORAL	LEE	municipality	CAPE CORRAL;CAPE CORSL;CAPRE CORAL;KAPE CORAL	sources:original;census;geonames
+FL	CAPTIVA	LEE	place	CAPTIVA ISLAND	sources:geonames variants:CAPTIVA ISLAND=63
+FL	CARRABELLE	FRANKLIN	municipality	CARABELLE	sources:original;census;geonames
+FL	CARYVILLE	WASHINGTON	municipality	MARYVILLE	sources:original;census;geonames
+FL	CASSADAGA	VOLUSIA	place		sources:geonames
+FL	CASSELBERRY	SEMINOLE	municipality	CASELBERRY;CASFELBERRY;CASSALBERRY;CASSELBERY;CASSELEBERRY	sources:original;census;geonames
+FL	CEDAR KEY	LEVY	municipality		sources:original;census;geonames
+FL	CELEBRATION	OSCEOLA	place	CELERATION	sources:original
+FL	CENTER HILL	SUMTER	municipality		sources:original;census;geonames
+FL	CENTURY	ESCAMBIA	municipality		sources:original;census;geonames
+FL	CHATTAHOOCHEE	GADSDEN	municipality	CHATTAHOOTCHEE	sources:original;census;geonames
+FL	CHIEFLAND	LEVY	municipality		sources:original;census;geonames
+FL	CHIPLEY	WASHINGTON	municipality		sources:original;census;geonames
+FL	CHOKOLOSKEE	COLLIER	place		sources:geonames
+FL	CHRISTMAS	ORANGE	place		sources:geonames
+FL	CHULUOTA	SEMINOLE	place		sources:observed
+FL	CINCO BAYOU	OKALOOSA	municipality		sources:census
+FL	CITRA	MARION	place		sources:geonames
+FL	CLARCONA	ORANGE	place		sources:geonames
+FL	CLARKSVILLE	CALHOUN	place		sources:geonames
+FL	CLEARWATER	PINELLAS	municipality	CLEARATER;CLEARWATEER;CLEAWATER;N CLEARWATER	sources:original;census;geonames;observed
+FL	CLEARWATER BEACH	PINELLAS	place		sources:geonames
+FL	CLERMONT	LAKE	municipality	CLEARMONT;CLEMONT;CLERMOMT;CLERONT;CLERRMONT;CLAREMONT;CLEMERMONT	sources:original;census;geonames variants:CLAREMONT=13,CLEMERMONT=10
+FL	CLEWISTON	HENDRY	municipality	LEWISTON	sources:original;census;geonames
+FL	CLOUD LAKE	PALM BEACH	municipality		sources:census
+FL	COCOA	BREVARD	municipality		sources:original;census;geonames
+FL	COCOA BEACH	BREVARD	municipality	COCO BEACH;COCOA BCH	sources:original;census;geonames
+FL	COCONUT CREEK	BROWARD	municipality	COCNUT CREEK;COCOANUT CREEK;COCOCNUT CREEK;COCOCUT CREEK;COCONOT CREEK;COCONT CREEK;COCONUT CREEEK;COCONUT CREEK F;COCONUT GREEK;COCONUTCREECK;COONUT CREEK	sources:original;census;geonames;observed
+FL	COLEMAN	SUMTER	municipality		sources:original;census;geonames
+FL	COOPER CITY	BROWARD	municipality		sources:original;census;observed
+FL	COPELAND	COLLIER	place		sources:geonames
+FL	CORAL GABLES	DADE	municipality	CORAL GABELS;CORAL GABLE;CORAL GABLESS;CORAL GBALES;CORAL GRABLES;CORAN GABLES;CORLA GABLES	sources:original;census;geonames
+FL	CORAL SPRINGS	BROWARD	municipality	CORA SPRINGS;CORAL SPEINGS;CORAL SPRIINGS;CORAL SPRING;CORAL SPRINNGS;CORAL SPRINTS;CORAL SPRNGS;CORALS SPRINGS;COROL SPRINGS;CORRAL SPRINGS	sources:original;census;geonames;observed
+FL	CORTEZ	MANATEE	place		sources:geonames
+FL	COTTONDALE	JACKSON	municipality		sources:original;census;geonames
+FL	CRAWFORDVILLE	WAKULLA	place		sources:geonames
+FL	CRESCENT CITY	PUTNAM	municipality	CRECENT CITY	sources:original;census;geonames
+FL	CRESTVIEW	OKALOOSA	municipality	CRESSTVIEW	sources:original;census;geonames
+FL	CROSS CITY	DIXIE	municipality		sources:original;census;geonames
+FL	CRYSTAL BEACH	PINELLAS	place		sources:geonames
+FL	CRYSTAL RIVER	CITRUS	municipality	CYSTAL RIVER	sources:original;census;geonames
+FL	CRYSTAL SPRINGS	PASCO	place		sources:geonames
+FL	CUTLER BAY	DADE	municipality	CUTTER BAY;CUTTLER BAY	sources:original;census;observed
+FL	CYPRESS	JACKSON	place		sources:geonames
+FL	DADE CITY	PASCO	municipality		sources:original;census;geonames
+FL	DANIA	BROWARD	place		sources:geonames
+FL	DANIA BEACH	BROWARD	municipality	BANIA BEACH;DANIA BCH;DANIA BECH;DANIE BEACH	sources:original;census;observed
+FL	DAVENPORT	POLK	municipality	DAVEMPORT;DAVENORT;DAVENPOERT;DAVENPPORT;DAVENTORT;DAVENVORT;DAVEPORT;DAVNPORT;DEVENPORT	sources:original;census;geonames
+FL	DAVIE	BROWARD	municipality	DAVIES	sources:original;census;observed
+FL	DAY	LAFAYETTE	place		sources:geonames
+FL	DAYTONA BEACH	VOLUSIA	municipality	DATONA BEACH;DAYTON BEACH;DAYTONA BAECH;DAYTONA BCH;DAYTONA BEACAH;S DAYTONA BEACH;DAYTONA BEAACH;DAYTONA	sources:original;census;geonames variants:DAYTONA BEAACH=14,DAYTONA=11
+FL	DAYTONA BEACH SHORES	VOLUSIA	municipality	DAYTONA BCH SHORES;DAYTONA BEACGH SHORE;DAYTONA BEACH SHORE	sources:original;census;observed
+FL	DE LEON SPRINGS	VOLUSIA	place		sources:geonames
+FL	DEBARY	VOLUSIA	municipality	DEBARRY	sources:original;census;geonames
+FL	DEERFIELD BEACH	BROWARD	municipality	DEEFIELD BEACH;DEERDIELD BEACH;DEERFEILD BEACH;DEERFFIELD BEACH;DEERFIELD BCH;DEERFIELD0 BEACH;DEERFILD BEACH;DEERFILED BEACH;DEERIELD BEACH;DERFIELD BEACH	sources:original;census;geonames;observed
+FL	DEFUNIAK SPRINGS	WALTON	municipality	DEFUNAIK SPRINGS;DEFUNIAK SPGS	sources:original;census;geonames
+FL	DELAND	VOLUSIA	municipality		sources:original;census;geonames
+FL	DELRAY BEACH	PALM BEACH	municipality	BELRAY BEACH;DALRAY BEACH;DEIRAY BEACH;DELARY BEACH;DELAY BEACH;DELIAY BEACH;DELRAT BEACH;DELRAY BCH;DELRAY BEACHB;DELRAY BEAH;DELRAY BERACH;DELRAY EACH;DELREAY BEACH;DELREY BEACH;DERAY BEACH;W DELRAY BEACH	sources:original;census;geonames
+FL	DELTONA	VOLUSIA	municipality		sources:original;census;geonames
+FL	DESTIN	OKALOOSA	municipality		sources:original;census;geonames
+FL	DOCTORS INLET	CLAY	place		sources:geonames
+FL	DORAL	DADE	municipality	DORAL BRANCH	sources:original;census;observed variants:DORAL BRANCH=34
+FL	DOVER	HILLSBOROUGH	place		sources:geonames
+FL	DUNDEE	POLK	municipality		sources:original;census;geonames
+FL	DUNEDIN	PINELLAS	municipality	DUNDEDIN;DUNEBIN;DUNEDINE	sources:original;census;geonames
+FL	DUNNELLON	MARION	municipality	DUNELLON;DUNNELON	sources:original;census;geonames
+FL	DURANT	HILLSBOROUGH	place		sources:geonames
+FL	EAGLE LAKE	POLK	municipality	EAGLE LAKES	sources:original;census;geonames
+FL	EARLETON	ALACHUA	place		sources:geonames
+FL	EAST PALATKA	PUTNAM	place		sources:geonames
+FL	EASTLAKE WEIR	MARION	place		sources:geonames
+FL	EASTPOINT	FRANKLIN	place		sources:geonames
+FL	EATON PARK	POLK	place		sources:geonames
+FL	EATONVILLE	ORANGE	municipality		sources:original;census
+FL	EBRO	WASHINGTON	municipality		sources:original;census;geonames
+FL	EDGEWATER	VOLUSIA	municipality	EDGEWATERS	sources:original;census;geonames
+FL	EDGEWOOD	ORANGE	municipality		sources:original;census
+FL	EGLIN AFB	OKALOOSA	place		sources:geonames
+FL	EL JOBEAN	CHARLOTTE	place		sources:geonames
+FL	EL PORTAL	DADE	municipality		sources:original;census
+FL	ELFERS	PASCO	place		sources:geonames
+FL	ELKTON	ST. JOHNS	place		sources:geonames
+FL	ELLENTON	MANATEE	place		sources:geonames
+FL	ENGLEWOOD	SARASOTA	place	ENGELWOOD	sources:geonames variants:ENGELWOOD=10
+FL	ENTERPRISE	VOLUSIA	place		sources:observed
+FL	ESTERO	LEE	municipality	ESTRERO;ESTRO	sources:original;census;geonames;observed
+FL	ESTO	HOLMES	municipality		sources:census
+FL	EUSTIS	LAKE	municipality	EUSTIST;EUTIS	sources:original;census;geonames
+FL	EVERGLADES CITY	COLLIER	municipality		sources:original;census;geonames
+FL	EVINSTON	ALACHUA	place		sources:geonames
+FL	FAIRFIELD	MARION	place		sources:geonames
+FL	FANNING SPRINGS	LEVY	municipality		sources:original;census
+FL	FELDA	HENDRY	place		sources:geonames
+FL	FELLSMERE	INDIAN RIVER	municipality	SELLSMERE	sources:original;census;geonames
+FL	FERN PARK	SEMINOLE	place		sources:observed
+FL	FERNANDINA BEACH	NASSAU	municipality	FERNADINA BEACH;FERNANDIA BEACH;FERNANDINA BCH;FERNANDINAY BEACH;FERNIDINA BEACH;FETNANDINA BEACH	sources:original;census;geonames
+FL	FERNDALE	LAKE	place		sources:geonames
+FL	FLAGLER BEACH	FLAGLER	municipality	FLAGER BEACH	sources:original;census;geonames
+FL	FLEMING ISLAND	CLAY	place	FLEMIMG ISLAND;FLEMING ISAND;FLEMMING ISLAND	sources:original;geonames
+FL	FLORAHOME	PUTNAM	place		sources:geonames
+FL	FLORAL CITY	CITRUS	place		sources:geonames
+FL	FLORIDA CITY	DADE	municipality		sources:original;census;observed
+FL	FORT LAUDERDALE	BROWARD	municipality	FOR LAUDERDALE;FORT LADERDALE;FORT LAUDARDALE;FORT LAUDEDALE;FORT LAUDEERDALE;FORT LAUDERALE;FORT LAUDERDADE;FORT LAUDERDADLE;FORT LAUDERDAE;FORT LAUDERDAL;FORT LAUDERDALEE;FORT LAUDERDALEW;FORT LAUDERDALLE;FORT LAUDERDLAE;FORT LAUDERDLE;FORT LAUDERDSLE;FORT LAUDEREDALE;FORT LAUDRRDALE;FORT LAUERDALE;FORT LAURDERDALE;FORT LAUTERDALE;FORT LUADERDALE;FORTH LAUDERDALE;FTLAUDERDALE	sources:original;census;geonames variants:FTLAUDERDALE=18
+FL	FORT MC COY	MARION	place		sources:geonames
+FL	FORT MEADE	POLK	municipality		sources:original;census;geonames
+FL	FORT MYERS	LEE	municipality	FOR MYERS;FORT MAYERS;FORT MEYERS;FORT MYER;FORT MYERS S;FORTH MYERS;S FORT MYERS;FTMYERS	sources:original;census;geonames variants:FTMYERS=12
+FL	FORT MYERS BEACH	LEE	municipality		sources:original;census;geonames
+FL	FORT OGDEN	DESOTO	place		sources:geonames
+FL	FORT PIERCE	ST. LUCIE	municipality	FOR PIERCE;FORT PEIRCE;FORT PIRECE;PORT PIERCE	sources:original;census;geonames
+FL	FORT WALTON BEACH	OKALOOSA	municipality	FORT WALTO BEACH;FORT WALTON BACH;FWB	sources:original;census;geonames variants:FWB=12
+FL	FORT WHITE	COLUMBIA	municipality		sources:original;census;geonames
+FL	FOUNTAIN	BAY	place		sources:geonames
+FL	FREEPORT	WALTON	municipality		sources:original;census;geonames
+FL	FROSTPROOF	POLK	municipality		sources:original;census;geonames
+FL	FRUITLAND PARK	LAKE	municipality	FRUITLAND PK	sources:original;census;geonames
+FL	GAINESVILLE	ALACHUA	municipality	GAINESAVILLE;GAINESVILE;GAINESVILLE FL;GAINESVILLLE;GAINESVLLE;GAINESVSILLE;GAINESWVILLE;GAINEVILLE;GAINSEVILLE;GAINSVILLE;GAINVESVILLE;GIANESVILLE;PAINESVILLE	sources:original;census;geonames
+FL	GENEVA	SEMINOLE	place		sources:geonames
+FL	GEORGETOWN	PUTNAM	place		sources:geonames
+FL	GIBSONTON	HILLSBOROUGH	place		sources:geonames
+FL	GLEN RIDGE	PALM BEACH	municipality		sources:census
+FL	GLEN SAINT MARY	BAKER	municipality		sources:original;census;geonames
+FL	GLENWOOD	VOLUSIA	place		sources:geonames
+FL	GOLDEN BEACH	DADE	municipality	GOLDEN BCH;HOLDEN BEACH	sources:original;census
+FL	GOLDENROD	SEMINOLE	place		sources:geonames
+FL	GOLF	PALM BEACH	municipality	VILLAGE OF GOLF	sources:census variants:VILLAGE OF GOLF=11
+FL	GONZALEZ	ESCAMBIA	place		sources:geonames
+FL	GOODLAND	COLLIER	place		sources:geonames
+FL	GOTHA	ORANGE	place		sources:geonames
+FL	GRACEVILLE	JACKSON	municipality	GRACEVILL	sources:original;census;geonames
+FL	GRAHAM	BRADFORD	place		sources:geonames
+FL	GRAND ISLAND	LAKE	place		sources:geonames
+FL	GRAND RIDGE	JACKSON	municipality		sources:original;census;geonames
+FL	GRANDIN	PUTNAM	place		sources:geonames
+FL	GRANT	BREVARD	place		sources:geonames
+FL	GRANT VALKARIA	BREVARD	municipality	GRAND VALKARIA	sources:original;census;observed
+FL	GREEN COVE SPRINGS	CLAY	municipality	GREEN COVE SPGS;GREEN COVE SPRGS;GREEN COVE SPRING;GREEN COVE SPRINGD	sources:original;census;geonames
+FL	GREENACRES	PALM BEACH	municipality	GREENAACRES;GREENACES;GREENACRE;GREENACREAS;GREENACRESS;GRENNACRES;GREEN ACRES CITY	sources:original;census;geonames;observed variants:GREEN ACRES CITY=54
+FL	GREENSBORO	GADSDEN	municipality		sources:original;census;geonames
+FL	GREENVILLE	MADISON	municipality	GREENEVILLE;GREENVIKLE;GREENVILE;GREENVILLLE	sources:original;census;geonames
+FL	GREENWOOD	JACKSON	municipality		sources:original;census;geonames
+FL	GRETNA	GADSDEN	municipality		sources:original;census;geonames
+FL	GROVELAND	LAKE	municipality		sources:original;census;geonames
+FL	GULF BREEZE	SANTA ROSA	municipality	GUL BREEZE;GULF BRREEZE	sources:original;census;geonames
+FL	GULF HAMMOCK	LEVY	place		sources:geonames
+FL	GULF STREAM	PALM BEACH	municipality		sources:original;census
+FL	GULFPORT	PINELLAS	municipality		sources:original;census;observed
+FL	HAINES CITY	POLK	municipality	HAINE CITY;HAINES CIRY;HAINS CITY;HANES CITY;HANIES CITY;HAYNES CITY	sources:original;census;geonames
+FL	HALLANDALE	BROWARD	place	HALLENDALE	sources:geonames variants:HALLENDALE=18
+FL	HALLANDALE BEACH	BROWARD	municipality	HALLADALE BEACH;HALLANDAE BEACH;HALLANDALE BAECH;HALLANDALE BCH;HALLANDALLE BEACH;HALLANDE BEACH;HALLANDELE BEACH;HALLANDLE BEACH;HALLENDALE BEACH;HALLLANDALE BEACH	sources:original;census;observed
+FL	HAMPTON	BRADFORD	municipality		sources:original;census;geonames
+FL	HASTINGS	ST. JOHNS	place		sources:geonames
+FL	HAVANA	GADSDEN	municipality	HAVANNA	sources:original;census;geonames
+FL	HAVERHILL	PALM BEACH	municipality		sources:original;census
+FL	HAWTHORNE	ALACHUA	municipality		sources:original;census;geonames
+FL	HERNANDO	CITRUS	place		sources:geonames
+FL	HIALEAH	DADE	municipality	HIAEAH;HIAHLEAH;HIALEA;HIALEH;HIALEIH;HIALIAH;HIEALEAH;HILLEAH	sources:original;census;geonames
+FL	HIALEAH GARDENS	DADE	municipality	HIALAEH GARDENS;HIALEAH GARDEN	sources:original;census;observed
+FL	HIGH SPRINGS	ALACHUA	municipality		sources:original;census;geonames
+FL	HIGHLAND BEACH	PALM BEACH	municipality	HIGHLAND BCH	sources:original;census;observed
+FL	HIGHLAND CITY	POLK	place		sources:geonames
+FL	HIGHLAND PARK	POLK	municipality		sources:original;census
+FL	HILLCREST HEIGHTS	POLK	municipality		sources:census
+FL	HILLIARD	NASSAU	municipality	HILLLIARD	sources:original;census;geonames
+FL	HILLSBORO BEACH	BROWARD	municipality	HILLSBORO BCH;HILLSBORO BEAXH;HILLSBOROUGH BEACH	sources:original;census variants:HILLSBOROUGH BEACH=12
+FL	HOBE SOUND	MARTIN	place		sources:geonames
+FL	HOLDER	CITRUS	place		sources:geonames
+FL	HOLIDAY	PASCO	place		sources:geonames
+FL	HOLLISTER	PUTNAM	place		sources:geonames
+FL	HOLLY HILL	VOLUSIA	municipality		sources:original;census;observed
+FL	HOLLYWOOD	BROWARD	municipality	HOLLIWOOD;HOLLLYWOOD;HOLLTYWOOD;HOLLWOOD;HOLLYHOOD;HOLLYOOD;HOLLYWOD;HOLLYWOOF;HOLLYWOOOD;HOLLYWWOD;HOLYWOOD	sources:original;census;geonames
+FL	HOLMES BEACH	MANATEE	municipality	HOLMES BCH	sources:original;census;geonames
+FL	HOLT	OKALOOSA	place		sources:geonames
+FL	HOMELAND	POLK	place		sources:geonames
+FL	HOMESTEAD	DADE	municipality	HOMESTAD;HOMESTEAF;HOMESTEARD;HOMESTEASD;HOMESTED;HOMESTREAD;HOMETEAD;HOMSTEAD;MD HOMESTEAD	sources:original;census;geonames variants:MD HOMESTEAD=16
+FL	HOMOSASSA	CITRUS	place		sources:geonames
+FL	HOMOSASSA SPRINGS	CITRUS	place		sources:geonames
+FL	HORSESHOE BEACH	DIXIE	municipality	HORSESHOE BCH	sources:original;census;geonames
+FL	HOSFORD	LIBERTY	place		sources:geonames
+FL	HOWEY IN THE HILLS	LAKE	municipality	HOWEY IN THE HILL;HOWIE IN THE HILLS	sources:original;census;geonames
+FL	HUDSON	PASCO	place		sources:original;geonames
+FL	HURLBURT FIELD	OKALOOSA	place		sources:geonames
+FL	HYPOLUXO	PALM BEACH	municipality		sources:original;census
+FL	IMMOKALEE	COLLIER	place		sources:geonames
+FL	INDIALANTIC	BREVARD	municipality	INDIATLANTIC	sources:original;census;geonames
+FL	INDIAN CREEK	DADE	municipality		sources:original;census
+FL	INDIAN HARBOUR BEACH	BREVARD	municipality	INDIAN HARBOR BEACH;INDIAN HARBOUR BCH;INDIAN HARBOUR BEAC;INDIAN HARBUR BEACH	sources:original;census;observed
+FL	INDIAN LAKE ESTATES	POLK	place		sources:geonames
+FL	INDIAN RIVER SHORES	INDIAN RIVER	municipality		sources:original;census
+FL	INDIAN ROCKS BEACH	PINELLAS	municipality	INDIAN ROCK BEACH;INDIAN ROCKS BCH;INDIN ROCKS BEACH	sources:original;census;geonames
+FL	INDIAN SHORES	PINELLAS	municipality		sources:original;census;observed
+FL	INDIANTOWN	MARTIN	municipality		sources:original;census;geonames
+FL	INGLIS	LEVY	municipality		sources:original;census;geonames
+FL	INLET BEACH	WALTON	place		sources:original
+FL	INTERCESSION CITY	OSCEOLA	place		sources:geonames
+FL	INTERLACHEN	PUTNAM	municipality		sources:original;census;geonames
+FL	INVERNESS	CITRUS	municipality	INVENESS;INVERESS;INVERNES;INVERNSESS	sources:original;census;geonames
+FL	ISLAMORADA	MONROE	municipality	ISLAMORADA VILLAGE OF ISLANDS;ISLAMORADA VLG OF I	sources:census;geonames variants:ISLAMORADA VLG OF I=12
+FL	ISLAND GROVE	ALACHUA	place		sources:geonames
+FL	ISTACHATTA	HERNANDO	place		sources:geonames
+FL	JACKSONVILLE	DUVAL	municipality	JACKASONVILLE;JACKDONVILLE;JACKONVILLE;JACKOSNVILLE;JACKSONEVILLE;JACKSONIVLLE;JACKSONSVILLE;JACKSONVILE;JACKSONVILEE;JACKSONVILL;JACKSONVILLIE;JACKSONVILLLE;JACKSONVILOLE;JACKSONVLLE;JACKSOVILLE;JACKSOVNILLE;JACLKSONVILLE;JACLSONVILLE;JACSONVILLE;JAKCSONVILLE;JAVKSONVILLE;JAX	sources:original;census;geonames;observed variants:JAX=32
+FL	JACKSONVILLE BEACH	DUVAL	municipality	JACKSONVILLE BCH;JACKSONVILLE EACH;JACKSOVILLE BEACH;JAX BEACH	sources:original;census;geonames variants:JAX BEACH=10
+FL	JACOB CITY	JACKSON	municipality		sources:census
+FL	JASPER	HAMILTON	municipality		sources:original;census;geonames
+FL	JAY	SANTA ROSA	municipality		sources:original;census;geonames
+FL	JENNINGS	HAMILTON	municipality		sources:original;census;geonames
+FL	JENSEN BEACH	MARTIN	place		sources:geonames
+FL	JUNO BEACH	PALM BEACH	municipality		sources:original;census;observed
+FL	JUPITER	PALM BEACH	municipality	JUITER	sources:original;census;geonames
+FL	JUPITER INLET COLONY	PALM BEACH	municipality		sources:original;census
+FL	JUPITER ISLAND	MARTIN	municipality		sources:census
+FL	KATHLEEN	POLK	place		sources:geonames
+FL	KENANSVILLE	OSCEOLA	place		sources:geonames
+FL	KENNETH CITY	PINELLAS	municipality		sources:original;census;observed
+FL	KEY BISCAYNE	DADE	municipality	KAY BISCAYNE;KEY BICAYNE;KEY BISACYNE;KEY BISCANE;KEY BISCANYNE;KEY BISCASYNE;KEY BISCAYE;KEY BISCYANE;KEY BSICAYNE	sources:original;census;geonames
+FL	KEY COLONY BEACH	MONROE	municipality	KEY COLONY BCH	sources:original;census;geonames
+FL	KEY LARGO	MONROE	place		sources:geonames
+FL	KEY WEST	MONROE	municipality	KEY WEAT	sources:original;census;geonames
+FL	KEYSTONE HEIGHTS	CLAY	municipality	KEYSTONE HEIGTHS;KEYSTONE HTS	sources:original;census;geonames
+FL	KILLARNEY	ORANGE	place		sources:geonames
+FL	KISSIMMEE	OSCEOLA	municipality	KIKSSIMMEE;KISIIMMEE;KISIMMEE;KISSEIMMEE;KISSEMMEE;KISSIIMMEE;KISSIMEE;KISSIMEEE;KISSIMME;KISSIMMEEE;KISSIMMIE;KISSIMMIEE;KISSIMMMEE;KISSMMEE;KISSSIMMEE;KISSEMME	sources:original;census;geonames variants:KISSEMME=14
+FL	LA CROSSE	ALACHUA	municipality		sources:original;census;geonames
+FL	LABELLE	HENDRY	municipality	LA BELLE	sources:original;census;geonames variants:LA BELLE=15
+FL	LACOOCHEE	PASCO	place		sources:geonames
+FL	LADY LAKE	LAKE	municipality	LADY LAKES	sources:original;census;geonames
+FL	LAKE ALFRED	POLK	municipality		sources:original;census;geonames
+FL	LAKE BUENA VISTA	ORANGE	municipality		sources:original;census
+FL	LAKE BUTLER	UNION	municipality		sources:original;census;geonames
+FL	LAKE CITY	COLUMBIA	municipality		sources:original;census;geonames
+FL	LAKE CLARKE SHORES	PALM BEACH	municipality		sources:original;census;observed
+FL	LAKE COMO	PUTNAM	place		sources:geonames
+FL	LAKE GENEVA	CLAY	place		sources:geonames
+FL	LAKE HAMILTON	POLK	municipality	LAKE HAMITLON	sources:original;census;geonames
+FL	LAKE HARBOR	PALM BEACH	place		sources:geonames
+FL	LAKE HELEN	VOLUSIA	municipality	LAKE HELLEN	sources:original;census;geonames
+FL	LAKE MARY	SEMINOLE	municipality	LAKE MART;LAKE MERY	sources:original;census;geonames
+FL	LAKE MONROE	SEMINOLE	place		sources:geonames
+FL	LAKE PANASOFFKEE	SUMTER	place		sources:geonames
+FL	LAKE PARK	PALM BEACH	municipality		sources:original;census
+FL	LAKE PLACID	HIGHLANDS	municipality		sources:original;census;geonames
+FL	LAKE WALES	POLK	municipality	LAKE WAILES;LAKE WLES	sources:original;census;geonames
+FL	LAKE WORTH	PALM BEACH	place		sources:geonames
+FL	LAKE WORTH BEACH	PALM BEACH	municipality	LAKE WORTH BCH;LAKE WORTH BEACK	sources:original;census
+FL	LAKELAND	POLK	municipality		sources:original;census;geonames
+FL	LAKESHORE	POLK	place		sources:geonames
+FL	LAKEWOOD RANCH	MANATEE	place	LACKWOOD RANCH;LAKEWOOD RANCE;LAKEWOOD RCH;LAKEWOOD RNCH;LAKEWOOE RANCH	sources:original
+FL	LAMONT	JEFFERSON	place		sources:geonames
+FL	LANARK VILLAGE	FRANKLIN	place		sources:geonames
+FL	LAND O LAKES	PASCO	place	LAND O LAKE;LAND OF LAKES;LANDON LAKES;LANK O LAKES	sources:original;geonames
+FL	LANTANA	PALM BEACH	municipality		sources:original;census;observed
+FL	LARGO	PINELLAS	municipality		sources:original;census;geonames;observed
+FL	LAUDERDALE BY THE SEA	BROWARD	municipality	LAUDERDALE BY THE SE;LBTS;LAUD BY THE SEA;LAUDERDALE BY SEA;LAUDERDALE BTS	sources:census variants:LAUDERDALE BY THE SE=43,LBTS=14,LAUD BY THE SEA=13,LAUDERDALE BY SEA=13,LAUDERDALE BTS=12
+FL	LAUDERDALE LAKES	BROWARD	municipality	LAUDARDALE LAKES;LAUDERDALE LAKE;LAUDERDALES LAKES;LAUDERSALE LAKES;LAUDUDERDALE LAKES;LAURDERDALE LAKES	sources:original;census;observed
+FL	LAUDERHILL	BROWARD	municipality	LAUDERDHILL;LAUDERHIL;LAUDERHILLL;LAUDERILL	sources:original;census;observed
+FL	LAUREL	SARASOTA	place		sources:geonames
+FL	LAUREL HILL	OKALOOSA	municipality	LUAREL HILL	sources:original;census;geonames
+FL	LAWTEY	BRADFORD	municipality		sources:original;census;geonames
+FL	LAYTON	MONROE	municipality		sources:census
+FL	LAZY LAKE	BROWARD	municipality		sources:census
+FL	LECANTO	CITRUS	place		sources:geonames
+FL	LEE	MADISON	municipality		sources:original;census;geonames
+FL	LEESBURG	LAKE	municipality	LEEBURG;LEEESBURG;LEESSBURG	sources:original;census;geonames
+FL	LEHIGH ACRES	LEE	place	LEHIGH ACERS;LEIGH ACRES;LEHIGH ACRESS	sources:geonames variants:LEHIGH ACERS=18,LEIGH ACRES=11,LEHIGH ACRESS=10
+FL	LIGHTHOUSE POINT	BROWARD	municipality	LIGHHOUSE POINT;LIGHTHOUSE POINTE;LIGHTHOUSE PT;LIGTHOUSE POINT	sources:original;census;observed
+FL	LITHIA	HILLSBOROUGH	place		sources:geonames
+FL	LIVE OAK	SUWANNEE	municipality		sources:original;census;geonames
+FL	LLOYD	JEFFERSON	place		sources:geonames
+FL	LOCHLOOSA	ALACHUA	place		sources:geonames
+FL	LONG KEY	MONROE	place		sources:geonames
+FL	LONGBOAT KEY	MANATEE	municipality	TOWN OF LONGBOAT	sources:original;census;geonames variants:TOWN OF LONGBOAT=11
+FL	LONGWOOD	SEMINOLE	municipality	LONGWOED	sources:original;census;geonames
+FL	LORIDA	HIGHLANDS	place		sources:geonames
+FL	LOUGHMAN	POLK	place		sources:geonames
+FL	LOWELL	MARION	place		sources:geonames
+FL	LOXAHATCHEE	PALM BEACH	place	LOXACHACHEE;LOXAHACHEE;LOXAHATCHEEE;LOXAHATCHER;LOXAHTACHEE;LOXAHTATCHEE;LOXAHTCHEE;LOXHATCHEE	sources:original;geonames
+FL	LOXAHATCHEE GROVES	PALM BEACH	municipality		sources:original;census
+FL	LULU	COLUMBIA	place		sources:geonames
+FL	LUTZ	HILLSBOROUGH	place		sources:original;geonames
+FL	LYNN HAVEN	BAY	municipality	LYNN HEAVEN	sources:original;census;geonames
+FL	MACCLENNY	BAKER	municipality	MACCLEANY	sources:original;census;geonames
+FL	MADEIRA BEACH	PINELLAS	municipality	MADEIRA BCH;MADEIRA BREACH;MADERIA BEACH;MADIERA BEACH	sources:original;census;observed
+FL	MADISON	MADISON	municipality		sources:census;geonames
+FL	MAITLAND	ORANGE	municipality	MAINTLAND;MAITAND;MAITLALND	sources:original;census;geonames
+FL	MALABAR	BREVARD	municipality		sources:original;census;geonames
+FL	MALONE	JACKSON	municipality		sources:original;census;geonames
+FL	MANALAPAN	PALM BEACH	municipality		sources:original;census
+FL	MANASOTA	MANATEE	place		sources:geonames
+FL	MANGO	HILLSBOROUGH	place		sources:geonames
+FL	MANGONIA PARK	PALM BEACH	municipality		sources:original;census
+FL	MARATHON	MONROE	municipality		sources:original;census;geonames
+FL	MARATHON SHORES	MONROE	place		sources:geonames
+FL	MARCO ISLAND	COLLIER	municipality	MARCO IALAND;MARCO ISALND	sources:original;census;geonames
+FL	MARGATE	BROWARD	municipality	MAGATE;MARGARE;MARGARTE;MARGETE;MARGRATE	sources:original;census;geonames;observed
+FL	MARIANNA	JACKSON	municipality		sources:original;census;geonames
+FL	MARINELAND	FLAGLER	municipality		sources:census
+FL	MARY ESTHER	OKALOOSA	municipality	MART ESTHER	sources:original;census;geonames
+FL	MASCOTTE	LAKE	municipality	MACOTTE;MASCOTT	sources:original;census;geonames
+FL	MAYO	LAFAYETTE	municipality		sources:original;census;geonames
+FL	MC ALPIN	SUWANNEE	place		sources:geonames
+FL	MC DAVID	ESCAMBIA	place		sources:geonames
+FL	MC INTOSH	MARION	municipality		sources:original;census;geonames
+FL	MEDLEY	DADE	municipality		sources:original;census
+FL	MELBOURNE	BREVARD	municipality	MELBORNE;MELBOUNE;MELBOURME;MELBOURN;MELBURNE;MELOURNE	sources:original;census;geonames
+FL	MELBOURNE BEACH	BREVARD	municipality	MELBOURE BEACH;MELBOUREN BEACH;MELBOURNE BCH;MELBOURNE BEACG	sources:original;census;geonames
+FL	MELBOURNE VILLAGE	BREVARD	municipality		sources:original;census
+FL	MELROSE	PUTNAM	place		sources:geonames
+FL	MERRITT ISLAND	BREVARD	place	MERRIT ISLAND	sources:geonames variants:MERRIT ISLAND=23
+FL	MEXICO BEACH	BAY	municipality	MEXICO BCH	sources:original;census;geonames
+FL	MIAMI	DADE	municipality	MIAIMI;MIAMAI;MD MIAMI;MAIMI;MIMAI	sources:original;census;geonames;observed variants:MD MIAMI=569,MAIMI=31,MIMAI=13
+FL	MIAMI BEACH	DADE	municipality	MAIMI BEACH;MIAIM BEACH;MIAM BEACH;MIAMI BAECH;MIAMI BCH;MIAMI BEACHE;MIAMI BEEACH	sources:original;census;geonames
+FL	MIAMI GARDENS	DADE	municipality	MAIMI GARDENS;MAMI GARDENS;MIAMI GAARDENS;MIAMI GADEN;MIAMI GARDEN;MIAMI GARDES;MIAMI GRADENS	sources:original;census;geonames;observed
+FL	MIAMI LAKES	DADE	municipality	MAIMI LAKES;MIAMI LAKE	sources:original;census;observed
+FL	MIAMI SHORES	DADE	municipality	MIAMI SHORES VILLAGE	sources:original;census;observed
+FL	MIAMI SPRINGS	DADE	municipality	MIAMI SORINGS;MIAMI SPRING;MIAMI SPRNGS	sources:original;census
+FL	MICANOPY	ALACHUA	municipality		sources:original;census;geonames
+FL	MICCO	BREVARD	place		sources:observed
+FL	MID FLORIDA	SEMINOLE	place		sources:geonames
+FL	MIDDLEBURG	CLAY	place	MIDDDLEBURG;MIDDLEBERG;MIDDLEBURGE;MIDDLEBURY	sources:original;geonames
+FL	MIDWAY	GADSDEN	municipality		sources:original;census;geonames
+FL	MILLIGAN	OKALOOSA	place		sources:geonames
+FL	MILTON	SANTA ROSA	municipality		sources:original;census;geonames
+FL	MIMS	BREVARD	place		sources:geonames
+FL	MINNEOLA	LAKE	municipality	MINEOLA;MINNNEOLA	sources:original;census;geonames
+FL	MIRAMAR	BROWARD	municipality	MIARAMAR;MIMAMAR;MIRAMAMR;MIRAMER;MIRAMIR;MIRAMRAR;MIRANAR;MIRARMAR;MIRIAMAR;MIRIMAR;MIRMAR	sources:original;census;observed
+FL	MIRAMAR BEACH	WALTON	place	MIRRAMAR BEACH	sources:geonames variants:MIRRAMAR BEACH=16
+FL	MOLINO	ESCAMBIA	place		sources:geonames
+FL	MONTICELLO	JEFFERSON	municipality		sources:original;census;geonames
+FL	MONTVERDE	LAKE	municipality	MONTEVERDE	sources:original;census;geonames
+FL	MOORE HAVEN	GLADES	municipality		sources:original;census;geonames
+FL	MORRISTON	LEVY	place		sources:geonames
+FL	MOSSY HEAD	WALTON	place		sources:geonames
+FL	MOUNT DORA	LAKE	municipality	NOUNT DORA	sources:original;census;geonames
+FL	MULBERRY	POLK	municipality	MULBERY	sources:original;census;geonames
+FL	MURDOCK	CHARLOTTE	place		sources:geonames
+FL	MYAKKA CITY	MANATEE	place		sources:geonames
+FL	NALCREST	POLK	place		sources:geonames
+FL	NAPLES	COLLIER	municipality	NALES;NAPES;NAPLE;NAPPLES	sources:original;census;geonames
+FL	NAVARRE	SANTA ROSA	place	NARVARRE;NAVAVRRE;NAVERRE	sources:original;geonames
+FL	NEPTUNE BEACH	DUVAL	municipality	NEPTUNE BCH	sources:original;census;geonames
+FL	NEW PORT RICHEY	PASCO	municipality	NEW PORT RICHE;NEW PORT RICHEYY;NEW PORT RICHIE;NEW PORT RICHY;NEW PT RICHEY;NEWPORT RITCHEY;NEW PRT RCHY	sources:original;census;geonames variants:NEW PRT RCHY=10
+FL	NEW SMYRNA BEACH	VOLUSIA	municipality	NEW SMRYNA BEACH;NEW SMYNA BEACH;NEW SMYNRA BEACH;NEW SMYRMA BEACH;NEW SMYRNA BCH;NEW SMYRNA BEAC;NEW SYMRNA BEACH;NEW SMYRNA BC	sources:original;census;geonames variants:NEW SMYRNA BC=19
+FL	NEWBERRY	ALACHUA	municipality	NEWBERYY	sources:original;census;geonames
+FL	NICEVILLE	OKALOOSA	municipality	NICECVILLE;NICEIVILLE;NICEVILE	sources:original;census;geonames
+FL	NICHOLS	POLK	place		sources:geonames
+FL	NOBLETON	HERNANDO	place		sources:geonames
+FL	NOCATEE	DESOTO	place		sources:geonames
+FL	NOKOMIS	SARASOTA	place	NOKIMIS	sources:original;geonames
+FL	NOMA	HOLMES	municipality		sources:original;census;geonames
+FL	NORTH BAY VILLAGE	DADE	municipality	N BAY VILLAGE;NORTH BAY VILLGE	sources:original;census
+FL	NORTH FORT MYERS	LEE	place	N FORT MYERS;NORTH FORT MEYERS	sources:geonames variants:NORTH FORT MEYERS=11
+FL	NORTH LAUDERDALE	BROWARD	municipality	N LAUDERDALE;NORT LAUDERDALE;NORTH LAUDEDALE;NORTH LAURDERDALE	sources:original;census;observed
+FL	NORTH MIAMI	DADE	municipality	N MIAMI;NOERTH MIAMI;NORHT MIAMI;NORT MIAMI;NORTH MAIMI	sources:original;census;observed
+FL	NORTH MIAMI BEACH	DADE	municipality	N MIAMI BEACH;NORT MIAMI BEACH;NORTH MIAMI BCH;NORTH MIAMI BEA;NORTH MIAMI BEACH F;NORTH MIAMI BEACH FL;NORTH MIAMI BEAH;NOTH MIAMI BEACH;NMB	sources:original;census;geonames;observed variants:NMB=14
+FL	NORTH PALM BEACH	PALM BEACH	municipality	N PALM BEACH;NORTH PALM BCH;NORTH PALM BEAACH;NORTRH PALM BEACH	sources:original;census;geonames
+FL	NORTH PORT	SARASOTA	municipality	N PORT;NORT PORT	sources:original;census;geonames
+FL	NORTH REDINGTON BEACH	PINELLAS	municipality	N REDINGTON BEACH	sources:census;observed
+FL	O BRIEN	SUWANNEE	place		sources:geonames
+FL	OAK HILL	VOLUSIA	municipality		sources:original;census;geonames
+FL	OAKLAND	ORANGE	municipality	OAKLND	sources:original;census;geonames
+FL	OAKLAND PARK	BROWARD	municipality	OAKALND PARK;OAKLAND OARK;OAKLEND PARK;OKLAND PARK	sources:original;census;observed
+FL	OCALA	MARION	municipality		sources:original;census;geonames
+FL	OCEAN BREEZE	MARTIN	municipality		sources:original;census
+FL	OCEAN RIDGE	PALM BEACH	municipality		sources:original;census;observed
+FL	OCHOPEE	COLLIER	place		sources:geonames
+FL	OCKLAWAHA	MARION	place	OKLAWAHA	sources:geonames variants:OKLAWAHA=11
+FL	OCOEE	ORANGE	municipality	OCOCEE	sources:original;census;geonames
+FL	ODESSA	HILLSBOROUGH	place	ODDESSA;ODESA;ODESS;ODESSSA	sources:original;geonames
+FL	OKAHUMPKA	LAKE	place		sources:geonames
+FL	OKEECHOBEE	OKEECHOBEE	municipality	OKECHOBEE;OKEECHOBEEE	sources:original;census;geonames
+FL	OLD TOWN	DIXIE	place		sources:geonames
+FL	OLDSMAR	PINELLAS	municipality	OLDMAR;OLDSMARE;OLDSNAR;OLSMAR	sources:original;census;geonames
+FL	OLUSTEE	BAKER	place		sources:geonames
+FL	ONA	HARDEE	place		sources:geonames
+FL	ONECO	MANATEE	place		sources:geonames
+FL	OPA LOCKA	DADE	municipality		sources:original;census;geonames;observed
+FL	ORANGE CITY	VOLUSIA	municipality	ORANG CITY	sources:original;census;geonames
+FL	ORANGE LAKE	MARION	place		sources:geonames
+FL	ORANGE PARK	CLAY	municipality	ORANG PARK;ORANGE PAKR;ORANGE PARKE;ORANGE PRK	sources:original;census;geonames
+FL	ORANGE SPRINGS	MARION	place		sources:geonames
+FL	ORCHID	INDIAN RIVER	municipality		sources:original;census
+FL	ORLANDO	ORANGE	municipality	0RLANDO;OLANDO;ORANDO;ORLADO;ORLAND;ORLAND0;ORLANDNO;ORLANDO S;ORLANDON;ORLANFO;ORLANO;ORALNDO	sources:original;census;geonames variants:ORALNDO=12
+FL	ORMOND BEACH	VOLUSIA	municipality	ALMOND BEACH;ARMOND BEACH;ORMOND BCH;ORMOND BEAACH;ORMOND BEACJ;ORMOND BRACH;ORMUND BEACH;ORNOND BEACH;ORMAND BEACH	sources:original;census;geonames variants:ORMAND BEACH=19
+FL	OSPREY	SARASOTA	place		sources:geonames
+FL	OSTEEN	VOLUSIA	place		sources:geonames
+FL	OTTER CREEK	LEVY	municipality		sources:original;census;geonames
+FL	OVIEDO	SEMINOLE	municipality	OVEDO;OVEIDO	sources:original;census;geonames variants:OVEIDO=26
+FL	OXFORD	SUMTER	place		sources:geonames
+FL	OZONA	PINELLAS	place		sources:geonames
+FL	PACE	SANTA ROSA	place		sources:original;observed
+FL	PAHOKEE	PALM BEACH	municipality		sources:original;census;geonames
+FL	PAISLEY	LAKE	place		sources:geonames
+FL	PALATKA	PUTNAM	municipality		sources:original;census;geonames
+FL	PALM BAY	BREVARD	municipality		sources:original;census;geonames
+FL	PALM BEACH	PALM BEACH	municipality	PALM BCH;PALM BEAC	sources:original;census;geonames
+FL	PALM BEACH GARDENS	PALM BEACH	municipality	PALM BCH GARDENS;PALM BEACG GARDENS;PALM BEACH GAEDENS;PALM BEACH GARDE;PALM BEACH GARDE S;PALM BEACH GARDEN;PALM BEACH GARDENS F;PALM BEACH GRDNS;PALM BEAH GARDENS;PAM BEACH GARDENS;PLAM BEACH GARDENS;PBG	sources:original;census;geonames variants:PBG=23
+FL	PALM BEACH SHORES	PALM BEACH	municipality		sources:original;census
+FL	PALM CITY	MARTIN	place		sources:geonames
+FL	PALM COAST	FLAGLER	municipality	PAKM COAST;PALM COSST	sources:original;census;geonames
+FL	PALM HARBOR	PINELLAS	place	PALM HABOR;PALM HARBOUR;PALM HRBOR;PLAM HARBOR	sources:original;geonames
+FL	PALM SHORES	BREVARD	municipality		sources:original;census
+FL	PALM SPRINGS	PALM BEACH	municipality	PALM SPRING;PALM SPRINS	sources:original;census;observed
+FL	PALMDALE	GLADES	place		sources:geonames
+FL	PALMETTO	MANATEE	municipality	PALETTO;PAMETTO	sources:original;census;geonames
+FL	PALMETTO BAY	DADE	municipality	PALLMETTO BAY;PALMETO BAY;PAMETTO BAY;PAOMETTO BAY;PLAMETTO BAY	sources:original;census
+FL	PANACEA	WAKULLA	place		sources:geonames
+FL	PANAMA CITY	BAY	municipality	PANAMA CIT;PANORAMA CITY	sources:original;census;geonames;observed
+FL	PANAMA CITY BEACH	BAY	municipality	PAAMA CITY BEACH;PANAMA CITY BCH;PANAMA CITY BEA;PANAMA CITY BEAH;PANAMA CTY BEACH;PCB;P C BEACH	sources:original;census;geonames;observed variants:PCB=89,P C BEACH=11
+FL	PARKER	BAY	municipality		sources:original;census
+FL	PARKLAND	BROWARD	municipality	BARKLAND;PAKLAND;PARKAND	sources:original;census;observed
+FL	PARRISH	MANATEE	place	PARISH;PARRRISH	sources:original;geonames
+FL	PATRICK AFB	BREVARD	place		sources:geonames
+FL	PAXTON	WALTON	municipality		sources:census;geonames
+FL	PEMBROKE PARK	BROWARD	municipality		sources:original;census
+FL	PEMBROKE PINES	BROWARD	municipality	PEMBOKE PINES;PEMBORKE PINES;PEMBRO PINES;PEMBROKE PINE;PEMBROKE PINEF;PEMBROKE PINS;PEMBROKE PNES;PEMBROKE PNS;PEMBROKE PONES;PEMBROKRE PINES;PEMBROOK PINES;PEMBROOKE PINES;PEMEBROKE PINES;PEMMBROKE PINES;PEMPBROKE PINES;PEMPROKE PINES;PENBROKE PINES;PERBROKE PINES;PMBROKE PINES;PRMBROKE PINES;TEMBROKE PINES	sources:original;census;geonames;observed
+FL	PENNEY FARMS	CLAY	municipality		sources:census;geonames
+FL	PENSACOLA	ESCAMBIA	municipality	PENACOLA;PENSCOLA	sources:original;census;geonames
+FL	PENSACOLA BEACH	ESCAMBIA	place		sources:observed
+FL	PERDIDO KEY	ESCAMBIA	place		sources:observed
+FL	PERRY	TAYLOR	municipality		sources:original;census;geonames
+FL	PIERSON	VOLUSIA	municipality	PEIERSON	sources:original;census;geonames
+FL	PINECREST	DADE	municipality	PINCECREST;PINESCREST;PINRCREST;VILLAGE OF PINECREST	sources:original;census variants:VILLAGE OF PINECREST=37
+FL	PINELAND	LEE	place		sources:geonames
+FL	PINELLAS PARK	PINELLAS	municipality	PINELLLAS PARK	sources:original;census;geonames
+FL	PINETTA	MADISON	place		sources:geonames
+FL	PLACIDA	CHARLOTTE	place		sources:geonames
+FL	PLANT CITY	HILLSBOROUGH	municipality	PLAN CITY;PLANC CITY	sources:original;census;geonames
+FL	PLANTATION	BROWARD	municipality	PLAINTATION;PLANATATION;PLANATION;PLANTATATION;PLANTATIION;PLANTATIOM;PLANTATIOON;PLATATION	sources:original;census;geonames;observed
+FL	PLYMOUTH	ORANGE	place		sources:geonames
+FL	POINCIANA	POLK	place		sources:observed
+FL	POLK CITY	POLK	municipality		sources:original;census;geonames
+FL	POMONA PARK	PUTNAM	municipality		sources:original;census;geonames
+FL	POMPANO BEACH	BROWARD	municipality	PAMPANO BEACH;POMANO BEACH;POMAPANO BEACH;POMAPNO BEACH;POMPANO BAECH;POMPANO BCH;POMPANO BEAH;POMPANO BEAHC;POMPANO BECAH;POMPANO BECH;POMPAO BEACH;POMPNO BEACH;POPANO BEACH	sources:original;census;geonames
+FL	PONCE DE LEON	WALTON	municipality		sources:original;census;geonames
+FL	PONCE INLET	VOLUSIA	municipality		sources:original;census;observed
+FL	PONTE VEDRA	ST. JOHNS	place	PONTE VERDA	sources:geonames variants:PONTE VERDA=13
+FL	PONTE VEDRA BEACH	ST. JOHNS	place	PNTE VDRA BCH;PONTE VERDA BEACH	sources:geonames variants:PNTE VDRA BCH=21,PONTE VERDA BEACH=17
+FL	PORT CHARLOTTE	CHARLOTTE	place	PT CHARLOTTE	sources:geonames;observed variants:PT CHARLOTTE=50
+FL	PORT LABELLE	HENDRY	place		sources:observed
+FL	PORT ORANGE	VOLUSIA	municipality	FORT ORANGE;PORT ORNAGE;PT ORANGE	sources:original;census;geonames variants:PT ORANGE=10
+FL	PORT RICHEY	PASCO	municipality	PORT RICHIE	sources:original;census;geonames
+FL	PORT SAINT JOE	GULF	municipality	PORT SAINT JE;PSJ	sources:original;census;geonames variants:PSJ=64
+FL	PORT SAINT LUCIE	ST. LUCIE	municipality	POR SAINT LUCIE;PORT SAINT LOUCIE;PORT SAINT LUCE;PORT SAINT LUCIA;PORT SAINT LUCIIE;PORT SAINT LUCUE;PORT SAINT LUICE;PORT SANT LUCIE;PORT STE LUCIE;POST SAINT LUCIE;PT SAINT LUCIE;PSL;PORT STLUCIE	sources:original;census;geonames variants:PSL=20,PORT STLUCIE=19
+FL	PORT SALERNO	MARTIN	place		sources:geonames
+FL	PUNTA GORDA	CHARLOTTE	municipality	OUNTA GORDA;PUBTA GORDA;PUNTA GIRDA;PUNTA GORA;PUNTA GORDE	sources:original;census;geonames
+FL	PUTNAM HALL	PUTNAM	place		sources:geonames
+FL	QUINCY	GADSDEN	municipality		sources:original;census;geonames
+FL	RAIFORD	UNION	municipality	RAEFORD	sources:original;census;geonames
+FL	REDDICK	MARION	municipality		sources:original;census;geonames
+FL	REDINGTON BEACH	PINELLAS	municipality		sources:original;census
+FL	REDINGTON SHORES	PINELLAS	municipality	REDDINGTON SHORES;REDJNGTON SHORES	sources:original;census
+FL	RIVER RANCH	POLK	place		sources:geonames
+FL	RIVERVIEW	HILLSBOROUGH	place	RIVERVIW;RVERVIEW	sources:original;geonames
+FL	RIVIERA BEACH	PALM BEACH	municipality	RIVERA BEACH;RIVERIA BEACH;RIVIERA BCH;RIVIERA BRACH;RIVIREA BEACH	sources:original;census;observed
+FL	ROCKLEDGE	BREVARD	municipality	ROCKLEEDGE	sources:original;census;geonames
+FL	ROSELAND	INDIAN RIVER	place		sources:geonames
+FL	ROSEMARY BEACH	WALTON	place		sources:geonames
+FL	ROTONDA WEST	CHARLOTTE	place	ROTUNDA WEST	sources:geonames variants:ROTUNDA WEST=24
+FL	ROYAL PALM BEACH	PALM BEACH	municipality	ROAYL PALM BEACH;ROYAL PALM BAECH;ROYAL PALM BCH;ROYAL PALM BECH;ROYAL PAM BEACH;ROYAL PLM BEACH	sources:original;census;geonames;observed
+FL	RUSKIN	HILLSBOROUGH	place		sources:geonames
+FL	SAFETY HARBOR	PINELLAS	municipality	SAFETY HATBOR;SAFTEY HARBOR;SAFTY HARBOR	sources:original;census;geonames
+FL	SAINT AUGUSTINE	ST. JOHNS	municipality	AUGUSTINE;SAINT AGUSTINE;SAINT AUGESTINE;SAINT AUGUSITNE;SAINT AUGUSTIINE;SAINT AUGUSTIN;SAINT AUGUSTUNE;SAINT AUGUTINE;STAUGUSTINE;SAINT AUG	sources:original;census;geonames variants:SAINT AUG=20
+FL	SAINT AUGUSTINE BEACH	ST. JOHNS	municipality	SAINT AUGUSTINE BCH;SAINT AUGUSTINE BEAC	sources:original;census variants:SAINT AUGUSTINE BEAC=10
+FL	SAINT CLOUD	OSCEOLA	municipality	SAINT CLOUF;SAINT CLOULD;STCLOUD	sources:original;census;geonames
+FL	SAINT JAMES CITY	LEE	place		sources:geonames
+FL	SAINT JOHNS	ST. JOHNS	place	STJOHNS	sources:geonames variants:STJOHNS=10
+FL	SAINT LEO	PASCO	municipality		sources:original;census;geonames
+FL	SAINT LUCIE VILLAGE	ST. LUCIE	municipality		sources:census
+FL	SAINT MARKS	WAKULLA	municipality		sources:original;census;geonames
+FL	SAINT PETE BEACH	PINELLAS	municipality	SAINT PETE BCH;STPETE BEACH;SAINT PETERSBURG BEA;ST PETERSBURG BEACH	sources:original;census variants:STPETE BEACH=47,SAINT PETERSBURG BEA=24,ST PETERSBURG BEACH=16
+FL	SAINT PETERSBURG	PINELLAS	municipality	SAINT PERTERBURG;SAINT PERTERSBURG;SAINT PETERBSURG;SAINT PETERBURG;SAINT PETEREBURG;SAINT PETERSBERG;SAINT PETERSBRUG;SAINT PETERSBUG;SAINT PETERSBUIRG;SAINT PETERSBURGE;SAINT PETERSBURGH;SAINT PETESBURG;SAINT PETESRBURG;SAINT PTERSBURG;STETERSBURG;STPETERSBURG;STPETE	sources:original;census;geonames variants:STPETE=21
+FL	SALEM	TAYLOR	place		sources:geonames
+FL	SAN ANTONIO	PASCO	municipality		sources:original;census;geonames
+FL	SAN MATEO	PUTNAM	place		sources:geonames
+FL	SANDERSON	BAKER	place		sources:geonames
+FL	SANFORD	SEMINOLE	municipality	SANDFORD;SANFOTD;STANFORD	sources:original;census;geonames
+FL	SANIBEL	LEE	municipality	SANIBEL ISLAND	sources:original;census;geonames variants:SANIBEL ISLAND=11
+FL	SANTA ROSA BEACH	WALTON	place	SAN ROSA BEACH;SANA ROSA BEACH;SANTA ROSA BCH;SANTA ROSA BEAC;STA ROSA BEACH	sources:original;geonames
+FL	SARASOTA	SARASOTA	municipality	SARASAOTA;SARASOA;SARASOT;SARASOTS;SARASTOTA;SARATOTA;SAROSOTA;SARSOTA;SATASOTA;SARASTOA	sources:original;census;geonames variants:SARASTOA=11
+FL	SATELLITE BEACH	BREVARD	municipality	SATALITE BEACH;SATALLITE BEACH;SATELITE BEACH;SATELLIE BEACH;SATELLITA BEACH;SATELLITE BCH;SATELLITTE BEACH;SATILLITE BEACH	sources:original;census;geonames
+FL	SATSUMA	PUTNAM	place		sources:geonames
+FL	SCOTTSMOOR	BREVARD	place		sources:geonames
+FL	SEA RANCH LAKES	BROWARD	municipality		sources:original;census
+FL	SEBASTIAN	INDIAN RIVER	municipality	SEBASTIEN;SEBASTION;SEBASTAIN	sources:original;census;geonames variants:SEBASTAIN=13
+FL	SEBRING	HIGHLANDS	municipality	SEBRIG;SEDRING	sources:original;census;geonames
+FL	SEFFNER	HILLSBOROUGH	place		sources:geonames
+FL	SEMINOLE	PINELLAS	municipality	SAMINOLE;SEMIBOLE;SEMNOLE	sources:original;census;geonames;observed
+FL	SEVILLE	VOLUSIA	place		sources:geonames
+FL	SEWALLS POINT	MARTIN	municipality	SEWALLS PT	sources:original;census
+FL	SHADY GROVE	TAYLOR	place		sources:geonames
+FL	SHALIMAR	OKALOOSA	municipality		sources:original;census;geonames
+FL	SHARPES	BREVARD	place		sources:geonames
+FL	SILVER SPRINGS	MARION	place		sources:geonames
+FL	SNEADS	JACKSON	municipality		sources:original;census;geonames
+FL	SOPCHOPPY	WAKULLA	municipality		sources:original;census;geonames
+FL	SORRENTO	LAKE	place		sources:geonames
+FL	SOUTH BAY	PINELLAS	municipality		sources:original;census;geonames
+FL	SOUTH DAYTONA	VOLUSIA	municipality	S DAYTONA;SOUTH DAYTONS	sources:original;census;observed
+FL	SOUTH MIAMI	DADE	municipality	S MIAMI	sources:original;census;observed
+FL	SOUTH PALM BEACH	PALM BEACH	municipality	S PALM BEACH	sources:original;census;observed
+FL	SOUTH PASADENA	PINELLAS	municipality	S PASADENA;SOUTH PASADINA	sources:original;census;observed
+FL	SOUTHPORT	BAY	place		sources:observed
+FL	SOUTHWEST RANCHES	BROWARD	municipality	S WEST RANCHES	sources:original;census
+FL	SPARR	MARION	place		sources:geonames
+FL	SPRING HILL	HERNANDO	place	SPRING HILLS	sources:geonames variants:SPRING HILLS=17
+FL	SPRINGFIELD	BAY	municipality	SPRIINGFIELD	sources:original;census
+FL	STARKE	BRADFORD	municipality	STARK	sources:original;census;geonames
+FL	STEINHATCHEE	TAYLOR	place		sources:geonames
+FL	STUART	MARTIN	municipality	STUAT;STURT	sources:original;census;geonames
+FL	SUMATRA	LIBERTY	place		sources:geonames
+FL	SUMMERFIELD	MARION	place		sources:geonames
+FL	SUMMERLAND KEY	MONROE	place		sources:geonames
+FL	SUMTERVILLE	SUMTER	place		sources:geonames
+FL	SUN CITY	HILLSBOROUGH	place		sources:geonames
+FL	SUN CITY CENTER	HILLSBOROUGH	place		sources:geonames
+FL	SUNNY ISLES BEACH	DADE	municipality	SANNY ISLES BEACH;SUNNY AISLES BEACH;SUNNY ILES BEACH;SUNNY ILSES BEACH;SUNNY ISLE BEACH;SUNNY ISLES BCH;SUNNY ISLES BEAH;SUNNY ISLES BECH;SUNNY ISLES EACH;SUNNY ISLESE BEACH;SUNNY ISLSE BEACH;SUNNY ISLES	sources:original;census;observed variants:SUNNY ISLES=11
+FL	SUNRISE	BROWARD	municipality	SUNRIAE;SUNRICE;SUNRRISE;SUNRTSE	sources:original;census;observed
+FL	SURFSIDE	DADE	municipality	SURFFIDE	sources:original;census
+FL	SUWANNEE	DIXIE	place		sources:geonames
+FL	SWEETWATER	DADE	municipality		sources:original;census
+FL	SYDNEY	HILLSBOROUGH	place		sources:geonames
+FL	TALLAHASSEE	LEON	municipality	TALLAHASEE;TALLAHASSE;TALLAHASSEEE;TALLAHASSSEE;TALLHASSEE	sources:original;census;geonames
+FL	TALLEVAST	MANATEE	place		sources:geonames
+FL	TAMARAC	BROWARD	municipality	TAMAAC;TAMARACK;TAMARC;TAMERAC;TAMRAC	sources:original;census;observed
+FL	TAMPA	HILLSBOROUGH	municipality		sources:original;census;geonames
+FL	TANGERINE	ORANGE	place		sources:geonames
+FL	TARPON SPRINGS	PINELLAS	municipality	TARNPON SPRINGS;TARPO SPRINGS;TARPON SPGS;TARPON SPRGS;TARPON SPRIN;TARPON SPRING;TARPON SPRINS;TARPONS SPRINGS	sources:original;census;geonames
+FL	TAVARES	LAKE	municipality	TAVERES	sources:original;census;geonames
+FL	TAVERNIER	MONROE	place		sources:geonames
+FL	TELOGIA	LIBERTY	place		sources:geonames
+FL	TEMPLE TERRACE	HILLSBOROUGH	municipality	TEMPE TERRACE;TEMPLE TERACE;TEMPLE TERRAE	sources:original;census;observed
+FL	TEQUESTA	PALM BEACH	municipality	TEQUESA;TEQUESPA;TEQUEST;TEQUETA	sources:original;census
+FL	TERRA CEIA	MANATEE	place		sources:geonames
+FL	THE VILLAGES	SUMTER	place	THE VILAGES;THE VILLAGE;THE VILLIAGES;THE VLLAGES;VILLAGES	sources:original;geonames variants:VILLAGES=16
+FL	THONOTOSASSA	HILLSBOROUGH	place		sources:geonames
+FL	TITUSVILLE	BREVARD	municipality	TITIUSVILLE;TITUSVILE;TITUVILLE	sources:original;census;geonames
+FL	TREASURE ISLAND	PINELLAS	municipality	TREASURE ISALND;TRESURE ISLAND	sources:original;census;observed
+FL	TRENTON	GILCHRIST	municipality	RENTON	sources:original;census;geonames
+FL	TRILBY	PASCO	place		sources:geonames
+FL	UMATILLA	LAKE	municipality		sources:original;census;geonames
+FL	VALPARAISO	OKALOOSA	municipality	VALPARASO	sources:original;census;geonames
+FL	VALRICO	HILLSBOROUGH	place	VALEICO;VARICO	sources:original;geonames
+FL	VENICE	SARASOTA	municipality	VENICIE	sources:original;census;geonames
+FL	VENUS	HIGHLANDS	place		sources:geonames
+FL	VERNON	WASHINGTON	municipality		sources:original;census;geonames
+FL	VERO BEACH	INDIAN RIVER	municipality	VERO BCH;VERO BECH;VERO VEACH	sources:original;census;geonames
+FL	VIRGINIA GARDENS	DADE	municipality	VIRGINI GARDENS	sources:original;census
+FL	WABASSO	INDIAN RIVER	place		sources:geonames
+FL	WACISSA	JEFFERSON	place		sources:geonames
+FL	WALDO	ALACHUA	municipality		sources:original;census;geonames
+FL	WALNUT HILL	ESCAMBIA	place		sources:observed
+FL	WAUCHULA	HARDEE	municipality	WACHULA	sources:original;census;geonames
+FL	WAUSAU	WASHINGTON	municipality		sources:original;census;geonames
+FL	WAVERLY	POLK	place		sources:geonames
+FL	WEBSTER	SUMTER	municipality		sources:original;census;geonames
+FL	WEEKI WACHEE	HERNANDO	place		sources:observed
+FL	WEIRSDALE	MARION	place		sources:geonames
+FL	WELAKA	PUTNAM	municipality		sources:original;census;geonames
+FL	WELLBORN	SUWANNEE	place		sources:geonames
+FL	WELLINGTON	PALM BEACH	municipality	ELLINGTON;WELINGTON;WELLIGTON;WELLINGON;WELLINGTN;WELLINGTONE;WELLINTON;WELLLINGTON;VILLAGE OF WELLINGTO	sources:original;census;geonames;observed variants:VILLAGE OF WELLINGTO=49
+FL	WESLEY CHAPEL	PASCO	place	WELSEY CHAPEL;WESELY CHAPEL;WESEY CHAPEL;WESLET CHAPEL;WESLEY CHAPER;WESLEY CHAPLE;WESLEY CHAPPEL;WESLY CHAPEL;WESTEY CHAPEL;WESTLEY CHAPEL;WESTLY CHAPEL	sources:original;geonames
+FL	WEST MELBOURNE	BREVARD	municipality	W MELBOURNE;WEST MELBORNE;WEST MELBOUNE;WEST MELBOUNRE;WEST MELOUBRNE	sources:original;census;observed
+FL	WEST MIAMI	DADE	municipality		sources:original;census
+FL	WEST PALM BEACH	PALM BEACH	municipality	W PALM BEACH;WEST PALM BACH;WEST PALM BCH;WEST PALM BEAC;WEST PALM BEAH;WEST PALM BECH;WEST PALM BEQACH;WEST PALM PEACH;WEST PLAM BEACH;WPB	sources:original;census;geonames;observed variants:WPB=22
+FL	WEST PARK	BROWARD	municipality		sources:original;census;observed
+FL	WESTLAKE	PALM BEACH	municipality	WESLAKE	sources:original;census;observed
+FL	WESTON	BROWARD	municipality		sources:original;census;observed
+FL	WESTVILLE	HOLMES	municipality		sources:original;census;geonames
+FL	WEWAHITCHKA	GULF	municipality		sources:original;census;geonames
+FL	WHITE SPRINGS	HAMILTON	municipality		sources:original;census;geonames
+FL	WILDWOOD	SUMTER	municipality	WILDOOD	sources:original;census;geonames
+FL	WILLISTON	LEVY	municipality	WILISTON;WILLSTON	sources:original;census;geonames
+FL	WILTON MANORS	BROWARD	municipality	WILTON MANOR;WILTON MAONORS	sources:original;census
+FL	WIMAUMA	HILLSBOROUGH	place	WIMUAMA	sources:geonames variants:WIMUAMA=12
+FL	WINDERMERE	ORANGE	municipality	WINDEMERE;WINDEREMERE;WINDERMER;WINDERMERD;WINDERMEREE;WINDERMIRE;WINDERMRE;WINDERNERE;WINDRMERE;WINTERMERE	sources:original;census;geonames
+FL	WINTER BEACH	INDIAN RIVER	place		sources:geonames
+FL	WINTER GARDEN	ORANGE	municipality	WINDER GARDEN;WINTER GARDEIN;WINTER GARDENS;WINTER GARDER;WINTER GARGEN;WINTER GARNDE;WINTER GRADEN;WINTERGARDREN;WINYER GARDEN	sources:original;census;geonames
+FL	WINTER HAVEN	POLK	municipality	WINTE HAVEN;WINTER HAVE;WINTER HAVENE;WINTER HEAVEN	sources:original;census;geonames
+FL	WINTER PARK	ORANGE	municipality	WINTE PARK;WINTER PARKS;WINTER PATK;WINTERE PARK	sources:original;census;geonames
+FL	WINTER SPRINGS	SEMINOLE	municipality	WINTER SPGS;WINTERSPRING	sources:original;census;geonames
+FL	WOODVILLE	LEON	place		sources:geonames
+FL	WORTHINGTON SPRINGS	UNION	municipality	WORTINGTON SPRINGS	sources:original;census;geonames
+FL	YALAHA	LAKE	place		sources:geonames
+FL	YANKEETOWN	LEVY	municipality		sources:original;census;geonames
+FL	YOUNGSTOWN	BAY	place		sources:geonames
+FL	YULEE	NASSAU	place		sources:geonames
+FL	ZELLWOOD	ORANGE	place		sources:geonames
+FL	ZEPHYRHILLS	PASCO	municipality	ZEHPYRHILLS;ZEPHERHILLS;ZEPHREHILLS;ZEPHRHILLS;ZEPHRYHILLS;ZEPHYHILLS;ZEPHYRHILL;ZEPHYRHILLIS;ZEPHYRILLS	sources:original;census;geonames
+FL	ZOLFO SPRINGS	HARDEE	municipality		sources:original;census;geonames
+FL	SEACREST BEACH	WALTON	place		addresses:230
+FL	COCONUT GROVE	DADE	place		addresses:142
+FL	CAPE SAN BLAS	GULF	place		addresses:136
+FL	ALYS BEACH	WALTON	place		addresses:131
+FL	MIDDLETON	LAKE	place		addresses:113
+FL	SEAGROVE BEACH	WALTON	place	SEAGROVE	addresses:112 variants:SEAGROVE=37
+FL	VIERA	BREVARD	place		addresses:89
+FL	HARMONY	OSCEOLA	place		addresses:86
+FL	CHAMPIONS GATE	POLK	place		addresses:79
+FL	UNIVERSITY PARK	MANATEE	place		addresses:77
+FL	CUTLER RIDGE	DADE	place		addresses:73
+FL	NORTH VENICE	SARASOTA	place		addresses:62
+FL	HUTCHINSON ISLAND	ST. LUCIE	place		addresses:58
+FL	SINGER ISLAND	PALM BEACH	place		addresses:56
+FL	ALLIGATOR POINT	WAKULLA	place		addresses:45
+FL	REUNION	OSCEOLA	place		addresses:43
+FL	AMELIA ISLAND	NASSAU	place		addresses:42
+FL	BABCOCK RANCH	CHARLOTTE	place		addresses:42
+FL	MIROMAR LAKES	LEE	place		addresses:39
+FL	INDIAN PASS	GULF	place		addresses:37
+FL	SEVEN SPRINGS	PASCO	place		addresses:36
+FL	PORT CANAVERAL	BREVARD	place		addresses:32
+FL	SUGARLOAF KEY	MONROE	place		addresses:32
+FL	PEMBROKE LAKES	BROWARD	place		addresses:26
+FL	PERRINE	DADE	place		addresses:26
+FL	KINDRED	OSCEOLA	place		addresses:25
+FL	WATERSOUND	WALTON	place		addresses:25
+FL	SEASIDE	WALTON	place		addresses:24
+FL	CAROL CITY	DADE	place		addresses:22
+FL	SANDESTIN	WALTON	place		addresses:22
+FL	LAKE SUZY	DESOTO	place		addresses:20
+FL	LITTLE TORCH KEY	MONROE	place		addresses:20
+FL	DUETTE	MANATEE	place		addresses:19
+FL	RAMROD KEY	MONROE	place		addresses:18
+FL	CONCH KEY	MONROE	place		addresses:17
+FL	DEER ISLAND	LAKE	place		addresses:17
+FL	KINARD	CALHOUN	place		addresses:17
+FL	DOWLING PARK	SUWANNEE	place		addresses:16
+FL	GRAYTON BEACH	WALTON	place		addresses:16
+FL	WILLIAMS ISLAND	DADE	place		addresses:16
+FL	YBOR CITY	HILLSBOROUGH	place		addresses:16
+FL	JONESVILLE	ALACHUA	place		addresses:15
+FL	BONITA BEACH	LEE	place		addresses:14
+FL	KENNEDY SPACE CENTER	BREVARD	place		addresses:14
+FL	MAXVILLE	DUVAL	place		addresses:14
+FL	PASADENA	PINELLAS	place		addresses:14
+FL	SAINT JOE BEACH	GULF	place		addresses:14
+FL	UPPER CAPTIVA	LEE	place		addresses:14
+FL	BELLA COLLINA	LAKE	place		addresses:13
+FL	CAPE HAZE	CHARLOTTE	place		addresses:13
+FL	GRASSY KEY	MONROE	place		addresses:13
+FL	MATLACHA ISLES	LEE	place		addresses:13
+FL	SALT SPRINGS	MARION	place		addresses:13
+FL	SEACREST	WALTON	place		addresses:13
+FL	NORTH CAPTIVA	LEE	place		addresses:12
+FL	HOLLYWOOD BEACH	BROWARD	place		addresses:11
+FL	SAINT LUCIE WEST	ST. LUCIE	place		addresses:11
+FL	WAKULLA SPRINGS	WAKULLA	place		addresses:11
+FL	WEST HOLLYWOOD	BROWARD	place		addresses:11
+FL	WILBUR BY THE SEA	VOLUSIA	place		addresses:11
+FL	PUNTA GORDA ISLES	CHARLOTTE	place		addresses:10
+FL	SWITZERLAND	ST. JOHNS	place		addresses:10

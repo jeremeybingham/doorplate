@@ -29,8 +29,8 @@ def test_a_folder_is_a_tree_link():
 
 
 def test_a_page_in_a_subfolder_resolves_from_its_own_folder():
-    assert rw("[x](../../README.md)", src="states/fl.md") == f"[x]({BLOB}README.md)"
-    assert rw("[x](../places.md)", src="states/fl.md") == "[x](../places.md)"  # inside docs/: left to MkDocs
+    assert rw("[x](../../README.md)", src="tests/corpus.md") == f"[x]({BLOB}README.md)"
+    assert rw("[x](../places.md)", src="tests/corpus.md") == "[x](../places.md)"  # inside docs/: left to MkDocs
 
 
 def test_links_inside_docs_anchors_urls_and_missing_files_are_left_alone():
@@ -59,7 +59,7 @@ def test_issue_numbers_in_code_links_and_anchors_are_left_alone():
 
 def test_a_file_name_as_link_text_becomes_the_page_title_on_the_site():
     assert links.title_links("[`warnings.md`](warnings.md)", "how-it-works.md", ROOT / "docs") == "[What each warning tells you](warnings.md)"
-    assert links.title_links("see [`../warnings.md`](../warnings.md#x).", "states/fl.md", ROOT / "docs") == "see [What each warning tells you](../warnings.md#x)."
+    assert links.title_links("see [`../warnings.md`](../warnings.md#x).", "tests/corpus.md", ROOT / "docs") == "see [What each warning tells you](../warnings.md#x)."
 
 
 def test_other_link_texts_and_missing_pages_are_left_alone():

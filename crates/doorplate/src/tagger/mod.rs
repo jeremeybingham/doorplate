@@ -143,7 +143,7 @@ pub(crate) struct Tagger<'a> {
     /// only a country is dropped (#130).
     country_street: bool,
     lens: LineLengths,
-    /// The state data that applies, once the last line's state or ZIP is
+    /// The curated rows that apply, once the last line's state or ZIP is
     /// known.
     places: Option<PlaceCtx>,
     /// The parser's `default_state`, used when the input names no state.
@@ -604,7 +604,7 @@ pub(crate) fn tag_fields(
         }
         end = z;
     }
-    // The state data applies to the address lines as it does to one-line input
+    // The curated rows apply to the address lines as they do to one-line input
     // (`SR 60` is `STATE ROAD 60` in Florida), #110.
     let state_at = (t.tags.get(state.start) == Some(&Tag::State)).then_some(state);
     t.places = t.place_ctx(state_at, zip_at);

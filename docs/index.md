@@ -26,7 +26,7 @@ a.key()                # "k5:S|123|N|MAIN|ST||FL|33101"
 | Switch from usaddress | [Coming from usaddress](usaddress-compat.md) |
 | Compare with libpostal | [Compared with libpostal](libpostal-compat.md) |
 | Look up a function or an option | [Python reference](python-api.md), [Command-line reference](cli.md), [Rust on docs.rs](https://docs.rs/doorplate) |
-| Know what data it uses | [Data policy](data-policy.md), [Places](places.md), [State data](states/README.md) |
+| Know what data it uses | [Data policy](data-policy.md), [Places](places.md) |
 | Fix a bug, add a rule, run the tools | [Development](change-checklist.md): the checklist, the tools, the tests, the benchmarks, the roadmap |
 
 Install and a first parse are in [Getting started](getting-started.md); the tours are the [Python guide](python.md),

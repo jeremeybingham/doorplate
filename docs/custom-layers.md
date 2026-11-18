@@ -16,7 +16,7 @@ A layer is a folder of small files (or the text of them, if you load it from cod
 
 - **Add-only.** A layer adds spellings and words. A spelling the shipped tables already have is an error, so a typo or
   a stale entry cannot silently change a shipped reading. The one exception is the state-scoped `overrides.toml`, whose job is
-  to read a base spelling differently in one state; even there, a reading the shipped state data already gives is an error.
+  to read a base spelling differently in one state; even there, a reading the shipped tables already give is an error.
 - **Deterministic.** The same layer text gives the same parse on every platform. Loading the same text twice gives the same layer.
 - **Validated at load.** Everything is checked before anything is used. On any problem nothing loads and the error lists all of
   them, each naming its file and entry (`aliases.toml [[suffix]] #2: ...`).
@@ -241,7 +241,7 @@ A place is looked up by its comparison key, so case, punctuation and abbreviatio
 is already equal). A name has at most as many words as the place lookup reads.
 
 `zips.tsv` adds ZIP codes the shipped list does not have, each naming its place (which may be a place of the national list,
-the shipped state data, or your `places.tsv`):
+the shipped curated rows, or your `places.tsv`):
 
 | Column | Meaning |
 |---|---|
@@ -252,12 +252,12 @@ the shipped state data, or your `places.tsv`):
 | `evidence` | required |
 
 A ZIP gives a line with no state its state, and the main and shared places are the ones a city may agree with: a city that is
-none of them raises `zip_city_mismatch` when the state has shipped state data (Florida today). A layer does not turn that
-check on for a state without state data.
+none of them raises `zip_city_mismatch` when the state is one the shipped data checks (`zip_city_check`: Florida today). A layer does not turn that
+check on for another state.
 
 ### `overrides.toml` (optional): a state reads a spelling differently
 
-The same shape as a state's own `overrides.toml` ([`states/README.md`](states/README.md)).
+The same shape as the shipped state-scoped spellings (`[[highway.state]]` in `special.toml` and the state-scoped suffix spellings).
 
 ```toml
 [[suffix]]                    # read a spelling the shipped tables have as another suffix, in one state
@@ -284,7 +284,7 @@ Any of these is an error, and nothing loads until all are fixed:
 - An abbreviation, code or name that is not a shipped row, or a state override the shipped data already gives (use `aliases.toml` for a spelling the shipped tables lack).
 - An unknown key, table or column, invalid TOML, or a TSV row with the wrong number of columns.
 - An entry with no `evidence` or `note`.
-- A place or spelling whose key the national list, the shipped state data or an earlier row already has.
+- A place or spelling whose key the national list, the shipped curated rows or an earlier row already has.
 - A ZIP the shipped list already has, listed twice, not five digits, or whose place is not a known place of its state.
 
 An entry defaults to `observed`, so a parse that uses it carries `non_standard_abbreviation`, as the shipped `observed`
@@ -377,4 +377,4 @@ A layer cannot remove or replace a shipped entry, and it cannot change:
 - the constant words in `lexicon.rs`: the missing-number markers, the unit filler words, the value joiners and the intersection connectors.
 
 Related: [`how-it-works.md`](how-it-works.md) ("What a layer can extend") · [`key-format.md`](key-format.md) ·
-[`states/README.md`](states/README.md) (the shipped state data that overrides mirror).
+[`places.md`](places.md#curated-rows) (the shipped curated rows).
