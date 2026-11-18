@@ -882,9 +882,9 @@ PROBES = [
 # Open rule issues that have no probe, and why. Every other open issue with the label `area:rules` has a probe in PROBES; the
 # issues about docs, tooling, the API or the architecture, and the trackers, are not text shapes and need none.
 NO_PROBE = {
-    11: "research: which state data to add; no text shape, a gap in the tables",
+    11: "research: which curated rows to add; no text shape, a gap in the tables",
     92: "research: the uncited parts of Pub 28; reading work, not a shape",
-    213: "research: whether more state data is needed; measured by the label comparisons, not a text shape",
+    213: "research: whether more curated rows are needed; measured by the label comparisons, not a text shape",
     238: "a family of unit misses in NAD, split into #320 and #321, which have probes",
     345: "research: a bare number after a street is a unit in some sources and a name in others; no text shape tells them apart",
     534: "research: the line-2 rules do not run on a comma-separated segment of a one-line string; measured on labeled one-line corpora (2 of 1,702 strings), not a text shape of the scan's field-form rows",

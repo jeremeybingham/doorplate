@@ -110,7 +110,7 @@ forms = ["ATTN", "ATTENTION", "C/O", "C O", "IN CARE OF", "CARE OF", "%"]
 # by position: ROUTE 88 is a highway, ROUTE 2 BOX 15 a rural route.
 #
 # State-dependent abbreviations are deliberately left out of the base table
-# and belong in state data (docs/how-it-works.md): "SR" is State Road in
+# and belong in curated rows (docs/how-it-works.md): "SR" is State Road in
 # Florida and State Route elsewhere (Appendix F itself shows both, SR 220 ->
 # STATE ROAD 220 and SR MM -> STATE ROUTE MM); "RR" is Ranch Road in Texas but
 # a rural route everywhere in Pub 28.
@@ -151,6 +151,18 @@ forms = ["STATE HIGHWAY", "STATE HWY", "ST HIGHWAY", "ST HWY", "SH"]
 # Appendix F: ST RD, STATE ROAD (and SR; see above).
 standard = "STATE ROAD"
 forms = ["STATE ROAD", "STATE RD", "ST RD"]
+
+# SR is STATE ROAD in Florida and STATE ROUTE elsewhere, so it is a state-scoped spelling and not
+# a form above. Pub 28 Appendix F writes SR 220 as STATE ROAD 220 and SR MM as STATE ROUTE MM. In
+# the Florida public-record address data (docs/places.md, "Curated rows"), 139 of 445,252 street
+# lines have SR before a route number (`22200 SR 60`, `177 N SR 51`); none writes STATE ROUTE.
+# The spelling is a listed variant, so it raises no non-standard warning. `kind` is `variant`
+# (Pub 28 lists the spelling) or `observed` (it does not; raises `non_standard_abbreviation`).
+# Add-only: a spelling that is already a form of any highway row is a build error.
+[[highway.state]]
+states = ["FL"]
+spelling = "SR"
+kind = "variant"
 
 [[highway]]
 # Appendix F: ST RT, STATE RTE (and SR; see above).

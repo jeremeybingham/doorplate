@@ -3,7 +3,7 @@
 Layer 2 of the lexicon (`docs/how-it-works.md`): place names and ZIP places for every
 state, DC and Puerto Rico, generated from public data. It lets the parser find a city on
 a line with no commas, tell a street from a city before a ZIP, and complete a cut-off
-city. A curated state data (`docs/states/fl.md`) sits above it and wins for its state.
+city. Hand-curated rows (Florida's; [Curated rows](#curated-rows) below) sit above it and win for their state.
 
 ## Files
 
@@ -13,14 +13,13 @@ city. A curated state data (`docs/states/fl.md`) sits above it and wins for its 
 | `places.tsv` | 50,408 places: 19,491 municipalities, 20,021 places, 10,896 subdivisions; 16,291 variants | `state`, `name`, `county`, `kind`, `sources`, `variants` |
 | `zips.tsv` | 41,154 ZIPs | `zip`, `state`, `place` |
 
-Same shape as a state data (`docs/states/fl.md`), with a `state` column
-because it is one table for all 52 states, and no `shared` column, because
-GeoNames gives each ZIP one place.
+The curated rows ([below](#curated-rows)) have the same shape, with an `evidence` column and, for ZIPs, a
+`shared` column; the national table has no `shared` column, because GeoNames gives each ZIP one place.
 
 - `name` is upper-case words of letters and digits: accents folded
   (`ANASCO`), apostrophes and periods dropped (`OFALLON`), other
   punctuation a space (`WINSTON SALEM`), `ST`, `FT`, `MT` written out
-  (`SAINT LOUIS`), as in the Florida state data.
+  (`SAINT LOUIS`), as in the Florida curated rows.
 - `kind` is `municipality` (a city, town, village or borough with its own
   government), `place` (a Census designated place, a Puerto Rico comunidad,
   or a postal name GeoNames has and the Census does not) or `subdivision`
@@ -30,7 +29,7 @@ GeoNames gives each ZIP one place.
   township's bare name and `TWP` form (`ROARING BROOK TOWNSHIP` has
   `ROARING BROOK` and `ROARING BROOK TWP`), and the long name of a
   consolidated city-county (`ATHENS` has `ATHENS CLARKE COUNTY`). There are
-  no misspellings in this list; those are curated (the Florida state data).
+  no misspellings in this list; those are curated (the Florida curated rows).
 - `county` is the county name without `County`, `Parish` or `Municipio`
   (`Baltimore city` stays `BALTIMORE CITY`). It is for telling places apart
   and is not used by the parser yet.
@@ -115,19 +114,19 @@ the place's state, and a state with no places or no ZIPs.
 ## How it is compiled in
 
 `build.rs` compiles `crates/doorplate/data/places/` when the `places-us` cargo feature is on
-(it is by default), under the state data:
+(it is by default), under the curated rows:
 
-- A state with a curated state data keeps the state data's places and ZIPs. A national
-  row whose comparison key the state data already has, as a name or a variant, is the
-  state data's and is skipped; the national list adds the rest. For Florida that is 405
-  Census places the state data lacks (`TRINITY`, `CITRUS SPRINGS`, all CDPs): 727 state
-  places (665 plus 62 added communities) and 1,132 with the national rows. The builder
+- A state with curated rows (`zip_city_check` in `places.toml`: Florida) keeps the curated places and ZIPs. A national
+  row whose comparison key the curated rows already have, as a name or a variant, is the
+  curated row's and is skipped; the national list adds the rest. For Florida that is 405
+  Census places the curated rows lack (`TRINITY`, `CITRUS SPRINGS`, all CDPs): 727 curated
+  places and 1,132 with the national rows. The builder
   renames the Census's `Everglades` to `EVERGLADES CITY` (`CENSUS_NAMES` in
-  `build_us.py`), the state data's name. The state data's 1,473 ZIPs are untouched
-  (GeoNames is the source of both); the observed-ZIP pairs (`docs/states/fl.md`) are added
+  `build_us.py`), the curated name. The curated 1,473 main ZIPs are untouched
+  (GeoNames is the source of both); the observed-ZIP pairs (rows of `curated_zips.tsv` with no `place`) are added
   once the national rows are in, and left out when `places-us` is off.
 - For every other state a name, variant or ZIP that would lead to two places
-  is a build error, as in a state's data. Names, counties and kinds are checked the
+  is a build error, as in the curated rows. Names, counties and kinds are checked the
   same way.
 - The parser reads the national layer for every state:
   `Lexicons::place`, `zip_places`, `places` and `is_place` cover all 52. So
@@ -135,8 +134,8 @@ the place's state, and a state with no places or no ZIPs.
   street versus a city before a ZIP, a city run into the street, a cut-off
   city completed from the ZIP, and the place from the ZIP. A `default_state`
   hint looks a city up in the hinted state's places.
-  `zip_city_mismatch` stays limited to states with a curated state data
-  (`Lexicons::has_state_data`), because the list names one place per
+  `zip_city_mismatch` stays limited to the states in `zip_city_check`
+  (`Lexicons::checks_zip_city`), because the list names one place per
   ZIP, and its place equals the written city on only 75.8% of the
   benchmark's addresses.
 
@@ -157,10 +156,107 @@ Measured on the blind [geocode benchmark](https://github.com/zhengcongyin/geocod
 | ZIP is in `zips.tsv` | 88.2% |
 | ZIP's place equals the city | 75.8% |
 
-The last row is why `zip_city_mismatch` stays limited to states with a curated state data:
+The last row is why `zip_city_mismatch` stays limited to the states in `zip_city_check`:
 GeoNames names one place per ZIP, and many ZIPs are used by several. The list contains
-657 of the Florida state data's 665 places (the state data wins for Florida and adds
+657 of the Florida curated rows' 665 original places (the curated rows win for Florida and add
 `BAREFOOT BAY`, `BRUCE`, `ENTERPRISE`, `INLET BEACH`, `PENSACOLA BEACH`, `PERDIDO KEY`,
 `WALNUT HILL`, `WEEKI WACHEE`). Corpus `rg-030` shows the gap: `BELLVIEW` is a Census place
-in Escambia County, but GeoNames names its ZIP 32526 `PENSACOLA`, so `zips_observed.tsv`
+in Escambia County, but GeoNames names its ZIP 32526 `PENSACOLA`, so `curated_zips.tsv`
 lists `BELLVIEW` as a place of 32526.
+
+
+## Curated rows
+
+Florida's places, spellings and ZIPs were checked by hand against real data. They are two hand-edited files
+next to the generated tables, compiled in every build (no feature), and they are not output of `build_us.py`:
+
+| File | Rows | Columns |
+|---|---|---|
+| `curated_places.tsv` | 727 places (411 municipalities, 316 other places), 1,072 variants | `state`, `name`, `county`, `kind`, `variants`, `evidence` |
+| `curated_zips.tsv` | 1,937 rows: 1,473 main ZIPs (107 with a second place), 464 observed (ZIP, place) pairs | `zip`, `state`, `place`, `shared`, `evidence` |
+
+`places.toml` lists the states whose ZIP-to-place table is complete enough to warn on (`zip_city_check = ["FL"]`):
+`zip_city_mismatch` is raised only there (`Lexicons::checks_zip_city`). Street spellings that mean something
+else in a state are in `data/suffixes.toml` and `data/special.toml` (`[[highway.state]]`: `SR` is `STATE ROAD`
+in Florida, below).
+
+- `name` is the place in upper case with `SAINT` written out (`PORT SAINT LUCIE`) and no punctuation
+  (`OPA LOCKA`). `county` is the county name; Miami-Dade is `DADE`. `kind` is `municipality` or `place`.
+- `variants` are other spellings seen in county listings and public address lists, mostly typos (`ADVENTURA`
+  for AVENTURA). Some are the names of real places in other states (`VENTURA`, `STANFORD`, `RENTON`), so the
+  parser trusts a variant only in a city field or when the ZIP agrees.
+- `evidence` is `sources:` the list of where a place came from (`original` is the authors' first hand-made list,
+  `observed` a place first seen in county listings, `census`, `geonames`) or `addresses:N`, the distinct street
+  addresses that show it. A `curated_zips.tsv` row with a `place` is a ZIP's main place (GeoNames' name, copied as
+  is); a row with an empty `place` adds the place in `shared` to the ZIP, from real addresses; the `shared`
+  column of a main row lists places that also use the ZIP (it straddles a boundary).
+- `build.rs` fails on a malformed or contradictory row: a name or variant that leads to two places, a ZIP that is
+  the main ZIP of two places, a shared place that is unknown or already used, a name that is not upper-case
+  words, or a row with no evidence. Additions are add-only: a name or spelling whose key is already present is an
+  error.
+
+### Sources
+
+| Data | Source | License |
+|---|---|---|
+| Place list, county, kind, variants, shared ZIPs | Curated by the authors from the sources below and from Florida county listings | MIT OR Apache-2.0 |
+| Place names (`census`) | US Census Bureau, 2024 Gazetteer Files, places, Florida | Public domain |
+| ZIP to main place (`geonames`) | GeoNames postal code export, `US.zip`, Florida rows, https://download.geonames.org/export/zip/ | CC BY 4.0, attribution in `NOTICE` |
+| Observed ZIP places, added communities and spellings, the `SR` rule and the evidence for `CR` and `CTY HWY` (moved to the base tables, #108) | A Florida public-record address export (2025-10-10, 445,252 Florida addresses) and four further public-record address files (961,275 distinct Florida addresses together); and the Florida DBPR licensee files (downloaded 2026-10-18; 1,794,538 distinct Florida street addresses with a city, from licensees' mailing and location addresses). Only city, ZIP and the parsed street key were used; no names are kept | Florida public record (Chapter 119, Florida Statutes) |
+
+### Rules for additions
+
+- **A community** is added when at least 10 distinct street addresses use it as the city and it has one main ZIP
+  (the ZIP with most of its addresses has at least half of them). The county is GeoNames' county for that ZIP,
+  in the curated spelling (`DADE`, `ST. LUCIE`). It must be a real place: left out are split ones
+  (`PLANTATION KEY`), resorts (`HIGH POINT RESORT`), non-places (`CIUDAD DE MIAMI`, `HIALEAH LAKES`) and strings
+  with mis-encoded accents.
+- **A spelling** of a known place is added when at least 10 distinct addresses use it. `LA BELLE` needs an entry
+  because the place comparison rule reads `LA` as the suffix LANE; changing that rule would merge `LADUE` and
+  `LA DUE` in Missouri. Two spellings the place key folds together (`GREEN ACRES CITY`, `GREENACRES CITY`) need
+  one row or none.
+- **An observed ZIP pair** (a place written with a ZIP the main row does not give it) is kept when the city is a
+  curated name or listed variant and either at least 10 distinct street addresses use it and they are at least
+  1% of the ZIP's addresses, or at least 3 that are at least 5% (small and PO Box ZIPs). Fewer stay out: they
+  are mostly a nearby big city written for a suburb (`ORLANDO` in Saint Cloud's 34771), which
+  `zip_city_mismatch` should still flag.
+- **A variant that is the name of a different Census place is dropped:** `BELLVIEW` is a Census place in
+  Escambia County (ZIP 32526), not a spelling of BELLEVIEW (Marion County).
+- **Placeholders written as the city are not curated** (see Known gaps).
+
+The `addresses` count of a row added from the DBPR files counts distinct street addresses in those files only
+(not summed with the earlier export).
+
+### How the parser uses them
+
+- **Finding the city on one line.** With the state (or, with none, the ZIP's state) known, the longest run of
+  words before the state or ZIP that is a place becomes the city, preferring a place the ZIP belongs to
+  (`123 MAIN ST WEST PALM BEACH FL 33401`). A variant counts there only when the ZIP agrees. Otherwise the
+  suffix rule decides. This is the same for every state.
+- **`zip_city_mismatch`**: the city is a known place, but the ZIP table does not list the ZIP for it. GeoNames
+  gives one place per ZIP, while USPS accepts several city names for many ZIPs, so this flags a disagreement
+  with the table, not a wrong address (`FORT MCCOY` with 32182). On 440,000 distinct Florida addresses it fires
+  on about 0.4%, mostly a nearby big city written for a suburb.
+- **`CR` is CIRCLE, `CTY HWY` is COUNTY HIGHWAY** (the base tables since #108; the evidence was first collected
+  in Florida). The base table read `CR` after a street name as CREEK (an older Appendix C1 transcription). In
+  the Florida address data 333 street lines end a name in `CR`; for 277 the same street in the same ZIP is also
+  written CIRCLE or CIR, for none CREEK or CRK; the all-state sources agree (817 of 1,742 street and ZIP
+  combinations Circle, 6 Creek). So `CR` is CIR in every state, with `non_standard_abbreviation`; `CR` before a
+  route number stays COUNTY ROAD. `CTY HWY` (5 rows here, 235 in all-state sources, mostly Minnesota) is COUNTY
+  HIGHWAY, and `CTY RD` and `CTY ROAD` are COUNTY ROAD, before a route number, raising
+  `non_standard_abbreviation`.
+- **`SR` is STATE ROAD in Florida** (`special.toml` `[[highway.state]]`; the rule and its evidence are in
+  [`usps-pub28-notes.md`](usps-pub28-notes.md)).
+
+### Known gaps
+
+- Cities that match no place: 0.36% of Florida rows in the DBPR files (0.51% before they were added), against
+  0.41% in the earlier export. The largest are not communities but placeholders and counties written as the city
+  (`NO CITY CODE`, `FLORIDA`, `MIAMI DADE`, `BROWARD`, `UNINCORPORATED`, `UNKNOWN`, `SOUTH FLORIDA`, the bare
+  counties `ORANGE` and `PINELLAS`; about 600 distinct addresses), and communities and spellings under the
+  10-address line. Whether to read these as placeholders is open (#11). `MD MIAMI` and `MD HOMESTEAD` (a
+  Miami-Dade district code before the city) are listed spellings.
+- `zip_city_mismatch` fires on 0.68% of Florida rows in the DBPR files (0.78% before), a long tail of about
+  7,000 (city, ZIP) pairs, mostly a nearby big city written for a suburb. The
+  [geocode benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark)'s scores did not move.
+- A city that is no known place, with a ZIP the table knows: `place` stays `None`.

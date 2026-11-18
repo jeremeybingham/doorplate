@@ -358,7 +358,7 @@ impl Tagger<'_> {
     }
 
     /// Where the city starts in a run with no commas, and the rule that
-    /// found it. A place the state data knows wins over the suffix rule
+    /// found it. A place the curated rows know wins over the suffix rule
     /// (`MAIN ST WEST PALM BEACH`).
     fn city_in_line(&self, lo: usize, hi: usize) -> Option<(usize, Decision)> {
         self.place_city(lo, hi)
@@ -410,8 +410,8 @@ impl Tagger<'_> {
         Some(PlaceCtx { state, zip, hinted })
     }
 
-    /// `WINGATE ST, 32507`: with a state data, a first segment of plain words
-    /// that ends in a street suffix and is no place the state data knows is the
+    /// `WINGATE ST, 32507`: with the curated rows, a first segment of plain words
+    /// that ends in a street suffix and is no place the curated rows know is the
     /// street, not the city.
     fn known_street(&self, lo: usize, hi: usize) -> bool {
         let Some(ctx) = self.places else {
@@ -425,7 +425,7 @@ impl Tagger<'_> {
                 .is_none()
     }
 
-    /// In a line with no commas, where the city starts by the state data's
+    /// In a line with no commas, where the city starts by the curated
     /// place list: the longest run of words ending at `hi` that is a place,
     /// preferring one the ZIP belongs to. A listed misspelling counts only
     /// when the ZIP agrees. After a house number, a street name must be left
@@ -642,7 +642,7 @@ impl Tagger<'_> {
         let mut c = c;
         // `44 MAPLE ROAD B ELMTOWN TX` (#600): a single letter after `ROAD` with city words after
         // it stays with the street (read as a unit); a city that starts with a letter is a place
-        // the state data know, which `place_city` has already found. A directional is left to the
+        // the curated rows know, which `place_city` has already found. A directional is left to the
         // postdirectional rule below.
         if c > 0
             && c + 1 < hi
@@ -3283,7 +3283,7 @@ impl Tagger<'_> {
             return None;
         }
         let lex = self.lex;
-        // A state data may add prefix spellings (`SR` in Florida).
+        // The curated rows may add prefix spellings (`SR` in Florida).
         let state = self.places.map(|c| c.state);
         // The end to give `longest_at` from token `k`: just that token when no key of two words or
         // more in the table starts with it (#438).

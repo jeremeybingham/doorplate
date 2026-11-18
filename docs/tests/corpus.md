@@ -79,10 +79,10 @@ Emitter expectations are optional record keys, checked only when present
 - `default_state`: a state (code or name) passed as
   `ParseOptions::default_state` for this case, so the hint cases (`ds-*`) can
   run in the one corpus. Absent means no hint.
-- `place`: `ParsedAddress::place` as `"NAME (source)"`, with the state data's
+- `place`: `ParsedAddress::place` as `"NAME (source)"`, with the curated rows'
   standard name and the `PlaceSource::code()` (`"WEST PALM BEACH (name)"`,
   `"FERNANDINA BEACH (completed)"`, `"PENSACOLA (zip)"`), or `"none"`.
-  These cases need the state data, which is always built in.
+  These cases need the curated rows, which are always built in.
 - `reso`: an object of Data Dictionary 2.0 and 2.1 field names to the expected
   `to_reso()` values (`{"StreetName": "MAIN", "City": "MIAMI"}`). A field not
   listed must be empty. Names are checked against the Data Dictionary address
@@ -115,7 +115,7 @@ not standard forms from the lexicon tables.
   dropped, suffixes, directionals, unit designators and states as their
   standard abbreviations (`CIRCLE` -> `CIR`, `EAST` -> `E`, `UN` -> `UNIT`).
   Names keep their own words (`6th` -> `6TH`, `St. Petersburg` ->
-  `ST PETERSBURG`; expanding `ST` to `SAINT` in a place name is a state-data
+  `ST PETERSBURG`; expanding `ST` to `SAINT` in a place name is a curated-row
   job).
 - A unit with no designator (`DR 706`) or with `#` has an empty `unit_type`
   and only a `unit_number`. Pub 28 C2 uses `#` when the designator is
@@ -167,7 +167,7 @@ One row per `tests/corpus/*.jsonl`; a new file gets a row here and an id prefix 
 | `dept.jsonl` | `dp-` | A department name on line 2 or after a comma is the attention line; `DEPT 4` and streets named `FIRE DEPT RD` are unchanged |
 | `digit-letter-unit.jsonl` | `dl-` | A digit-letter after a name with no suffix (`60 LARKMOOR 1A`) is the unit, with or without a postdirectional |
 | `fields-state.jsonl` | `ff-` | A reading only a state's data has (Florida `SR 60`) applies to pre-split fields as to one line |
-| `fl-state.jsonl` | `fl-` | Florida state data and the national place list on Florida input: a city with no comma, cut-off cities completed, the place from the ZIP, `zip_city_mismatch`, `CR` and `SR` |
+| `florida.jsonl` | `fl-` | Florida curated rows and the national place list on Florida input: a city with no comma, cut-off cities completed, the place from the ZIP, `zip_city_mismatch`, `CR` and `SR` |
 | `glue.jsonl` | `gl-` | A word before a trailing `CT`, `WY`, `KY` or `MT` stays one word (`PINEBRIAR CT`), in pre-split fields and on one line |
 | `glued-floor.jsonl` | `gf-` | A floor written as a plain number and the floor word |
 | `glued-number-letter.jsonl` | `gnl-` | A letter stuck to the house number (`glued_number_letter`) |
@@ -199,7 +199,7 @@ One row per `tests/corpus/*.jsonl`; a new file gets a row here and an id prefix 
 | `paren-group.jsonl` | `pg-` | A parenthesized group at the end of a line: a unit, floor or box is read as that unit, any other group lands in `unparsed`; an unclosed `(` is dropped |
 | `placeholder-city.jsonl` | `pcity-` | A placeholder in the city field (`Not stated`, `UNKNOWN`) is no city; a real city is kept |
 | `placeholder-phrases.jsonl` | `ph-` | Registry stand-ins for a missing street (`NO STREET ADDRESS`): a placeholder, no key |
-| `places-us.jsonl` | `pl-` | The place behaviors in states with no curated state data, a county written as the city, a municipality prefix (`VILLAGE OF ...`) |
+| `places-us.jsonl` | `pl-` | The place behaviors in states with no curated rows, a county written as the city, a municipality prefix (`VILLAGE OF ...`) |
 | `po-no-box.jsonl` | `pn-` | `PO`, `P O` and `P.O.` with a number that ends the line are a PO Box; `PO RD 5` keeps its reading |
 | `pobox.jsonl` | `pb-` | The eleven misspellings of PO BOX read as a box; streets named `POX`, `P`, `POP` are unchanged |
 | `pobox-zip.jsonl` | `pz-` | A number after `PO BOX` or a designator is the box or unit number even when it equals the ZIP5 |
@@ -237,5 +237,5 @@ One row per `tests/corpus/*.jsonl`; a new file gets a row here and an id prefix 
 
 Notes on single files:
 
-- `<st>-state.jsonl`: every folder under `crates/doorplate/data/states/` needs one, with cases from that state; a test fails when one is missing. `fl-013` and `fl-019` are Georgia and Colorado inputs that show a state with no curated data. The place cases need the default feature `places-us`.
+- `florida.jsonl` holds the cases for Florida's curated rows. `fl-013` and `fl-019` are Georgia and Colorado inputs that show a state with no curated rows. The place cases need the default feature `places-us`.
 - `pub28.jsonl` takes its inputs from the highway table (section 237), Appendix F, and the PO Box, rural route, contract route, general delivery and military sections; `docs/usps-pub28-notes.md` has the page for each. House numbers are present only where Pub 28's example has one.

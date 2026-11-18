@@ -33,7 +33,7 @@ No tracker is open. Point releases carry speed, tooling and documentation, never
 
 The goals of 0.7.0, in the order they ship:
 
-1. **Remove the state packs (#700, the last API break).** Florida's rows fold into the ordinary place list and base tables; `state_data_version`
+1. **Remove the state data structure (#700, the last API break; done).** Florida's rows fold into the ordinary place list and base tables; `state_data_version`
    leaves `Diagnostics`, Python and the JSON provenance. No key and no parse output changes. After it, no break is planned.
 2. **Puerto Rico improvements:** the rules below, researched first (#332).
 3. **Better accuracy generally:** the key-affecting rules below, measured at P2 or above, each against the frozen `k5` keys before it merges.

@@ -37,13 +37,11 @@ New to the project? Read the [project README](../README.md), then
 | [`reso-mapping.md`](reso-mapping.md) | The RESO Data Dictionary 2.0 and 2.1 field mapping |
 | [`usps-pub28-notes.md`](usps-pub28-notes.md) | The USPS Publication 28 rules: the source of every table and parser rule, and what was left as it is on purpose |
 
-## Data: places, state data and what data may be used
+## Data: places, curated rows and what data may be used
 
 | Page | What it covers |
 |---|---|
-| [`places.md`](places.md) | The national place list: sources, licenses, how it is built and compiled in, coverage |
-| [`states/README.md`](states/README.md) | State data: what a state's folder holds and how to add one |
-| [`states/fl.md`](states/fl.md) | The Florida state data: places, spellings, ZIPs, evidence |
+| [`places.md`](places.md) | The national place list and Florida's curated rows: sources, licenses, how they are built and compiled in, coverage, evidence |
 | [`data-policy.md`](data-policy.md) | What data the project uses, what may be committed, and what may be said about data that is not ours to publish |
 | [`NOTICE`](../NOTICE), [`LICENSE-MIT`](../LICENSE-MIT), [`LICENSE-APACHE`](../LICENSE-APACHE) | Licenses and third-party credits (GeoNames, the National Address Database) |
 

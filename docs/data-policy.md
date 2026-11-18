@@ -43,7 +43,7 @@ that is not ours to publish. It applies to people and to AI agents.
    on, so scripts that read private files print only the error's type (as
    `tools/ingest/ingest.py` does).
 6. **Every addition to the shipped data cites a source** (`docs/usps-pub28-notes.md`,
-   `docs/places.md`, `docs/states/`), and the source's terms allow the use.
+   `docs/places.md`), and the source's terms allow the use.
 
 ## Sources
 
@@ -52,7 +52,7 @@ that is not ours to publish. It applies to people and to AI agents.
 | Pub 28 tables, Census Gazetteer and 2020 reference lists | `crates/doorplate/data/`, `local-data/places/` | Yes | Public domain (USPS Publication 28; US Census Bureau) |
 | GeoNames postal codes | `crates/doorplate/data/` | Yes | CC BY 4.0; attribution in `NOTICE` |
 | usaddress test data | `tests/external/usaddress/` | Yes | MIT (datamade) |
-| Florida public-record address data | `crates/doorplate/data/states/fl/` (city/ZIP pairs and street spellings only; no names) | Yes | Public record (Chapter 119, Florida Statutes) |
+| Florida public-record address data | `crates/doorplate/data/places/curated_*.tsv` (city/ZIP pairs and street spellings only; no names) | Yes | Public record (Chapter 119, Florida Statutes) |
 | Florida DBPR licensee files (names, mailing and location addresses; 293 CSV, 10 XLS) | `local-data/florida-dbpr/` | **No** (aggregates only) | Public record (Chapter 119, Florida Statutes). Contains personal names: only city, ZIP and street-key aggregates may be used, as for the other Florida exports |
 | [Geocode benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark) (`test`, `dev`, `train`) | `local-data/geocode-benchmark/` | **No** | No license stated. Only aggregate scores ship (`docs/benchmarks.md`). |
 | [Senzing libpostal test set](https://github.com/Senzing/libpostal-data) (`test_data.csv`, v1.2.0) | `local-data/senzing-libpostal-test/` | **No** | Repository Apache-2.0, but the rows come from OpenStreetMap, OpenAddresses, libpostal's tests and customer feedback, and Senzing withheld rows over permissions. Only aggregate scores ship (`docs/benchmarks.md`). |
@@ -101,7 +101,7 @@ list, and is subject to state statutes that prohibit that use. We treat it as fo
   6,020 city names in the geocode benchmark's `train` place-name gap. Evaluated and not used:
   `Addr_Type`, `AddrClass`, `Lifecycle` and `DeliverTyp` (mostly `Unknown`, empty or
   unnormalized), and the GNIS populated-places file (#52, about a tenth of the gap).
-- **If anything derived ships**, cite NAD in `docs/places.md`, the state data doc or
+- **If anything derived ships**, cite NAD in `docs/places.md` or
   `docs/benchmark-suite.md`, whichever uses it, and in `NOTICE`.
   The metadata's credit line asks for acknowledgment of the Department of Transportation,
   the Census Bureau's Geography Division and the contributing providers; follow it.
@@ -119,8 +119,8 @@ street-key aggregates are used, and no name is printed or committed. Used so far
   inferred): 4,092,224 address rows, 1,794,538 distinct Florida street addresses with a city.
 - *Parser scoring:* 94.8% of 1.96M distinct records parse with no warning; the leftovers are
   mostly business and building names on line 2 and 3. Two unit gaps became a rule (PR #66).
-- *Florida state data 2026.10.5:* 26 communities, 37 spellings and 123 observed ZIP pairs
-  (PR #67, `docs/states/fl.md`).
+- *Florida curated rows (data version 2026.10.5):* 26 communities, 37 spellings and 123 observed ZIP pairs
+  (PR #67, `docs/places.md`).
 - *One-line check* (`tools/compare/oneline_fl.py`): the records rendered as one line with no
   commas, with the true city known. It showed that a rule tuned on the geocode benchmark
   alone (compass words as city heads) broke spelled-out postdirectionals, because the
@@ -151,12 +151,12 @@ viewers. We treat it as follows:
      a state or USPS list, or another source whose terms allow the use.
 
   The entry cites both. Netsyms is evidence of frequency, never the sole source. A state's
-  data keeps its own threshold for how many rows count as enough (the Florida state data
-  uses 10 distinct addresses, `docs/states/fl.md`); write the threshold down for any new
+  data keeps its own threshold for how many rows count as enough (the Florida curated rows
+  use 10 distinct addresses, `docs/places.md`); write the threshold down for any new
   rule.
 - **If anything derived from it ships**, add Netsyms to `NOTICE` with a link
   (https://netsyms.com/gis/addresses) and mention it in the data doc that uses it
-  (`docs/places.md` or the state data doc). That honors their request without implying a
+  (`docs/places.md`). That honors their request without implying a
   license.
 - This is a project policy, not legal advice. If the terms change or a rule here becomes
   doubtful, stop using the data and ask.
@@ -197,7 +197,7 @@ upper bound on distinct addresses):
 
 Exports from public-record sources and the labeled Florida sample contain personal names
 and addresses of real people. Treat them as private even when the source is public
-record: only city, ZIP and street-key aggregates, as in the Florida state data, are used. A
+record: only city, ZIP and street-key aggregates, as in the Florida curated rows, are used. A
 corpus case is never a real row; use an invented one with the same shape.
 
 ## Checklist before committing data-derived changes

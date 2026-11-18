@@ -144,8 +144,7 @@ names are used only to say what the output follows or is compared with.
 ## License
 
 Licensed under either of [MIT](LICENSE-MIT) or [Apache-2.0](LICENSE-APACHE) at your
-option. The ZIP tables in `crates/doorplate/data/states/` and
-`crates/doorplate/data/places/` are GeoNames data under CC BY 4.0; see
+option. The ZIP tables in `crates/doorplate/data/places/` are GeoNames data under CC BY 4.0; see
 [`NOTICE`](NOTICE).
 
 ## About the author

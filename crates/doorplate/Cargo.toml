@@ -15,7 +15,7 @@ rust-version.workspace = true
 [features]
 default = ["places-us"]
 # National place list (data/places/, docs/places.md): places and ZIPs for every
-# state, DC and Puerto Rico, under the curated state data (data/states/).
+# state, DC and Puerto Rico, under the curated rows.
 places-us = []
 # Rule firing counts (#401): which tagger and tokenizer rules fire, per call site. Research only;
 # off by default and not part of the public API (`doorplate::rulestats`).

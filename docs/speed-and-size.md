@@ -110,7 +110,7 @@ for `parse_many` on the same strings (an older run on all 14 threads, not repeat
 
 The binary and the extension are 1.5 MB larger than in 0.6.1 (5.2 to 6.7 MB, 4.8 to 6.3 MB): from 0.6.2 `build.rs` writes the place and
 ZIP tables as static data (#703 G6) instead of building them on the first parse (the likely cause; the growth was not bisected). The wheel went from
-2.1 to 2.5 MB. The lexicon tables, the national place list and the Florida state data are compiled
+2.1 to 2.5 MB. The lexicon tables, the national place list and the Florida curated rows are compiled
 in, so there is no model or data file to download or load. The tables are
 inside the crate, so the crate package (0.8 MB compressed) and the Python source
 distribution (0.9 MB) carry them and build from a clean directory.

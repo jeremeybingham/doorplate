@@ -69,7 +69,7 @@ What data may be used and committed is in [`docs/data-policy.md`](docs/data-poli
 
 Tables live in `crates/doorplate/data/`. A spelling that Pub 28 does not list goes
 in an `observed` list with its evidence and raises `non_standard_abbreviation`. A
-state-data addition names its evidence and is add-only (`docs/states/fl.md`). A change
+curated-row addition names its evidence and is add-only (`docs/places.md`, "Curated rows"). A change
 to a Pub 28 table should be checked with `tools/pub28/verify.py`.
 
 ## Package pages and READMEs

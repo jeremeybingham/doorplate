@@ -37,7 +37,7 @@ reports the last release's version. A pull request that says its keys do not cha
 | `version:O` | Changes output without a key: a warning, a new field, a new opt-in API |
 | `version:N` | No user-visible change: docs, tooling, tests, internal |
 | `priority:P0` to `P3` | P0 a correctness bug in shipped output or a release blocker; P1 do next; P2 planned; P3 held until data, a decision or demand |
-| `area:architecture` | How the core works: state data, the lexicon, the layer format |
+| `area:architecture` | How the core works: curated rows, the lexicon, the layer format |
 | `area:rules` | Parser rules and warnings: what an input parses to |
 | `area:api` | The public surface: Rust, Python, CLI, JSON, warning codes |
 | `area:tooling` | Harness, review tool, benchmarks, CI |

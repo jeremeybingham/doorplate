@@ -40,7 +40,7 @@ impl std::error::Error for ParseError {}
 pub struct ParseOptions {
     /// A state (USPS code or name) to assume when the input names none and
     /// its ZIP (if any) is unknown: the place list looks cities up in that
-    /// state, and the state's state data readings (`CR` is CIRCLE in Florida)
+    /// state, and the state's curated readings (`CR` is CIRCLE in Florida)
     /// apply. It is a hint, never a fill: the parsed
     /// `state` stays empty, `missing_state` still fires and the key is
     /// unchanged. [`Warning::DefaultStateApplied`] says when it decided
@@ -183,10 +183,6 @@ impl Parser {
             &|s: &Span| input.get(s.start..s.end),
         );
         place::resolve(&mut addr, &self.lex, self.default_state);
-        addr.diagnostics.state_data_version = addr
-            .state
-            .as_ref()
-            .and_then(|s| self.lex.state_data_version(s.code()));
         addr.diagnostics.custom_layer = self.lex.layer();
         if country {
             addr.diagnostics.warn(Warning::CountryIgnored);
@@ -286,10 +282,6 @@ impl Parser {
             &source,
         );
         place::resolve(&mut addr, &self.lex, self.default_state);
-        addr.diagnostics.state_data_version = addr
-            .state
-            .as_ref()
-            .and_then(|s| self.lex.state_data_version(s.code()));
         addr.diagnostics.custom_layer = self.lex.layer();
         if country {
             addr.diagnostics.warn(Warning::CountryIgnored);
@@ -479,7 +471,7 @@ mod tests {
     }
 
     #[test]
-    fn default_state_gives_the_state_data_readings() {
+    fn default_state_gives_the_state_scoped_readings() {
         let a = hinted("FL").parse("22200 SR 60").unwrap();
         assert_eq!(a.highway.unwrap().prefix.standard(), "STATE ROAD");
         assert!(a.diagnostics.has(&Warning::DefaultStateApplied));
@@ -574,28 +566,6 @@ mod tests {
                 "{input}"
             );
         }
-    }
-
-    #[cfg(feature = "corpus")]
-    #[test]
-    fn state_data_version_follows_the_state() {
-        let p = Parser::new();
-        let fl = p.parse("123 N Main St, Miami FL 33101").unwrap();
-        assert_eq!(
-            fl.diagnostics.state_data_version,
-            Lexicons::builtin().state_data_version("FL")
-        );
-        assert!(fl.diagnostics.state_data_version.is_some());
-        // No curated data for Georgia, and none with no state.
-        let ga = p.parse("123 N Main St, Atlanta GA 30303").unwrap();
-        assert_eq!(ga.diagnostics.state_data_version, None);
-        assert_eq!(
-            p.parse("123 Main St")
-                .unwrap()
-                .diagnostics
-                .state_data_version,
-            None
-        );
     }
 
     #[test]

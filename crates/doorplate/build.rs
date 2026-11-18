@@ -1,4 +1,4 @@
-//! Compiles `data/*.toml` and the state data (`data/states/<st>/`) into static,
+//! Compiles `data/*.toml`, the place list and the curated rows (`data/places/`) into static,
 //! sorted lookup tables (`$OUT_DIR/lexicon_tables.rs`, included by `src/lexicon.rs`).
 //!
 //! Doing this at build time keeps `doorplate` free of runtime dependencies
@@ -57,7 +57,7 @@ fn run() -> Result<()> {
     let mut max_words = 1;
     let mut expand = Expand::new();
 
-    let suffix_rows = gen_suffixes(
+    gen_suffixes(
         &load(&dir, "suffixes.toml")?,
         &mut out,
         &mut max_words,
@@ -71,8 +71,8 @@ fn run() -> Result<()> {
     )?;
     gen_units(&load(&dir, "units.toml")?, &mut out, &mut max_words)?;
     gen_states(&load(&dir, "states.toml")?, &mut out, &mut max_words)?;
-    let highway_rows = gen_special(&load(&dir, "special.toml")?, &mut out, &mut max_words)?;
-    gen_places(&dir, &expand, &suffix_rows, &highway_rows, &mut out)?;
+    let (_, state_highways) = gen_special(&load(&dir, "special.toml")?, &mut out, &mut max_words)?;
+    gen_places(&dir.join("places"), &expand, &state_highways, &mut out)?;
 
     writeln!(
         out,
@@ -374,7 +374,11 @@ fn gen_states(t: &Table, out: &mut String, mw: &mut usize) -> Result<()> {
 /// Highway prefix standard -> (row, all its spellings).
 type HighwayRows = BTreeMap<String, (usize, Vec<String>)>;
 
-fn gen_special(t: &Table, out: &mut String, mw: &mut usize) -> Result<HighwayRows> {
+fn gen_special(
+    t: &Table,
+    out: &mut String,
+    mw: &mut usize,
+) -> Result<(HighwayRows, StateHighways)> {
     let ctx = "special.toml";
     let mut index = Index::default();
     for (key, variant) in [
@@ -419,6 +423,8 @@ fn gen_special(t: &Table, out: &mut String, mw: &mut usize) -> Result<HighwayRow
     let mut hw = Index::default();
     let mut standards = Vec::new();
     let mut highway_rows = HighwayRows::new();
+    let mut state_highways = StateHighways::new();
+    let mut state_spellings: Vec<(String, String)> = Vec::new();
     for (i, r) in tables(t, "highway", ctx)?.iter().enumerate() {
         let hctx = format!("{ctx} [[highway]] #{}", i + 1);
         let standard = key_str(r, "standard", &hctx)?;
@@ -442,6 +448,37 @@ fn gen_special(t: &Table, out: &mut String, mw: &mut usize) -> Result<HighwayRow
         }
         for f in &observed {
             hw.add(f, format!("({i}, MatchKind::Observed)"), &hctx, mw)?;
+        }
+        // State-scoped spellings of this row (`[[highway.state]]`): a prefix spelling the
+        // base forms lack, read as this highway in the listed states only (`SR` is STATE ROAD
+        // in Florida, STATE ROUTE elsewhere).
+        if r.contains_key("state") {
+            for (n, sr) in tables(r, "state", &hctx)?.iter().enumerate() {
+                let sctx = format!("{hctx} [[highway.state]] #{}", n + 1);
+                let spelling = key_str(sr, "spelling", &sctx)?;
+                let kind = match sr.get("kind").and_then(Value::as_str) {
+                    Some("variant") => "Variant",
+                    Some("observed") => "Observed",
+                    k => return Err(format!("{sctx}: kind {k:?} must be variant or observed")),
+                };
+                for st in key_list(sr, "states", &sctx, true)? {
+                    if state_highways
+                        .insert(format!("{st}|{spelling}"), (i, kind))
+                        .is_some()
+                    {
+                        return Err(format!("{sctx}: `{spelling}` listed twice for {st}"));
+                    }
+                }
+                state_spellings.push((spelling, sctx));
+            }
+        }
+    }
+    // Add-only: a spelling the base tables have stays what it is.
+    for (spelling, sctx) in &state_spellings {
+        if highway_rows.values().any(|(_, s)| s.contains(spelling)) {
+            return Err(format!(
+                "{sctx}: `{spelling}` is already a highway spelling"
+            ));
         }
     }
     writeln!(
@@ -560,7 +597,7 @@ fn gen_special(t: &Table, out: &mut String, mw: &mut usize) -> Result<HighwayRow
         first_letters(&words)
     )
     .ok();
-    Ok(highway_rows)
+    Ok((highway_rows, state_highways))
 }
 
 /// The first letters of `keys` as a bit mask (bit 0 for A, bit 25 for Z); bit 31 is set when a key
@@ -621,7 +658,7 @@ fn gen_fixed(
     Ok(())
 }
 
-// ---- state data -----------------------------------------------------------
+// ---- places: curated rows and the national list --------------------------
 
 /// Rows of a state `.tsv` file: a header naming `cols`, then tab-separated
 /// rows with exactly that many fields.
@@ -654,17 +691,8 @@ fn list(s: &str) -> Vec<&str> {
 }
 
 /// `STATE|spelling` -> (highway row, `Variant` or `Observed`), the highway
-/// prefix spellings a state adds.
+/// prefix spellings a state adds (`[[highway.state]]` in `special.toml`).
 type StateHighways = BTreeMap<String, (usize, &'static str)>;
-
-/// What the state folders give: the states, their `state.toml` versions, the suffix
-/// spellings they read differently and the highway prefixes they add.
-type StateData = (
-    Vec<String>,
-    Vec<(String, String)>,
-    BTreeMap<String, usize>,
-    StateHighways,
-);
 
 /// One place. `kind` is 0 municipality, 1 place, 2 subdivision.
 struct PlaceData {
@@ -675,43 +703,42 @@ struct PlaceData {
 }
 
 /// The place tables as they are built: rows, the `STATE|key` index, and the
-/// ZIP index. State data fills it first and the national list adds to it.
+/// ZIP index. The curated rows fill it first and the national list adds to it.
 #[derive(Default)]
 struct PlaceTables {
     rows: Vec<PlaceData>,
     index: BTreeMap<String, (usize, &'static str)>,
     zips: BTreeMap<String, (usize, Vec<usize>)>,
     max_words: usize,
-    /// Observed (state, ZIP, place) pairs whose place is not in the state data; the
-    /// national list may have it (resolved after it is added).
-    deferred: Vec<(String, String, String)>,
-    /// Added (state, variant, place) spellings for a place the state data lacks.
-    deferred_variants: Vec<(String, String, String)>,
     /// `STATE|key` of every county name of a state, for `Lexicons::is_county`.
     counties: std::collections::BTreeSet<String>,
 }
 
-/// The place tables: the state data (`data/states/<st>/`), in state
-/// order, then the national list (`data/places/`, feature `places-us`)
-/// under them. Each adds places and ZIPs; nothing replaces another entry,
-/// and a spelling or ZIP that would lead to two places is a build error.
+/// The place tables: the curated rows (`curated_places.tsv`, `curated_zips.tsv`), then the
+/// national list (`places.tsv`, `zips.tsv`, feature `places-us`) under them. Each adds places
+/// and ZIPs; a national row whose name or ZIP a curated state already has is dropped, and in
+/// every other case a spelling or ZIP that would lead to two places is a build error.
 fn gen_places(
     dir: &Path,
     ex: &Expand,
-    sfx: &SuffixRows,
-    hwy: &HighwayRows,
+    state_highways: &StateHighways,
     out: &mut String,
 ) -> Result<()> {
+    println!("cargo:rerun-if-changed={}", dir.display());
+    let meta = load(dir, "places.toml")?;
+    if meta.get("version").and_then(Value::as_str).is_none() {
+        return Err("places/places.toml: missing string `version`".to_string());
+    }
+    let zip_city_check = key_list(&meta, "zip_city_check", "places/places.toml", true)?;
     let mut t = PlaceTables {
         max_words: 1,
         ..PlaceTables::default()
     };
-    let (states, versions, state_suffixes, state_highways) =
-        gen_state_data(&dir.join("states"), ex, sfx, hwy, &mut t)?;
+    let (curated_states, pending) = gen_curated(dir, ex, &mut t)?;
     if env::var_os("CARGO_FEATURE_PLACES_US").is_some() {
-        gen_national(&dir.join("places"), ex, &states, &mut t)?;
-        resolve_deferred(ex, &mut t)?;
+        gen_national(dir, ex, &curated_states, &mut t)?;
     }
+    resolve_shared(ex, pending, &mut t)?;
     let expand = |w: &str| ex.get(w).cloned();
     t.counties = t
         .rows
@@ -719,360 +746,159 @@ fn gen_places(
         .filter(|r| !r.county.is_empty())
         .map(|r| format!("{}|{}", r.state, place_key(&r.county, expand)))
         .collect();
-    emit_places(
-        &states,
-        &versions,
-        &state_suffixes,
-        &state_highways,
-        &t,
-        out,
-    )
+    emit_places(&zip_city_check, state_highways, &t, out)
 }
 
-/// The state data folders, in state order.
-fn gen_state_data(
+fn check_state(st: &str, ctx: &str) -> Result<()> {
+    if st.len() != 2 || !st.bytes().all(|b| b.is_ascii_uppercase()) {
+        return Err(format!("{ctx}: `{st}` is not a state code"));
+    }
+    Ok(())
+}
+
+fn check_zip(zip: &str, ctx: &str) -> Result<()> {
+    if zip.len() != 5 || !zip.bytes().all(|b| b.is_ascii_digit()) {
+        return Err(format!("{ctx}: not a 5-digit ZIP"));
+    }
+    Ok(())
+}
+
+/// Shared places of curated ZIPs still to be resolved: (ZIP, place name, state, context).
+type PendingShared = Vec<(String, String, String, String)>;
+
+/// The curated rows (`curated_places.tsv`, `curated_zips.tsv`), hand-edited. Places and variants
+/// go in here; the main place of each ZIP too. A ZIP's shared places are returned, to be resolved
+/// once the national list is in, because a shared place may be one only the national list has.
+/// Returns the states the curated rows name.
+fn gen_curated(
     dir: &Path,
     ex: &Expand,
-    sfx: &SuffixRows,
-    hwy: &HighwayRows,
     t: &mut PlaceTables,
-) -> Result<StateData> {
-    println!("cargo:rerun-if-changed={}", dir.display());
+) -> Result<(Vec<String>, PendingShared)> {
     let PlaceTables {
         rows,
         index,
         zips,
         max_words,
-        deferred,
-        deferred_variants,
         ..
     } = t;
-    let mut states = Vec::new();
-    if let Ok(entries) = fs::read_dir(dir) {
-        for e in entries.flatten() {
-            if e.path().is_dir() {
-                states.push(e.file_name().to_string_lossy().to_uppercase());
-            }
+    let expand = |w: &str| ex.get(w).cloned();
+    let places = tsv(
+        &dir.join("curated_places.tsv"),
+        &["state", "name", "county", "kind", "variants", "evidence"],
+    )?;
+    let mut states: Vec<String> = Vec::new();
+    // Names first, so a variant that the comparison rule already covers is dropped rather
+    // than reported as a clash.
+    let mut row_of = Vec::new();
+    for r in &places {
+        let (st, name, county) = (&r[0], &r[1], &r[2]);
+        let ctx = format!("places/curated_places.tsv {st} {name}");
+        check_state(st, &ctx)?;
+        check_key(name, &ctx)?;
+        if r[5].is_empty() {
+            return Err(format!("{ctx}: every curated row names its evidence"));
+        }
+        let kind = match r[3].as_str() {
+            "municipality" => 0,
+            "place" => 1,
+            k => return Err(format!("{ctx}: bad kind `{k}`")),
+        };
+        if !states.contains(st) {
+            states.push(st.clone());
+        }
+        let i = rows.len();
+        rows.push(PlaceData {
+            state: st.clone(),
+            name: name.clone(),
+            county: county.clone(),
+            kind,
+        });
+        row_of.push(i);
+        *max_words = (*max_words).max(words(name));
+        let key = format!("{st}|{}", place_key(name, expand));
+        if let Some((j, _)) = index.insert(key.clone(), (i, "Standard")) {
+            return Err(format!("{ctx}: same key `{key}` as row {j}"));
         }
     }
     states.sort();
-
-    let expand = |w: &str| ex.get(w).cloned();
-    let mut state_suffixes: BTreeMap<String, usize> = BTreeMap::new();
-    let mut state_highways = StateHighways::new();
-    let mut versions: Vec<(String, String)> = Vec::new();
-    for st in &states {
-        let pdir = dir.join(st.to_lowercase());
-        let meta = load(&pdir, "state.toml")?;
-        let ctx = format!("states/{} state.toml", st.to_lowercase());
-        if key_str(&meta, "state", &ctx)? != *st {
-            return Err(format!("{ctx}: `state` must be {st}"));
+    for (r, &i) in places.iter().zip(&row_of) {
+        let ctx = format!("places/curated_places.tsv {} {}", r[0], r[1]);
+        for v in list(&r[4]) {
+            check_key(v, &ctx)?;
+            let key = format!("{}|{}", r[0], place_key(v, expand));
+            match index.get(&key) {
+                Some((j, _)) if *j == i => {}
+                Some((j, _)) => {
+                    return Err(format!("{ctx}: variant `{v}` also leads to row {j}"));
+                }
+                None => {
+                    index.insert(key, (i, "Variant"));
+                    *max_words = (*max_words).max(words(v));
+                }
+            }
         }
-        let version = meta
-            .get("version")
-            .and_then(Value::as_str)
-            .ok_or_else(|| format!("{ctx}: missing string `version`"))?;
-        versions.push((st.clone(), version.to_string()));
-        let places = tsv(
-            &pdir.join("places.tsv"),
-            &["name", "county", "kind", "sources", "variants"],
-        )?;
-        let first = rows.len();
-        let mut by_name = BTreeMap::new();
-        // Names first, so a variant that the comparison rule already covers
-        // is dropped rather than reported as a clash.
-        for r in &places {
-            let (name, county, kind) = (&r[0], &r[1], &r[2]);
-            let ctx = format!("states/{} places.tsv {name}", st.to_lowercase());
-            check_key(name, &ctx)?;
-            let kind = match kind.as_str() {
-                "municipality" => 0,
-                "place" => 1,
-                k => return Err(format!("{ctx}: bad kind `{k}`")),
+    }
+    let mut pending = PendingShared::new();
+    for r in tsv(
+        &dir.join("curated_zips.tsv"),
+        &["zip", "state", "place", "shared", "evidence"],
+    )? {
+        let (zip, st) = (&r[0], &r[1]);
+        let ctx = format!("places/curated_zips.tsv {zip}");
+        check_zip(zip, &ctx)?;
+        check_state(st, &ctx)?;
+        if r[4].is_empty() {
+            return Err(format!("{ctx}: every curated row names its evidence"));
+        }
+        if r[2].is_empty() {
+            // Another shared place for a ZIP an earlier row gave a main place.
+            if !zips.contains_key(zip) {
+                return Err(format!("{ctx}: ZIP has no earlier row with a main place"));
+            }
+        } else {
+            let Some(&(main, _)) = index.get(&format!("{st}|{}", place_key(&r[2], expand))) else {
+                return Err(format!("{ctx}: unknown place `{}`", r[2]));
             };
-            let i = rows.len();
-            rows.push(PlaceData {
-                state: st.clone(),
-                name: name.clone(),
-                county: county.clone(),
-                kind,
-            });
-            by_name.insert(name.clone(), i);
-            *max_words = (*max_words).max(words(name));
-            let key = format!("{st}|{}", place_key(name, expand));
-            if let Some((j, _)) = index.insert(key.clone(), (i, "Standard")) {
-                return Err(format!("{ctx}: same key `{key}` as row {j}"));
-            }
-        }
-        // Optional: communities found in real data that the state data and the
-        // national list lack (`places_added.tsv`, hand-kept, each with the
-        // number of distinct addresses that use it). Add-only: a name whose
-        // key the state data already has is an error.
-        let added = pdir.join("places_added.tsv");
-        println!("cargo:rerun-if-changed={}", added.display());
-        if added.exists() {
-            for r in tsv(&added, &["name", "county", "kind", "addresses"])? {
-                let (name, county) = (&r[0], &r[1]);
-                let ctx = format!("states/{} places_added.tsv {name}", st.to_lowercase());
-                check_key(name, &ctx)?;
-                let kind = match r[2].as_str() {
-                    "municipality" => 0,
-                    "place" => 1,
-                    k => return Err(format!("{ctx}: bad kind `{k}`")),
-                };
-                if r[3].parse::<u32>().is_err() {
-                    return Err(format!("{ctx}: `addresses` must be a number"));
-                }
-                let i = rows.len();
-                rows.push(PlaceData {
-                    state: st.clone(),
-                    name: name.clone(),
-                    county: county.clone(),
-                    kind,
-                });
-                by_name.insert(name.clone(), i);
-                *max_words = (*max_words).max(words(name));
-                let key = format!("{st}|{}", place_key(name, expand));
-                if let Some((j, _)) = index.insert(key.clone(), (i, "Standard")) {
-                    return Err(format!("{ctx}: same key `{key}` as row {j}"));
-                }
-            }
-        }
-        for r in &places {
-            let (name, i) = (&r[0], by_name[&r[0]]);
-            let ctx = format!("states/{} places.tsv {name}", st.to_lowercase());
-            for v in list(&r[4]) {
-                check_key(v, &ctx)?;
-                let key = format!("{st}|{}", place_key(v, expand));
-                match index.get(&key) {
-                    Some((j, _)) if *j == i => {}
-                    Some((j, _)) => {
-                        return Err(format!("{ctx}: variant `{v}` also leads to row {j}"));
-                    }
-                    None => {
-                        index.insert(key, (i, "Variant"));
-                        *max_words = (*max_words).max(words(v));
-                    }
-                }
-            }
-        }
-        // Optional: more spellings seen in real data for a place
-        // (`variants_added.tsv`: variant, place, distinct addresses). A
-        // place only the national list has is resolved after it is added.
-        let extra = pdir.join("variants_added.tsv");
-        println!("cargo:rerun-if-changed={}", extra.display());
-        if extra.exists() {
-            for r in tsv(&extra, &["variant", "place", "addresses"])? {
-                let ctx = format!("states/{} variants_added.tsv {}", st.to_lowercase(), r[0]);
-                check_key(&r[0], &ctx)?;
-                if r[2].parse::<u32>().is_err() {
-                    return Err(format!("{ctx}: `addresses` must be a number"));
-                }
-                match by_name.get(&r[1]) {
-                    Some(&i) => add_variant(index, max_words, expand, st, &r[0], i, &ctx)?,
-                    None => deferred_variants.push((st.clone(), r[0].clone(), r[1].clone())),
-                }
-            }
-        }
-        let place = |n: &str, ctx: &str| {
-            by_name
-                .get(n)
-                .copied()
-                .ok_or_else(|| format!("{ctx}: unknown place `{n}`"))
-        };
-        for r in tsv(&pdir.join("zips.tsv"), &["zip", "place", "shared"])? {
-            let ctx = format!("states/{} zips.tsv {}", st.to_lowercase(), r[0]);
-            if r[0].len() != 5 || !r[0].bytes().all(|b| b.is_ascii_digit()) {
-                return Err(format!("{ctx}: not a 5-digit ZIP"));
-            }
-            let main = place(&r[1], &ctx)?;
-            let shared = list(&r[2])
-                .into_iter()
-                .map(|n| place(n, &ctx))
-                .collect::<Result<Vec<_>>>()?;
-            if shared.contains(&main) {
-                return Err(format!("{ctx}: main place also listed as shared"));
-            }
-            if zips.insert(r[0].clone(), (main, shared)).is_some() {
+            if zips.insert(zip.clone(), (main, Vec::new())).is_some() {
                 return Err(format!("{ctx}: ZIP listed twice"));
             }
         }
-        // Optional: places seen using a ZIP in real data, added to its
-        // shared places. Add-only, so a pair `zips.tsv` already has is an
-        // error.
-        let observed = pdir.join("zips_observed.tsv");
-        println!("cargo:rerun-if-changed={}", observed.display());
-        if observed.exists() {
-            for r in tsv(&observed, &["zip", "place", "addresses"])? {
-                let ctx = format!("states/{} zips_observed.tsv {}", st.to_lowercase(), r[0]);
-                // A place the state data lacks may be in the national list.
-                let Some(&p) = by_name.get(&r[1]) else {
-                    deferred.push((st.clone(), r[0].clone(), r[1].clone()));
-                    continue;
-                };
-                let Some((main, shared)) = zips.get_mut(&r[0]) else {
-                    return Err(format!("{ctx}: ZIP not in zips.tsv"));
-                };
-                if *main == p || shared.contains(&p) {
-                    return Err(format!("{ctx}: `{}` already uses this ZIP", r[1]));
-                }
-                shared.push(p);
-            }
-        }
-        // Optional: suffix spellings that mean another suffix in this
-        // state (`CR` is CIRCLE in Florida, CREEK in the base table). Only a
-        // spelling the base table already has, so tagging is unchanged.
-        let ofile = pdir.join("overrides.toml");
-        println!("cargo:rerun-if-changed={}", ofile.display());
-        if ofile.exists() {
-            let o = load(&pdir, "overrides.toml")?;
-            let suffix_overrides = if o.contains_key("suffix") {
-                tables(&o, "suffix", "overrides.toml")?
-            } else {
-                Vec::new()
-            };
-            for (n, r) in suffix_overrides.iter().enumerate() {
-                let ctx = format!(
-                    "states/{} overrides.toml [[suffix]] #{}",
-                    st.to_lowercase(),
-                    n + 1
-                );
-                let spelling = key_str(r, "spelling", &ctx)?;
-                let target = key_str(r, "suffix", &ctx)?;
-                let Some((row, own)) = sfx.get(&target) else {
-                    return Err(format!("{ctx}: `{target}` is not a suffix name"));
-                };
-                if !ex.contains_key(&spelling) {
-                    return Err(format!("{ctx}: `{spelling}` is not a suffix spelling"));
-                }
-                if own.contains(&spelling) {
-                    return Err(format!("{ctx}: `{spelling}` already means {target}"));
-                }
-                if state_suffixes
-                    .insert(format!("{st}|{spelling}"), *row)
-                    .is_some()
-                {
-                    return Err(format!("{ctx}: `{spelling}` listed twice"));
-                }
-            }
-            // Highway prefix spellings the base table lacks (`SR` is STATE
-            // ROAD in Florida, STATE ROUTE elsewhere). Add-only: a spelling
-            // the base table has stays what it is.
-            let highway_overrides = if o.contains_key("highway") {
-                tables(&o, "highway", "overrides.toml")?
-            } else {
-                Vec::new()
-            };
-            for (n, r) in highway_overrides.iter().enumerate() {
-                let ctx = format!(
-                    "states/{} overrides.toml [[highway]] #{}",
-                    st.to_lowercase(),
-                    n + 1
-                );
-                let spelling = key_str(r, "spelling", &ctx)?;
-                let target = key_str(r, "highway", &ctx)?;
-                let kind = match r.get("kind").and_then(Value::as_str) {
-                    Some("variant") => "Variant",
-                    Some("observed") => "Observed",
-                    k => return Err(format!("{ctx}: kind {k:?} must be variant or observed")),
-                };
-                let Some((row, _)) = hwy.get(&target) else {
-                    return Err(format!("{ctx}: `{target}` is not a highway prefix"));
-                };
-                if hwy.values().any(|(_, s)| s.contains(&spelling)) {
-                    return Err(format!("{ctx}: `{spelling}` is already a highway spelling"));
-                }
-                if state_highways
-                    .insert(format!("{st}|{spelling}"), (*row, kind))
-                    .is_some()
-                {
-                    return Err(format!("{ctx}: `{spelling}` listed twice"));
-                }
-            }
-        }
-        if rows.len() == first {
-            return Err(format!("states/{}: no places", st.to_lowercase()));
+        for n in list(&r[3]) {
+            pending.push((zip.clone(), n.to_string(), st.clone(), ctx.clone()));
         }
     }
-
-    Ok((states, versions, state_suffixes, state_highways))
+    Ok((states, pending))
 }
 
-/// Observed ZIP pairs for places only the national list has (the state data's
-/// `zips_observed.tsv`), added to the ZIP's shared places. Without the
-/// national list they are left out.
-fn resolve_deferred(ex: &Expand, t: &mut PlaceTables) -> Result<()> {
+/// Adds the shared places of the curated ZIPs, by name, now that the national list is in.
+fn resolve_shared(ex: &Expand, pending: PendingShared, t: &mut PlaceTables) -> Result<()> {
     let expand = |w: &str| ex.get(w).cloned();
-    for (st, zip, name) in std::mem::take(&mut t.deferred) {
-        let ctx = format!("states/{} zips_observed.tsv {zip}", st.to_lowercase());
+    for (zip, name, st, ctx) in pending {
         let Some(&(p, _)) = t.index.get(&format!("{st}|{}", place_key(&name, expand))) else {
             return Err(format!("{ctx}: unknown place `{name}`"));
         };
         let Some((main, shared)) = t.zips.get_mut(&zip) else {
-            return Err(format!("{ctx}: ZIP not in zips.tsv"));
+            return Err(format!("{ctx}: ZIP has no main place"));
         };
         if *main == p || shared.contains(&p) {
             return Err(format!("{ctx}: `{name}` already uses this ZIP"));
         }
         shared.push(p);
     }
-    for (st, variant, name) in std::mem::take(&mut t.deferred_variants) {
-        let ctx = format!("states/{} variants_added.tsv {variant}", st.to_lowercase());
-        let Some(&(p, _)) = t.index.get(&format!("{st}|{}", place_key(&name, expand))) else {
-            return Err(format!("{ctx}: unknown place `{name}`"));
-        };
-        add_variant(
-            &mut t.index,
-            &mut t.max_words,
-            expand,
-            &st,
-            &variant,
-            p,
-            &ctx,
-        )?;
-    }
     Ok(())
 }
 
-/// Adds `variant` as another spelling of place row `i`. Add-only: a key
-/// that already leads anywhere is an error.
-fn add_variant(
-    index: &mut BTreeMap<String, (usize, &'static str)>,
-    max_words: &mut usize,
-    expand: impl Fn(&str) -> Option<String>,
-    st: &str,
-    variant: &str,
-    i: usize,
-    ctx: &str,
-) -> Result<()> {
-    let key = format!("{st}|{}", place_key(variant, expand));
-    if let Some((j, _)) = index.get(&key) {
-        return Err(format!(
-            "{ctx}: `{variant}` already leads to row {j} (wanted row {i})"
-        ));
-    }
-    index.insert(key, (i, "Variant"));
-    *max_words = (*max_words).max(words(variant));
-    Ok(())
-}
-
-/// The national place list (`data/places/`), added under the state data. A state
-/// with curated state data keeps the state data's places and ZIPs; national rows only
-/// add places the state data lacks (a place whose comparison key the state data already
-/// has, as a name or a variant, is the state data's) and are never matched against
-/// the state data's ZIPs. For every other state a repeated key or ZIP is an error.
+/// The national place list (`places.tsv`, `zips.tsv`), added under the curated rows. A state with
+/// curated rows keeps them: national rows only add places the curated rows lack (a place whose
+/// comparison key they already have, as a name or a variant, is the curated one) and are never
+/// matched against the curated ZIPs. For every other state a repeated key or ZIP is an error.
 fn gen_national(
     dir: &Path,
     ex: &Expand,
     data_states: &[String],
     t: &mut PlaceTables,
 ) -> Result<()> {
-    println!("cargo:rerun-if-changed={}", dir.display());
-    let ctx = "places/places.toml";
-    let meta = load(dir, "places.toml")?;
-    if meta.get("version").and_then(Value::as_str).is_none() {
-        return Err(format!("{ctx}: missing string `version`"));
-    }
     let expand = |w: &str| ex.get(w).cloned();
     let PlaceTables {
         rows,
@@ -1113,7 +939,7 @@ fn gen_national(
         let key = format!("{st}|{}", place_key(name, expand));
         if index.contains_key(&key) {
             if data_states.contains(st) {
-                continue; // the state data has this place
+                continue; // the curated rows have this place
             }
             return Err(format!("{ctx}: same key `{key}` as an earlier row"));
         }
@@ -1161,7 +987,7 @@ fn gen_national(
         };
         if zips.contains_key(&r[0]) {
             if data_states.contains(&r[1]) {
-                continue; // the state data's ZIP
+                continue; // the curated rows' ZIP
             }
             return Err(format!("{ctx}: ZIP listed twice"));
         }
@@ -1207,9 +1033,7 @@ fn le8(v: usize, what: &str) -> Result<u8> {
 ///   one (0 empty), over the keys of `place_keys.txt` and over the keys of
 ///   `place_any.bin` without `STATE|`.
 fn emit_places(
-    states: &[String],
-    versions: &[(String, String)],
-    state_suffixes: &BTreeMap<String, usize>,
+    zip_city_check: &[String],
     state_highways: &StateHighways,
     t: &PlaceTables,
     out: &mut String,
@@ -1314,15 +1138,14 @@ fn emit_places(
     write("place_slots.bin", &place_slots)?;
     write("place_any_slots.bin", &any_slots)?;
 
-    writeln!(out, "/// States with curated data compiled in.").ok();
     writeln!(
         out,
-        "pub(crate) static STATES_WITH_DATA: &[&str] = &{states:?};\n"
+        "/// States where a ZIP's shared places were collected (`zip_city_check` in `places.toml`)."
     )
     .ok();
     writeln!(
         out,
-        "/// `(state, version)` of each state's curated data (`state.toml`).\npub(crate) static STATE_DATA_VERSIONS: &[(&str, &str)] = &{versions:?};\n"
+        "pub(crate) static ZIP_CITY_CHECK_STATES: &[&str] = &{zip_city_check:?};\n"
     )
     .ok();
     writeln!(out, "/// States that have places, by number.").ok();
@@ -1376,7 +1199,7 @@ fn emit_places(
     writeln!(out, "];\n").ok();
     writeln!(
         out,
-        "/// `STATE|spelling` -> suffix row, for a spelling a state reads differently."
+        "/// `STATE|spelling` -> suffix row, for a spelling a state reads differently. No rows now (#108,\n/// #700): custom layers use the same lookup."
     )
     .ok();
     writeln!(
@@ -1384,9 +1207,6 @@ fn emit_places(
         "pub(crate) static STATE_SUFFIX_INDEX: &[(&str, u16)] = &["
     )
     .ok();
-    for (k, row) in state_suffixes {
-        writeln!(out, "    ({k:?}, {row}),").ok();
-    }
     writeln!(out, "];\n").ok();
     writeln!(
         out,

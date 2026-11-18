@@ -144,13 +144,12 @@ impl Serialize for Record<'_> {
         )?;
         m.serialize_entry("reso", &Pairs(&reso))?;
         m.serialize_entry("place", &a.place.as_ref().map(PlaceJson))?;
-        // Which release, which state data and which custom layer (#3) produced this
+        // Which release and which custom layer (#3) produced this
         // record. A group, not bare keys.
         m.serialize_entry(
             "provenance",
             &ProvenanceJson {
                 library_version: a.diagnostics.library_version,
-                state_data_version: a.diagnostics.state_data_version,
                 custom_layer: a.diagnostics.custom_layer.as_ref(),
             },
         )?;
@@ -176,15 +175,13 @@ impl Serialize for UspsJson<'_> {
 
 struct ProvenanceJson<'a> {
     library_version: &'a str,
-    state_data_version: Option<&'a str>,
     custom_layer: Option<&'a doorplate::LayerInfo>,
 }
 
 impl Serialize for ProvenanceJson<'_> {
     fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
-        let mut m = s.serialize_map(Some(3))?;
+        let mut m = s.serialize_map(Some(2))?;
         m.serialize_entry("library_version", self.library_version)?;
-        m.serialize_entry("state_data_version", &self.state_data_version)?;
         m.serialize_entry(
             "custom_layer",
             &self.custom_layer.map(|l| LayerJson {
