@@ -820,7 +820,56 @@ PROBES = [
     ("paren-inside-name", "645", "a parenthesis inside a word or in the middle of a name, not at the edge of a line (ELM(ST, MARTIN (LUTHER KING BLVD)", r"[A-Z]\([A-Z]|\b[A-Z]{3,} \([A-Z]+ [A-Z]+[^)|]*(?:\||$)", "S", 3),
     ("zip4-spaced-unit-after-zip", "733", "a ZIP+4 with spaces around its hyphen, or a unit after the ZIP (OK 74103 - 2373, OK 74103 ROOM 900)", rf"\b[0-9]{{5}} +- ?[0-9]{{4}}\b|\b[0-9]{{5}}- +[0-9]{{4}}\b|\b[0-9]{{5}}(?:-[0-9]{{4}})? +{UN}\b", "S", 2),
     ("dash-separator", "736", "a spaced dash between street and city or building and street (12 OAK AVE - TULSA, OK 74103)", r" - [A-Za-z]+[A-Za-z .]*,? +[A-Z]{2} +[0-9]{5}\b", "S", 2),
-    ("unit-before-city", "732", "a unit or PO Box right before the city with no comma between them (12 OAK AVE, SUITE 100 TULSA, OK 74103)", rf",\\s*(?:{UN}|P\\.? ?O\\.? BOX) [A-Z0-9-]+ +[A-Z][A-Z .]*,\\s*[A-Z]{{2}}\\s+[0-9]{{5}}\\b", "S", 2),
+    ("unit-before-city", "732", "a unit or PO Box right before the city with no comma between them (12 OAK AVE, SUITE 100 TULSA, OK 74103)", rf",\s*(?:{UN}|P\.? ?O\.? BOX) [A-Z0-9-]+ +[A-Z][A-Z .]*,\s*[A-Z]{{2}}\s+[0-9]{{5}}\b", "S", 2),
+    # 0.7.0 rule issues that had no probe (#724, 2026-11-18).
+    (
+        "box-after-unnumbered-line",
+        "734",
+        "a PO Box after a line or segment with no house number (ELM PLAZA | PO BOX 77; ACME CORP, PO BOX 77): the box is lost",
+        rf"^(?![0-9])(?!(?:{BOX}|P\.? ?O\.? BOX|POB|PMB|RR|HC|HCR|RT|C/O|ATTN|{UN})\b)[A-Z][^|0-9]*?(?:,| \|) *(?:P\.? ?O\.? ?)?BOX [0-9]+",
+        "S",
+        2,
+    ),
+    (
+        "letter-after-number-repeated-as-unit",
+        "693",
+        "a letter A to D after the house number and the same letter as the unit (123 B ELM ST APT B, 123 B ELM ST | # B)",
+        rf"^[0-9]+ ([A-D]) .*?(?:\b{UN}|#) ?\1(?: |$)",
+        "S",
+        2,
+    ),
+    (
+        "misspelled-suffix",
+        "725",
+        "a misspelled street suffix the tables do not read (100 MAIN STRET, 12 OAK RAOD); a fixed list, so a lower bound",
+        r"^[0-9]+[A-Z]? [^|]*\b(?:STRET|STREE|STRRET|SREET|STEET|STRETT|AVENE|AVANUE|AVEUNE|AVNEUE|RAOD|ROAED|BOULEVRD|BOULVARD|BLVRD|DIRVE|DRVIE|CIRLCE|CRICLE|HIGWAY|LANNE)(?=[ ,])",
+        "M",
+        3,
+    ),
+    (
+        "misspelled-unit-word",
+        "725",
+        "a misspelled unit word the tables do not read (APRTMENT 4, SUIET 200); a fixed list, so a lower bound",
+        r"\b(?:APRTMENT|APARMENT|APPARTMENT|APARTMNT|SUIET|SUTIE|SIUTE|SUIITE|UINT|UNTI|FLOR|ROOOM) ?#? ?[0-9A-Z]",
+        "M",
+        2,
+    ),
+    (
+        "name-line-over-street",
+        "726",
+        "line 1 is a name with no number, street, unit or box word and line 2 is the street (THE GARRETT | 12 OAK AVE)",
+        rf"^(?!(?:C/O|C / O|ATTN|PMB|RR|HC|HCR)\b)(?![^|]*\b(?:{UN}|{SUF}|BOX|PLAZA|PLZ|BUILDING|TOWER)\b)[A-Z][A-Z .&'/-]*[A-Z] \| [0-9]+[A-Z]? [A-Z]",
+        "D",
+        1,
+    ),
+    (
+        "name-line-under-street",
+        "726",
+        "line 1 is a street and line 2 a name with no number, unit or box word (12 OAK AVE | THE GARRETT)",
+        rf"^[0-9]+[A-Z]? [^|]*\b{SUF}\b[^|]* \| (?![^|]*(?:[0-9]|\b(?:{UN}|BOX|PMB|C/O|ATTN)\b|#))[A-Z][A-Z .&'/-]*[A-Z]$",
+        "D",
+        1,
+    ),
 ]
 # Open rule issues that have no probe, and why. Every other open issue with the label `area:rules` has a probe in PROBES; the
 # issues about docs, tooling, the API or the architecture, and the trackers, are not text shapes and need none.
