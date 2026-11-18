@@ -64,7 +64,7 @@ fn unit_directional_state_special_and_highway_aliases() {
         r#"
 [[unit]]
 abbr = "STE"
-spellings = ["SUTE"]
+spellings = ["SUITT"]
 evidence = "x"
 [[directional]]
 abbr = "N"
@@ -206,7 +206,7 @@ abbr = "TRL"
 spellings = ["TRAYL", "TRAYL"]
 [[unit]]
 abbr = "STE"
-spellings = ["SUTE"]
+spellings = ["SUITT"]
 evidence = "x"
 colour = "red"
 [[words]]
