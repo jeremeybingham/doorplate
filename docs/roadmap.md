@@ -25,10 +25,9 @@ the changelog says so. Nothing else in the API is planned to change.
 
 No tracker is open. Point releases carry speed, tooling and documentation, never a key change. A CI guard fails a pull request that adds more than 1% instructions per parse; the speed leads left are under Waiting, below.
 
-- **Speed leads at a 0.5% bar:** #703 (tokenizer trims, a hash index for the lexicon tables, place search, allocation groups), one measured pull request per group.
-- **Shipped in 0.6.2:** the speed work of #701 and #703 G1 to G8 (about 25% less time per parse than 0.6.1, no output change); #712 keeps the leads left.
+- **Shipped in 0.6.2:** the speed work of #701 and #703 G1 to G8 (about 25% less time per parse than 0.6.1, no output change); the leads left are under Waiting.
 - **Shipped in 0.6.1:** the speed cuts of #672 (B, C, and the feature bitset and `Piece::sub` byte tests of D, about 27% less time per parse than 0.6.0), #652 (a letter written twice gets a label in `parse_tokens`), and the answer to #671 (the #614 rule, not a regression).
-- **Blog post:** [doorplate 0.6.1](https://jeremeybingham.github.io/doorplate/2026/11/13/doorplate-0-6-1.html) (#491).
+- **Blog post:** [doorplate 0.6.1](https://jeremeybingham.github.io/doorplate/2026/11/13/doorplate-0-6-1.html).
 
 ## Planned: 0.7.0, the first beta and the `k6`
 
@@ -48,11 +47,13 @@ Working order (tracker #724; each group is one batch, unit rules one after anoth
 - **E. ZIP form:** #519.
 - **A. Designator and suffix spellings (data only):** #289, #375, #471, #321 (the residual), #725 (misspelled suffix and unit words).
 - **C. House-number letter shapes:** #311, #360, and the decision #312.
-- **B. Boxes and routes:** #538, #304 with #307, #598.
+- **B. Boxes and routes:** #538, #304 with #307, #598, #734 (a PO Box after a line with no house number).
 - **D. Repeated, glued and multi-part units:** the decision #656, then #693 with #499, then #294.
 - **F. Names beside the street:** #310, #351, #589, #341, shaped by #726 (named buildings with no building word).
-- **G. Parentheses left after #291:** #644 (a warning), #645.
+- **G. Parentheses left after the 0.6.0 rules:** #644 (a warning), #645.
 - **H. Other P2 rules:** #498, #274, #327, #357, #244, #272.
+- **RESO 2.1:** the decision #729 (the full-word suffix as an option).
+- **One-line separators from the pudl comparison:** three rules merged; the one left is in group B.
 
 Issues below the P2 line are in on the owner's priorities or as members of a group; the list may be cut later.
 
@@ -67,9 +68,10 @@ One line per kind. Every open issue here is in the **Later** milestone (or **Too
 - **ZIP forms and odd text:** #601, #602.
 - **Parsing ideas:** #397, #435.
 - **Review data and tooling:** #222, #225, #395, #403; the Tooling milestone (never shipped, never closed): #323, #609, and the parser showdown (its own repository).
-- **Data, API, docs and speed:** #692, #233, #213, #11 (Won't Do), #88, #253.
+- **Data, API, docs and speed:** #233, #11 (Won't Do), #253, #712 (speed leads left).
+- **usaddress dependents (no milestone, research):** the survey #723 and the pudl benchmark #728, with its rule list #731.
 - **Not yet issues:** a highway modifier before a city on one line, a comma
-  after a directional, a PO box on line 2 beside a street with no number, a unit followed by business words, and
+  after a directional, a unit followed by business words, and
   `possibly_truncated` firing on some complete units.
 - **A public Arrow result and a Polars expression namespace** only if there is demand.
 - **usaddress labels** (#35): the drop-in module is done; more labels proceed when someone needs them. Recipient and name lines,
@@ -78,7 +80,7 @@ One line per kind. Every open issue here is in the **Later** milestone (or **Too
 ## Researched, but not supported
 
 International addresses are **not supported**. Two questions about them are researched, not planned: Canadian addresses (#203)
-and a libpostal-shaped output ([`libpostal-compat.md`](libpostal-compat.md), #215). A result would become its own issue.
+and a libpostal-shaped output ([`libpostal-compat.md`](libpostal-compat.md)). A result would become its own issue.
 
 ## Not planned
 

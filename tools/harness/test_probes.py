@@ -496,3 +496,43 @@ def test_last_line_in_line1_probe(line1, state, hit):
 )
 def test_the_follow_up_probes_for_643_to_645(line1, line2, expect, hit):
     assert (expect in probes.hits(line1, line2, None)) is hit
+
+
+@pytest.mark.parametrize(
+    "line1, line2, expect, hit",
+    [
+        # The pudl one-line shapes (#731): fixed rules, probes count what is left.
+        ("12 OAK AVE, SUITE 100 TULSA, OK 74103", None, "unit-before-city", True),
+        ("12 OAK AVE, P.O. BOX 77 TULSA, OK 74103", None, "unit-before-city", True),
+        ("12 OAK AVE, SUITE 100, TULSA, OK 74103", None, "unit-before-city", False),
+        ("12 OAK AVE, TULSA, OK 74103 - 2373", None, "zip4-spaced-unit-after-zip", True),
+        ("12 OAK AVE, TULSA, OK 74103 ROOM 900", None, "zip4-spaced-unit-after-zip", True),
+        ("12 OAK AVE, TULSA, OK 74103-2373", None, "zip4-spaced-unit-after-zip", False),
+        ("12 OAK AVE - TULSA, OK 74103", None, "dash-separator", True),
+        ("12 OAK AVE, TULSA, OK 74103", None, "dash-separator", False),
+        # The 0.7.0 issues that had no probe (#724).
+        ("ELM PLAZA", "PO BOX 77", "box-after-unnumbered-line", True),
+        ("ACME CORP, PO BOX 77", None, "box-after-unnumbered-line", True),
+        ("ONE ELM PLAZA", "P O BOX 77", "box-after-unnumbered-line", True),
+        ("PO BOX 77", None, "box-after-unnumbered-line", False),
+        ("C/O JANE DOE", "PO BOX 5", "box-after-unnumbered-line", False),
+        ("12 OAK AVE", "PO BOX 77", "box-after-unnumbered-line", False),
+        ("123 B ELM ST APT B", None, "letter-after-number-repeated-as-unit", True),
+        ("123 B ELM ST", "# B", "letter-after-number-repeated-as-unit", True),
+        ("123 B ELM ST", "APT C", "letter-after-number-repeated-as-unit", False),
+        ("123 BAKER ST APT B", None, "letter-after-number-repeated-as-unit", False),
+        ("100 MAIN STRET", None, "misspelled-suffix", True),
+        ("12 OAK RAOD", "APT 4", "misspelled-suffix", True),
+        ("100 STRETTON AVE", None, "misspelled-suffix", False),
+        ("100 MAIN ST", "APRTMENT 4", "misspelled-unit-word", True),
+        ("100 MAIN ST", "SUITE 4", "misspelled-unit-word", False),
+        ("THE GARRETT", "12 OAK AVE", "name-line-over-street", True),
+        ("APT 4", "12 OAK AVE", "name-line-over-street", False),
+        ("C/O JANE DOE", "12 OAK AVE", "name-line-over-street", False),
+        ("12 OAK AVE", "THE GARRETT", "name-line-under-street", True),
+        ("12 OAK AVE", "APT 4", "name-line-under-street", False),
+        ("12 OAK AVE", "BLDG B", "name-line-under-street", False),
+    ],
+)
+def test_the_pudl_and_0_7_0_probes(line1, line2, expect, hit):
+    assert (expect in probes.hits(line1, line2, None)) is hit
