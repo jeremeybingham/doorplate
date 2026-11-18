@@ -836,7 +836,8 @@ impl Tagger<'_> {
 
     /// A ZIP that is nearly right at the end of `lo..hi`, after a state (#275): a four-digit ZIP with
     /// the leading zero cut off where the state's ZIPs start with `0`, a space before the `-NNNN`
-    /// (the hyphen is trimmed from that token, so its span is longer than its text), and an extension
+    /// (the hyphen is trimmed from that token, so its span is longer than its text), a space instead of the
+    /// hyphen (`33000 1234`, #519), and an extension
     /// shorter than four digits. Returns where the ZIP's tokens start and whether it was repaired
     /// (a zero restored or an extension dropped).
     fn loose_zip(&self, lo: usize, hi: usize) -> Option<(usize, bool)> {
@@ -845,9 +846,12 @@ impl Tagger<'_> {
         let two = hi >= lo + 2
             && all_digits(&last.text)
             && last.text.len() <= 4
-            && last.span.end - last.span.start > last.text.len()
             && all_digits(&toks[hi - 2].text)
-            && toks[hi - 2].seg == last.seg;
+            && toks[hi - 2].seg == last.seg
+            // A space before the `-NNNN` (the hyphen was trimmed, so the span is longer than the text),
+            // or a plain space between five digits and four (`FL 33000 1234`, #519).
+            && (last.span.end - last.span.start > last.text.len()
+                || (last.text.len() == 4 && toks[hi - 2].text.len() == 5));
         let start = if two { hi - 2 } else { hi - 1 };
         if start <= lo {
             return None;
