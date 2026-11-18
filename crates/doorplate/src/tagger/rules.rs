@@ -305,10 +305,23 @@ impl Tagger<'_> {
             // The last line starts its segment: the city is the segment before.
             let cs = self.seg_start(prev).max(lo);
             let first_seg = toks[cs].seg == toks[lo].seg;
-            if !first_seg
-                || (self.looks_like_city(cs, ll_start) && !self.known_street(cs, ll_start))
-            {
-                Some((cs, Decision::CityByComma))
+            if !first_seg {
+                // `12 OAK AVE, SUITE 100 TULSA, OK 74103`: a unit or PO Box that starts
+                // the city's segment with no comma after it is not part of the city (#732).
+                // A one-word segment (the usual city) has nothing to cut.
+                let c = if cs + 1 < ll_start {
+                    self.unit_or_box_end(cs, ll_start).unwrap_or(cs)
+                } else {
+                    cs
+                };
+                Some((c, Decision::CityByComma))
+            } else if self.looks_like_city(cs, ll_start) && !self.known_street(cs, ll_start) {
+                // `ONE ELM PLAZA TULSA, OK 74103`: words before a place the list knows for the
+                // state and ZIP, with a street word among them, are the street (#732).
+                let k = self
+                    .place_city(cs, ll_start)
+                    .filter(|&k| k > cs && self.has_street_word(cs, k));
+                Some((k.unwrap_or(cs), Decision::CityByComma))
             } else {
                 // "626 E KILBOURN AVE MILWAUKEE, WI 53202": the street and
                 // the city share the first segment. A segment ending in a
@@ -516,6 +529,33 @@ impl Tagger<'_> {
             Some(e) if e < hi => e,
             _ => k,
         }
+    }
+
+    /// Where the city starts in a segment that opens with a unit (`SUITE 100`, `3RD FLOOR`)
+    /// or a PO Box and then runs on into the city (`SUITE 100 TULSA`): the end of the unit
+    /// or box, when words remain after it.
+    fn unit_or_box_end(&self, cs: usize, hi: usize) -> Option<usize> {
+        let end = self
+            .match_special(cs, hi)
+            .map(|m| m.end)
+            .or_else(|| {
+                let e = self.after_unit(cs, hi);
+                (e > cs).then_some(e)
+            })
+            .or_else(|| {
+                // `3RD FLOOR`: an ordinal, then the designator.
+                let v = self.text(cs);
+                (cs + 2 < hi && is_unit_value(v) && has_digit(v))
+                    .then(|| longest_at(self.toks, cs + 1, hi, |s| self.lex.unit(s)))
+                    .flatten()
+                    .map(|(_, w)| cs + 1 + w)
+            })?;
+        (end > cs && end < hi).then_some(end)
+    }
+
+    /// Whether `lo..hi` holds a street suffix word (`PLAZA`, `AVE`).
+    fn has_street_word(&self, lo: usize, hi: usize) -> bool {
+        (lo..hi).any(|k| self.lex.suffix(self.text(k)).is_some())
     }
 
     /// Whether the first segment, when it is all that comes before the last
