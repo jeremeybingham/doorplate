@@ -78,6 +78,7 @@ nav:
       - Speed, size and memory: speed-and-size.md
       - RESO mapping: reso-mapping.md
       - USPS Publication 28 notes: usps-pub28-notes.md
+      - Puerto Rico addressing: puerto-rico.md
   - Guides:
       - pandas, Polars and DuckDB: dataframes.md
       - Custom layers: custom-layers.md
