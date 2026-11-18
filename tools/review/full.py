@@ -212,14 +212,16 @@ def entry(n, a, mask, anonymizer=None):
         c = a["compare"]
         lines.append(f"- comparison ({c.get('class')}): differs {c.get('differs')}")
         lines.append("- usaddress read: " + " ".join(f"{mk(t)}/{l}" for t, l in c.get("usaddress") or []))
-    if a["verdict"] in ("corrected", "both_wrong") or (a["verdict"] == "usaddress_right" and a.get("corrected")):
+    if a["verdict"] in ("corrected", "both_wrong") or (a["verdict"] == "usaddress_right" and (a.get("corrected") or a.get("labels"))):
         original = one_line(inp)
-        lines.append(f"- corrected: {mk(a.get('corrected'))!r}")
+        if a.get("corrected"):  # a retyped string (older answers); newer corrections are the labels above
+            lines.append(f"- corrected: {mk(a.get('corrected'))!r}")
         lines.append(f"- corrected parse: {parse_line(mk(a.get('corrected_parse')))}")
         c, p = a.get("corrected_parse") or {}, a.get("parse") or {}
         clean = bool(c) and not c.get("warnings") and not c.get("unparsed") and "error" not in c
         lines.append(f"- clean: {'yes' if clean else 'no'}; same key as the original parse: {'yes' if p.get('key') and p.get('key') == c.get('key') else 'no'}")
-        lines.append("- edit: " + "; ".join(mask_text(s, words) for s in edit_summary(original, a.get("corrected") or "")))
+        if a.get("corrected"):
+            lines.append("- edit: " + "; ".join(mask_text(s, words) for s in edit_summary(original, a["corrected"])))
     if a.get("draft"):  # an attempted fix under a verdict that is not a correction
         d = a.get("draft_parse") or {}
         lines.append(f"- draft (an attempt, not saved as a correction): {mk(a['draft'])!r}")

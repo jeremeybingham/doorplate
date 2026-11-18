@@ -129,8 +129,9 @@ def safe(a, with_source=False):
         out["usaddress_right"] = a["usaddress_right"]
     if a.get("compare"):
         out["compare"] = compare_safe(a["compare"])
-    if a["verdict"] in ("corrected", "both_wrong") or (a["verdict"] == "usaddress_right" and a.get("corrected")):
-        out["corrected"] = clip(shape(a.get("corrected") or ""), 120)
+    if a["verdict"] in ("corrected", "both_wrong") or (a["verdict"] == "usaddress_right" and (a.get("corrected") or a.get("labels"))):
+        if a.get("corrected"):  # a retyped string (older answers); newer corrections are the labels
+            out["corrected"] = clip(shape(a["corrected"]), 120)
         out["corrected_warnings"] = codes(c.get("warnings"))
         out["corrected_components"] = component_shapes(c.get("components"))
         out["corrected_clean"] = bool(c) and not c.get("warnings") and not c.get("unparsed") and "error" not in c

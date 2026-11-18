@@ -323,3 +323,52 @@ def test_rule_queue_verdicts(tmp_path):
         r.answer({"id": "inv|site|1", "verdict": "usaddress_right"})
     with pytest.raises(ValueError):  # the right/corrected verdicts are for rows with one reading
         r.answer({"id": "inv|site|1", "verdict": "right", "warning": "fair"})
+
+
+# The page since the labeler replaced the correction box: a correction is the labels on the original line.
+TEXT = "123 456 QUINCEWOOD ST, MIAMI, FL 33101"
+PARSER = [{"start": 0, "end": 7, "component": "StreetNumber"}, {"start": 8, "end": 21, "component": "StreetName"},
+          {"start": 23, "end": 28, "component": "City"}, {"start": 30, "end": 32, "component": "State"},
+          {"start": 33, "end": 38, "component": "Zip5"}]
+FIXED = [{"start": 0, "end": 3, "component": "StreetNumber"}, {"start": 4, "end": 7, "component": "UnitNumber"},
+         {"start": 8, "end": 18, "component": "StreetName"}, {"start": 19, "end": 21, "component": "StreetSuffix"},
+         {"start": 23, "end": 28, "component": "City"}, {"start": 30, "end": 32, "component": "State"},
+         {"start": 33, "end": 38, "component": "Zip5"}]
+
+
+def label_body(verdict, labels, **kw):
+    return dict({"id": "inv|site|1", "verdict": verdict, "labeled_text": TEXT, "labels": labels, "parser_labels": PARSER,
+                 "corrected_parse": {"key": "k5:x"}}, **kw)
+
+
+def test_a_correction_can_be_labels_instead_of_a_string(review):
+    rec = review.answer(label_body("corrected", FIXED))
+    assert rec["verdict"] == "corrected" and rec["labels"] == FIXED and rec["parser_labels"] == PARSER
+    assert "corrected" not in rec and rec["corrected_parse"] == {"key": "k5:x"}
+    with pytest.raises(ValueError, match="needs labels or the corrected string"):
+        review.answer({"id": "inv|site|1", "verdict": "corrected"})
+
+
+def test_unchanged_labels_are_refused_unless_confirmed(review):
+    with pytest.raises(ValueError, match="unchanged reading"):
+        review.answer(label_body("corrected", PARSER))
+    rec = review.answer(label_body("corrected", PARSER, unchanged_ok=True))
+    assert rec["verdict"] == "corrected" and rec["labels"] == PARSER
+
+
+def test_both_wrong_and_usaddress_right_save_labels_on_a_comparison_row(tmp_path):
+    r = comparison_review(tmp_path)
+    rec = r.answer(label_body("both_wrong", FIXED))
+    assert rec["verdict"] == "both_wrong" and rec["labels"] == FIXED and "corrected" not in rec
+    r.undo()
+    rec = r.answer(label_body("usaddress_right", FIXED))
+    assert rec["verdict"] == "usaddress_right" and rec["labels"] == FIXED
+    r.undo()
+    with pytest.raises(ValueError, match="unchanged reading"):
+        r.answer(label_body("both_wrong", PARSER))
+
+
+def test_both_wrong_saves_labels_on_a_rule_queue_row(tmp_path):
+    r = rule_review(tmp_path)
+    rec = r.answer(label_body("both_wrong", FIXED))
+    assert rec["verdict"] == "both_wrong" and rec["labels"] == FIXED and rec["alt"]["label"] == "attention lines"
