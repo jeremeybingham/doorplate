@@ -15,7 +15,7 @@ Planned for 0.7.0, the first beta: the `k6` key, the removal of the state data s
 - A PO Box after a name, a building or a street with no house number (`Elm Plaza, PO Box 77, Tulsa, OK 74103`) is kept as the box, with `dual_address`, instead of being left in `unparsed_remainder` (#734).
 - A unit, a PO Box or a spelled-number street written before the city with no comma (`12 Oak Avenue, Suite 100 Tulsa, OK 74103`) no longer ends up in the city (#732).
 - A spaced dash between a building name, the street and the city (`Tower - 12 Oak Avenue - Tulsa, OK 74103`) is read as a comma when a state and ZIP follow, so the city no longer starts with `-` (#736).
-- **A ZIP+4 written with a space instead of the hyphen** (`k5`, #519): `TOWN FL 33000 1234` reads city, state, ZIP and ZIP+4, as `33000-1234` does; before, the whole last line was left in `unparsed_remainder`. A short tail (`FL 33000 123`) and a number with no state before it are unchanged.
+- **A ZIP+4 written with a space instead of the hyphen** (`k6`, #519): `TOWN FL 33000 1234` reads city, state, ZIP and ZIP+4, as `33000-1234` does; before, the whole last line was left in `unparsed_remainder`. A short tail (`FL 33000 123`) and a number with no state before it are unchanged.
 - A ZIP+4 with spaces around the hyphen (`OK 74103 - 2373`) and a unit after the ZIP (`OK 74103 Room 900`) no longer lose the last line: city, state, ZIP and the unit are read (#733).
 
 ## [0.6.2] - 2026-11-14
