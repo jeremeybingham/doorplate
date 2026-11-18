@@ -2105,7 +2105,9 @@ impl Tagger<'_> {
             if !numbered && !starts_segment {
                 continue;
             }
-            let bare = starts_segment || self.unit_value_before(lo, k);
+            // Without a house number only a spelled PO Box counts: a bare `BOX 12`
+            // after `STAR ROUTE` or a ranch name is not a PO Box.
+            let bare = numbered && (starts_segment || self.unit_value_before(lo, k));
             let Some(m) = self.box_line(k, hi, bare) else {
                 continue;
             };
