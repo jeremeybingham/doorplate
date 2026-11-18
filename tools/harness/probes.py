@@ -819,6 +819,7 @@ PROBES = [
     ("paren-group-line1-other", "644", "a parenthesized group inside line 1 that is not a unit, floor or box (ELM ST (OLD MILL) 4)", rf"^[^|]*\((?!\s*(?:{UN}|{BOX}|#|[0-9]+(?:ST|ND|RD|TH)? (?:FL|FLOOR))\b)[^()|]*\)[^|]*(?:\||$)", "S", 2),
     ("paren-inside-name", "645", "a parenthesis inside a word or in the middle of a name, not at the edge of a line (ELM(ST, MARTIN (LUTHER KING BLVD)", r"[A-Z]\([A-Z]|\b[A-Z]{3,} \([A-Z]+ [A-Z]+[^)|]*(?:\||$)", "S", 3),
     ("zip4-spaced-unit-after-zip", "733", "a ZIP+4 with spaces around its hyphen, or a unit after the ZIP (OK 74103 - 2373, OK 74103 ROOM 900)", rf"\b[0-9]{{5}} +- ?[0-9]{{4}}\b|\b[0-9]{{5}}- +[0-9]{{4}}\b|\b[0-9]{{5}}(?:-[0-9]{{4}})? +{UN}\b", "S", 2),
+    ("dash-separator", "736", "a spaced dash between street and city or building and street (12 OAK AVE - TULSA, OK 74103)", r" - [A-Za-z]+[A-Za-z .]*,? +[A-Z]{2} +[0-9]{5}\b", "S", 2),
 ]
 # Open rule issues that have no probe, and why. Every other open issue with the label `area:rules` has a probe in PROBES; the
 # issues about docs, tooling, the API or the architecture, and the trackers, are not text shapes and need none.

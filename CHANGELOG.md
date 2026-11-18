@@ -11,6 +11,7 @@ Planned for 0.7.0, the first beta: the `k6` key, the removal of the state data s
 
 ### Changed
 
+- A spaced dash between a building name, the street and the city (`Tower - 12 Oak Avenue - Tulsa, OK 74103`) is read as a comma when a state and ZIP follow, so the city no longer starts with `-` (#736).
 - A ZIP+4 with spaces around the hyphen (`OK 74103 - 2373`) and a unit after the ZIP (`OK 74103 Room 900`) no longer lose the last line: city, state, ZIP and the unit are read (#733).
 
 ## [0.6.2] - 2026-11-14

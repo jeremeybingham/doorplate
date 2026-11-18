@@ -233,6 +233,7 @@ One row per `tests/corpus/*.jsonl`; a new file gets a row here and an id prefix 
 | `warnings.jsonl` | `wn-` | A letter after the number read into the street name warns that it may be the number's suffix or an initial |
 | `zip-repair.jsonl` | `zr-` | A nearly right ZIP is repaired |
 | `zip-spaced.jsonl` | `zs-` | A ZIP+4 with spaces around its hyphen; a unit after the ZIP (#733) |
+| `dash-separator.jsonl` | `dsep-` | A spaced dash between building, street and city is a separator when a state and ZIP follow (#736) |
 
 Notes on single files:
 
