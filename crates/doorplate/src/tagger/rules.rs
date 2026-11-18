@@ -2094,11 +2094,17 @@ impl Tagger<'_> {
             self.warn(Warning::DualAddress);
             return true;
         }
-        if hi < lo + 3 || house_number(self.text(lo)).is_none() {
+        if hi < lo + 3 {
             return false;
         }
+        // No house number (#734): a name or unnumbered street, then a PO Box
+        // in its own comma segment (`ELM PLAZA, PO BOX 77, TULSA, OK`).
+        let numbered = house_number(self.text(lo)).is_some();
         for k in lo + 2..hi {
             let starts_segment = self.toks[k].seg != self.toks[k - 1].seg;
+            if !numbered && !starts_segment {
+                continue;
+            }
             let bare = starts_segment || self.unit_value_before(lo, k);
             let Some(m) = self.box_line(k, hi, bare) else {
                 continue;
@@ -2107,6 +2113,20 @@ impl Tagger<'_> {
                 self.set(r, tag);
             }
             self.units(m.end, m.end, hi, false);
+            // `TOWER 2, 12 OAK AVE, PO BOX 77`: a numbered segment before
+            // the box is the street; the words before it are the name.
+            let mut lo = lo;
+            if !numbered {
+                let s = (lo + 1..k).rev().find(|&s| {
+                    self.toks[s].seg != self.toks[s - 1].seg
+                        && house_number(self.text(s)).is_some()
+                        && s + 1 < k
+                });
+                if let Some(s) = s {
+                    self.set(lo..s, Tag::Attention);
+                    lo = s;
+                }
+            }
             self.street(lo, k);
             self.warn(Warning::DualAddress);
             return true;
