@@ -36,6 +36,7 @@ New to the project? Read the [project README](../README.md), then
 | [`key-format.md`](key-format.md) | The match key (`k5`) and the slug: the contract, and when a key changes |
 | [`reso-mapping.md`](reso-mapping.md) | The RESO Data Dictionary 2.0 and 2.1 field mapping |
 | [`usps-pub28-notes.md`](usps-pub28-notes.md) | The USPS Publication 28 rules: the source of every table and parser rule, and what was left as it is on purpose |
+| [`puerto-rico.md`](puerto-rico.md) | Puerto Rico addressing: what Pub 28 says (section 29, Appendices H and I), what the parser does with each form, and what the rule issues need |
 
 ## Data: places, curated rows and what data may be used
 

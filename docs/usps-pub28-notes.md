@@ -257,6 +257,10 @@ How the tagger (`crates/doorplate/src/tagger/`) reads an address, grouped by the
 | Words only on line 2 under a street are the attention line when they look like a firm or a person: `JANE ROE`, `HARBOR & PINE PC`. Two to four plain words, or up to seven with `&` or a business word; not a digit, suffix, designator, government, lot or level word, a single word, a known place or a repeat. Field form only. | §213 puts a recipient above the delivery line; VA review and a 50-card review. |
 | A fraction (`1/2`, `3/4`) alone in line 2, or opening a longer line 2, is the house number's fraction: `123 MAIN ST` / `1/2` is `123 1/2 MAIN ST`. Only when line 1 starts with a number with no fraction; a PO Box and a letter before the fraction are left. Pre-split input only. | §232 (the fraction); national address database (42,598 rows). |
 
+### Puerto Rico
+
+Section 29 and Appendices D5, H and I were read for #332; the rules, the parser's result for each form and the open decisions are in [`puerto-rico.md`](puerto-rico.md). No parse rule here cites them yet; each rule issue adds its row when it lands.
+
 ### Left as it is on purpose
 
 Standing decisions, not reopened without new evidence: the data does not say which reading is right, or a rule costs more than it gains.
