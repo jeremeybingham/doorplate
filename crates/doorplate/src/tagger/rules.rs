@@ -2814,6 +2814,14 @@ impl Tagger<'_> {
             self.text(r),
             "PRIVATE" | "COUNTY" | "STATE" | "FM" | "PR" | "FARM" | "CR" | "CO"
         );
+        // `4 7983 ELM CT`: one digit and four before a plain name: the long number is the
+        // house number and the single digit a unit, not the other way round (#617).
+        if la == 1 && lb == 4 && !road_word && !is_ordinal(self.text(r)) && !join {
+            self.set(p..p + 1, Tag::UnitNumber(0));
+            self.set(i..i + 1, Tag::StreetNumber);
+            self.decide(Decision::BareUnit);
+            return i + 1;
+        }
         if join || is_ordinal(self.text(r)) || (!road_word && lb >= 3) {
             self.set(i..i + 1, Tag::UnitNumber(0));
             self.decide(Decision::BareUnit);
