@@ -78,7 +78,7 @@ A layer is worth writing when the same misreading shows up many times in your da
 
    | You see | Add | File |
    |---|---|---|
-   | `TRAYL` instead of `TRL`/`TRAIL`, `SUTE` for `STE`, `NRTH` for `N`, a misspelled state | a spelling of the row | `aliases.toml` `[[suffix]]`, `[[unit]]`, `[[directional]]`, `[[state]]` |
+   | `TRAYL` instead of `TRL`/`TRAIL`, `SUITT` for `STE`, `NRTH` for `N`, a misspelled state | a spelling of the row | `aliases.toml` `[[suffix]]`, `[[unit]]`, `[[directional]]`, `[[state]]` |
    | `POSTBX`, `CNTRY RD 12` | a special word or highway prefix | `aliases.toml` `[[special]]`, `[[highway]]` |
    | a trailing word that is not part of the address, a building word, a stand-in such as `NONE` | a word | `aliases.toml` `[[words]]` (`country`, `building`, `placeholder`, `non_recipient`, ...) |
    | a community or postal name the place list lacks, or a misspelling of one | a place | `places.tsv` |
@@ -182,7 +182,7 @@ evidence = "County export 2026: 41 lines like `120 OAK TRAYL`"
 
 [[unit]]                      # a unit designator, by its abbreviation
 abbr = "STE"
-spellings = ["SUTE"]
+spellings = ["SUITT"]
 evidence = "..."
 
 [[directional]]               # N, S, E, W, NE, NW, SE or SW

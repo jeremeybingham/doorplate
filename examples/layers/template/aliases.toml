@@ -11,8 +11,8 @@ evidence = "EXAMPLE: 41 lines like `120 OAK TRAYL` in the 2026 export"
 
 [[unit]]                     # a unit designator, by its abbreviation
 abbr = "STE"
-spellings = ["SUTE"]
-evidence = "EXAMPLE: 9 lines like `300 MILL ST SUTE 2`"
+spellings = ["SUITT"]
+evidence = "EXAMPLE: 9 lines like `300 MILL ST SUITT 2`"
 
 [[directional]]              # N, S, E, W, NE, NW, SE or SW
 abbr = "N"

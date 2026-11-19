@@ -34,7 +34,8 @@ range_required = true
 forms = ["APARTMENT", "APT"]
 # observed: Florida address data ("APTO 417", "APART 1707", "AP 902");
 # APTO, APARTAMENTO and APARTAMENT are Spanish spellings
-observed = ["AP", "APART", "APARTAMENT", "APARTAMENTO", "APP", "APPT", "APRT", "APTO"]
+# Misspellings seen after a street suffix on silent cards (#289): ATP, APMT, APTR, APTL
+observed = ["AP", "APART", "APARTAMENT", "APARTAMENTO", "APMT", "APP", "APPT", "APRT", "APTL", "APTO", "APTR", "ATP"]
 
 [[unit]]
 name = "BASEMENT"
@@ -154,6 +155,9 @@ name = "SPACE"
 abbr = "SPC"
 range_required = true
 forms = ["SPACE", "SPC"]
+# observed: FCC amateur licensees write SP for a mobile-home lot after the suffix
+# ("OAK AVE SP 32", #471)
+observed = ["SP"]
 
 [[unit]]
 name = "STOP"
@@ -168,7 +172,10 @@ range_required = true
 forms = ["SUITE", "STE"]
 # observed: Florida address data ("SUIT 300", "N WICKHAM RD SU B",
 # "ALTA MEADOWS LANE SU 612"; SU in 16 lines at 6 distinct addresses)
-observed = ["SUIT", "SU"]
+#
+# Misspellings (#289, review rounds 3 and the Virginia SCC review): SUT, STU,
+# SIUTE, SUTE, SUTIE, SUIE, STES; each seen with a value after the street suffix
+observed = ["SIUTE", "STES", "STU", "SU", "SUIE", "SUIT", "SUT", "SUTE", "SUTIE"]
 
 [[unit]]
 name = "TRAILER"
@@ -186,7 +193,10 @@ forms = ["UNIT"]
 # has no word for ("14355 SW 120TH STREET, BAY 102" 127 lines, "STUDIO 7" 99,
 # "BOOTH 12" 11), read as a plain unit; BAY is a unit only after a street suffix
 # or on a later line, not at the end of a street name (issue #144)
-observed = ["UN", "BAY", "STUDIO", "BOOTH"]
+#
+# MSC (mail stop code, carrier census and amateur radio, "OAK AVE MSC 518", #375)
+# and UNITE (a misspelling, #289) are read as a plain unit too
+observed = ["UN", "BAY", "BOOTH", "MSC", "STUDIO", "UNITE"]
 
 [[unit]]
 name = "UPPER"
