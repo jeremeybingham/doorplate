@@ -2072,6 +2072,18 @@ impl Tagger<'_> {
                 self.set(lo..j, Tag::Attention);
                 j
             }
+            // `ACME BAKERY - 100 ELM ST` (#310): a spaced hyphen ends the name. The hyphen token
+            // is dropped; a street name with a hyphen has none of its own (`12 ELM-OAK RD`).
+            Some(j)
+                if j > lo + 1
+                    && self.toks[j - 1].is_dash()
+                    && house_number(self.text(j)).is_some()
+                    && self.recipient_words(lo, j - 1) =>
+            {
+                self.set(lo..j - 1, Tag::Attention);
+                self.set(j - 1..j, Tag::Skip);
+                j
+            }
             _ => lo,
         }
     }
