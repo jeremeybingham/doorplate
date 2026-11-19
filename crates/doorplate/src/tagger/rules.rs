@@ -3013,6 +3013,12 @@ impl Tagger<'_> {
             })
             .count();
         if numbers >= 2 {
+            // "1200,3400 S ELM AVE": the comma-joined numbers are followed by a whole street on
+            // the last one's segment: the first is the house number, as in a space-joined pair
+            // (`1309 1329 E VINE ST`); the rest are left unparsed (#617).
+            if lo + numbers < hi && self.second_house_number(lo + numbers - 1, hi) {
+                self.set(i..i + 1, Tag::StreetNumber);
+            }
             self.warn(Warning::MultipleAddresses);
             i += numbers;
         } else if is_slash_pair(t0) {
