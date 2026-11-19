@@ -65,7 +65,7 @@ What differs:
   Wisconsin form) is `AddressNumberPrefix` and the number is `AddressNumber`, as in usaddress
   (#651). The parse itself holds them as one number (`street_number` is `E7379`, and so is the
   key); only the label differs. The same prefix glued to the number (`E7379`) is one token and
-  stays `AddressNumber`. The grid form (`N45 W2210`, #311) and a lone letter before a number
+  stays `AddressNumber`. The grid form (`N45 W2210`, #311) is one `street_number` here and two `AddressNumber` tokens in usaddress's labels. A lone letter before a number
   that is not read as its prefix (#312) are not covered.
 - usaddress's `AddressNumberSuffix` (`214 B`) and number ranges (`5240;5220`) are
   kept in `AddressNumber` or left out. Its intersection, landmark, `CornerOf`,

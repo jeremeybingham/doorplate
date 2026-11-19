@@ -230,6 +230,16 @@ pub(crate) fn is_grid_number(t: &str) -> bool {
     (1..=2).contains(&letters) && b.len() >= 4
 }
 
+/// One part of a grid number written in two parts: a compass letter and digits
+/// (`N45`, `W2210`; #311). The first part may be as short as `N5`, which alone is
+/// not a grid number (`is_grid_number` wants four characters).
+pub(crate) fn is_grid_part(t: &str) -> bool {
+    let b = t.as_bytes();
+    b.len() >= 2
+        && matches!(b[0], b'N' | b'S' | b'E' | b'W')
+        && b[1..].iter().all(u8::is_ascii_digit)
+}
+
 /// A compass letter, three digits or more and one trailing letter:
 /// `E7608B` (Wisconsin grid numbers with a suffix letter).
 pub(crate) fn is_lettered_number_letter(t: &str) -> bool {

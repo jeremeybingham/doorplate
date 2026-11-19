@@ -35,10 +35,10 @@ use std::ops::Range;
 use super::{Decision, PlaceCtx, Tag, Tagger};
 use crate::classify::{
     all_digits, has_digit, house_number, is_bare_unit, is_cut_designator, is_fraction,
-    is_glued_ordinal, is_grid_number, is_letter, is_lettered_route, is_ordinal, is_route_value,
-    is_slash_pair, is_unit_pair, is_unit_value, is_unit_word, join_ref, longest_at, longest_ending,
-    spelled_number, spelled_ordinal, zero_zip_state, zip_parts, zip_repair, NumberShape,
-    ORDINAL_SUFFIXES,
+    is_glued_ordinal, is_grid_number, is_grid_part, is_letter, is_lettered_route, is_ordinal,
+    is_route_value, is_slash_pair, is_unit_pair, is_unit_value, is_unit_word, join_ref, longest_at,
+    longest_ending, spelled_number, spelled_ordinal, zero_zip_state, zip_parts, zip_repair,
+    NumberShape, ORDINAL_SUFFIXES,
 };
 use crate::lexicon::{MatchKind, Special, MAX_PLACE_WORDS};
 use crate::tokenize::Token;
@@ -3044,8 +3044,13 @@ impl Tagger<'_> {
             if i < hi && is_fraction(self.text(i)) {
                 self.set(i..i + 1, Tag::StreetNumber);
                 i += 1;
-            } else if i < hi && is_grid_number(t0) && is_grid_number(self.text(i)) {
-                // "N165 W2123": a grid number written in two parts.
+            } else if i < hi
+                && (is_grid_number(t0) || is_grid_part(t0))
+                && (is_grid_number(self.text(i)) || is_grid_part(self.text(i)))
+                && self.text(i).len() >= 3
+                && self.toks[i].seg == self.toks[i - 1].seg
+            {
+                // "N165 W2123", "N45 W2210": a grid number written in two parts (#311).
                 self.set(i..i + 1, Tag::StreetNumber);
                 i += 1;
             } else if i + 1 < hi && (self.number_letter(i) || self.guessed_number_letter(i, hi)) {
