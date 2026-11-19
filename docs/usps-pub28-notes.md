@@ -14,7 +14,7 @@ Pages are under `https://pe.usps.com/text/pub28/` (`pe.usps.com` refuses clients
 
 | Table | Pub 28 source | Notes |
 |---|---|---|
-| `suffixes.toml` | Appendix C1 | C1 lists MDW under MEADOW and MEADOWS: it maps to MEADOW only. C1 names ANX's primary ANEX: we use ANNEX. Spellings the open-source copies have and C1 lacks (`CRT`, `CK`, `CR`, `LA`, `TR`, `PK`) are `observed`. |
+| `suffixes.toml` | Appendix C1 | C1 lists MDW under MEADOW and MEADOWS: it maps to MEADOW only. C1 names ANX's primary ANEX: we use ANNEX. Spellings the open-source copies have and C1 lacks (`CRT`, `CK`, `CR`, `LA`, `TR`, `PK`, `RT` for ROUTE) are `observed`. |
 | `units.toml` | Appendix C2; §285 for PMB | BSMT, FRNT, LBBY, LOWR, OFC, PH, REAR, SIDE and UPPR need no range. `#` is C2's "blank, unable to determine" row. PMB is added from §285. C2 spells HNGR "Hanger": HANGAR is `observed`. |
 | `states.toml` | Appendix B; §225.1 for AA, AE, AP | The AE aliases cover all four regions (§225.1 adds Africa). |
 | `directionals.toml` | §233; Appendix B | The eight directionals. §233.1 says to abbreviate them; the parsing rules of §233 belong to the tagger. |
