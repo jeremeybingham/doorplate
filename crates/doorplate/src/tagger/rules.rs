@@ -3937,6 +3937,31 @@ impl Tagger<'_> {
                 .is_some())
     }
 
+    /// Whether tokens `last - 1` and `last` are one unit value of two parts after a designator
+    /// that always takes a value: two single letters (`STE D E`, `APT K K`) or a letter-digit
+    /// value and a number (`STE C1 10`, `SUITE A1 2`) (#294). The space stays in the value.
+    fn letters_or_code_pair(&self, floor: usize, last: usize) -> bool {
+        if last < floor + 2 {
+            return false;
+        }
+        let (a, b) = (self.text(last - 1), self.text(last));
+        let seg = self.toks[last].seg;
+        let code = |t: &str| {
+            t.len() >= 2
+                && t.as_bytes()[0].is_ascii_alphabetic()
+                && t.bytes().skip(1).all(|c| c.is_ascii_digit())
+        };
+        (is_letter(a) && is_letter(b) || code(a) && all_digits(b))
+            && self.toks[last - 1].seg == seg
+            && self.toks[last - 2].seg == seg
+            && longest_ending(self.toks, floor, last - 1, |s| {
+                self.lex
+                    .unit(s)
+                    .filter(|l| l.kind != MatchKind::Observed && l.value.range_required())
+            })
+            .is_some()
+    }
+
     /// Whether tokens `last - 1` and `last` are one unit value written in two
     /// parts, a letter and a number in either order, right after a designator
     /// or `#`: `APT E 1003`, `UNIT 210 C`, and `# V 21`, the form the USPS
@@ -4200,7 +4225,10 @@ impl Tagger<'_> {
                 || self.letters_after_designator(floor, last))
                 && last > floor
             {
-                let start = if self.split_value(floor, last) || self.number_pair(floor, last) {
+                let start = if self.split_value(floor, last)
+                    || self.number_pair(floor, last)
+                    || self.letters_or_code_pair(floor, last)
+                {
                     last - 1
                 } else {
                     self.hash_run(floor, last)
@@ -4291,6 +4319,32 @@ impl Tagger<'_> {
                 self.decide(Decision::BareUnit);
                 j = last;
                 continue;
+            }
+            // A comma segment of its own that is a number and a letter (`412 ELM RD, 1 D`):
+            // the two-part value the field form reads from line 2, one unit with no
+            // designator (#294). The street needs its suffix and a name before the segment.
+            if found.is_empty() && j == hi && last > name_lo + 2 {
+                let k = last - 1;
+                let (a, b) = (self.text(k), self.text(last));
+                let own_segment = self.toks[k].seg == self.toks[last].seg
+                    && self.toks[k].seg != self.toks[k - 1].seg
+                    && (last + 1 == self.toks.len()
+                        || self.toks[last + 1].seg != self.toks[last].seg);
+                if own_segment
+                    && k > floor
+                    && !self.toks[k].paren
+                    && !self.toks[last].paren
+                    && (1..=4).contains(&a.len())
+                    && all_digits(a)
+                    && is_letter(b)
+                    && self.lex.unit(b).is_none()
+                    && self.suffix_before(name_lo, k)
+                {
+                    found.push((k..k, k..j));
+                    self.decide(Decision::BareUnit);
+                    j = k;
+                    continue;
+                }
             }
             // An ordinal before the designator: "3RD FLOOR".
             if let Some((u, w)) = longest_ending(self.toks, floor + 1, j, |s| lex.unit(s)) {
