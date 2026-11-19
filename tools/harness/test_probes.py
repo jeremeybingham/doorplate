@@ -109,6 +109,9 @@ def test_keys_are_unique_and_every_pattern_compiles():
         ("C O ACME CORP", None, None, "careof-name-only"),
         ("123 104 11TH STREET", None, None, "bare-unit-number-after-house-number"),
         ("123 OAK ST", "OAK VALLEY VI CONDOMINIUMS", None, "building-name-after-street"),
+        ("412 ELM RD, 17 APT", None, None, "unit-designator-split"),
+        ("412 ELM RD STE, 120 241", None, None, "unit-designator-split"),
+        ("412 ELM RD STE", "120 241", None, "unit-designator-split"),
     ],
 )
 def test_each_shape_is_found(line1, line2, zip_code, expect):
@@ -193,6 +196,12 @@ def test_the_new_probes_leave_ordinary_addresses_alone():
             "bare-unit-number-after-house-number", "careof-name-only",
         }
         assert not got, (line1, line2, got)
+
+
+def test_unit_designator_split_leaves_a_unit_with_its_value_alone():
+    assert "unit-designator-split" not in probes.hits("412 ELM RD", "17 APT")
+    assert "unit-designator-split" not in probes.hits("412 ELM RD STE 120", None)
+    assert "unit-designator-split" not in probes.hits("412 ELM RD, STE 120", None)
 
 
 def test_an_ordinary_address_hits_nothing():

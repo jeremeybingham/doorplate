@@ -5,7 +5,7 @@ bring, so the more real, messy addresses it sees, the sooner the items below can
 ([Sharing messy data](../CONTRIBUTING.md#sharing-messy-data)). Labels, milestones and ordering: [`backlog.md`](backlog.md).
 What each release changed is in [`CHANGELOG.md`](../CHANGELOG.md).
 
-**Last reviewed 2026-11-17.** 0.7.0 is planned as the first **beta** (below). 0.6.2 (a second speed release, no key change; the `k5` is as in 0.6.0) is released; 0.6.1 (speed and one label fix, no key change) is released. Open trackers: #417 (decided against); the 0.6.x tracker (#673) and the speed tracker (#672) are closed.
+**Last reviewed 2026-11-19.** 0.7.0 is planned as the first **beta** (below). 0.6.2 (a second speed release, no key change; the `k5` is as in 0.6.0) is released; 0.6.1 (speed and one label fix, no key change) is released. Open trackers: #417 (decided against); the 0.6.x tracker (#673) and the speed tracker (#672) are closed.
 
 ## Stability: alpha now, beta from 0.7.0
 
@@ -42,13 +42,12 @@ The goals of 0.7.0, in the order they ship:
    The beta needs 1 and 3 done and the `k6` measured on the private sources; item 2 does not have to be finished (a Puerto Rico rule that
    misses the release moves to 0.8).
 
-Working order (tracker #724; each group is one batch, unit rules one after another): **before the rules,** #700, then Puerto Rico (#332, #314, #318, #319, #92). Then the rules:
+Working order (tracker #724; each group is one batch, unit rules one after another): **before the rules,** #700 (done), then Puerto Rico (#332, #314, #318, #319, #92, and the rule issues from its research: #747, #748, #749, #750). Then the rules:
 
-- **E. ZIP form:** #519.
-- **A. Designator and suffix spellings (data only):** #289, #375, #471, #321 (the residual), #725 (misspelled suffix and unit words).
+- **A. Designator and suffix spellings:** #321 (the residual: `SITE`, `CAMPSITE`, `CONDO` after the suffix need a code rule). Done: #289, #375, #471 (one data PR); #725 closed (0 misses in 60 cards).
 - **C. House-number letter shapes:** #360, and the decision #312.
-- **B. Boxes and routes:** #538, #304 with #307, #598, #734 (a PO Box after a line with no house number).
-- **D. Repeated, glued and multi-part units:** the decision #656, then #693 with #499, then #294.
+- **B. Boxes and routes:** #304 with #307, #598, #734 (a name line before a PO Box, decided with #726). Done: #538 (`STAR RT`).
+- **D. Repeated, glued and multi-part units:** the decision #656, then #693 with #499. Done: #294 (its two leftover forms are in Later).
 - **F. Names beside the street:** #310, #351, #589, #341, shaped by #726 (named buildings with no building word).
 - **G. Parentheses left after the 0.6.0 rules:** #644 (a warning), #645.
 - **H. Other P2 rules:** #498, #274, #327, #357, #244, #272.
@@ -61,9 +60,9 @@ Issues below the P2 line are in on the owner's priorities or as members of a gro
 
 One line per kind. Every open issue here is in the **Later** milestone (or **Tooling**, where noted); none is at the P2 line (200 rows; 2,500 for P1), and none is in a 0.7.0 group.
 
-- **Units:** #243, #290, #295, #345, #238, #559, #534, #531, #558.
+- **Units:** #243, #290, #295, #345, #238, #559, #534, #531, #558, #770 (a unit split from its designator, left over when #294 merged).
 - **Boxes and routes:** #358.
-- **House numbers and street names:** #594, #643, #560, #617.
+- **House numbers and street names:** #594, #643, #560.
 - **City field and line 2:** #367, #480, #482, #483, #553, #596, #597, #741, #742.
 - **Glued strings (split and re-parse):** the tracker #761 with #762, #763, #764, #765, #766; #741 and #742 above are parts of it, as are #304 and #656 in 0.7.0.
 - **ZIP forms and odd text:** #601, #602.
