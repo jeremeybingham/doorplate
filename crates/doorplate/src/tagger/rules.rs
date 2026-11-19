@@ -918,20 +918,45 @@ impl Tagger<'_> {
     /// the last line (`413 OLD CORRY FIELD RD B 32506` before
     /// `PENSACOLA, FL- 32506`, Escambia). The copy is skipped. Returns the
     /// new end of the line.
+    ///
+    /// The copy may carry a ZIP+4 the tagged ZIP lacks (`TOWN CA 90210 1234` or
+    /// `90210-1234` on line 2 with a ZIP field of `90210`): the five digits must match, and the copy is
+    /// then tagged as the ZIP so its +4 is kept. A plain space between the five digits and the four is read
+    /// as in [`Self::loose_zip`] (#519).
     pub(super) fn drop_repeated_zip(&mut self, lo: usize, hi: usize) -> usize {
-        if hi < lo + 2 || zip_parts(self.text(hi - 1)).is_none() || self.toks[hi - 2].is_hash() {
+        if hi < lo + 2 {
+            return hi;
+        }
+        // The copy: one token (`90210`, `90210-1234`), or five digits and four (`90210 1234`).
+        let spaced = hi >= lo + 3
+            && self.text(hi - 1).len() == 4
+            && all_digits(self.text(hi - 1))
+            && self.text(hi - 2).len() == 5
+            && all_digits(self.text(hi - 2))
+            && self.toks[hi - 2].seg == self.toks[hi - 1].seg
+            && self.toks[hi - 1].span.end - self.toks[hi - 1].span.start == 4;
+        let start = if spaced { hi - 2 } else { hi - 1 };
+        let copy = if spaced {
+            Some((self.text(hi - 2), Some(self.text(hi - 1))))
+        } else {
+            zip_parts(self.text(hi - 1))
+        };
+        let Some((copy5, copy4)) = copy else {
+            return hi;
+        };
+        if self.toks[start - 1].is_hash() {
             return hi;
         }
         // After a PO Box word or a unit designator it is the box or unit number,
         // not a copy of the ZIP (`PO BOX 12345`, `APT 12345` with ZIP 12345, #260).
-        let after_word = longest_ending(self.toks, lo, hi - 1, |s| {
+        let after_word = longest_ending(self.toks, lo, start, |s| {
             self.lex
                 .special(s)
                 .filter(|l| l.value == Special::PoBox)
                 .map(|_| ())
         })
         .is_some()
-            || longest_ending(self.toks, lo, hi - 1, |s| {
+            || longest_ending(self.toks, lo, start, |s| {
                 self.lex
                     .unit(s)
                     .filter(|l| l.kind != MatchKind::Observed && l.value.range_required())
@@ -940,14 +965,47 @@ impl Tagger<'_> {
         if after_word {
             return hi;
         }
-        let copy = self.text(hi - 1);
-        let repeated = (0..self.toks.len())
-            .any(|i| i != hi - 1 && self.tags[i] == Tag::Zip && self.text(i) == copy);
-        if repeated {
-            self.set(hi - 1..hi, Tag::Skip);
-            return hi - 1;
+        // The tagged ZIP (a field of one token) that the copy repeats, and whether it has a +4.
+        let tagged = (0..self.toks.len())
+            .filter(|&i| !(start..hi).contains(&i) && self.tags[i] == Tag::Zip)
+            .find_map(|i| zip_parts(self.text(i)).filter(|(z5, _)| *z5 == copy5));
+        let Some((_, tagged4)) = tagged else {
+            return hi;
+        };
+        let tag = if copy4.is_some() && tagged4.is_none() {
+            Tag::Zip
+        } else {
+            Tag::Skip
+        };
+        self.set(start..hi, tag);
+        self.zip_copy_kept |= tag == Tag::Zip;
+        start
+    }
+
+    /// Line 1 starts with the row's own ZIP and a four-digit number (`90210 1234 ELM CT` with a ZIP
+    /// field of `90210`): a ZIP+4 written in the street line, not a house number and a unit (#617
+    /// against #519). The pair is skipped, so the street has no house number. Returns the new start.
+    pub(super) fn drop_leading_zip4(&mut self, lo: usize, hi: usize) -> usize {
+        if hi < lo + 3
+            || self.text(lo).len() != 5
+            || !all_digits(self.text(lo))
+            || self.text(lo + 1).len() != 4
+            || !all_digits(self.text(lo + 1))
+            || self.toks[lo].seg != self.toks[lo + 1].seg
+        {
+            return lo;
         }
-        hi
+        let z5 = self.text(lo);
+        let own = (0..self.toks.len()).any(|i| {
+            !(lo..hi).contains(&i)
+                && self.tags[i] == Tag::Zip
+                && zip_parts(self.text(i)).is_some_and(|(z, _)| z == z5)
+        });
+        if !own {
+            return lo;
+        }
+        self.set(lo..lo + 2, Tag::Skip);
+        lo + 2
     }
 
     /// A state ending the address line that repeats the state already
