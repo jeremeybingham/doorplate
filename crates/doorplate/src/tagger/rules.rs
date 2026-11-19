@@ -2423,11 +2423,11 @@ impl Tagger<'_> {
                     let ambiguous = lex.highway(&form).is_some() || lex.suffix(&form).is_some();
                     if let Some((route, hash)) = self.value_at(lo + w, hi) {
                         let bx = self.box_part(route + 1, hi);
-                        // `STAR RT # 71E1`, `HC # 12`: the USPS line of the no-route-number
+                        // `STAR RT # 71E1`, `HC # 12`, `RR # 12`: the USPS line of the no-route-number
                         // reading (`STAR RT BOX 71E1`, `HC BOX 12`: street and unit, #384,
-                        // #538) must read back as it came, so a `#` after a highway contract
-                        // form needs a BOX.
-                        let ambiguous = ambiguous || (hash && l.value == Special::HighwayContract);
+                        // #538) must read back as it came, so a `#` after a rural route
+                        // or highway contract form needs a BOX.
+                        let ambiguous = ambiguous || (hash);
                         if bx.is_some() || !ambiguous {
                             tags.push((lo..lo + w, Tag::Route));
                             value(&mut tags, route, hash, Tag::RouteNumber);
@@ -3792,8 +3792,18 @@ impl Tagger<'_> {
             && (0..k).all(|i| self.toks[i].seg == self.toks[0].seg)
             && matches!(
                 lex.special(&join_ref(&self.toks[0..k])),
-                Some(l) if l.value == Special::HighwayContract
+                Some(l) if matches!(l.value, Special::HighwayContract | Special::RuralRoute)
             )
+        {
+            return true;
+        }
+        // A highway and its number with no house number (`HWY 12 BOX 5`, `STATE ROUTE 9
+        // BOX 4`): the highway is the street, the box value a unit.
+        if k >= 2
+            && self.text(k) == "BOX"
+            && has_digit(self.text(k - 1))
+            && (0..k).all(|i| self.toks[i].seg == self.toks[0].seg)
+            && longest_at(self.toks, 0, k - 1, |s| lex.highway(s)).is_some_and(|(_, w)| w == k - 1)
         {
             return true;
         }
