@@ -65,6 +65,7 @@ One line per kind. Every open issue here is in the **Later** milestone (or **Too
 - **Boxes and routes:** #358.
 - **House numbers and street names:** #594, #643, #560, #617.
 - **City field and line 2:** #367, #480, #482, #483, #553, #596, #597, #741, #742.
+- **Glued strings (split and re-parse):** the tracker #761 with #762, #763, #764, #765, #766; #741 and #742 above are parts of it, as are #304 and #656 in 0.7.0.
 - **ZIP forms and odd text:** #601, #602.
 - **Parsing ideas:** #397, #435.
 - **Review data and tooling:** #222, #225, #395, #403; the Tooling milestone (never shipped, never closed): #323, #609, and the parser showdown (its own repository).
