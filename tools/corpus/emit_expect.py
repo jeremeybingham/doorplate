@@ -80,7 +80,21 @@ def unit_text(t,n):
     if n: return f"# {n}"
     return ""
 
+def _route_words():
+    """The rural route and highway contract forms of special.toml (the lexicon's `special`)."""
+    import tomllib, pathlib
+    d=tomllib.loads((pathlib.Path(__file__).resolve().parents[2]/"crates/doorplate/data/special.toml").read_text())
+    return {f for k in ("rural_route","highway_contract") for f in d[k]["forms"]}
+ROUTE_WORDS=_route_words()
+
 def units(e):
+    # `HC BOX 12`, `RR BOX 12`, `STAR RT BOX 12`: a route word as the street and the box value
+    # as the unit keeps the BOX word (#384, #538); `HC # 12` would read back as a route.
+    if (not e.get("street_number") and not e.get("unit_type") and not e.get("second_unit_number")
+            and e.get("unit_number") and not e.get("highway")):
+        st=join(e.get("street_dir_prefix",""),name_text(e),e.get("street_suffix",""),e.get("street_dir_suffix",""))
+        n=plain(e["unit_number"])
+        if n and st in ROUTE_WORDS: return "BOX "+n
     return join(unit_text(e.get("unit_type"),e.get("unit_number")),
                 unit_text(e.get("second_unit_type"),e.get("second_unit_number")))
 
