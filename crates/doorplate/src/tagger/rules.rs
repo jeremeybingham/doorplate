@@ -2423,10 +2423,11 @@ impl Tagger<'_> {
                     let ambiguous = lex.highway(&form).is_some() || lex.suffix(&form).is_some();
                     if let Some((route, hash)) = self.value_at(lo + w, hi) {
                         let bx = self.box_part(route + 1, hi);
-                        // `STAR RT # 71E1` is what the USPS line of the #384 reading
-                        // (`STAR RT BOX 71E1`: street and unit) says; it must read back
-                        // as that street, so a `#` after `STAR RT` needs a BOX (#538).
-                        let ambiguous = ambiguous || (hash && &*form == "STAR RT");
+                        // `STAR RT # 71E1`, `HC # 12`: the USPS line of the no-route-number
+                        // reading (`STAR RT BOX 71E1`, `HC BOX 12`: street and unit, #384,
+                        // #538) must read back as it came, so a `#` after a highway contract
+                        // form needs a BOX.
+                        let ambiguous = ambiguous || (hash && l.value == Special::HighwayContract);
                         if bx.is_some() || !ambiguous {
                             tags.push((lo..lo + w, Tag::Route));
                             value(&mut tags, route, hash, Tag::RouteNumber);
@@ -3777,12 +3778,25 @@ impl Tagger<'_> {
             && (name_lo..k).all(|i| lex.highway(self.text(i)).is_none())
     }
 
-    /// Whether `BOX` at `k` follows a route word with no route number and a plain
+    /// Whether `BOX` at `k` follows a highway contract form, or a route word, with no route number and a plain
     /// word, at the start of the line (`STAR RT BOX 71E1`, `STAR ROUTE BOX 309`, #384):
     /// the words are the street and the box value a unit, as the reviewers read it. A
     /// route number (`RT 2 BOX 15`) never reaches here: the word before `BOX` is a number.
     fn route_word_before_box(&self, name_lo: usize, k: usize) -> bool {
         let lex = self.lex;
+        // Every highway contract form with no route number (`HC BOX 12`,
+        // `HWY CONTRACT ROUTE BOX 12`, `STAR ROUTE BOX 12`) is read the same way (#538).
+        if name_lo == 0
+            && k >= 1
+            && self.text(k) == "BOX"
+            && (0..k).all(|i| self.toks[i].seg == self.toks[0].seg)
+            && matches!(
+                lex.special(&join_ref(&self.toks[0..k])),
+                Some(l) if l.value == Special::HighwayContract
+            )
+        {
+            return true;
+        }
         name_lo == 0
             && k >= 2
             && self.text(k) == "BOX"
