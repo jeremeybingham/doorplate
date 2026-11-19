@@ -21,7 +21,7 @@ Pages are under `https://pe.usps.com/text/pub28/` (`pe.usps.com` refuses clients
 | `special.toml` `[po_box]` | §281 to 284 | `PO BOX ##`. §283 turns CALLER, FIRM CALLER, BIN, LOCKBOX and DRAWER into PO BOX. PO DRAWER, LOCK BOX and the PO BOX spelling variants are accepted input only. |
 | `special.toml` `[rural_route]`, `[box]` | §241 to 245 | `RR ## BOX ##`; §241 bans RURAL, NUMBER, NO and `#`. §244 turns RFD and RD into RR, so RD is a route form, taken only in the `RD ## BOX ##` position. RTE, RT and ROUTE are accepted input only. |
 | `special.toml` `[general_delivery]` | §261 | Spelled out, never abbreviated: the short forms are input only. |
-| `special.toml` `[highway_contract]` | §251 | `HC ## BOX ##` (`HC 68 BOX 23A`). §251 bans HIGHWAY CONTRACT and STAR ROUTE; HCR, H C, HWY CONTRACT and STAR RTE are accepted input only. |
+| `special.toml` `[highway_contract]` | §251 | `HC ## BOX ##` (`HC 68 BOX 23A`). §251 bans HIGHWAY CONTRACT and STAR ROUTE; HCR, H C, HWY CONTRACT, STAR RTE and STAR RT are accepted input only. |
 | `special.toml` `[[highway]]` | §237; Appendix F | The prefix is spelled out (COUNTY ROAD, COUNTY HIGHWAY, HIGHWAY, STATE HIGHWAY, STATE ROAD, STATE ROUTE, US HIGHWAY, INTERSTATE, RANCH ROAD); FM is the exception (`FM 1200`). Added from Appendix F: ST HIGHWAY, ST RD, ST RT, TOWNSHIP ROAD (TSR), ROAD (RD), ROUTE (RT, RTE), EXPRESSWAY, LOOP. F maps SR to both STATE ROAD and STATE ROUTE, so SR is left out of the base rows and read in Florida only (`[[highway.state]]`, below). |
 | `special.toml` `[placeholder]` | Not a USPS rule | Stand-in text seen in county property data. |
 
