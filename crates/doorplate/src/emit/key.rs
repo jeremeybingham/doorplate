@@ -49,6 +49,14 @@ impl ParsedAddress {
             }
             _ => n,
         };
+        // A grid number in two parts (`N45 W2210`, #311) keys as one number, `N45W2210`.
+        if let Some((a, b)) = n.split_once(' ') {
+            if (crate::classify::is_grid_number(a) || crate::classify::is_grid_part(a))
+                && (crate::classify::is_grid_number(b) || crate::classify::is_grid_part(b))
+            {
+                return Some(format!("{a}{b}"));
+            }
+        }
         let queens_form = n.split_once('-').is_some_and(|(a, b)| {
             let digits = |s: &str| !s.is_empty() && s.bytes().all(|c| c.is_ascii_digit());
             let end = b
