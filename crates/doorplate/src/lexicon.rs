@@ -1814,6 +1814,10 @@ mod tests {
             Some((Special::HighwayContract, MatchKind::Variant))
         );
         assert_eq!(
+            sp("STAR RT"),
+            Some((Special::HighwayContract, MatchKind::Variant))
+        );
+        assert_eq!(
             sp("Gen Del"),
             Some((Special::GeneralDelivery, MatchKind::Variant))
         );

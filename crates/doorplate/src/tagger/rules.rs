@@ -3773,12 +3773,35 @@ impl Tagger<'_> {
             && (name_lo..k).all(|i| lex.highway(self.text(i)).is_none())
     }
 
-    /// Whether `BOX` at `k` follows a route word with no route number and a plain
+    /// Whether `BOX` at `k` follows a highway contract form, or a route word, with no route number and a plain
     /// word, at the start of the line (`STAR RT BOX 71E1`, `STAR ROUTE BOX 309`, #384):
     /// the words are the street and the box value a unit, as the reviewers read it. A
     /// route number (`RT 2 BOX 15`) never reaches here: the word before `BOX` is a number.
     fn route_word_before_box(&self, name_lo: usize, k: usize) -> bool {
         let lex = self.lex;
+        // Every highway contract form with no route number (`HC BOX 12`,
+        // `HWY CONTRACT ROUTE BOX 12`, `STAR ROUTE BOX 12`) is read the same way (#538).
+        if name_lo == 0
+            && k >= 1
+            && self.text(k) == "BOX"
+            && (0..k).all(|i| self.toks[i].seg == self.toks[0].seg)
+            && matches!(
+                lex.special(&join_ref(&self.toks[0..k])),
+                Some(l) if matches!(l.value, Special::HighwayContract | Special::RuralRoute)
+            )
+        {
+            return true;
+        }
+        // A highway and its number with no house number (`HWY 12 BOX 5`, `STATE ROUTE 9
+        // BOX 4`): the highway is the street, the box value a unit.
+        if k >= 2
+            && self.text(k) == "BOX"
+            && has_digit(self.text(k - 1))
+            && (0..k).all(|i| self.toks[i].seg == self.toks[0].seg)
+            && longest_at(self.toks, 0, k - 1, |s| lex.highway(s)).is_some_and(|(_, w)| w == k - 1)
+        {
+            return true;
+        }
         name_lo == 0
             && k >= 2
             && self.text(k) == "BOX"

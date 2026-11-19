@@ -4,6 +4,7 @@
 //! This formats a parse; it does not check that the address exists or is
 //! deliverable.
 
+use crate::lexicon::{Lexicons, Special};
 use crate::types::{ParsedAddress, UnitType};
 
 /// A Pub 28 style address: uppercase, punctuation dropped except the
@@ -115,6 +116,28 @@ impl ParsedAddress {
 
     /// Both units in Pub 28 form (`APT 4 # 2`), or empty.
     pub(super) fn units_text(&self) -> String {
+        // `HC BOX 12`, `RR BOX 12` and `STAR RT BOX 12` are the route word as the street and
+        // the box value as a unit (#384, #538). Written `HC # 12` the line would read back
+        // as a route, so the BOX word stays.
+        if self.street_number.is_none()
+            && self.unit_type.is_none()
+            && self.second_unit_number.is_none()
+        {
+            if let (Some(n), Some(street)) = (
+                self.unit_number
+                    .as_deref()
+                    .map(plain)
+                    .filter(|n| !n.is_empty()),
+                self.street_line(),
+            ) {
+                if matches!(
+                    Lexicons::builtin().special(&street).map(|l| l.value),
+                    Some(Special::RuralRoute | Special::HighwayContract)
+                ) {
+                    return format!("BOX {n}");
+                }
+            }
+        }
         join([
             &unit_text(self.unit_type, self.unit_number.as_deref()),
             &unit_text(self.second_unit_type, self.second_unit_number.as_deref()),
