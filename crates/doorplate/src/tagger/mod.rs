@@ -142,6 +142,8 @@ pub(crate) struct Tagger<'a> {
     /// Pre-split input with a city, state or ZIP field: a street field that is
     /// only a country is dropped (#130).
     country_street: bool,
+    /// A ZIP copy at the end of the address lines was kept as the ZIP for its +4 (#617, #519).
+    zip_copy_kept: bool,
     lens: LineLengths,
     /// The curated rows that apply, once the last line's state or ZIP is
     /// known.
@@ -215,6 +217,7 @@ impl<'a> Tagger<'a> {
             number_letter_guess: false,
             letter_unit: None,
             country_street: false,
+            zip_copy_kept: false,
             lens,
             places: None,
             hint,
@@ -305,7 +308,10 @@ impl<'a> Tagger<'a> {
                     | Tag::HighwayRoute
             )
         };
-        let skipped = second.iter().all(|t| *t == Tag::Skip);
+        // A copy of the last line whose ZIP+4 was kept counts as skipped too (#617, #519).
+        let skipped = second
+            .iter()
+            .all(|t| *t == Tag::Skip || *t == Tag::Zip && self.zip_copy_kept);
         // The street began on line 1: a street on line 2 alone (`THE COVE` /
         // `1111 ASBURY WAY`, a box on line 1) is just the address.
         let began = first.iter().any(|t| street(t) || *t == Tag::StreetNumber);
@@ -614,6 +620,11 @@ pub(crate) fn tag_fields(
     }
     let end = t.drop_city_copy(line.start, s2, city_range);
     if end < s2 {
+        t.repeated();
+    }
+    let before = line.start;
+    line.start = t.drop_leading_zip4(line.start, end);
+    if line.start > before {
         t.repeated();
     }
     t.country_street = true;

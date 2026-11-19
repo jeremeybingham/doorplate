@@ -586,6 +586,14 @@ PROBES = [
         2,
     ),
     (
+        "line2-last-line-zip4",
+        "760",
+        "line 2 repeats the last line with a ZIP+4 (TOWN CA 90210 1234 under the fields)",
+        r"\| ?[A-Z][A-Z .'-]* [A-Z]{2},? [0-9]{5}[ -][0-9]{4}$",
+        "S",
+        2,
+    ),
+    (
         "unit-before-street-residual",
         "529",
         "a designator and its value between the house number and the street name (242 APT B ESPLANADE, 2900 APT S OLD 63)",
