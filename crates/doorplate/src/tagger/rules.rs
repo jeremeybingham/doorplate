@@ -2174,14 +2174,23 @@ impl Tagger<'_> {
         // No house number (#734): a name or unnumbered street, then a PO Box
         // in its own comma segment (`ELM PLAZA, PO BOX 77, TULSA, OK`).
         let numbered = house_number(self.text(lo)).is_some();
-        for k in lo + 2..hi {
+        let first = if numbered { lo + 2 } else { lo + 1 };
+        for k in first..hi {
             let starts_segment = self.toks[k].seg != self.toks[k - 1].seg;
             if !numbered && !starts_segment {
                 continue;
             }
-            // Without a house number only a spelled PO Box counts: a bare `BOX 12`
-            // after `STAR ROUTE` or a ranch name is not a PO Box.
-            let bare = numbered && (starts_segment || self.unit_value_before(lo, k));
+            // A name of two or more words before the box (`ACME TRUSTEES, PO
+            // BOX 123`) is the attention line, not a street (#734, #726).
+            let name = !numbered && self.box_name(lo, k);
+            // Without a house number only a spelled PO Box counts, or a bare
+            // `BOX 12` after a name: a bare box after `STAR ROUTE` or a ranch
+            // name is not a PO Box.
+            let bare = if numbered {
+                starts_segment || self.unit_value_before(lo, k)
+            } else {
+                name
+            };
             let Some(m) = self.box_line(k, hi, bare) else {
                 continue;
             };
@@ -2189,6 +2198,10 @@ impl Tagger<'_> {
                 self.set(r, tag);
             }
             self.units(m.end, m.end, hi, false);
+            if name {
+                self.set(lo..k, Tag::Attention);
+                return true;
+            }
             // `TOWER 2, 12 OAK AVE, PO BOX 77`: a numbered segment before
             // the box is the street; the words before it are the name.
             let mut lo = lo;
@@ -2208,6 +2221,16 @@ impl Tagger<'_> {
             return true;
         }
         false
+    }
+
+    /// Words before a PO Box with no house number that read as a name, not
+    /// an unnumbered street (#734): two or more recipient words with no street
+    /// suffix (`ACME TRUSTEES`, `JANE Q DOE`). `ELM PLAZA`, `OAK RD` and a single
+    /// word (`BROADWAY`) stay a street.
+    fn box_name(&self, lo: usize, k: usize) -> bool {
+        k >= lo + 2
+            && self.recipient_words(lo, k)
+            && (lo..k).all(|i| self.lex.suffix(self.text(i)).is_none())
     }
 
     /// `PO BOX 190 ELM RD` (#366): street words after the box number, with no
