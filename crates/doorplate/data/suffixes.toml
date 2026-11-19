@@ -842,7 +842,7 @@ forms = ["RDS", "ROADS"]
 [[suffix]]
 name = "ROUTE"
 abbr = "RTE"
-forms = ["ROUTE", "RTE"]
+forms = ["ROUTE", "RTE", "RT"]
 
 [[suffix]]
 name = "ROW"

@@ -46,7 +46,7 @@ Working order (tracker #724; each group is one batch, unit rules one after anoth
 
 - **E. ZIP form:** #519.
 - **A. Designator and suffix spellings (data only):** #289, #375, #471, #321 (the residual), #725 (misspelled suffix and unit words).
-- **C. House-number letter shapes:** #311, #360, and the decision #312.
+- **C. House-number letter shapes:** #360, and the decision #312.
 - **B. Boxes and routes:** #538, #304 with #307, #598, #734 (a PO Box after a line with no house number).
 - **D. Repeated, glued and multi-part units:** the decision #656, then #693 with #499, then #294.
 - **F. Names beside the street:** #310, #351, #589, #341, shaped by #726 (named buildings with no building word).
