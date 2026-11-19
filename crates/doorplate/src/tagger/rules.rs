@@ -2423,6 +2423,10 @@ impl Tagger<'_> {
                     let ambiguous = lex.highway(&form).is_some() || lex.suffix(&form).is_some();
                     if let Some((route, hash)) = self.value_at(lo + w, hi) {
                         let bx = self.box_part(route + 1, hi);
+                        // `STAR RT # 71E1` is what the USPS line of the #384 reading
+                        // (`STAR RT BOX 71E1`: street and unit) says; it must read back
+                        // as that street, so a `#` after `STAR RT` needs a BOX (#538).
+                        let ambiguous = ambiguous || (hash && &*form == "STAR RT");
                         if bx.is_some() || !ambiguous {
                             tags.push((lo..lo + w, Tag::Route));
                             value(&mut tags, route, hash, Tag::RouteNumber);

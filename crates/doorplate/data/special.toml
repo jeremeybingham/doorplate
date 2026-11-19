@@ -68,7 +68,7 @@ forms = ["RR", "R R", "RURAL ROUTE", "RURAL RTE", "RURAL RT", "RURAL", "RFD", "R
 # HIGHWAY CONTRACT, ROUTE, NUMBER, NO, STAR ROUTE or the pound sign. Those
 # words are accepted here as input only; the emitter writes HC.
 standard = "HC"
-forms = ["HC", "H C", "HCR", "HRC", "HIGHWAY CONTRACT", "HIGHWAY CONTRACT ROUTE", "HWY CONTRACT", "STAR ROUTE", "STAR RTE",
+forms = ["HC", "H C", "HCR", "HRC", "HIGHWAY CONTRACT", "HIGHWAY CONTRACT ROUTE", "HWY CONTRACT", "STAR ROUTE", "STAR RTE", "STAR RT",
   # With ROUTE written out, which section 251 says to drop (seen in input:
   # HC ROUTE 72, HC R 32, HIGHWAY CONTRACT RTE 46, HWY CONTRACT ROUTE 102).
   "HC ROUTE", "HC RTE", "HC RT", "HC R", "HCR ROUTE",
