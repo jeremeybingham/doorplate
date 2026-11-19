@@ -950,6 +950,14 @@ PROBES = [
         "D",
         1,
     ),
+    (
+        "unit-designator-split",
+        "770",
+        "a unit split from its designator: a one-line segment of a number then the designator (, 17 APT,) or a designator after the suffix with its value in the next segment or line 2 (ELM RD STE, 120 241)",
+        rf", [0-9]+[A-Z]? {UN}(?:,| \||$)|\b{SUF} {UN}(?:,| \|) [0-9]",
+        "S",
+        3,
+    ),
 ]
 # Open rule issues that have no probe, and why. Every other open issue with the label `area:rules` has a probe in PROBES; the
 # issues about docs, tooling, the API or the architecture, and the trackers, are not text shapes and need none.
