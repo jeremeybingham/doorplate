@@ -4164,8 +4164,8 @@ impl Tagger<'_> {
     /// after the designator ends a street. A street-suffix code is the value too
     /// (`SUITE LA`, `APT LN`, #272): the designator always takes a value, so the word
     /// after it is that value whatever it spells.
-    /// A suffix code needs a street name before the designator (`100 UNIT LN` is the street
-    /// `UNIT LN`, not a unit with no street).
+    /// A suffix code is the value only right after a street suffix or a segment break (line 2,
+    /// a comma): `OAK KEY DR` and `100 UNIT LN` are street names, not a unit.
     fn letters_after_designator(&self, floor: usize, name_lo: usize, last: usize) -> bool {
         let t = self.text(last);
         last > floor
@@ -4178,7 +4178,13 @@ impl Tagger<'_> {
                     .unit(s)
                     .filter(|l| l.kind != MatchKind::Observed && l.value.range_required())
             })
-            .is_some_and(|(_, n)| self.lex.suffix(t).is_none() || last - n > name_lo)
+            .is_some_and(|(_, n)| {
+                let d = last - n;
+                self.lex.suffix(t).is_none()
+                    || d == 0
+                    || self.toks[d].seg != self.toks[d - 1].seg
+                    || (d > name_lo && self.lex.suffix(self.text(d - 1)).is_some())
+            })
     }
 
     /// Up to two units at the end of `floor..hi`, read from the right.
