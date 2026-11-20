@@ -223,6 +223,15 @@ impl Parser {
                 return Ok(addr);
             }
         }
+        // The city field holds a unit or a box and line 2 is empty (#244): the text is line 2,
+        // the city stays empty (`missing_city`).
+        if let Some(moved) = self.unit_in_city(fields) {
+            if let Ok(mut addr) = self.parse_fields(&moved) {
+                addr.source.original = fields.joined();
+                addr.source.fields = Some(fields.clone());
+                return Ok(addr);
+            }
+        }
         let order = [
             FieldName::Line1,
             FieldName::Line2,
@@ -333,6 +342,48 @@ impl Parser {
         Some(Fields {
             line2: None,
             city: Some(line2.to_string()),
+            ..fields.clone()
+        })
+    }
+
+    /// The fields with the city text moved to line 2, when the city field is only a unit
+    /// designator (or `BOX`) and one value (`APT C`, `BOX 1204`, `SUITE #410`), line 1 has a
+    /// street and line 2 is empty (#244). A city with more words (`UNIT 8 MARLOW`) or a line 2
+    /// that is already there is left alone.
+    fn unit_in_city(&self, fields: &Fields) -> Option<Fields> {
+        let city = fields.city.as_deref()?.trim();
+        if fields
+            .line2
+            .as_deref()
+            .is_some_and(|l| !l.trim().is_empty())
+            || !fields
+                .line1
+                .as_deref()
+                .is_some_and(|l| l.chars().any(|c| c.is_ascii_digit()))
+        {
+            return None;
+        }
+        let mut words = city.split_whitespace();
+        let head = words.next()?.trim_end_matches('.');
+        let mut value = words.next()?;
+        if value == "#" || value.eq_ignore_ascii_case("NO") {
+            value = words.next()?;
+        }
+        if words.next().is_some()
+            || !(head.eq_ignore_ascii_case("BOX") || self.lex.unit(head).is_some())
+            || value.chars().count() > 8
+            || !value
+                .trim_start_matches('#')
+                .chars()
+                .all(|c| c.is_ascii_alphanumeric() || c == '-')
+            || !(value.chars().any(|c| c.is_ascii_digit())
+                || value.trim_start_matches('#').len() == 1)
+        {
+            return None;
+        }
+        Some(Fields {
+            line2: Some(city.to_string()),
+            city: None,
             ..fields.clone()
         })
     }
