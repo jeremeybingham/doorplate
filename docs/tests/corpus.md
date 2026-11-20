@@ -161,6 +161,7 @@ One row per `tests/corpus/*.jsonl`; a new file gets a row here and an id prefix 
 | `care-of-front.jsonl` | `cof-` | `C/O` and a name ahead of a box or a street line: the marker and name go to `attention` |
 | `compass-street.jsonl` | `cn-` | A spelled-out compass word and a suffix (`44 WEST AVE 2B`) are the street's name and suffix; `KY` or `TR` and a number after a compass word are the road |
 | `country.jsonl` | `co-` | A trailing `USA`, `US` or `UNITED STATES` on one line, on its own line, in line 2 or in the city or state field (`country_ignored`); `US` as a highway prefix is not a country |
+| `city-is-state.jsonl` | `cs-` | The city field repeats the state and line 2 is a place of that state: line 2 is the city; a unit, a firm name or a real city in the field leaves the rule off |
 | `county.jsonl` | `cy-` | `CR` after a name is `CIRCLE` in every state; `CTY RD` and `CTY HWY` before a route are `COUNTY ROAD` and `COUNTY HIGHWAY` outside Florida too |
 | `county-data.jsonl` | `cty-street-`, `cty-full-`, `cty-placeholder-`, `cty-highway-` | Shapes seen in Florida county property listings, hand-labeled: house number letters, units with and without designators, highways, placeholders (`UNKNOWN`, `NO SITUS`) |
 | `county-data-golden.jsonl` | `cty-golden-` | One case per distinct shape in raw lines from eight Florida county listings; inputs only were taken, the labels are by hand |

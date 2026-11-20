@@ -214,6 +214,15 @@ impl Parser {
                 return Ok(addr);
             }
         }
+        // The city field repeats the state and line 2 is the real place (#357): the city is
+        // line 2, read as the city field.
+        if let Some(moved) = self.city_on_line2(fields) {
+            if let Ok(mut addr) = self.parse_fields(&moved) {
+                addr.source.original = fields.joined();
+                addr.source.fields = Some(fields.clone());
+                return Ok(addr);
+            }
+        }
         let order = [
             FieldName::Line1,
             FieldName::Line2,
@@ -293,6 +302,39 @@ impl Parser {
             addr.diagnostics.warn(Warning::IntersectionDetected);
         }
         Ok(addr)
+    }
+
+    /// The fields with line 2 moved to the city, when the city field holds only the row's
+    /// state (`NY` or `Virginia` for state `VA`) and line 2 is a place of that state (#357).
+    /// A city that is itself a place in the state (`New York`, state `NY`) is left alone, and
+    /// so is a line 2 that is not a place (`APT E`, a firm).
+    fn city_on_line2(&self, fields: &Fields) -> Option<Fields> {
+        let line2 = fields.line2.as_deref()?.trim();
+        let city = fields.city.as_deref()?.trim();
+        let state = self
+            .lex
+            .state(fields.state.as_deref()?.trim())?
+            .value
+            .code();
+        if line2.is_empty()
+            || !fields
+                .line1
+                .as_deref()
+                .is_some_and(|l| !l.trim().is_empty())
+            || self.lex.state(city)?.value.code() != state
+            || self.lex.place(state, city).is_some()
+            || line2
+                .chars()
+                .any(|c| !(c.is_alphabetic() || c == ' ' || c == '.' || c == '\'' || c == '-'))
+            || self.lex.place(state, line2).is_none()
+        {
+            return None;
+        }
+        Some(Fields {
+            line2: None,
+            city: Some(line2.to_string()),
+            ..fields.clone()
+        })
     }
 
     /// Parse many single-line addresses. Each element succeeds or fails
