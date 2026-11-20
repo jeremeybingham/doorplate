@@ -4160,14 +4160,15 @@ impl Tagger<'_> {
     }
 
     /// `APT TD`, `UNIT AB`: two letters right after a designator that always
-    /// takes a value. Others are street words (`FRONT ST`, `UPPER RD`), and a suffix
-    /// or directional after the designator ends a street (`KEY RD`).
+    /// takes a value. Others are street words (`FRONT ST`, `UPPER RD`), and a directional
+    /// after the designator ends a street. A street-suffix code is the value too
+    /// (`SUITE LA`, `APT LN`, #272): the designator always takes a value, so the word
+    /// after it is that value whatever it spells.
     fn letters_after_designator(&self, floor: usize, last: usize) -> bool {
         let t = self.text(last);
         last > floor
             && t.len() == 2
             && t.bytes().all(|c| c.is_ascii_alphabetic())
-            && self.lex.suffix(t).is_none()
             && self.lex.directional(t).is_none()
             && self.toks[last].seg == self.toks[last - 1].seg
             && longest_ending(self.toks, floor, last, |s| {

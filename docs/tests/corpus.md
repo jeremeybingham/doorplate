@@ -231,6 +231,7 @@ One row per `tests/corpus/*.jsonl`; a new file gets a row here and an id prefix 
 | `unit-separator.jsonl` | `sep-` | A dash or slash between a suffix and a unit, and a spaced hyphen then a bare value, are separators; a slash before a PO Box gives street and box |
 | `unit-spaced-hyphen.jsonl` | `uh-` | A spaced hyphen between a designator and its value is dropped |
 | `unit-two-parts.jsonl` | `utp-` | A unit value of two parts after a designator (`STE D E`, `STE A1 2`) or alone in a comma segment (`1 D`) is one unit, the space kept |
+| `unit-value-suffix-code.jsonl` | `uvs-` | A two-letter value after a designator that always takes a value is the unit even when it is a street-suffix code (`SUITE LA`, `APT LN`, `STE PL`) |
 | `unit-in-city.jsonl` | `uc-` | The city field is only a unit designator and one value (`APT C`, `Suite # K`) and line 2 is empty: the unit is read and the city is missing; a line 2, `FORT 4` or a longer city leaves the rule off |
 | `unit-then-box.jsonl` | `ub-` | A bare `BOX` and its number after a unit (`STE 105 BOX 121`) is the PO Box with `dual_address` |
 | `units.jsonl` | `un-` | Units left in the street name: two numbers after a designator, `BOX`, `NO`, `NUM`, `LOC` after a street, a cut-off designator; a street named `FLOOR` or `UNIT` is unchanged |
