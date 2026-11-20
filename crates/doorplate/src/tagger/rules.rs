@@ -3974,6 +3974,20 @@ impl Tagger<'_> {
             && !self.suffix_before(name_lo, k)
     }
 
+    /// Whether the bare `PIER` at `k` (nothing after it) ends the street's name
+    /// (`40 HARBOR FISH PIER`): a name word (no digit, no `#`) comes before it in
+    /// the street's own segment and no street suffix does. With a value it stays
+    /// the designator (`PIER 4`), as after a suffix (`MAIN ST PIER`) or on a
+    /// later line (#327, the reasoning of #166 and #193).
+    fn pier_in_name(&self, name_lo: usize, k: usize) -> bool {
+        self.text(k) == "PIER"
+            && k > name_lo
+            && self.toks[k].seg == self.toks[name_lo].seg
+            && !self.toks[k - 1].is_hash()
+            && !has_digit(self.text(k - 1))
+            && !self.suffix_before(name_lo, k)
+    }
+
     /// Whether the value at `last` follows a street name that ends in `BAY`,
     /// with a postdirectional between them or not (`HERON BAY 2B`, `HERON BAY
     /// W 2B`).
@@ -4439,7 +4453,7 @@ impl Tagger<'_> {
             if let Some((u, w)) = longest_ending(self.toks, floor + 1, j, |s| {
                 lex.unit(s).filter(|l| l.kind != MatchKind::Observed)
             }) {
-                if j - w > name_lo + 1 {
+                if j - w > name_lo + 1 && !self.pier_in_name(name_lo, j - w) {
                     // A penthouse right after a designator is its number
                     // (`APT PH 5213`, `SUITE PH`).
                     if let Some((ty, num)) = found.last_mut() {

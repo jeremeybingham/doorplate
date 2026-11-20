@@ -152,6 +152,7 @@ One row per `tests/corpus/*.jsonl`; a new file gets a row here and an id prefix 
 | `bare-po-box.jsonl` | `nb-` | `PO BOX` with no number at the end of a street line is left unparsed, not part of the street name |
 | `bare-unit-word.jsonl` | `bw-` | A number before a designator word on line 2 (`4 REAR`, `408 SOUTH`) is the unit; a directional plus suffix is a street name |
 | `bay.jsonl` | `by-` | `BAY` at the end of a street name is part of the name; after a suffix or on line 2 it is still a unit |
+| `pier.jsonl` | `pr-` | a bare `PIER` at the end of a street name is part of the name; with a value or after a suffix it is a unit (#327) |
 | `blvd-direction.jsonl` | `bd-` | A suffix-word street (`BOULEVARD`, `PARKWAY`) with a direction after it, so the USPS line reads back; `AVENUE N` stays a lettered street |
 | `box-bare-name.jsonl` | `bx-` | `BOX` and a number after a street name with no suffix is a unit, as after a suffix |
 | `box-first.jsonl` | `bf-` | A box first, then a street (`BOX 3310 FERNLEAF RD`); `PMB` before a PO Box |
