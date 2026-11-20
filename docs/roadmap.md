@@ -50,7 +50,7 @@ Working order (tracker #724; each group is one batch, unit rules one after anoth
 - **D. Repeated, glued and multi-part units:** the decision #656, then #693 with #499. Done: #294 (its two leftover forms are in Later).
 - **F. Names beside the street:** #310, #351, #589, #341, shaped by #726 (named buildings with no building word).
 - **G. Parentheses left after the 0.6.0 rules:** #644 (a warning), #645.
-- **H. Other P2 rules:** #498, #274, #327, #357, #244, #272.
+- **H. Other P2 rules:** #244, #272. Done: #498, #274, #327, #357.
 - **RESO 2.1:** the decision #729 (the full-word suffix as an option).
 - **One-line separators from the pudl comparison:** three rules merged; the one left is in group B.
 
