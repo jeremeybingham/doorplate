@@ -52,6 +52,7 @@ pub(crate) fn assemble(
         tags,
         warnings,
         decisions,
+        letter_repeats_unit,
     } = tagged;
     addr.diagnostics.decisions = decisions;
     for w in warnings {
@@ -441,9 +442,11 @@ pub(crate) fn assemble(
     // units with different designators (`FL 2`, `UNIT 2`) are two units. The copy keeps its
     // spans, so its tokens still read as a unit; `tag()` leaves a second-unit span out when
     // there is no second unit (#652).
+    // A letter after the house number that repeats the unit at the end (`123 B ELM ST APT B`) is
+    // the same unit whatever the designators (#693).
     if addr.unit_number.is_some()
         && addr.unit_number == addr.second_unit_number
-        && addr.unit_type == addr.second_unit_type
+        && (addr.unit_type == addr.second_unit_type || letter_repeats_unit)
     {
         addr.second_unit_number = None;
         addr.second_unit_type = None;

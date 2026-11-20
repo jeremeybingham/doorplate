@@ -111,6 +111,9 @@ pub(crate) struct Tagged {
     pub warnings: Vec<Warning>,
     /// Each uncertain decision once, in the order first made.
     pub decisions: Vec<Decision>,
+    /// The letter read as a unit after the house number is the same as the unit written at the
+    /// end (`123 B ELM ST APT B`, #693): one unit written twice, so `assemble` drops the copy.
+    pub letter_repeats_unit: bool,
 }
 
 /// Lengths used for the truncation check.
@@ -329,11 +332,16 @@ impl<'a> Tagger<'a> {
     }
 
     fn finish(mut self) -> Tagged {
+        let mut letter_repeats_unit = false;
         if let Some(k) = self.letter_unit {
             let used = |tags: &[Tag], n: u8| tags.contains(&Tag::UnitNumber(n));
             self.tags[k] = if !used(&self.tags, 0) {
                 Tag::UnitNumber(0)
             } else if !used(&self.tags, 1) {
+                // The same letter as the first unit's value is that unit again (#693).
+                letter_repeats_unit = self.tags.iter().zip(self.toks).any(|(t, tok)| {
+                    *t == Tag::UnitNumber(0) && tok.text.eq_ignore_ascii_case(&self.toks[k].text)
+                });
                 Tag::UnitNumber(1)
             } else {
                 Tag::Unparsed
@@ -433,6 +441,7 @@ impl<'a> Tagger<'a> {
             tags: self.tags,
             warnings: self.warnings,
             decisions: self.decisions,
+            letter_repeats_unit,
         }
     }
 }
