@@ -175,12 +175,13 @@ One row per `tests/corpus/*.jsonl`; a new file gets a row here and an id prefix 
 | `hash-before-designator.jsonl` | `hu-` | A `#` right before a unit designator and its value marks that unit (`# APT-4`); `#4` and `APT #4` keep their reading |
 | `hyphen.jsonl` | `hn-` | The Queens house number with one trailing letter (`12-34A`); no letter or two letters stay as they were |
 | `hyphen-second-number.jsonl` | `hp-` | A spaced hyphen between the house number and a second number is dropped; New York, Massachusetts, Hawaii and Canada are left as before |
+| `ampersand-numbers.jsonl` | `amp-` | Two house numbers joined by `&` or `AND` are a range (`3 & 5 E 41ST ST` is `3-5`); `&` inside a name is left alone |
 | `intersections.jsonl` | `is-` | Two streets joined by `&`, `AND`, `@` or `AT`: first street as components, second in `unparsed`, `intersection_detected`, no key; look-alikes (`AT&T WAY`) must not warn |
 | `keys.jsonl` | `key-` | Pin the emitters: exact key and slug strings, written from `docs/key-format.md` |
 | `last-line-in-line1.jsonl` | `ll-` | On pre-split fields, line 1 ending with the state field and a ZIP is read as written |
 | `letter-before-hyphen.jsonl` | `lh-` | A letter before the hyphen (`53A-53 HOLLIS AVE`) is one house number, kept as written; a range with a letter is `multiple_addresses` |
 | `level-words.jsonl` | `lv-` | `GROUND`, `MEZZANINE`, `GARAGE`, `LL`, `LOBBY LEVEL` as units; `CAMP GROUND RD` and `LL BEAN RD` keep their reading |
-| `line2-attention.jsonl` | `an-` | Words only on line 2 under a street are the attention line when they look like a firm or a person; a name after a unit, a credential, `D/B/A`; the rest stay unparsed |
+| `line2-attention.jsonl` | `amp-` | Words only on line 2 under a street are the attention line when they look like a firm or a person; a name after a unit, a credential, `D/B/A`; the rest stay unparsed |
 | `lonedir.jsonl` | `ld-` | A lone directional on line 2 after a line 1 that ends in its suffix is the unit, not the postdirectional |
 | `loop.jsonl` | `lp-` | `LOOP` after a street name, then a number, is the suffix and a bare unit |
 | `lost-fraction.jsonl` | `lf-` | A fraction written without its slash (`31 1 2 ELM PLACE`) after the house number or in a whole-number street name |

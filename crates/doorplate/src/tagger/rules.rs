@@ -3111,6 +3111,22 @@ impl Tagger<'_> {
             && (ty + 1..line_end).all(|j| self.lex.directional(self.text(j)).is_some())
     }
 
+    /// `&` or `AND` at `i` between the house number (at `i - 1`, plain digits) and a second
+    /// plain number, all in one segment, with a street after them: a name or direction and a
+    /// suffix (#274). `5 A & B ST`, `12 ARTS & CRAFTS LN` and `100 & 200` do not match.
+    fn ampersand_pair(&self, i: usize, hi: usize) -> bool {
+        if i < 1 || i + 3 >= hi || !matches!(self.text(i), "&" | "AND") {
+            return false;
+        }
+        let (a, b) = (self.text(i - 1), self.text(i + 1));
+        let plain = |t: &str| all_digits(t) && t.len() <= 5 && !t.bytes().all(|c| c == b'0');
+        plain(a)
+            && plain(b)
+            && (i - 1..hi).all(|k| self.toks[k].seg == self.toks[i].seg)
+            && self.lex.suffix(self.text(i + 2)).is_none()
+            && (i + 3..hi).any(|k| self.lex.suffix(self.text(k)).is_some())
+    }
+
     fn street_from(&mut self, lo: usize, hi: usize) {
         let mut i = lo;
         let t0 = self.text(i);
@@ -3161,7 +3177,13 @@ impl Tagger<'_> {
                 }
             }
             i += 1;
-            if i < hi && is_fraction(self.text(i)) {
+            if shape == NumberShape::Plain && self.ampersand_pair(i, hi) {
+                // "3 & 5 E 41ST ST", "3 AND 5 ...": two house numbers joined by `&` are a range,
+                // as `3-5` is (#274); the assembler writes them with a hyphen.
+                self.set(i..i + 2, Tag::StreetNumber);
+                self.warn(Warning::MultipleAddresses);
+                i += 2;
+            } else if i < hi && is_fraction(self.text(i)) {
                 self.set(i..i + 1, Tag::StreetNumber);
                 i += 1;
             } else if i < hi

@@ -126,6 +126,10 @@ pub(crate) fn assemble(
                             {
                                 format!("{}{}", n.text, l.text)
                             }
+                            // Two numbers joined by `&` or `AND` are a range (#274).
+                            [a, amp, b] if matches!(amp.text.as_str(), "&" | "AND") => {
+                                format!("{}-{}", a.text, b.text)
+                            }
                             _ => text.into_owned(),
                         };
                         set_once(&mut addr.street_number, text);
