@@ -1221,11 +1221,21 @@ impl Tagger<'_> {
             .any(|t| matches!(t, Tag::UnitType(_) | Tag::UnitNumber(_)));
         let name_after = self.tags[a + 1..l1.end].contains(&Tag::Name)
             && self.tags[a + 1..l1.end].contains(&Tag::Suffix);
+        // No suffix word: a single direction letter and then the name (`APT S OLD 63`,
+        // `APT S PROVIDENCE`). The letter is the street's direction, the rest its name.
+        let dir_name = !name_after
+            && l1.end > a + 2
+            && self.toks[a + 1].seg == self.toks[a].seg
+            && is_letter(self.text(a + 1))
+            && self.lex.directional(self.text(a + 1)).is_some()
+            && self.tags[a + 1..l1.end]
+                .iter()
+                .all(|t| matches!(t, Tag::Name | Tag::PreDir));
         if self.tags[a] != Tag::Name
             || !one_seg
             || !bare_l2
             || !none_on_l1
-            || !name_after
+            || !(name_after || dir_name)
             || self.tags[l1.end..]
                 .iter()
                 .any(|t| matches!(t, Tag::UnitType(_)))
@@ -1237,6 +1247,9 @@ impl Tagger<'_> {
             return;
         }
         self.set(a..a + 1, Tag::UnitType(0));
+        if dir_name {
+            self.set(a + 1..a + 2, Tag::PreDir);
+        }
         self.decide(Decision::BareUnit);
     }
 
