@@ -159,6 +159,12 @@ cof-013
 cof-014
 cof-015
 cof-016
+cs-001
+cs-002
+cs-003
+cs-004
+cs-005
+cs-006
 cty-full-001
 cty-full-002
 cty-full-003
