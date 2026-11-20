@@ -443,10 +443,13 @@ pub(crate) fn assemble(
     // spans, so its tokens still read as a unit; `tag()` leaves a second-unit span out when
     // there is no second unit (#652).
     // A letter after the house number that repeats the unit at the end (`123 B ELM ST APT B`) is
-    // the same unit whatever the designators (#693).
+    // the same unit whatever the designators (#693). A bare `# N` after a designated unit with the
+    // same value (`SPC 249, # 249`) is that unit again (#499).
     if addr.unit_number.is_some()
         && addr.unit_number == addr.second_unit_number
-        && (addr.unit_type == addr.second_unit_type || letter_repeats_unit)
+        && (addr.unit_type == addr.second_unit_type
+            || letter_repeats_unit
+            || (addr.unit_type.is_some() && addr.second_unit_type.is_none()))
     {
         addr.second_unit_number = None;
         addr.second_unit_type = None;
