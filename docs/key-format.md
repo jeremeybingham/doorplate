@@ -94,11 +94,12 @@ Applied to every free-text segment (number, name, route, box, unit):
 1. Uppercase; drop periods and apostrophes (`O'BRIEN` and `OBRIEN` match).
    Pub 28 lets punctuation be omitted (section 222) and lists periods and
    apostrophes for removal (section 354). Section 232 keeps the period in a
-   name such as `39.2 RD`, and the USPS emitter does, but the key drops it,
-   so `39.2 RD` and `392 RD` share a key.
+   name such as `39.2 RD`, and so does the key (`k6`, #750): a period between
+   two digits stays, so `39.2 RD` and `392 RD`, or `KM 14.5` and `KM 145`,
+   have different keys. The `k5` key dropped it. Any other period is dropped.
 2. Collapse whitespace to one space.
 3. Percent-encode (`%XX`, uppercase hex, UTF-8 bytes) every character outside
-   `A-Z 0-9 space / -`. This keeps `|` and `%` out of segments; `clean.rs`
+   `A-Z 0-9 space / - .`. This keeps `|` and `%` out of segments; `clean.rs`
    already folds accents, so it rarely applies.
 
 Spelling variants (`North`/`N`, `Street`/`ST`, `Florida`/`FL`) are resolved by

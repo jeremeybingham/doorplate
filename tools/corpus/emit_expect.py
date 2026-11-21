@@ -119,8 +119,10 @@ def zipfull(e):
 def last_line(e): return join(city_of(e),e.get("state",""),zipfull(e))
 
 def keyseg(s):
-    s=" ".join(s.replace(".","").replace("'","").upper().split())
-    return "".join(c if (c.isascii() and (c.isalnum() or c in " /-")) else "".join("%%%02X"%b for b in c.encode()) for c in s)
+    # A period between two digits stays (#750); every other period goes.
+    s=re.sub(r"(?<!\d)\.|\.(?!\d)","",s)
+    s=" ".join(s.replace("'","").upper().split())
+    return "".join(c if (c.isascii() and (c.isalnum() or c in " /-.")) else "".join("%%%02X"%b for b in c.encode()) for c in s)
 
 def key(e,unit):
     st,z=e.get("state",""),e.get("zip5","")
