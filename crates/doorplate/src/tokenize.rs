@@ -560,6 +560,29 @@ fn floor_next(out: &[Token], at: usize, lex: &Lexicons) -> bool {
     named && floor && !state_clash
 }
 
+/// A lone letter after a separator, alone in its segment or followed by a number of up to five
+/// digits that ends it (`- B`, `/ B 12`): the unit written with no designator (#341). Without the
+/// separator the tagger already reads `OAK AVE B` as unit `B`; a letter that is a direction
+/// (`- N`) then reads as it does without the dash.
+fn letter_unit_next(out: &[Token], at: usize) -> bool {
+    let Some(letter) = out.get(at) else {
+        return false;
+    };
+    let seg = letter.seg;
+    let lone = letter.text.len() == 1 && letter.text.bytes().all(|c| c.is_ascii_alphabetic());
+    let number = |t: &Token| {
+        t.seg == seg
+            && (1..=5).contains(&t.text.len())
+            && t.text.bytes().all(|c| c.is_ascii_digit())
+    };
+    let tail = &out[at + 1..];
+    lone && match tail.first() {
+        None => true,
+        Some(t) if t.seg != seg => true,
+        Some(t) => number(t) && tail.get(1).map_or(true, |u| u.seg != seg),
+    }
+}
+
 /// A dash or slash between a street suffix and a unit is a separator (`ST - 2210`, `ST / APT 4C`,
 /// `ROAD / PO BOX 5`): the token is dropped, and what follows reads as a unit or a box. Only
 /// when what follows is a unit designator, a box word, or a value with a digit that is not an
@@ -577,7 +600,9 @@ fn drop_unit_separators(out: &mut Vec<Token>, lex: &Lexicons) {
             && lex
                 .suffix(&prev.text)
                 .is_some_and(|l| l.kind != MatchKind::Observed);
-        let unit_next = unit_like(&next.text, lex) || floor_next(out, k + 1, lex);
+        let unit_next = unit_like(&next.text, lex)
+            || floor_next(out, k + 1, lex)
+            || letter_unit_next(out, k + 1);
         if after_suffix && next.seg == sep.seg && unit_next {
             out.remove(k);
         } else {
