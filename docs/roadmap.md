@@ -66,7 +66,7 @@ One line per kind. Every open issue here is in the **Later** milestone (or **Too
 - **ZIP forms and odd text:** #601, #602.
 - **Parsing ideas:** #397, #435.
 - **0.7.x:** #729 (the RESO 2.1 full-word suffix as an option; the default stays the abbreviation).
-- **Review data and tooling:** #222, #225, #395, #403; the Tooling milestone (never shipped, never closed): #323, #609, and the parser showdown (its own repository).
+- **Review data and tooling:** #222, #225, #395, #403; the Tooling milestone (never shipped, never closed): #323, #609, #789 (`probe_scan.py --only` writes NULL-typed empty hit files), and the parser showdown (its own repository).
 - **Data, API, docs and speed:** #233, #11 (Won't Do), #253, #712 (speed leads left).
 - **usaddress dependents (no milestone, research):** the survey #723 and the pudl benchmark #728, with its rule list #731.
 - **Not yet issues:** a highway modifier before a city on one line, a comma
