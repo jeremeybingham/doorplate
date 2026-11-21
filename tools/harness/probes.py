@@ -978,6 +978,7 @@ NO_PROBE = {
     597: "one-line input (a listed city ending in a suffix word, no comma before it): sized on one-line data, not a field-form text shape (#586 R7 row 11)",
     656: "a decision waiting on a review queue; the glued shape was sized by sibling counts over the seven sources (#653), not a probe",
     583: "a before and after count of the warnings PR 494 changed, by code (#586 B1); not a text shape",
+    798: "a line-1 unit plus a bare unit on line 2 (APT B | 3K): sized by re-parsing the glued-unit-letter rows (#765, PR 797), about 105 rows in the seven sources; the spaced form has no counted shape yet",
     578: "a convention question, not a text shape: the letter after a house number is documented in docs/usaddress-compat.md and docs/benchmarks.md (#586 R8, #603)",
 }
 NOT_A_SHAPE_LABELS = ("tracker", "area:docs", "area:tooling", "area:api", "area:architecture")
