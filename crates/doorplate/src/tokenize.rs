@@ -1073,6 +1073,20 @@ fn unit_punct(t: &str, lex: &Lexicons) -> Option<usize> {
     ok.then_some(cut)
 }
 
+/// The words after a token are a ZIP, or a state and at most a ZIP (`UNITE IN 46613`): the token
+/// may be the last word of the city on a one-line row with no comma.
+fn city_before_state<S: AsRef<str>>(after: &[S], lex: &Lexicons) -> bool {
+    let zip = |w: &S| {
+        let w = w.as_ref();
+        w.len() >= 5 && w.bytes().all(|c| c.is_ascii_digit() || c == b'-')
+    };
+    match after {
+        [z] => zip(z) || lex.state(z.as_ref()).is_some(),
+        [st, z] => lex.state(st.as_ref()).is_some() && zip(z),
+        _ => false,
+    }
+}
+
 /// Where to split a glued alphanumeric token, if anywhere.
 fn glue_split(
     t: &str,
@@ -1185,8 +1199,14 @@ fn glue_split(
     }
     // APTB, STEC, SUITEC, UNITA, RMB after a street suffix: a unit word glued to one letter
     // (#765). `APTS` is "apartments" (a building word), not unit `S`; the word must follow a suffix
-    // so a name such as `STEA` in a street name is left alone.
-    if alpha_lead == n && n >= 3 && prev.is_some_and(|p| lex.suffix(&p.text).is_some()) {
+    // so a name such as `STEA` in a street name is left alone. A word that is a place (`UNITY`,
+    // `STEM`) may start the city of a one-line row, so it stays whole.
+    if alpha_lead == n
+        && n >= 3
+        && prev.is_some_and(|p| lex.suffix(&p.text).is_some())
+        && !lex.is_place(t)
+        && !city_before_state(after, lex)
+    {
         let cut = n - 1;
         if matches!(&t[..cut], "APT" | "UNIT" | "STE" | "SUITE" | "RM") && &t[cut..] != "S" {
             return Some(cut);
