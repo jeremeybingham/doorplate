@@ -1091,6 +1091,16 @@ fn glue_split(
     if mixed && prev.is_some_and(|p| p.is_hash() || lex.unit(&p.text).is_some()) {
         return None;
     }
+    // W5TH, N12TH, NMAIN: one direction letter glued to an ordinal or to `MAIN` (#764). Other
+    // words that start with a direction (`NORTHGATE`, `NELSON`) are not touched.
+    if n >= 3 && matches!(t.as_bytes()[0], b'N' | b'S' | b'E' | b'W') {
+        let rest = &t[1..];
+        let ordinal = rest.bytes().take_while(u8::is_ascii_digit).count() <= 3 && is_ordinal(rest);
+        let unit_before = prev.is_some_and(|p| p.is_hash() || lex.unit(&p.text).is_some());
+        if (ordinal || rest == "MAIN") && !unit_before {
+            return Some(1);
+        }
+    }
     if digits_lead > 0 && digits_lead < n {
         let rest = &t[digits_lead..];
         // A route right after a highway prefix may end in letters (Appendix F: `ROUTE 1150EE`).
