@@ -1200,15 +1200,15 @@ fn glue_split(
     // APTB, STEC, SUITEC, UNITA, RMB after a street suffix: a unit word glued to one letter
     // (#765). `APTS` is "apartments" (a building word), not unit `S`; the word must follow a suffix
     // so a name such as `STEA` in a street name is left alone. A word that is a place (`UNITY`,
-    // `STEM`) may start the city of a one-line row, so it stays whole.
-    if alpha_lead == n
-        && n >= 3
-        && prev.is_some_and(|p| lex.suffix(&p.text).is_some())
-        && !lex.is_place(t)
-        && !city_before_state(after, lex)
-    {
+    // `STEM`) may start the city of a one-line row, so it stays whole. The word test comes first:
+    // this runs on every all-letter token, and only a handful pass it.
+    if alpha_lead == n && n >= 3 && !t.ends_with('S') {
         let cut = n - 1;
-        if matches!(&t[..cut], "APT" | "UNIT" | "STE" | "SUITE" | "RM") && &t[cut..] != "S" {
+        if matches!(&t[..cut], "APT" | "UNIT" | "STE" | "SUITE" | "RM")
+            && prev.is_some_and(|p| lex.suffix(&p.text).is_some())
+            && !lex.is_place(t)
+            && !city_before_state(after, lex)
+        {
             return Some(cut);
         }
     }
