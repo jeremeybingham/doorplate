@@ -188,14 +188,30 @@ fn route_key(route: &str) -> String {
 }
 
 /// Escape one segment: uppercase, drop periods and apostrophes (Pub 28 uses
-/// minimal punctuation), collapse whitespace, then percent-encode every byte
-/// outside `A-Z 0-9 space / -` so a segment can never contain `|` or `%`
-/// unescaped.
+/// minimal punctuation) except a period between two digits (`14.5`, #750),
+/// collapse whitespace, then percent-encode every byte outside
+/// `A-Z 0-9 space / - .` so a segment can never contain `|` or `%` unescaped.
 fn esc(s: &str) -> String {
     let mut out = String::with_capacity(s.len());
     let mut pending_space = false;
-    for c in s.chars() {
-        if matches!(c, '.' | '\'' | '\u{2019}') {
+    let chars: Vec<char> = s.chars().collect();
+    for (i, &c) in chars.iter().enumerate() {
+        if c == '.' {
+            // A decimal point stays, so `KM 14.5` and `KM 145` keep apart.
+            let digit = |j: Option<usize>| {
+                j.and_then(|j| chars.get(j))
+                    .is_some_and(char::is_ascii_digit)
+            };
+            if digit(i.checked_sub(1)) && digit(Some(i + 1)) {
+                if pending_space {
+                    out.push(' ');
+                    pending_space = false;
+                }
+                out.push('.');
+            }
+            continue;
+        }
+        if matches!(c, '\'' | '\u{2019}') {
             continue;
         }
         if c.is_whitespace() {
@@ -240,6 +256,17 @@ mod tests {
         assert_eq!(a, "k5:S|123|N|MAIN|ST||FL|33101");
         assert_eq!(a, pk("123 north main st #4, miami, florida 33101-1234"));
         assert_eq!(a, pk("123 NORTH MAIN ST, MIAMI, FL 33101"));
+    }
+
+    #[test]
+    fn decimal_point_stays_in_the_key() {
+        // #750: a point between digits is kept; any other period is dropped.
+        let a = pk("BO PUEBLO CARR 2 KM 14.5, Aguada PR 00602");
+        let b = pk("BO PUEBLO CARR 2 KM 145, Aguada PR 00602");
+        assert_ne!(a, b);
+        assert!(a.contains("14.5"), "{a}");
+        assert_eq!(esc("N. MAIN ST."), "N MAIN ST");
+        assert_eq!(esc("1.A 2."), "1A 2");
     }
 
     #[test]
