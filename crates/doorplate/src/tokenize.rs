@@ -1183,6 +1183,15 @@ fn glue_split(
         }
         return None;
     }
+    // APTB, STEC, SUITEC, UNITA, RMB after a street suffix: a unit word glued to one letter
+    // (#765). `APTS` is "apartments" (a building word), not unit `S`; the word must follow a suffix
+    // so a name such as `STEA` in a street name is left alone.
+    if alpha_lead == n && n >= 3 && prev.is_some_and(|p| lex.suffix(&p.text).is_some()) {
+        let cut = n - 1;
+        if matches!(&t[..cut], "APT" | "UNIT" | "STE" | "SUITE" | "RM") && &t[cut..] != "S" {
+            return Some(cut);
+        }
+    }
     if alpha_lead == n && next_numeric && n >= 4 && !known_word(t, lex) {
         // CTAPT 107, DRUNIT 142: a suffix followed by a designator.
         for cut in 2..n - 1 {
