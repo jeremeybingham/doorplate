@@ -530,3 +530,19 @@ fn unit_in_city_spans_index_the_input() {
         check(p.parse_fields(&f));
     }
 }
+
+/// #787: the same for the city-on-line-2 rule (#357): the city text came from line 2.
+#[test]
+fn city_on_line2_spans_index_the_input() {
+    let p = Parser::new();
+    for (line2, city, state) in [("Albany", "NY", "NY"), ("Brooklyn", "New York", "NY")] {
+        let f = Fields {
+            line1: Some("12 Oak St".into()),
+            line2: Some(line2.into()),
+            city: Some(city.into()),
+            state: Some(state.into()),
+            zip: None,
+        };
+        check(p.parse_fields(&f));
+    }
+}

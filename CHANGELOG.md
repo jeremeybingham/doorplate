@@ -11,7 +11,7 @@ Planned for 0.7.0, the first beta: the `k6` key, the removal of the state data s
 
 ### Fixed
 
-- **Spans of a unit read from the city field name `City`** (#787): the #244 rule moves the city text to line 2 to parse it, and the component spans kept `Line2`, which is empty in the input, so `ComponentSpan` did not index the input (`line1` `250`, city `Dept 06103`; `no_panic::fields_never_panic` failed about one run in ten). The spans now name the city field. Spans only: no key, warning or field changes. Fixed case `unit_in_city_spans_index_the_input` in `no_panic.rs`.
+- **Spans of a unit read from the city field name `City`, and of a city read from line 2 name `Line2`** (#787): the #357 rule (city `NY`, line 2 a place of the state) had the same fault the other way round. The #244 rule moves the city text to line 2 to parse it, and the component spans kept `Line2`, which is empty in the input, so `ComponentSpan` did not index the input (`line1` `250`, city `Dept 06103`; `no_panic::fields_never_panic` failed about one run in ten). The spans now name the city field. Spans only: no key, warning or field changes. Fixed cases `unit_in_city_spans_index_the_input` and `city_on_line2_spans_index_the_input` in `no_panic.rs`.
 
 ### Changed
 
