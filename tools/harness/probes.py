@@ -168,8 +168,8 @@ PROBES = [
     (
         "glued-name-suffix",
         "763",
-        "a street suffix glued to the street name (OAKDR, MAPLEAVENUE); ST and RD endings left out (FOREST, ORCHARD)",
-        r"^[0-9]+[A-Z]? (?:[NSEW] )?[A-Z]{3,}(?:AVE|AVENUE|DR|DRIVE|LN|LANE|BLVD|PKWY|STREET)(?: |\||$)",
+        "a long street suffix glued to the street name (OAKDRIVE, MAPLEAVENUE, ELMBLVD); only STREET, AVENUE, DRIVE, BLVD and PKWY endings, since AVE, DR, LN, ST and RD endings are mostly real names (LINCOLN, FOREST), and known names (LONGSTREET) are left out (#763 re-probe)",
+        r"^[0-9]+[A-Z]? (?:[NSEW] )?(?!LONGSTREET\b|ENCLAVE\b)[A-Z]{3,}(?:STREET|AVENUE|DRIVE|BLVD|PKWY)(?: |\||$)",
         "M",
         3,
     ),
