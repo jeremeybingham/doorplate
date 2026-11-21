@@ -168,8 +168,8 @@ PROBES = [
     (
         "glued-name-suffix",
         "763",
-        "a street suffix glued to the street name (OAKDR, MAPLEAVENUE); ST and RD endings left out (FOREST, ORCHARD)",
-        r"^[0-9]+[A-Z]? (?:[NSEW] )?[A-Z]{3,}(?:AVE|AVENUE|DR|DRIVE|LN|LANE|BLVD|PKWY|STREET)(?: |\||$)",
+        "a long street suffix glued to the street name (OAKDRIVE, MAPLEAVENUE, ELMBLVD); only STREET, AVENUE, DRIVE, BLVD and PKWY endings, since AVE, DR, LN, ST and RD endings are mostly real names (LINCOLN, FOREST), and known names (LONGSTREET) are left out (#763 re-probe)",
+        r"^[0-9]+[A-Z]? (?:[NSEW] )?(?!LONGSTREET\b|ENCLAVE\b)[A-Z]{3,}(?:STREET|AVENUE|DRIVE|BLVD|PKWY)(?: |\||$)",
         "M",
         3,
     ),
@@ -979,6 +979,10 @@ NO_PROBE = {
     656: "a decision waiting on a review queue; the glued shape was sized by sibling counts over the seven sources (#653), not a probe",
     583: "a before and after count of the warnings PR 494 changed, by code (#586 B1); not a text shape",
     798: "a line-1 unit plus a bare unit on line 2 (APT B | 3K): sized by re-parsing the glued-unit-letter rows (#765, PR 797), about 105 rows in the seven sources; the spaced form has no counted shape yet",
+    774: "no probe yet: a PO Box after the ZIP, P3 and unmeasured; a probe waits until the issue is promoted",
+    778: "no probe yet: leftovers of #498 (a bare unit designator before the street), P3 and unmeasured; the Netsyms comparison is still to run",
+    802: "no probe yet: TOP or MAIN before FLOOR after a suffix (follow-up of #796, PR 800), P3 and unmeasured; a probe waits until the issue is promoted",
+    803: "a fault of the #272 rule (PR 784) on a street whose own suffix is a two-letter code (PINE KEY DR); sized from that PR's key comparison (59 NC voter rows), not a probe",
     578: "a convention question, not a text shape: the letter after a house number is documented in docs/usaddress-compat.md and docs/benchmarks.md (#586 R8, #603)",
 }
 NOT_A_SHAPE_LABELS = ("tracker", "area:docs", "area:tooling", "area:api", "area:architecture")
