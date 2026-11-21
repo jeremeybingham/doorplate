@@ -5,7 +5,7 @@ bring, so the more real, messy addresses it sees, the sooner the items below can
 ([Sharing messy data](../CONTRIBUTING.md#sharing-messy-data)). Labels, milestones and ordering: [`backlog.md`](backlog.md).
 What each release changed is in [`CHANGELOG.md`](../CHANGELOG.md).
 
-**Last reviewed 2026-11-19.** 0.7.0 is planned as the first **beta** (below). 0.6.2 (a second speed release, no key change; the `k5` is as in 0.6.0) is released; 0.6.1 (speed and one label fix, no key change) is released. Open trackers: #417 (decided against); the 0.6.x tracker (#673) and the speed tracker (#672) are closed.
+**Last reviewed 2026-11-20.** 0.7.0 is planned as the first **beta** (below). 0.6.2 (a second speed release, no key change; the `k5` is as in 0.6.0) is released; 0.6.1 (speed and one label fix, no key change) is released. Open trackers: #417 (decided against); the 0.6.x tracker (#673) and the speed tracker (#672) are closed.
 
 ## Stability: alpha now, beta from 0.7.0
 
@@ -42,17 +42,15 @@ The goals of 0.7.0, in the order they ship:
    The beta needs 1 and 3 done and the `k6` measured on the private sources; item 2 does not have to be finished (a Puerto Rico rule that
    misses the release moves to 0.8).
 
-Working order (tracker #724; each group is one batch, unit rules one after another): **before the rules,** #700 (done), then Puerto Rico (#332, #314, #318, #319, #92, and the rule issues from its research: #747, #748, #749, #750). Then the rules:
+Working order (tracker #724; each group is one batch, unit rules one after another): **the regular rules first, then Puerto Rico** (owner, 2026-11-19).
+Done before the rules: #700. Every regular rule measured at P2 or above is merged; what is left:
 
-- **A. Designator and suffix spellings:** #321 (the residual: `SITE`, `CAMPSITE`, `CONDO` after the suffix need a code rule). Done: #289, #375, #471 (one data PR); #725 closed (0 misses in 60 cards).
-- **C. House-number letter shapes:** #360, and the decision #312.
-- **B. Boxes and routes:** #304 with #307, #598, #734 (a name line before a PO Box, decided with #726). Done: #538 (`STAR RT`).
-- **D. Repeated, glued and multi-part units:** the decision #656, then #693 with #499. Done: #294 (its two leftover forms are in Later).
-- **F. Names beside the street:** #310, #351, #589, #341, shaped by #726 (named buildings with no building word).
-- **G. Parentheses left after the 0.6.0 rules:** #644 (a warning), #645.
-- **H. Other P2 rules:** #244, #272. Done: #498, #274, #327, #357.
-- **RESO 2.1:** the decision #729 (the full-word suffix as an option).
-- **One-line separators from the pudl comparison:** three rules merged; the one left is in group B.
+- **Boxes and routes:** #304 (glued box and route words) and #598 (`PO DRAWER C`), both P3, in on the owner's priorities. Done: #538 (`STAR RT`), #734 (a name line before a PO Box).
+- **Names beside the street:** #341 (` - WORD` after the suffix; the rule is decided, its review queue decides which tails it covers) and #726 (a name line with no building word; the reading is decided, the rule waits on a second queue and moves to 0.8 if that queue is not read before the release). Done: #310.
+- **Bug:** #787 (a span from the #244 rule on an empty line 2).
+- **Puerto Rico (#332), after the rules:** #314 (the Texas `PR` guard, first), #318, #319, #747, #748, #749, and #92 (the Pub 28 sources). A Puerto Rico rule that misses the release moves to 0.8.
+- **Done in the other groups:** spellings #289, #375, #471 (one data PR; #725 closed with no rule); house numbers #311, #617, #274; units #294, #693, #499, #498, #272; one-line separators #732, #733, #736; others #519, #327, #357, #244, #553, #750 (a period between two digits stays in the key).
+- **Moved out (owner, 2026-11-19):** #321, #360, #312, #307, #351, #589, #644, #645 and #656 to Later; #729 (the RESO 2.1 full-word suffix as an option) to 0.7.x.
 
 Issues below the P2 line are in on the owner's priorities or as members of a group; the list may be cut later.
 
@@ -60,11 +58,12 @@ Issues below the P2 line are in on the owner's priorities or as members of a gro
 
 One line per kind. Every open issue here is in the **Later** milestone (or **Tooling**, where noted); none is at the P2 line (200 rows; 2,500 for P1), and none is in a 0.7.0 group.
 
-- **Units:** #243, #290, #295, #345, #238, #559, #534, #531, #558, #770 (a unit split from its designator, left over when #294 merged).
-- **Boxes and routes:** #358.
-- **House numbers and street names:** #594, #643, #560.
-- **City field and line 2:** #367, #480, #482, #483, #553, #596, #597, #741, #742.
-- **Glued strings (split and re-parse):** the tracker #761 with #762, #763, #764, #765, #766; #741 and #742 above are parts of it, as are #304 and #656 in 0.7.0.
+- **Units:** #243, #290, #295, #345, #238, #559, #534, #531, #558, #770 (a unit split from its designator, left over when #294 merged), #778 (left over from #498).
+- **Boxes and routes:** #358, #307 (a route after a street), #774 (a box after the ZIP; no milestone, decided with pudl).
+- **House numbers and street names:** #594, #643, #560, #360 and #312 (a letter before a direction or the number), #321 (designator words after the suffix).
+- **Names beside the street and parentheses:** #351, #589, #644, #645.
+- **City field and line 2:** #367, #480, #482, #483, #596, #597, #741, #742.
+- **Glued strings (split and re-parse):** the tracker #761 with #762, #763, #764, #765, #766; #741 and #742 above are parts of it, as are #304 (in 0.7.0) and #656.
 - **ZIP forms and odd text:** #601, #602.
 - **Parsing ideas:** #397, #435.
 - **Review data and tooling:** #222, #225, #395, #403; the Tooling milestone (never shipped, never closed): #323, #609, and the parser showdown (its own repository).
