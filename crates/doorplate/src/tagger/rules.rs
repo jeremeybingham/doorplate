@@ -3188,6 +3188,53 @@ impl Tagger<'_> {
             && (ty + 1..line_end).all(|j| self.lex.directional(self.text(j)).is_some())
     }
 
+    /// A number at `i` before a road type that has its own id after it (`15 COUNTY ROAD 42`,
+    /// `15 COUNTY RD B`, `15 STATE ROAD 7 NORTH`, `15 FM RD 1960`): the road word, `ROAD` or
+    /// `RD`, then an id (one to four digits with an optional letter, or one letter) and at most
+    /// a direction, all on the line. The id makes the road the highway, so the number before it
+    /// is a second number, not the road's (#795; `15 PRIVATE ROAD` alone is #542's).
+    fn road_id_after_type(&self, i: usize, hi: usize) -> bool {
+        let line_end = (i..hi)
+            .find(|&e| self.toks[e].seg != self.toks[i].seg)
+            .unwrap_or(hi);
+        let num = self.text(i);
+        if i < 1 || i + 3 >= line_end || !all_digits(num) || num.len() > 4 {
+            return false;
+        }
+        if num.bytes().all(|c| c == b'0') {
+            return false;
+        }
+        let w = match self.text(i + 1) {
+            "PRIVATE" | "COUNTY" | "STATE" | "FM" | "PR" => 1,
+            "FARM"
+                if i + 4 < line_end && self.text(i + 2) == "TO" && self.text(i + 3) == "MARKET" =>
+            {
+                3
+            }
+            _ => return false,
+        };
+        let ty = i + 1 + w;
+        if ty + 1 >= line_end
+            || !self
+                .lex
+                .suffix(self.text(ty))
+                .is_some_and(|l| l.value.abbr() == "RD")
+        {
+            return false;
+        }
+        let id = self.text(ty + 1);
+        let digits = id.bytes().take_while(u8::is_ascii_digit).count();
+        let rest = &id[digits..];
+        let id_ok = if digits == 0 {
+            id.len() == 1
+                && id.bytes().all(|c| c.is_ascii_alphabetic())
+                && self.lex.directional(id).is_none()
+        } else {
+            digits <= 4 && rest.len() <= 1 && rest.bytes().all(|c| c.is_ascii_alphabetic())
+        };
+        id_ok && (ty + 2..line_end).all(|j| self.lex.directional(self.text(j)).is_some())
+    }
+
     /// `&` or `AND` at `i` between the house number (at `i - 1`, plain digits) and a second
     /// plain number, all in one segment, with a street after them: a name or direction and a
     /// suffix (#274). `5 A & B ST`, `12 ARTS & CRAFTS LN` and `100 & 200` do not match.
@@ -3297,6 +3344,14 @@ impl Tagger<'_> {
             }
             // "41 12 80TH AVE": a second number before the street (#313, #501, #502).
             i = self.house_number_pair(i, hi);
+            // "120 15 COUNTY ROAD 42": the road has its own id after the type, so the number
+            // before the type is a second number, not part of the road (#795): it is left
+            // unparsed with `multiple_addresses` and the road reads as a highway or a
+            // suffixed street with its id (the #565 rule does not apply).
+            if self.road_id_after_type(i, hi) {
+                self.warn(Warning::MultipleAddresses);
+                i += 1;
+            }
             // "1309 1329 E VINE ST": more house numbers. The first is the
             // address's; the rest are left unparsed.
             while self.second_house_number(i, hi) {
