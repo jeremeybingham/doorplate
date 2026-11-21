@@ -597,12 +597,15 @@ pub enum Warning {
     /// (`MIAMI DADE`, `HENNEPIN`), so [`ParsedAddress::place`] is empty. The
     /// city is kept as written and the key does not change (#113).
     CityIsCounty,
+    /// The city was a place written in parentheses after the street (`7 OAK AVE(SPRINGFIELD)`) in a
+    /// row with no city of its own.
+    CityFromParentheses,
 }
 
 impl Warning {
     /// Every variant, in declaration order. Add new variants here too; the
     /// golden-corpus runner checks expected warning codes against this list.
-    pub const ALL: [Warning; 31] = [
+    pub const ALL: [Warning; 32] = [
         Warning::UnparsedRemainder,
         Warning::AmbiguousToken,
         Warning::Placeholder,
@@ -634,6 +637,7 @@ impl Warning {
         Warning::AmbiguousNumberLetter,
         Warning::GluedNumberLetter,
         Warning::CityIsCounty,
+        Warning::CityFromParentheses,
     ];
 
     /// Stable snake_case identifier. Part of the public contract: never
@@ -671,6 +675,7 @@ impl Warning {
             Warning::AmbiguousNumberLetter => "ambiguous_number_letter",
             Warning::GluedNumberLetter => "glued_number_letter",
             Warning::CityIsCounty => "city_is_county",
+            Warning::CityFromParentheses => "city_from_parentheses",
         }
     }
 }

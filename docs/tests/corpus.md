@@ -176,6 +176,7 @@ One row per `tests/corpus/*.jsonl`; a new file gets a row here and an id prefix 
 | `glued-direction.jsonl` | `gd-` | One direction letter glued to an ordinal or to `MAIN` (`W5TH`, `NMAIN`) is split; `NORTHGATE` and `NELSON` are not (#764) |
 | `glued-floor.jsonl` | `gf-` | A floor written as a plain number and the floor word |
 | `glued-number-letter.jsonl` | `gnl-` | A letter stuck to the house number (`glued_number_letter`) |
+| `glued-paren-city.jsonl` | `gpc-` | A place in parentheses glued to line 1, with no city in the row, is the city (`city_from_parentheses`) |
 | `hash-before-designator.jsonl` | `hu-` | A `#` right before a unit designator and its value marks that unit (`# APT-4`); `#4` and `APT #4` keep their reading |
 | `hyphen.jsonl` | `hn-` | The Queens house number with one trailing letter (`12-34A`); no letter or two letters stay as they were |
 | `hyphen-second-number.jsonl` | `hp-` | A spaced hyphen between the house number and a second number is dropped; New York, Massachusetts, Hawaii and Canada are left as before |

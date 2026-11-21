@@ -59,6 +59,7 @@ The parser did something, or the input lacks a part. A parse with one of these i
 | `intersection_detected` | Two streets joined by `&`, `AND`, `@` or `AT`. The first street is parsed, the second stays in `unparsed`, and the key is `None`. | Handle corners separately. | 18 rows: too few |
 | `zip_city_mismatch` | The city is a known place but the place list does not give the ZIP to it. Only in a state with curated data (Florida). | Check the city and ZIP. | 0 rows; not measured (no labeled Florida sample) |
 | `city_is_county` | The city is no place of the state but a county name (`HENNEPIN`, `MIAMI DADE`); `place` is empty. | Check the city. | 1,544 rows: name 3.0% (46 / 1,544), the baseline |
+| `city_from_parentheses` | The row had no city (a placeholder such as `Not stated`) and line 1 ended in a place glued in parentheses (`7 OAK AVE(SPRINGFIELD)`); the place is the city. The key does not change. | Check the city. | Probe read: 14 of 14 labeled as the city (#741); not measured on a full run |
 | `default_state_applied` | A `default_state` hint decided a place or a reading; `state` stays empty. | Nothing. | 0 rows; only with the option |
 | `repeated_label` | Reported by `tag()` only: a usaddress label appears in two runs. | Nothing. | `tag()` only |
 | `ambiguous_token` | Reserved: defined, but the parser does not raise it today. | Nothing. | None |
