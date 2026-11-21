@@ -1105,6 +1105,16 @@ fn glue_split(
         let rest = &t[digits_lead..];
         // A route right after a highway prefix may end in letters (Appendix F: `ROUTE 1150EE`).
         let after_prefix = || prev.is_some_and(|p| lex.highway(&p.text).is_some());
+        // 5THST, 1STAVE, 22NDST, 21STST: an ordinal glued to a street suffix splits after the
+        // ordinal (#762). Three digits at most, and the ending must be the one the number takes.
+        if digits_lead <= 3
+            && rest.len() >= 4
+            && rest.is_char_boundary(2)
+            && ordinal_ending(&t[..digits_lead]) == Some(&rest[..2])
+            && lex.suffix(&rest[2..]).is_some()
+        {
+            return Some(digits_lead + 2);
+        }
         // 101BRADDOCK; not 12A, 42ND, 1ST.
         // A route after a highway prefix keeps up to two letters (`1150EE`).
         if rest.len() >= 2
