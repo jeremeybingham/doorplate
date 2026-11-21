@@ -927,14 +927,8 @@ impl Piece<'_> {
         if plain {
             // `glue_split` looks at the token before only when the shape needs it.
             let prev = self.out.last().filter(|p| p.seg == self.seg);
-            let next_box = self.after.first().is_some_and(|w| {
-                *w == "BOX"
-                    || *w == "BX"
-                    || w.strip_prefix("BOX")
-                        .is_some_and(|r| r.starts_with(|c: char| c.is_ascii_digit()))
-            });
-            let next_suffix = self.after.first().is_some_and(|w| lex.suffix(w).is_some());
-            let cut = glue_split(t, next_numeric, next_box, next_suffix, prev, lex).or_else(|| {
+            let after = self.after;
+            let cut = glue_split(t, next_numeric, after, prev, lex).or_else(|| {
                 glue_place(
                     t,
                     self.before(),
@@ -1083,8 +1077,7 @@ fn unit_punct(t: &str, lex: &Lexicons) -> Option<usize> {
 fn glue_split(
     t: &str,
     next_numeric: bool,
-    next_box: bool,
-    next_suffix: bool,
+    after: &[&str],
     prev: Option<&Token>,
     lex: &Lexicons,
 ) -> Option<usize> {
@@ -1136,26 +1129,31 @@ fn glue_split(
             return Some(alpha_lead);
         }
         // POBOX481, P O BOX2284, RR#4 BOX219: a box word and its number (#304). The number
-        // may end in letters (`BOX12D`); `BOX` alone and `BX` need a digit first so a name
-        // such as `BOXWOOD` is untouched.
-        let box_value = rest.bytes().next().is_some_and(|c| c.is_ascii_digit())
-            && rest.bytes().all(|c| c.is_ascii_alphanumeric());
-        // `12 BOX2 RD` keeps its name: a street suffix after it makes it a street.
-        let suffix_next = next_suffix;
-        if box_value
-            && matches!(letters, "POBOX" | "BOX" | "BX")
-            && !(suffix_next && letters != "POBOX")
-        {
-            return Some(alpha_lead);
-        }
-        // RR4, HCR75: a rural route or highway contract word and its number, only when a
-        // box follows (`RR4 BOX 88`), so `RR4` alone stays as it was (#304).
-        if next_box
-            && rest.len() <= 4
-            && rest.bytes().all(|c| c.is_ascii_digit())
-            && matches!(letters, "RR" | "HC" | "HCR" | "HRC" | "RFD")
-        {
-            return Some(alpha_lead);
+        // may end in letters (`BOX12D`); a digit must come first so `BOXWOOD` is untouched.
+        if matches!(
+            letters,
+            "POBOX" | "BOX" | "BX" | "RR" | "HC" | "HCR" | "HRC" | "RFD"
+        ) {
+            let first = after.first().copied().unwrap_or("");
+            if matches!(letters, "POBOX" | "BOX" | "BX") {
+                // `12 BOX2 RD` keeps its name: a street suffix after it makes it a street.
+                if rest.bytes().next().is_some_and(|c| c.is_ascii_digit())
+                    && rest.bytes().all(|c| c.is_ascii_alphanumeric())
+                    && (letters == "POBOX" || lex.suffix(first).is_none())
+                {
+                    return Some(alpha_lead);
+                }
+            } else if rest.len() <= 4
+                && rest.bytes().all(|c| c.is_ascii_digit())
+                && (first == "BOX"
+                    || first == "BX"
+                    || first
+                        .strip_prefix("BOX")
+                        .is_some_and(|r| r.starts_with(|c: char| c.is_ascii_digit())))
+            {
+                // RR4, HCR75: only with a box after it (`RR4 BOX 88`), so a bare `RR4` stays.
+                return Some(alpha_lead);
+            }
         }
         // APT107, APT3D
         let unit_value = rest.bytes().next().is_some_and(|c| c.is_ascii_digit())
