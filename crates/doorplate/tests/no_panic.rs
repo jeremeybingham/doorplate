@@ -511,3 +511,22 @@ fn route_box_letter_never_panics() {
         }
     }
 }
+
+/// #787: the unit-in-city rule (#244) reads the city field as line 2, but the spans must
+/// name the field the text came from, or they do not index the input.
+#[test]
+fn unit_in_city_spans_index_the_input() {
+    let p = Parser::new();
+    for (line1, city) in [
+        ("250", "Dept 06103"),
+        ("12 Oak St", "Apt C"),
+        ("9 Elm Rd", "Box 1204"),
+    ] {
+        let f = Fields {
+            line1: Some(line1.into()),
+            city: Some(city.into()),
+            ..Fields::default()
+        };
+        check(p.parse_fields(&f));
+    }
+}

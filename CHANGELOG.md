@@ -9,6 +9,10 @@ change to what an input produces needs a new key version.
 
 Planned for 0.7.0, the first beta: the `k6` key, the removal of the state data structure (#700), Puerto Rico improvements and better accuracy generally ([`docs/roadmap.md`](docs/roadmap.md)).
 
+### Fixed
+
+- **Spans of a unit read from the city field name `City`** (#787): the #244 rule moves the city text to line 2 to parse it, and the component spans kept `Line2`, which is empty in the input, so `ComponentSpan` did not index the input (`line1` `250`, city `Dept 06103`; `no_panic::fields_never_panic` failed about one run in ten). The spans now name the city field. Spans only: no key, warning or field changes. Fixed case `unit_in_city_spans_index_the_input` in `no_panic.rs`.
+
 ### Changed
 
 - **A period between two digits stays in the key** (`k6`, #750): `BO PUEBLO CARR 2 KM 14.5` keys with `KM 14.5`, no longer the same as `KM 145`; `39.2 RD` and `392 RD` no longer share a key. Any other period is still dropped. Corpus `key-008`; `p28-punct-001` and `tools/corpus/emit_expect.py` follow. Over the seven key-comparison sources (36.9M rows) the property key changed on 6,150 rows (0.017%: Netsyms 2,520, FMCSA 210, FCC 122, NAD 101, NY corps 79, NC voter 27, IRS 16), the unit-level key on the same rows, warnings on 0; 0 city gains and 0 regressions on four splits, `oneline_fl` unchanged (94.7%), Netsyms sample unchanged in every total.
