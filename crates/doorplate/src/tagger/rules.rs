@@ -4374,8 +4374,20 @@ impl Tagger<'_> {
                 self.lex.suffix(t).is_none()
                     || d == 0
                     || self.toks[d].seg != self.toks[d - 1].seg
-                    || (d > name_lo && self.lex.suffix(self.text(d - 1)).is_some())
+                    || self.name_then_suffix_before(name_lo, d)
             })
+    }
+
+    /// A street suffix right before token `d` with a name before it (`OAK RD`, then `d`).
+    /// The suffix word is not the first word of the name, so `PINE KEY DR` (`PINE` is a
+    /// suffix spelling too) is a street name and its suffix, not a unit (#803).
+    fn name_then_suffix_before(&self, name_lo: usize, d: usize) -> bool {
+        let start = if self.lex.directional(self.text(name_lo)).is_some() {
+            name_lo + 1
+        } else {
+            name_lo
+        };
+        d > start + 1 && self.lex.suffix(self.text(d - 1)).is_some()
     }
 
     /// Up to two units at the end of `floor..hi`, read from the right.
