@@ -70,12 +70,19 @@ def answered_ids(pattern):
     return ids
 
 
+# Held-out roles: scored in bulk and never read, so never queued (docs/tools/harness.md, MessyStreets: gold and silver).
+HELD_OUT = (("messy-streets", "gold"), ("messy-streets", "silver"))
+
+
 def candidates(con, scan_dir, probe, take, flagged_only=False):
-    """The `take` matches of a probe with the lowest rk in each source: (input index, source, role, record_id, rk, flagged)."""
+    """The `take` matches of a probe with the lowest rk in each source: (input index, source, role, record_id, rk, flagged).
+    Rows of a held-out role (`HELD_OUT`) are left out."""
+    held = " and ".join(f"not (source = '{s}' and role = '{r}')" for s, r in HELD_OUT)
     sql = (
         "select * from (select cast(regexp_extract(filename, '/([0-9]+)-[0-9]+[.]parquet$', 1) as integer) as i, source, role, "
         "record_id, rk, flagged, row_number() over (partition by source order by rk) as r "
-        "from read_parquet(?, filename = true) where probe = ?" + (" and flagged" if flagged_only else "") + ") where r <= ? order by rk"
+        f"from read_parquet(?, filename = true) where probe = ? and {held}" + (" and flagged" if flagged_only else "")
+        + ") where r <= ? order by rk"
     )
     return [row[:6] for row in con.execute(sql, [str(scan_dir / "hits" / "*.parquet"), probe, take]).fetchall()]
 

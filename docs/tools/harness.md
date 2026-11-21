@@ -179,7 +179,7 @@ Read the figures with care: many providers put the suffix inside the name and le
 
 [MessyStreets](https://github.com/EdGaere/MessyStreets) (Gaere and von Wangenheim, ACM SIGSPATIAL '26, DOI 10.1145/3841645.3843362; cite it with any score) is 3 tiers of 10,000 verbatim web addresses from schema.org markup. Its labels are the page's own fields, not hand-checked. The score table is in [`benchmarks.md`](../benchmarks.md#other-checks).
 
-**Rules of use** ([`data-policy.md`](../data-policy.md), `local-data/messy-streets/NOTICE.md`): local, aggregates only, nothing from the rows in the repository; the terms were accepted by the owner (Web Data Commons says "research purposes only"). **Gold and silver are held-out checks**: they are scored in bulk and never read, never queued. **Raw is the work list**: it may be read (`full-ok.txt` lists `messy-streets`, for the raw queue only) and feeds rule issues like any source.
+**Rules of use** ([`data-policy.md`](../data-policy.md), `local-data/messy-streets/NOTICE.md`): local, aggregates only, nothing from the rows in the repository; the terms were accepted by the owner (Web Data Commons says "research purposes only"). **Gold and silver are held-out checks**: they are scored in bulk and never read, never queued (`tools/review/probe_queue.py` leaves them out of every probe queue, `HELD_OUT`). **Raw is the work list**: it may be read (`full-ok.txt` lists `messy-streets`, for the raw queue only) and feeds rule issues like any source.
 
 ```sh
 python tools/ingest/ingest.py tools/ingest/specs/messy-streets.toml --confirm    # US-like rows only: gold, silver, raw roles

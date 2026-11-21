@@ -241,12 +241,19 @@ def scan_rows(rows, fields_many, parse_many, hit_cap, seed):
     return counts, hits
 
 
+# Column types, so a chunk with no rows still writes a typed file: an empty list would make pyarrow infer `null`, and
+# DuckDB then fails to read that file next to the typed ones (#789).
+TYPES = {"source": "string", "role": "string", "state": "string", "probe": "string", "kind": "string", "n": "int64",
+         "record_id": "string", "flagged": "bool", "text_hash": "string", "rk": "float64"}
+
+
 def write_parquet(path, columns, names):
     import pyarrow as pa
     import pyarrow.parquet as pq
 
     tmp = path.with_suffix(".tmp")
-    table = pa.table({n: c for n, c in zip(names, columns)})
+    schema = pa.schema([(n, TYPES[n]) for n in names])
+    table = pa.table({n: c for n, c in zip(names, columns)}, schema=schema)
     pq.write_table(table, tmp, compression="zstd")
     os.replace(tmp, path)
 

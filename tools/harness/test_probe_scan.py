@@ -170,3 +170,17 @@ def test_the_raw_nad_and_netsyms_inputs_are_mapped(tmp_path):
     assert probe_scan.count_rows(inp) == (1, 3)
     got = probe_scan.fetch(con, inp, 1, 3)
     assert got == [("1", "netsyms", "address", "12 ELM ST", None, "MIAMI", "FL", "33101-1234", None)]
+
+
+def test_an_empty_chunk_writes_typed_files_that_read_with_the_others(tmp_path):
+    for d in ("counts", "hits"):
+        (tmp_path / d).mkdir()
+    counts, hits = probe_scan.scan_rows(ROWS, doorplate.parse_fields_many, doorplate.parse_many, 10, 1)
+    probe_scan.write_chunk(tmp_path, "0-0", counts, hits)
+    probe_scan.write_chunk(tmp_path, "0-1", {}, [])
+    con = duckdb.connect()
+    for d in ("counts", "hits"):
+        n = con.execute(f"select count(*) from read_parquet('{tmp_path / d}/*.parquet')").fetchone()[0]
+        assert n > 0
+    types = {r[0]: r[1] for r in con.execute(f"describe select * from '{tmp_path / 'hits' / '0-1.parquet'}'").fetchall()}
+    assert types["flagged"] == "BOOLEAN" and types["rk"] == "DOUBLE" and types["record_id"] == "VARCHAR"
