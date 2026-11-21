@@ -33,7 +33,9 @@
 //!   the segment or comes before a state or ZIP:
 //!   `WILSON STREETDADE CITY FL` -> `STREET` `DADE` `CITY`.
 
-use crate::classify::{house_number, is_ordinal, is_unit_value, zip_parts, ORDINAL_SUFFIXES};
+use crate::classify::{
+    house_number, is_ordinal, is_unit_value, spelled_ordinal, zip_parts, ORDINAL_SUFFIXES,
+};
 use crate::clean::Cleaned;
 use crate::lexicon::{Lexicons, MatchKind, Special, MAX_PLACE_WORDS};
 use crate::types::{FieldName, Span};
@@ -532,6 +534,32 @@ fn unit_like(w: &str, lex: &Lexicons) -> bool {
         || (w.bytes().any(|c| c.is_ascii_digit()) && !is_ordinal(w))
 }
 
+/// A floor after a separator: the word at `at` and then a floor designator in the same segment,
+/// `5TH FL`, `FIFTH FLOOR`, `GROUND FLOOR`, `LOWER FL`. The word is an ordinal, a spelled ordinal
+/// or a word the lexicon already reads as a level or a unit (`TOP` and `MAIN` are not: without a
+/// separator they are not read as a floor either, so dropping it would gain nothing). A
+/// bare `FL` after a word is read as a floor only when another segment follows it, since at the
+/// end of a line it may be the state (#796).
+fn floor_next(out: &[Token], at: usize, lex: &Lexicons) -> bool {
+    let (Some(word), Some(fl)) = (out.get(at), out.get(at + 1)) else {
+        return false;
+    };
+    let w = word.text.as_str();
+    let named = is_ordinal(w)
+        || spelled_ordinal(w).is_some()
+        || lex.is_level_word(w)
+        || matches!(w, "UPPER" | "LOWER");
+    let floor = fl.seg == word.seg
+        && lex
+            .unit(&fl.text)
+            .is_some_and(|l| l.kind != MatchKind::Observed && l.value.abbr() == "FL");
+    // After an ordinal no city or state can come between: `5TH FL` is a floor even when it ends
+    // the line (the fields form gives line 1 alone).
+    let ordinal = is_ordinal(w) || spelled_ordinal(w).is_some();
+    let state_clash = !ordinal && fl.text == "FL" && !out.iter().any(|t| t.seg > fl.seg);
+    named && floor && !state_clash
+}
+
 /// A dash or slash between a street suffix and a unit is a separator (`ST - 2210`, `ST / APT 4C`,
 /// `ROAD / PO BOX 5`): the token is dropped, and what follows reads as a unit or a box. Only
 /// when what follows is a unit designator, a box word, or a value with a digit that is not an
@@ -549,7 +577,7 @@ fn drop_unit_separators(out: &mut Vec<Token>, lex: &Lexicons) {
             && lex
                 .suffix(&prev.text)
                 .is_some_and(|l| l.kind != MatchKind::Observed);
-        let unit_next = unit_like(&next.text, lex);
+        let unit_next = unit_like(&next.text, lex) || floor_next(out, k + 1, lex);
         if after_suffix && next.seg == sep.seg && unit_next {
             out.remove(k);
         } else {
