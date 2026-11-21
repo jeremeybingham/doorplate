@@ -16,6 +16,7 @@ use crate::types::{
     Component, ComponentSpan, Highway, MilitaryBox, ParsedAddress, RouteKind, RuralRoute, Span,
     Warning,
 };
+use crate::FieldName;
 
 /// The state of the address before it is assembled: the tagged state, else
 /// the main place's state for the tagged ZIP. The curated rows read some
@@ -77,6 +78,7 @@ pub(crate) fn assemble(
     let state = own_state.or(hint);
     let hinted = own_state.is_none() && hint.is_some();
     let mut unparsed: Vec<String> = Vec::new();
+    let mut unparsed_toks: Vec<&Token> = Vec::new();
     let mut highway_state = None;
     let mut highway_prefix = None;
     let mut route_kind = None;
@@ -102,6 +104,7 @@ pub(crate) fn assemble(
         match tag {
             Tag::Untagged | Tag::Unparsed => {
                 for t in run {
+                    unparsed_toks.push(t);
                     unparsed.push(source(&t.span).map_or_else(|| t.text.clone(), str::to_string));
                     addr.source.spans.push(ComponentSpan {
                         component: Component::Unparsed,
@@ -368,6 +371,23 @@ pub(crate) fn assemble(
         }
     }
 
+    // A place in parentheses glued to the end of line 1, with no city in the row (`7 OAK AVE(SPRINGFIELD)`,
+    // `Not stated` in the city field), is the city (#741).
+    if addr.city.is_none() && addr.military_post_office.is_none() {
+        if let Some(city) = glued_paren_city(&unparsed_toks, lex, source) {
+            addr.city = Some(city);
+            for cs in &mut addr.source.spans {
+                if cs.component == Component::Unparsed {
+                    cs.component = Component::City;
+                }
+            }
+            unparsed.clear();
+            addr.diagnostics
+                .warnings
+                .retain(|w| *w != Warning::UnparsedRemainder);
+            addr.diagnostics.warn(Warning::CityFromParentheses);
+        }
+    }
     if !unparsed.is_empty() {
         addr.diagnostics.unparsed = Some(unparsed.join(" "));
     }
@@ -468,6 +488,54 @@ pub(crate) fn assemble(
     if addr.zip5.is_none() && !addr.diagnostics.has(&Warning::InvalidZip) {
         addr.diagnostics.warn(Warning::MissingZip);
     }
+}
+
+/// The city in a parenthesized group that is the whole unparsed text of line 1 and is glued to the
+/// word before it (#741): letters only (no digit, unit, box, floor or building word, no remark
+/// word) and not the placeholder `CITY`.
+fn glued_paren_city(toks: &[&Token], lex: &Lexicons, source: &SourceText<'_>) -> Option<String> {
+    let first = toks.first()?;
+    if toks
+        .iter()
+        .any(|t| !t.paren || t.span.field != Some(FieldName::Line1))
+    {
+        return None;
+    }
+    let before = Span {
+        field: first.span.field,
+        start: first.span.start.checked_sub(1)?,
+        end: first.span.start,
+    };
+    if !source(&before)?
+        .chars()
+        .all(|c| c.is_alphanumeric() || c == '.')
+    {
+        return None;
+    }
+    let mut words = Vec::with_capacity(toks.len());
+    for t in toks {
+        let w = t
+            .text
+            .trim_matches(|c: char| !c.is_alphanumeric())
+            .to_ascii_uppercase();
+        let ok = !w.is_empty()
+            && w.chars()
+                .all(|c| c.is_alphabetic() || matches!(c, '.' | '\'' | '-'))
+            && w != "CITY"
+            && !matches!(
+                w.as_str(),
+                "REAR" | "FRONT" | "SIDE" | "BACK" | "ROOF" | "ENTRANCE" | "OFFICE" | "BASEMENT"
+            )
+            && lex.unit(&w).is_none()
+            && !lex.is_bare_box_word(&w)
+            && !lex.is_building_word(&w)
+            && !lex.is_city_placeholder_phrase(&w);
+        if !ok {
+            return None;
+        }
+        words.push(w);
+    }
+    Some(words.join(" "))
 }
 
 fn set_once(slot: &mut Option<String>, value: String) {
