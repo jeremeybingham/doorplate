@@ -218,6 +218,13 @@ impl Parser {
         // line 2, read as the city field.
         if let Some(moved) = self.city_on_line2(fields) {
             if let Ok(mut addr) = self.parse_fields(&moved) {
+                // The text came from line 2, so the spans name it (#787): the moved city
+                // field holds a different text in the input.
+                for cs in &mut addr.source.spans {
+                    if cs.span.field == Some(FieldName::City) {
+                        cs.span.field = Some(FieldName::Line2);
+                    }
+                }
                 addr.source.original = fields.joined();
                 addr.source.fields = Some(fields.clone());
                 return Ok(addr);
@@ -227,6 +234,13 @@ impl Parser {
         // the city stays empty (`missing_city`).
         if let Some(moved) = self.unit_in_city(fields) {
             if let Ok(mut addr) = self.parse_fields(&moved) {
+                // The text came from the city field, so the spans name it (#787): the moved
+                // line 2 is empty in the input.
+                for cs in &mut addr.source.spans {
+                    if cs.span.field == Some(FieldName::Line2) {
+                        cs.span.field = Some(FieldName::City);
+                    }
+                }
                 addr.source.original = fields.joined();
                 addr.source.fields = Some(fields.clone());
                 return Ok(addr);
