@@ -4160,14 +4160,17 @@ impl Tagger<'_> {
     }
 
     /// `APT TD`, `UNIT AB`: two letters right after a designator that always
-    /// takes a value. Others are street words (`FRONT ST`, `UPPER RD`), and a suffix
-    /// or directional after the designator ends a street (`KEY RD`).
-    fn letters_after_designator(&self, floor: usize, last: usize) -> bool {
+    /// takes a value. Others are street words (`FRONT ST`, `UPPER RD`), and a directional
+    /// after the designator ends a street. A street-suffix code is the value too
+    /// (`SUITE LA`, `APT LN`, #272): the designator always takes a value, so the word
+    /// after it is that value whatever it spells.
+    /// A suffix code is the value only right after a street suffix or a segment break (line 2,
+    /// a comma): `OAK KEY DR` and `100 UNIT LN` are street names, not a unit.
+    fn letters_after_designator(&self, floor: usize, name_lo: usize, last: usize) -> bool {
         let t = self.text(last);
         last > floor
             && t.len() == 2
             && t.bytes().all(|c| c.is_ascii_alphabetic())
-            && self.lex.suffix(t).is_none()
             && self.lex.directional(t).is_none()
             && self.toks[last].seg == self.toks[last - 1].seg
             && longest_ending(self.toks, floor, last, |s| {
@@ -4175,7 +4178,13 @@ impl Tagger<'_> {
                     .unit(s)
                     .filter(|l| l.kind != MatchKind::Observed && l.value.range_required())
             })
-            .is_some()
+            .is_some_and(|(_, n)| {
+                let d = last - n;
+                self.lex.suffix(t).is_none()
+                    || d == 0
+                    || self.toks[d].seg != self.toks[d - 1].seg
+                    || (d > name_lo && self.lex.suffix(self.text(d - 1)).is_some())
+            })
     }
 
     /// Up to two units at the end of `floor..hi`, read from the right.
@@ -4306,7 +4315,7 @@ impl Tagger<'_> {
                 || self.spelled_after_designator(floor, last)
                 || is_unit_pair(t)
                 || (last > floor && self.toks[last - 1].is_hash() && is_unit_word(t))
-                || self.letters_after_designator(floor, last))
+                || self.letters_after_designator(floor, name_lo, last))
                 && last > floor
             {
                 let start = if self.split_value(floor, last)
