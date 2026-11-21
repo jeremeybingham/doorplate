@@ -86,3 +86,14 @@ def test_an_unknown_probe_is_refused(scan):
     run, lst = scan
     with pytest.raises(SystemExit):
         probe_queue.main([str(run), str(lst), "--probe", "no-such-probe"])
+
+
+def test_held_out_roles_are_never_candidates(tmp_path):
+    (tmp_path / "hits").mkdir()
+    rows = [("messy-streets", "gold", "1"), ("messy-streets", "silver", "2"), ("messy-streets", "raw", "3"), ("big", "a", "4")]
+    names = ["source", "role", "record_id", "state", "probe", "flagged", "text_hash", "rk"]
+    cols = [[r[0] for r in rows], [r[1] for r in rows], [r[2] for r in rows], ["FL"] * 4, ["p"] * 4, [False] * 4,
+            ["h"] * 4, [0.1, 0.2, 0.3, 0.4]]
+    probe_scan.write_parquet(tmp_path / "hits" / "0-0.parquet", cols, names)
+    got = probe_queue.candidates(duckdb.connect(), tmp_path, "p", 10)
+    assert sorted((c[1], c[2]) for c in got) == [("big", "a"), ("messy-streets", "raw")]
