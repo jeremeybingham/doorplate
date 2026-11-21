@@ -979,6 +979,8 @@ NO_PROBE = {
     656: "a decision waiting on a review queue; the glued shape was sized by sibling counts over the seven sources (#653), not a probe",
     583: "a before and after count of the warnings PR 494 changed, by code (#586 B1); not a text shape",
     798: "a line-1 unit plus a bare unit on line 2 (APT B | 3K): sized by re-parsing the glued-unit-letter rows (#765, PR 797), about 105 rows in the seven sources; the spaced form has no counted shape yet",
+    774: "no probe yet: a PO Box after the ZIP, P3 and unmeasured; a probe waits until the issue is promoted",
+    778: "no probe yet: leftovers of #498 (a bare unit designator before the street), P3 and unmeasured; the Netsyms comparison is still to run",
     578: "a convention question, not a text shape: the letter after a house number is documented in docs/usaddress-compat.md and docs/benchmarks.md (#586 R8, #603)",
 }
 NOT_A_SHAPE_LABELS = ("tracker", "area:docs", "area:tooling", "area:api", "area:architecture")
