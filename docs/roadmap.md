@@ -47,10 +47,9 @@ Done before the rules: #700. Every regular rule measured at P2 or above is merge
 
 - **Boxes and routes:** #304 (glued box and route words) and #598 (`PO DRAWER C`), both P3, in on the owner's priorities. Done: #538 (`STAR RT`), #734 (a name line before a PO Box).
 - **Names beside the street:** #341 (` - WORD` after the suffix; the rule is decided, its review queue decides which tails it covers) and #726 (a name line with no building word; the reading is decided, the rule waits on a second queue and moves to 0.8 if that queue is not read before the release). Done: #310.
-- **Bug:** #787 (a span from the #244 rule on an empty line 2).
+- **Bug:** #787 (a span from the unit-in-the-city rule on an empty line 2).
 - **Puerto Rico (#332), after the rules:** #314 (the Texas `PR` guard, first), #318, #319, #747, #748, #749, and #92 (the Pub 28 sources). A Puerto Rico rule that misses the release moves to 0.8.
 - **Done in the other groups:** spellings #289, #375, #471 (one data PR; #725 closed with no rule); house numbers #311, #617, #274; units #294, #693, #499, #498, #272; one-line separators #732, #733, #736; others #519, #327, #357, #244, #553, #750 (a period between two digits stays in the key).
-- **Moved out (owner, 2026-11-19):** #321, #360, #312, #307, #351, #589, #644, #645 and #656 to Later; #729 (the RESO 2.1 full-word suffix as an option) to 0.7.x.
 
 Issues below the P2 line are in on the owner's priorities or as members of a group; the list may be cut later.
 
@@ -66,6 +65,7 @@ One line per kind. Every open issue here is in the **Later** milestone (or **Too
 - **Glued strings (split and re-parse):** the tracker #761 with #762, #763, #764, #765, #766; #741 and #742 above are parts of it, as are #304 (in 0.7.0) and #656.
 - **ZIP forms and odd text:** #601, #602.
 - **Parsing ideas:** #397, #435.
+- **0.7.x:** #729 (the RESO 2.1 full-word suffix as an option; the default stays the abbreviation).
 - **Review data and tooling:** #222, #225, #395, #403; the Tooling milestone (never shipped, never closed): #323, #609, and the parser showdown (its own repository).
 - **Data, API, docs and speed:** #233, #11 (Won't Do), #253, #712 (speed leads left).
 - **usaddress dependents (no milestone, research):** the survey #723 and the pudl benchmark #728, with its rule list #731.
