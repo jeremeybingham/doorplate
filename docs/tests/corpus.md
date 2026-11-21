@@ -172,6 +172,7 @@ One row per `tests/corpus/*.jsonl`; a new file gets a row here and an id prefix 
 | `florida.jsonl` | `fl-` | Florida curated rows and the national place list on Florida input: a city with no comma, cut-off cities completed, the place from the ZIP, `zip_city_mismatch`, `CR` and `SR` |
 | `grid-number.jsonl` | `grd-` | A grid house number in two parts (`N45 W2210 OAK AVE`) is one number, and keys as `N45W2210` (#311) |
 | `glue.jsonl` | `gl-` | A word before a trailing `CT`, `WY`, `KY` or `MT` stays one word (`PINEBRIAR CT`), in pre-split fields and on one line |
+| `glued-box.jsonl` | `gb-` | A box or route word glued to its number (`POBOX481`, `HCR75 BOX 12D`, `RR#4 BOX219`) is split; `BOXWOOD`, `BOX2 RD` and a bare `RR4` are not; `P O DRAWER C` is a box (#304, #598) |
 | `glued-floor.jsonl` | `gf-` | A floor written as a plain number and the floor word |
 | `glued-number-letter.jsonl` | `gnl-` | A letter stuck to the house number (`glued_number_letter`) |
 | `hash-before-designator.jsonl` | `hu-` | A `#` right before a unit designator and its value marks that unit (`# APT-4`); `#4` and `APT #4` keep their reading |

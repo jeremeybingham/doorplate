@@ -927,7 +927,8 @@ impl Piece<'_> {
         if plain {
             // `glue_split` looks at the token before only when the shape needs it.
             let prev = self.out.last().filter(|p| p.seg == self.seg);
-            let cut = glue_split(t, next_numeric, prev, lex).or_else(|| {
+            let after = self.after;
+            let cut = glue_split(t, next_numeric, after, prev, lex).or_else(|| {
                 glue_place(
                     t,
                     self.before(),
@@ -1073,7 +1074,13 @@ fn unit_punct(t: &str, lex: &Lexicons) -> Option<usize> {
 }
 
 /// Where to split a glued alphanumeric token, if anywhere.
-fn glue_split(t: &str, next_numeric: bool, prev: Option<&Token>, lex: &Lexicons) -> Option<usize> {
+fn glue_split(
+    t: &str,
+    next_numeric: bool,
+    after: &[&str],
+    prev: Option<&Token>,
+    lex: &Lexicons,
+) -> Option<usize> {
     let digits_lead = t.bytes().take_while(u8::is_ascii_digit).count();
     let alpha_lead = t.bytes().take_while(u8::is_ascii_alphabetic).count();
     let n = t.len();
@@ -1120,6 +1127,33 @@ fn glue_split(t: &str, next_numeric: bool, prev: Option<&Token>, lex: &Lexicons)
         let route = rest.bytes().next().is_some_and(|c| c.is_ascii_digit());
         if route && lex.highway(letters).is_some() {
             return Some(alpha_lead);
+        }
+        // POBOX481, P O BOX2284, RR#4 BOX219: a box word and its number (#304). The number
+        // may end in letters (`BOX12D`); a digit must come first so `BOXWOOD` is untouched.
+        if matches!(
+            letters,
+            "POBOX" | "BOX" | "BX" | "RR" | "HC" | "HCR" | "HRC" | "RFD"
+        ) {
+            let first = after.first().copied().unwrap_or("");
+            if matches!(letters, "POBOX" | "BOX" | "BX") {
+                // `12 BOX2 RD` keeps its name: a street suffix after it makes it a street.
+                if rest.bytes().next().is_some_and(|c| c.is_ascii_digit())
+                    && rest.bytes().all(|c| c.is_ascii_alphanumeric())
+                    && (letters == "POBOX" || lex.suffix(first).is_none())
+                {
+                    return Some(alpha_lead);
+                }
+            } else if rest.len() <= 4
+                && rest.bytes().all(|c| c.is_ascii_digit())
+                && (first == "BOX"
+                    || first == "BX"
+                    || first
+                        .strip_prefix("BOX")
+                        .is_some_and(|r| r.starts_with(|c: char| c.is_ascii_digit())))
+            {
+                // RR4, HCR75: only with a box after it (`RR4 BOX 88`), so a bare `RR4` stays.
+                return Some(alpha_lead);
+            }
         }
         // APT107, APT3D
         let unit_value = rest.bytes().next().is_some_and(|c| c.is_ascii_digit())
