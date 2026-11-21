@@ -180,6 +180,7 @@ One row per `tests/corpus/*.jsonl`; a new file gets a row here and an id prefix 
 | `ampersand-numbers.jsonl` | `amp-` | Two house numbers joined by `&` or `AND` are a range (`3 & 5 E 41ST ST` is `3-5`); `&` inside a name is left alone |
 | `intersections.jsonl` | `is-` | Two streets joined by `&`, `AND`, `@` or `AT`: first street as components, second in `unparsed`, `intersection_detected`, no key; look-alikes (`AT&T WAY`) must not warn |
 | `keys.jsonl` | `key-` | Pin the emitters: exact key and slug strings, written from `docs/key-format.md` |
+| `nyc-repeat.jsonl` | `nr-` | A New York City place name followed by a repeated `NEW YORK` or `NY` keeps the place as the city (#553) |
 | `last-line-in-line1.jsonl` | `ll-` | On pre-split fields, line 1 ending with the state field and a ZIP is read as written |
 | `letter-before-hyphen.jsonl` | `lh-` | A letter before the hyphen (`53A-53 HOLLIS AVE`) is one house number, kept as written; a range with a letter is `multiple_addresses` |
 | `level-words.jsonl` | `lv-` | `GROUND`, `MEZZANINE`, `GARAGE`, `LL`, `LOBBY LEVEL` as units; `CAMP GROUND RD` and `LL BEAN RD` keep their reading |

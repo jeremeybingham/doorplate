@@ -299,6 +299,13 @@ impl Tagger<'_> {
             return (lo, None);
         }
 
+        // `BRONX, NEW YORK, NY 10451`: a repeat of the state in a New York City address (#553).
+        if zip {
+            if let Some(r) = &state {
+                ll_start = self.drop_nyc_repeat(lo, r, hi - 1);
+            }
+        }
+
         // City.
         let prev = ll_start - 1;
         let city = if toks[prev].seg != toks[ll_start].seg {
@@ -355,6 +362,76 @@ impl Tagger<'_> {
             }
             _ => (ll_start, None),
         }
+    }
+
+    /// A New York City address whose city is a place name and then `NEW YORK`, `NEW YORK CITY` or
+    /// `NY` again (`BRONX, NEW YORK, NY 10451`, `MURRAY HILL NY NY 10016`, #553): the repeat is
+    /// skipped and the place name stays the city. Only in New York State with a New York City ZIP
+    /// prefix (`100` to `104`, `110` to `114`, `116`), and only after a place the list knows for
+    /// New York, so `NEW YORK, NY` and `... AVE NEW YORK NY` are left alone. `state` is the state's
+    /// tokens and `zip` the ZIP's token; the repeat ends where the state starts. Returns the new
+    /// start of the last line (the repeat's).
+    fn drop_nyc_repeat(&mut self, lo: usize, state: &Range<usize>, zip: usize) -> usize {
+        self.nyc_repeat(lo, state.start, state, zip)
+            .unwrap_or(state.start)
+    }
+
+    /// [`Self::drop_nyc_repeat`] for a city field: the repeat ends the field at `end`.
+    pub(super) fn drop_nyc_repeat_in_city(
+        &mut self,
+        city: Option<Range<usize>>,
+        state: &Range<usize>,
+        zip: &Range<usize>,
+    ) -> Option<Range<usize>> {
+        let city = city?;
+        if state.is_empty() || zip.len() != 1 {
+            return Some(city);
+        }
+        let rs = self.nyc_repeat(city.start, city.end, state, zip.start);
+        Some(city.start..rs.unwrap_or(city.end))
+    }
+
+    /// Mark the repeat that ends at `end` (tokens `lo..end`) as skipped and return where it starts.
+    fn nyc_repeat(
+        &mut self,
+        lo: usize,
+        end: usize,
+        state: &Range<usize>,
+        zip: usize,
+    ) -> Option<usize> {
+        let toks = self.toks;
+        let nyc_zip = zip_parts(self.text(zip)).is_some_and(|(z5, _)| {
+            z5.get(..3)
+                .and_then(|p| p.parse::<u16>().ok())
+                .is_some_and(|p| matches!(p, 100..=104 | 110..=114 | 116))
+        });
+        let in_ny = self
+            .lex
+            .state(&join_ref(&toks[state.clone()]))
+            .is_some_and(|s| s.value.code() == "NY");
+        if !nyc_zip || !in_ny {
+            return None;
+        }
+        for k in [1, 2, 3] {
+            if end < lo + k + 1 {
+                break;
+            }
+            let rs = end - k;
+            if !matches!(
+                &*join_ref(&toks[rs..end]),
+                "NY" | "NEW YORK" | "NEW YORK CITY"
+            ) {
+                continue;
+            }
+            let known = (1..=MAX_PLACE_WORDS).any(|w| {
+                rs >= lo + w && self.lex.place("NY", &join_ref(&toks[rs - w..rs])).is_some()
+            });
+            if known {
+                self.set(rs..end, Tag::Skip);
+                return Some(rs);
+            }
+        }
+        None
     }
 
     /// Where the city starts in a run with no commas, and the rule that

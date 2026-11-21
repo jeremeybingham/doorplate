@@ -167,12 +167,12 @@ lists `BELLVIEW` as a place of 32526.
 
 ## Curated rows
 
-Florida's places, spellings and ZIPs were checked by hand against real data. They are two hand-edited files
+Florida's places, spellings and ZIPs were checked by hand against real data; 46 Manhattan and Brooklyn neighborhoods (evidence `neighborhood:#553`, public names, not counted from addresses) were added for the repeated `NEW YORK` / `NY` rule. They are two hand-edited files
 next to the generated tables, compiled in every build (no feature), and they are not output of `build_us.py`:
 
 | File | Rows | Columns |
 |---|---|---|
-| `curated_places.tsv` | 727 places (411 municipalities, 316 other places), 1,072 variants | `state`, `name`, `county`, `kind`, `variants`, `evidence` |
+| `curated_places.tsv` | 773 places (411 municipalities, 362 other places), 1,072 variants | `state`, `name`, `county`, `kind`, `variants`, `evidence` |
 | `curated_zips.tsv` | 1,937 rows: 1,473 main ZIPs (107 with a second place), 464 observed (ZIP, place) pairs | `zip`, `state`, `place`, `shared`, `evidence` |
 
 `places.toml` lists the states whose ZIP-to-place table is complete enough to warn on (`zip_city_check = ["FL"]`):

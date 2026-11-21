@@ -606,6 +606,7 @@ pub(crate) fn tag_fields(
     let city_range = t.city_field(city, state.is_empty());
     t.state_field(state.clone());
     t.zip_field(zip.clone());
+    let city_range = t.drop_nyc_repeat_in_city(city_range, &state, &zip);
     let mut end = line.end;
     // The ZIP that tells the place context: the field, else one ending line 1.
     let mut zip_at = (t.tags.get(zip.start) == Some(&Tag::Zip)).then_some(zip.start);
