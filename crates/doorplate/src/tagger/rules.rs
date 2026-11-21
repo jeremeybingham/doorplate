@@ -1568,7 +1568,8 @@ impl Tagger<'_> {
                 || lex.highway(t).is_some()
                 || lex.special(t).is_some()
                 || lex.is_placeholder(t)
-                || lex.is_line2_non_name(t)
+                // A leading `THE` opens a name (`THE GARRETT`, #726).
+                || (lex.is_line2_non_name(t) && !(k == l2.start && t == "THE" && l2.len() > 1))
             {
                 return false;
             }
@@ -1586,11 +1587,7 @@ impl Tagger<'_> {
             (l1.clone()).any(|j| self.toks[j].text == self.toks[k].text)
                 || matches!(self.text(k), "&" | "AND")
         });
-        !(words < 2
-            || (words > 4 && !marked)
-            || repeat
-            || lex.is_placeholder(&text)
-            || lex.is_place(&text))
+        !(!(2..=8).contains(&words) || repeat || lex.is_placeholder(&text) || lex.is_place(&text))
     }
 
     /// A lone directional on line 2 that `tag_fields` kept out of the street
@@ -1743,7 +1740,12 @@ impl Tagger<'_> {
                     t.text.len() >= 3
                         && t.text.bytes().all(|c| c.is_ascii_alphabetic())
                         && lex.unit(&t.text).is_none()
-                });
+                })
+                // A numbered street (`1200 5TH ST`, #726): an ordinal and a suffix.
+                || (e + 2 < hi
+                    && self.toks[e + 2].seg == seg2
+                    && is_ordinal(self.text(e + 1))
+                    && lex.suffix(self.text(e + 2)).is_some());
             if !named {
                 return lo;
             }

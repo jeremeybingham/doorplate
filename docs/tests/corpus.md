@@ -197,6 +197,7 @@ One row per `tests/corpus/*.jsonl`; a new file gets a row here and an id prefix 
 | `name-after-box.jsonl` | `nm-` | Words only on line 2 under a PO Box line with no street are the attention line |
 | `name-before-number.jsonl` | `nbn-` | Words ahead of the house number: an initial is part of the name, `C O` with a space is the care-of marker |
 | `name-lines.jsonl` | `nl-` | Name lines with commas and two leading units |
+| `name-line-no-building-word.jsonl` | `nq-` | A name line with no building word over or under a street (#726) |
 | `national-data.jsonl` | `nat-` | Fixes found by comparing the parser with a national address database; the addresses are invented (the database is not redistributable) |
 | `no-north.jsonl` | `nn-` | `NO` right after the house number and before a plain word is north; `NO NAME RD` and a bare number keep `NO` |
 | `non-us-address.jsonl` | `fa-` | A foreign address whose line 2 or last segment ends in a country name gets `non_us_address` |
