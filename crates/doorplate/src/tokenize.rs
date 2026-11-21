@@ -1250,6 +1250,24 @@ fn glue_split(
         }
         return None;
     }
+    // ELMBLVD, MAPLEAVENUE, MAINSTREET: a long street suffix glued to the street name splits
+    // before the suffix (#763). Only the long spellings: names ending in `AVE`, `DR`, `LN`, `ST`
+    // or `RD` are mostly real (`LINCOLN`, `FOREST`). The word follows the house number (or a
+    // direction after it) and no suffix follows it: a name that already has its suffix
+    // (`BRADSTREET RD`) is left whole. `LONGSTREET` is a surname.
+    if alpha_lead == n && n >= 7 && prev.is_some_and(|p| after_number(p, lex)) {
+        for end in ["STREET", "AVENUE", "DRIVE", "BLVD", "PKWY"] {
+            if let Some(name) = t.strip_suffix(end) {
+                if name.len() >= 3
+                    && t != "LONGSTREET"
+                    && after.first().map_or(true, |w| lex.suffix(w).is_none())
+                {
+                    return Some(name.len());
+                }
+                break;
+            }
+        }
+    }
     // APTB, STEC, SUITEC, UNITA, RMB after a street suffix: a unit word glued to one letter
     // (#765). `APTS` is "apartments" (a building word), not unit `S`; the word must follow a suffix
     // so a name such as `STEA` in a street name is left alone. A word that is a place (`UNITY`,
@@ -1275,6 +1293,11 @@ fn glue_split(
         }
     }
     None
+}
+
+/// Whether `p` is a house number, or a direction word that follows one.
+fn after_number(p: &Token, lex: &Lexicons) -> bool {
+    p.text.as_bytes().first().is_some_and(u8::is_ascii_digit) || lex.directional(&p.text).is_some()
 }
 
 /// The ordinal ending English writes after the number `n`: `ST`, `ND`,

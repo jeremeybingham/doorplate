@@ -175,6 +175,7 @@ One row per `tests/corpus/*.jsonl`; a new file gets a row here and an id prefix 
 | `glued-box.jsonl` | `gb-` | A box or route word glued to its number (`POBOX481`, `HCR75 BOX 12D`, `RR#4 BOX219`) is split; `BOXWOOD`, `BOX2 RD` and a bare `RR4` are not; `P O DRAWER C` is a box (#304, #598) |
 | `glued-direction.jsonl` | `gd-` | One direction letter glued to an ordinal or to `MAIN` (`W5TH`, `NMAIN`) is split; `NORTHGATE` and `NELSON` are not (#764) |
 | `glued-ordinal-suffix.jsonl` | `go-` | An ordinal glued to its street suffix (`5THST`, `21STST`) is cut after the ordinal; `1STATE ST` keeps its old cut (#762) |
+| `glued-name-suffix.jsonl` | `gns-` | A long suffix (`STREET`, `AVENUE`, `DRIVE`, `BLVD`, `PKWY`) glued to the street name (`OAKBLVD`) is split; a name with its own suffix after it, `LONGSTREET` and `LINCOLN` are not (#763) |
 | `glued-unit-letter.jsonl` | `gu-` | A unit word glued to one letter after a street suffix (`APTB`, `STEC`, `APTE 38`) is split; `APTS` is not (#765) |
 | `glued-floor.jsonl` | `gf-` | A floor written as a plain number and the floor word |
 | `glued-number-letter.jsonl` | `gnl-` | A letter stuck to the house number (`glued_number_letter`) |
