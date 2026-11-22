@@ -24,6 +24,27 @@ pub(crate) struct Cleaned {
     src: Vec<(usize, usize)>,
 }
 
+type Buffers = (String, Vec<(usize, usize)>);
+
+thread_local! {
+    /// The text and map buffers of the last `Cleaned` dropped on this thread, reused by the next
+    /// `clean` so a parse does not allocate them (#841).
+    static POOL: std::cell::RefCell<Buffers> = std::cell::RefCell::new(Buffers::default());
+}
+
+impl Drop for Cleaned {
+    fn drop(&mut self) {
+        let mut text = std::mem::take(&mut self.text);
+        let mut src = std::mem::take(&mut self.src);
+        // A buffer grown by one huge input is not kept.
+        if text.capacity() <= 4096 && src.capacity() <= 4096 {
+            text.clear();
+            src.clear();
+            let _ = POOL.try_with(|c| c.replace((text, src)));
+        }
+    }
+}
+
 impl Cleaned {
     /// Original byte range covered by `text[start..end]`. `start < end`
     /// must hold; an empty or out-of-range request returns `None`.
@@ -38,8 +59,9 @@ impl Cleaned {
 }
 
 pub(crate) fn clean(input: &str) -> Cleaned {
-    let mut text = String::with_capacity(input.len());
-    let mut src = Vec::with_capacity(input.len());
+    let (mut text, mut src) = POOL.try_with(|c| c.take()).unwrap_or_default();
+    text.reserve(input.len());
+    src.reserve(input.len());
     let mut pending_space = false;
     for (i, c) in input.char_indices() {
         let range = (i, i + c.len_utf8());
@@ -223,7 +245,7 @@ mod tests {
         }
         for s in inputs {
             let (a, b) = (clean(&s), clean_general(&s));
-            assert_eq!((a.text, a.src), (b.text, b.src), "{s:?}");
+            assert_eq!((&a.text, &a.src), (&b.text, &b.src), "{s:?}");
         }
     }
 }
