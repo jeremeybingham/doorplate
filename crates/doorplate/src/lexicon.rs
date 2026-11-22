@@ -758,6 +758,13 @@ impl Lexicons {
             .or_else(|| self.layer?.state.get(&*normalize_key_cow(s)).copied())
     }
 
+    /// Whether a state spelling may start with a digit: no shipped key does (tested), so only a
+    /// layer can say yes. A caller that tests a piece starting with a digit for a ZIP can skip
+    /// `state` when this is false (#839).
+    pub(crate) fn state_may_start_with_digit(&self) -> bool {
+        self.layer.is_some()
+    }
+
     fn state_base(&self, s: &str) -> Option<Lookup<StateCode>> {
         // A two-letter spelling (most state lookups that hit) is read from a table of the
         // two-letter keys: no normalizing, no hash, no search (#672 B3). Two bytes that are not
@@ -2321,6 +2328,15 @@ mod tests {
             }
         }
         assert!(checked > 10_000, "{checked}");
+    }
+
+    /// The gate in `state_may_start_with_digit` is exact for the shipped table (#839).
+    #[test]
+    fn no_state_key_starts_with_a_digit() {
+        for (k, _) in tables::STATE_INDEX {
+            assert!(!k.as_bytes()[0].is_ascii_digit(), "{k}");
+        }
+        assert!(!LEX.state_may_start_with_digit());
     }
 
     /// The two-letter state table (#672 B3) holds every two-byte key of `STATE_INDEX`, no such key has a

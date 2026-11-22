@@ -155,7 +155,14 @@ pub(crate) fn tokenize(
     let n = pieces.len();
     let mut scan = vec![(n, false, false); n + 1];
     for k in (0..n).rev() {
-        let at = lex.state(words[k]).is_some() || zip_parts(words[k]).is_some();
+        // A piece that starts with a digit is no state (unless a layer adds one): skip the lookup (#839).
+        let at = if !lex.state_may_start_with_digit()
+            && words[k].as_bytes().first().is_some_and(u8::is_ascii_digit)
+        {
+            zip_parts(words[k]).is_some()
+        } else {
+            lex.state(words[k]).is_some() || zip_parts(words[k]).is_some()
+        };
         let seg_end = if k + 1 < n && pieces[k + 1].2 == pieces[k].2 {
             scan[k + 1].0
         } else {
