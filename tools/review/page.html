@@ -128,6 +128,11 @@
 
   <div class="hint" id="selhint" hidden></div>
 
+  <details class="card" id="cardhint" hidden>
+    <summary><b>Hint</b> <span class="muted">(a reading of this card written into the queue; open it only when unsure)</span></summary>
+    <div id="cardhinttext" style="white-space: pre-wrap"></div>
+  </details>
+
   <details class="card" id="mailcard" open>
     <summary><b>On a letter</b> <span class="muted">(the Pub 28 delivery lines for each reading; the name line is a placeholder)</span></summary>
     <div class="mail" id="mail"></div>
@@ -367,6 +372,8 @@
       $("onelinehead").textContent = "The same row as one line (what the labels start from, and what usaddress is compared with) keys differently:";
       chips($("onelineview"), oneLine(it), oneParse.spans || []); warnings($("onelinewarn"), oneParse); kv($("onelinekv"), oneParse);
     }
+    // A queue entry may carry a `hint` (free text): shown collapsed, closed again on every card.
+    $("cardhint").hidden = !it.hint; $("cardhint").open = false; $("cardhinttext").textContent = it.hint || "";
     $("note").value = ""; $("hint").hidden = true;
     shownAt = Date.now(); startLabels();
   }
