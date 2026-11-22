@@ -983,6 +983,7 @@ NO_PROBE = {
     778: "no probe yet: leftovers of #498 (a bare unit designator before the street), P3 and unmeasured; the Netsyms comparison is still to run",
     802: "no probe yet: TOP or MAIN before FLOOR after a suffix (follow-up of #796, PR 800), P3 and unmeasured; a probe waits until the issue is promoted",
     803: "a fault of the #272 rule (PR 784) on a street whose own suffix is a two-letter code (PINE KEY DR); sized from that PR's key comparison (59 NC voter rows), not a probe",
+    818: "a collection of Puerto Rico leftovers (0.7.x), not one text shape; each item gets its own probe when it is split out and promoted",
     578: "a convention question, not a text shape: the letter after a house number is documented in docs/usaddress-compat.md and docs/benchmarks.md (#586 R8, #603)",
 }
 NOT_A_SHAPE_LABELS = ("tracker", "area:docs", "area:tooling", "area:api", "area:architecture")
