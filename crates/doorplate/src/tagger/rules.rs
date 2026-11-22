@@ -3494,7 +3494,9 @@ impl Tagger<'_> {
     ///
     /// Returns whether it tagged the street.
     fn puerto_rico_street(&mut self, lo: usize, hi: usize) -> bool {
-        if hi < lo + 2 {
+        // The place test first: it is cheap, and outside Puerto Rico nothing below applies
+        // (the word lookups cost +1.3% of instructions on rows with no Puerto Rico in them).
+        if hi < lo + 2 || !self.in_puerto_rico() {
             return false;
         }
         let lex = self.lex;
@@ -3508,9 +3510,7 @@ impl Tagger<'_> {
                 || is_letter(t0)
                 || is_hyphen_lettered(t0));
         let urb_after = (lo + 1..hi - 1).find(|&k| lex.is_urbanization_word(self.text(k)));
-        if !(urb_first || street_first || number_first || urb_after.is_some())
-            || !self.in_puerto_rico()
-        {
+        if !(urb_first || street_first || number_first || urb_after.is_some()) {
             return false;
         }
         if urb_first {
