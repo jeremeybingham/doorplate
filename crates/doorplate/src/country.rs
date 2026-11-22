@@ -37,7 +37,7 @@ pub(crate) fn strip_trailing(toks: &mut Vec<Token>, own_field: bool, lex: &Lexic
         if tail.iter().any(|t| t.seg != tail[0].seg) {
             continue;
         }
-        let text = tail.iter().map(|t| t.text.as_str()).collect::<Vec<_>>();
+        let text = tail.iter().map(|t| &*t.text).collect::<Vec<_>>();
         if !lex.is_country(&text.join(" ")) {
             continue;
         }

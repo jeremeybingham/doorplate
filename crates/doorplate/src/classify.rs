@@ -456,9 +456,9 @@ impl std::ops::Deref for Joined<'_> {
 
 /// `join`, but a one-token run is borrowed and a short one is built on the
 /// stack, not copied to the heap (#672 B8, #703 G5).
-pub(crate) fn join_ref(run: &[Token]) -> Joined<'_> {
+pub(crate) fn join_ref<'a>(run: &'a [Token<'_>]) -> Joined<'a> {
     if let [one] = run {
-        return Joined::Borrowed(one.text.as_str());
+        return Joined::Borrowed(&one.text);
     }
     let need = run
         .iter()
@@ -514,11 +514,11 @@ mod tests {
     use super::*;
     use crate::types::Span;
 
-    fn toks(words: &[&str]) -> Vec<Token> {
+    fn toks<'a>(words: &[&'a str]) -> Vec<Token<'a>> {
         words
             .iter()
             .map(|w| Token {
-                text: (*w).to_string(),
+                text: std::borrow::Cow::Borrowed(*w),
                 span: Span {
                     field: None,
                     start: 0,

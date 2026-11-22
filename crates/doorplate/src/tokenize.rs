@@ -40,6 +40,7 @@ use crate::clean::Cleaned;
 use crate::lexicon::{Lexicons, MatchKind, Special, MAX_PLACE_WORDS};
 use crate::types::{FieldName, Span};
 
+use std::borrow::Cow;
 use std::cell::RefCell;
 
 /// The two working vectors of `tokenize`, kept per thread and reused by the next call so a parse
@@ -74,9 +75,10 @@ impl Drop for Scratch {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct Token {
-    /// Normalized text: uppercase, punctuation handled as above.
-    pub text: String,
+pub(crate) struct Token<'a> {
+    /// Normalized text: uppercase, punctuation handled as above. Borrowed from the cleaned text
+    /// when it needs no change (#841).
+    pub text: Cow<'a, str>,
     /// Span in the original input, including any stripped punctuation.
     pub span: Span,
     /// Comma-separated segment index, counted across the whole input.
@@ -88,13 +90,13 @@ pub(crate) struct Token {
     pub group: bool,
 }
 
-impl AsRef<str> for Token {
+impl AsRef<str> for Token<'_> {
     fn as_ref(&self) -> &str {
         &self.text
     }
 }
 
-impl Token {
+impl Token<'_> {
     pub fn is_dash(&self) -> bool {
         self.text == "-"
     }
@@ -106,12 +108,12 @@ impl Token {
 
 /// Tokenize one input string (a single line, or one field). `seg0` is the
 /// first segment index to use, so fields can share one numbering.
-pub(crate) fn tokenize(
-    cleaned: &Cleaned,
+pub(crate) fn tokenize<'a>(
+    cleaned: &'a Cleaned,
     field: Option<FieldName>,
     seg0: usize,
     lex: &Lexicons,
-) -> Vec<Token> {
+) -> Vec<Token<'a>> {
     let text = cleaned.text.as_str();
     let bytes = text.as_bytes();
     // Raw pieces: (start, end, segment) in cleaned byte offsets.
@@ -253,7 +255,7 @@ pub(crate) fn tokenize(
                     .next_back()
                     .filter(|t| t.text == "FL" && k > 0 && edge_at(k - 1) == Edge::Inline)
                 {
-                    t.text = "FLOOR".to_string();
+                    t.text = Cow::Borrowed("FLOOR");
                 }
             }
             _ => {}
@@ -405,8 +407,8 @@ fn join_zip_hyphen(out: &mut Vec<Token>, lex: &Lexicons) {
             if dash {
                 out.remove(k + 1);
             }
-            out[k].text.push('-');
-            out[k].text.push_str(&last.text);
+            out[k].text.to_mut().push('-');
+            out[k].text.to_mut().push_str(&last.text);
             out[k].span.end = last.span.end;
         }
         k += 1;
@@ -586,7 +588,7 @@ fn floor_next(out: &[Token], at: usize, lex: &Lexicons) -> bool {
     let (Some(word), Some(fl)) = (out.get(at), out.get(at + 1)) else {
         return false;
     };
-    let w = word.text.as_str();
+    let w = &*word.text;
     let named = is_ordinal(w)
         || spelled_ordinal(w).is_some()
         || lex.is_level_word(w)
@@ -684,8 +686,8 @@ fn join_unit_hyphen(out: &mut Vec<Token>, lex: &Lexicons) {
             {
                 let next = out.remove(k + 1);
                 out.remove(k);
-                out[k - 1].text.push('-');
-                out[k - 1].text.push_str(&next.text);
+                out[k - 1].text.to_mut().push('-');
+                out[k - 1].text.to_mut().push_str(&next.text);
                 out[k - 1].span.end = next.span.end;
                 continue;
             }
@@ -713,7 +715,7 @@ fn fraction_hyphen(t: &str) -> Option<usize> {
 /// (`E 1000 N`, a Utah street) or no word at all keeps them apart.
 fn join_split_grid_number(out: &mut Vec<Token>, lex: &Lexicons) {
     if out.len() < 3
-        || !matches!(out[0].text.as_str(), "N" | "S" | "E" | "W")
+        || !matches!(&*out[0].text, "N" | "S" | "E" | "W")
         || out[1].text.len() < 3
         || !out[1].text.bytes().all(|c| c.is_ascii_digit())
         || out[0].seg != out[1].seg
@@ -725,7 +727,7 @@ fn join_split_grid_number(out: &mut Vec<Token>, lex: &Lexicons) {
         return;
     }
     let digits = out.remove(1);
-    out[0].text.push_str(&digits.text);
+    out[0].text.to_mut().push_str(&digits.text);
     out[0].span.end = digits.span.end;
 }
 
@@ -735,14 +737,14 @@ fn join_split_grid_number(out: &mut Vec<Token>, lex: &Lexicons) {
 /// house number, and a unit designator or box word next (`5 1 2 STE 100`) keeps the digits
 /// apart.
 fn join_lost_fraction(out: &mut Vec<Token>, lex: &Lexicons) {
-    if house_number(out.first().map_or("", |t| t.text.as_str())).is_none() {
+    if house_number(out.first().map_or("", |t| &*t.text)).is_none() {
         return;
     }
     let half_at = |k: usize| {
         matches!(
             (
-                out.get(k).map(|t| t.text.as_str()),
-                out.get(k + 1).map(|t| t.text.as_str())
+                out.get(k).map(|t| &*t.text),
+                out.get(k + 1).map(|t| &*t.text)
             ),
             (Some("1"), Some("2")) | (Some("1"), Some("4")) | (Some("3"), Some("4"))
         )
@@ -770,7 +772,7 @@ fn join_lost_fraction(out: &mut Vec<Token>, lex: &Lexicons) {
             .is_some_and(|l| l.kind != MatchKind::Observed);
     // A lone direction letter (`10 1 2 N MAIN ST`) counts too when a street word follows in the
     // same segment; the other single letters stay apart (#387).
-    let lone_direction = matches!(word.text.as_str(), "N" | "S" | "E" | "W")
+    let lone_direction = matches!(&*word.text, "N" | "S" | "E" | "W")
         && out.get(k + 3).is_some_and(|t| {
             t.seg == word.seg
                 && t.text.len() >= 2
@@ -788,8 +790,8 @@ fn join_lost_fraction(out: &mut Vec<Token>, lex: &Lexicons) {
         .all(|t| t.seg == out[0].seg && t.span.field == out[0].span.field);
     if plain && same {
         let denom = out.remove(k + 1);
-        out[k].text.push('/');
-        out[k].text.push_str(&denom.text);
+        out[k].text.to_mut().push('/');
+        out[k].text.to_mut().push_str(&denom.text);
         out[k].span.end = denom.span.end;
     }
 }
@@ -820,22 +822,22 @@ fn join_directional_comma(out: &mut [Token], lex: &Lexicons) {
     }
 }
 
-struct Piece<'a> {
+struct Piece<'a, 'o> {
     cleaned: &'a Cleaned,
     field: Option<FieldName>,
     seg: usize,
     /// The words after this piece in its segment.
-    after: &'a [&'a str],
+    after: &'o [&'o str],
     /// Whether another segment follows this one.
     later_seg: bool,
     /// Whether a later segment holds a state or a ZIP.
     later_anchor: bool,
-    out: &'a mut Vec<Token>,
+    out: &'o mut Vec<Token<'a>>,
 }
 
-impl Piece<'_> {
+impl<'a> Piece<'a, '_> {
     /// The words before this piece in its segment, nearest last.
-    fn before(&self) -> &[Token] {
+    fn before(&self) -> &[Token<'a>] {
         let n = self
             .out
             .iter()
@@ -855,7 +857,7 @@ impl Piece<'_> {
         })
     }
 
-    fn emit(&mut self, text: String, a: usize, b: usize, paren: bool) {
+    fn emit(&mut self, text: Cow<'a, str>, a: usize, b: usize, paren: bool) {
         if text.is_empty() {
             return;
         }
@@ -875,12 +877,12 @@ impl Piece<'_> {
         let text = &self.cleaned.text;
         let raw = &text[a..b];
         if raw.bytes().all(|c| c == b'-') {
-            self.emit("-".to_string(), a, b, paren);
+            self.emit(Cow::Borrowed("-"), a, b, paren);
             return;
         }
         // A line of only asterisks stays, so it reads as a placeholder.
         if raw.bytes().all(|c| c == b'*') {
-            self.emit("*".to_string(), a, b, paren);
+            self.emit(Cow::Borrowed("*"), a, b, paren);
             return;
         }
         // Trim wrapping punctuation from the text, but keep the whole piece
@@ -909,7 +911,7 @@ impl Piece<'_> {
             && inner.starts_with('%')
             && inner[1..].chars().next().is_some_and(char::is_alphabetic)
         {
-            self.emit("%".to_string(), ia, ia + 1, paren);
+            self.emit(Cow::Borrowed("%"), ia, ia + 1, paren);
             self.sub(ia + 1, ib, a, b, paren, next_numeric, lex);
             return;
         }
@@ -919,7 +921,7 @@ impl Piece<'_> {
             for (i, c) in text[ia..ib].char_indices() {
                 if c == '#' {
                     self.sub(s, ia + i, a, b, paren, next_numeric, lex);
-                    self.emit("#".to_string(), ia + i, ia + i + 1, paren);
+                    self.emit(Cow::Borrowed("#"), ia + i, ia + i + 1, paren);
                     s = ia + i + 1;
                 }
             }
@@ -975,21 +977,21 @@ impl Piece<'_> {
             // `1174-1/2`: a hyphen before a fraction is a space (`1174 1/2`).
             if let Some(cut) = fraction_hyphen(t) {
                 rule_hit!("sub:fraction_hyphen");
-                self.emit(t[..cut].to_string(), s2, s2 + cut, paren);
-                self.emit(t[cut + 1..].to_string(), s2 + cut + 1, e2, paren);
+                self.emit(Cow::Borrowed(&t[..cut]), s2, s2 + cut, paren);
+                self.emit(Cow::Borrowed(&t[cut + 1..]), s2 + cut + 1, e2, paren);
                 return;
             }
             if let Some(cut) = route_hyphen(t, lex) {
                 rule_hit!("sub:route_hyphen");
-                self.emit(t[..cut].to_string(), s2, s2 + cut, paren);
-                self.emit(t[cut + 1..].to_string(), s2 + cut + 1, e2, paren);
+                self.emit(Cow::Borrowed(&t[..cut]), s2, s2 + cut, paren);
+                self.emit(Cow::Borrowed(&t[cut + 1..]), s2 + cut + 1, e2, paren);
                 return;
             }
             // `STREET-SUITE 303`, `CT-UNIT 4`: a street suffix, a hyphen glued to a unit
             // designator (#308). The pieces are words of their own.
             if let Some(cut) = suffix_hyphen_designator(t, lex) {
                 rule_hit!("sub:suffix_hyphen_designator");
-                self.emit(t[..cut].to_string(), s2, s2 + cut, paren);
+                self.emit(Cow::Borrowed(&t[..cut]), s2, s2 + cut, paren);
                 self.sub(s2 + cut + 1, e2, pa, pb, paren, next_numeric, lex);
                 return;
             }
@@ -997,8 +999,8 @@ impl Piece<'_> {
             // its own, dropped later when a unit follows (`drop_unit_separators`).
             if let Some(cut) = suffix_slash(t, self.after, lex) {
                 rule_hit!("sub:suffix_slash");
-                self.emit(t[..cut].to_string(), s2, s2 + cut, paren);
-                self.emit("/".to_string(), s2 + cut, s2 + cut + 1, paren);
+                self.emit(Cow::Borrowed(&t[..cut]), s2, s2 + cut, paren);
+                self.emit(Cow::Borrowed("/"), s2 + cut, s2 + cut + 1, paren);
                 self.sub(s2 + cut + 1, e2, pa, pb, paren, next_numeric, lex);
                 return;
             }
@@ -1006,7 +1008,7 @@ impl Piece<'_> {
             // `STE.200`, `APT:201`, `UNIT-4`.
             if let Some(cut) = unit_punct(t, lex) {
                 rule_hit!("sub:unit_punct");
-                self.emit(t[..cut].to_string(), s2, s2 + cut, paren);
+                self.emit(Cow::Borrowed(&t[..cut]), s2, s2 + cut, paren);
                 self.sub(s2 + cut + 1, e2, pa, pb, paren, next_numeric, lex);
                 return;
             }
@@ -1035,8 +1037,8 @@ impl Piece<'_> {
             });
             if let Some(cut) = cut {
                 rule_hit!("sub:glue_split_or_place");
-                self.emit(t[..cut].to_string(), s2, s2 + cut, paren);
-                self.emit(t[cut..].to_string(), s2 + cut, e2, paren);
+                self.emit(Cow::Borrowed(&t[..cut]), s2, s2 + cut, paren);
+                self.emit(Cow::Borrowed(&t[cut..]), s2 + cut, e2, paren);
                 return;
             }
         }
@@ -1073,23 +1075,26 @@ fn piece_is_whole(piece: &str, t: &str) -> bool {
 }
 
 /// Drop periods except between digits; drop quotes.
-fn normalize(t: &str) -> String {
+fn normalize(t: &str) -> Cow<'_, str> {
     let b = t.as_bytes();
+    // Dropped: a quote, and a period that is not between two digits. Most tokens have none.
+    let dropped = |i: usize, c: u8| match c {
+        b'.' => {
+            !(i > 0 && b[i - 1].is_ascii_digit() && b.get(i + 1).is_some_and(u8::is_ascii_digit))
+        }
+        b'"' | b'\'' => true,
+        _ => false,
+    };
+    if !b.iter().enumerate().any(|(i, &c)| dropped(i, c)) {
+        return Cow::Borrowed(t);
+    }
     let mut out = String::with_capacity(t.len());
     for (i, c) in t.char_indices() {
-        match c {
-            '.' => {
-                let digit_before = i > 0 && b[i - 1].is_ascii_digit();
-                let digit_after = b.get(i + 1).is_some_and(u8::is_ascii_digit);
-                if digit_before && digit_after {
-                    out.push('.');
-                }
-            }
-            '"' | '\'' => {}
-            _ => out.push(c),
+        if !(c.is_ascii() && dropped(i, c as u8)) {
+            out.push(c);
         }
     }
-    out
+    Cow::Owned(out)
 }
 
 /// The hyphen's index in a hyphenated route such as `GA-25`, if `t` is one.
@@ -1627,9 +1632,10 @@ mod tests {
     }
 
     fn toks(s: &str) -> Vec<String> {
-        tokenize(&clean(s), None, 0, &Lexicons::builtin())
+        let c = clean(s);
+        tokenize(&c, None, 0, &Lexicons::builtin())
             .into_iter()
-            .map(|t| t.text)
+            .map(|t| t.text.into_owned())
             .collect()
     }
 
@@ -1765,12 +1771,14 @@ mod tests {
     #[test]
     fn segments_and_spans() {
         let input = "26166 Paysandu Dr, PUNTA GORDA, FL- 33983";
-        let t = tokenize(&clean(input), None, 0, &Lexicons::builtin());
+        let c = clean(input);
+        let t = tokenize(&c, None, 0, &Lexicons::builtin());
         let segs: Vec<_> = t.iter().map(|t| t.seg).collect();
         assert_eq!(segs, [0, 0, 0, 1, 1, 2, 2]);
         let fl = &t[5];
         assert_eq!(&input[fl.span.start..fl.span.end], "FL-");
-        let p = tokenize(&clean("(OFF)"), None, 0, &Lexicons::builtin());
+        let c = clean("(OFF)");
+        let p = tokenize(&c, None, 0, &Lexicons::builtin());
         assert_eq!(p[0].text, "OFF");
         assert!(p[0].paren);
         assert_eq!((p[0].span.start, p[0].span.end), (0, 5));

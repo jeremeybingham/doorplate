@@ -89,7 +89,7 @@ pub(crate) fn assemble(
     for (tag, run) in runs {
         let text: std::borrow::Cow<'_, str> = match run {
             [] => std::borrow::Cow::Borrowed(""),
-            [one] => std::borrow::Cow::Borrowed(one.text.as_str()),
+            [one] => std::borrow::Cow::Borrowed(&*one.text),
             _ => std::borrow::Cow::Owned(join(run)),
         };
         let span = run_span(run);
@@ -105,7 +105,8 @@ pub(crate) fn assemble(
             Tag::Untagged | Tag::Unparsed => {
                 for t in run {
                     unparsed_toks.push(t);
-                    unparsed.push(source(&t.span).map_or_else(|| t.text.clone(), str::to_string));
+                    unparsed
+                        .push(source(&t.span).map_or_else(|| t.text.to_string(), str::to_string));
                     addr.source.spans.push(ComponentSpan {
                         component: Component::Unparsed,
                         span: t.span,
@@ -130,7 +131,7 @@ pub(crate) fn assemble(
                                 format!("{}{}", n.text, l.text)
                             }
                             // Two numbers joined by `&` or `AND` are a range (#274).
-                            [a, amp, b] if matches!(amp.text.as_str(), "&" | "AND") => {
+                            [a, amp, b] if matches!(&*amp.text, "&" | "AND") => {
                                 format!("{}-{}", a.text, b.text)
                             }
                             _ => text.into_owned(),
@@ -267,7 +268,7 @@ pub(crate) fn assemble(
                                 .unit(&first.text)
                                 .is_some_and(|u| u.value.abbr() == "PH") =>
                     {
-                        run.iter().map(|t| t.text.as_str()).collect()
+                        run.iter().map(|t| &*t.text).collect()
                     }
                     _ => text,
                 };
@@ -591,7 +592,7 @@ fn run_span(run: &[Token]) -> Option<Span> {
 /// start of a street name is read as a highway, #543). A route number must follow, so
 /// `UNITED STATES POSTAL SERVICE` is not touched. The word before and the route are kept.
 fn us_highway_spelled(run: &[Token]) -> Option<String> {
-    let at = |k: usize| run.get(k).map(|t| t.text.as_str());
+    let at = |k: usize| run.get(k).map(|t| &*t.text);
     let spelled = |k: usize| {
         at(k) == Some("UNITED")
             && at(k + 1) == Some("STATES")
