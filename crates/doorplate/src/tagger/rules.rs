@@ -2429,7 +2429,8 @@ impl Tagger<'_> {
             return None;
         }
         let e = self.seg_end(k, hi);
-        let b = (k..e).find(|&b| {
+        // The box word sits at most three words in (`lead` below), so a later one never matches.
+        let b = (k..e.min(k + 4)).find(|&b| {
             matches!(
                 self.text(b),
                 "BOX" | "BX" | "CPO" | "UPO" | "CPU" | "UNX" | "UNY" | "CMB" | "CB"
@@ -2563,6 +2564,11 @@ impl Tagger<'_> {
 
     /// Match a special delivery line starting at `lo`, without tagging.
     fn match_special(&self, lo: usize, hi: usize) -> Option<SpecialMatch> {
+        // Every form below needs a special word, a Puerto Rico box word or a campus box code
+        // somewhere in the line (a `PMB` unit only counts before a box): the line gate (#838).
+        if !self.features.box_word {
+            return None;
+        }
         if let Some(m) = self.campus_box(lo, hi) {
             return Some(m);
         }
