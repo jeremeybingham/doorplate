@@ -338,13 +338,13 @@ FIXED = [{"start": 0, "end": 3, "component": "StreetNumber"}, {"start": 4, "end"
 
 def label_body(verdict, labels, **kw):
     return dict({"id": "inv|site|1", "verdict": verdict, "labeled_text": TEXT, "labels": labels, "parser_labels": PARSER,
-                 "corrected_parse": {"key": "k5:x"}}, **kw)
+                 "corrected_parse": {"key": "k6:x"}}, **kw)
 
 
 def test_a_correction_can_be_labels_instead_of_a_string(review):
     rec = review.answer(label_body("corrected", FIXED))
     assert rec["verdict"] == "corrected" and rec["labels"] == FIXED and rec["parser_labels"] == PARSER
-    assert "corrected" not in rec and rec["corrected_parse"] == {"key": "k5:x"}
+    assert "corrected" not in rec and rec["corrected_parse"] == {"key": "k6:x"}
     with pytest.raises(ValueError, match="needs labels or the corrected string"):
         review.answer({"id": "inv|site|1", "verdict": "corrected"})
 

@@ -29,7 +29,7 @@ postal-service-certified data; warnings such as `zip_city_mismatch` are hints ab
 input, not verdicts.
 
 > **Alpha release (0.6.2).** Expect rough edges; names in the API and the warning codes may still change before 1.0.
-> The match key is versioned (`k5:`) and later versions will probably change it, so store
+> The match key is versioned (`k6:`) and later versions will probably change it, so store
 > the prefix with your keys and plan to re-key. `k5` has only been checked on the project's own data (public records). Accuracy and speed are measurements on a few datasets, not guarantees.
 >
 > **Help wanted: messy addresses.** If it parses your addresses badly (odd abbreviations, typos, cut-off lines, units in
@@ -51,7 +51,7 @@ a = doorplate.parse("123 north main street apt 4, Miami FL 33101")
 
 a.street_name, a.unit_number        # ("MAIN", "4")
 a.to_usps()["line1"]                # "123 N MAIN ST APT 4"
-a.key()                             # "k5:S|123|N|MAIN|ST||FL|33101"
+a.key()                             # "k6:S|123|N|MAIN|ST||FL|33101"
 a.slug()                            # "123-n-main-st-apt-4-miami-fl-33101"
 a.to_display()["line1"]             # "123 N Main St Apt 4" (mixed case, display only)
 a.warnings                          # []
@@ -64,7 +64,7 @@ $ doorplate parse "123 N. Main St #4, miami, fl 33101" --usps
 123 N MAIN ST # 4
 MIAMI FL 33101
 $ doorplate parse "123 N. Main St #4, miami, fl 33101" | jq -r .key
-k5:S|123|N|MAIN|ST||FL|33101
+k6:S|123|N|MAIN|ST||FL|33101
 ```
 
 ## Install

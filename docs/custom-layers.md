@@ -43,7 +43,7 @@ Fern Holow WA 98991
 
 Without the layer `TRAYL` is part of the street name and `Fern Holow` is an unknown city; with it the suffix is `TRL`, the
 place is `FERN HOLLOW` (reported in `place`, with `source: "variant"`), and the key changes from
-`k5:S|120||FERN HOLLOW TRAYL|||WA|98991` to `k5:S|120||FERN HOLLOW|TRL||WA|98991`. The notebook
+`k6:S|120||FERN HOLLOW TRAYL|||WA|98991` to `k6:S|120||FERN HOLLOW|TRL||WA|98991`. The notebook
 ([`examples/quickstart.ipynb`](../examples/quickstart.ipynb), "Your own spellings and places") and
 [`examples/custom_layer_example.py`](../examples/custom_layer_example.py) walk through it from Python.
 
