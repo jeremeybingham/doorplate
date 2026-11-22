@@ -1040,23 +1040,11 @@ impl Lexicons {
     }
 
     /// A Puerto Rico Spanish box word (`APARTADO`, `RUTA`, `BUZON`, `BZN`, Pub 28 R8), for the
-    /// first-word reject. Source: `data/special.toml` `[puerto_rico]`.
+    /// first-word reject. Source: `data/special.toml` `[puerto_rico]`. Called on every token, so
+    /// the shipped words are compared first (tokens are upper case); a test keeps that list equal
+    /// to the data.
     pub(crate) fn is_pr_box_word(&self, s: &str) -> bool {
-        // Called on every token: the first letter rejects nearly all of them.
-        if !matches!(
-            s.as_bytes().first(),
-            Some(b'A' | b'R' | b'B' | b'a' | b'r' | b'b')
-        ) {
-            return false;
-        }
-        let k = normalize_key_cow(s);
-        [
-            tables::PR_PO_BOX_WORDS,
-            tables::PR_ROUTE_WORDS,
-            tables::PR_BOX_WORDS,
-        ]
-        .iter()
-        .any(|l| find_str(l, &k))
+        matches!(s, "APARTADO" | "RUTA" | "BUZON" | "BZN")
     }
 
     /// `APARTADO`: the Spanish word for a PO Box (R8, #748).
@@ -1859,6 +1847,20 @@ mod tests {
             assert_eq!(LEX.state(s.code()).unwrap().value, s);
             assert_eq!(LEX.state(s.name()).unwrap().value, s);
         }
+    }
+
+    #[test]
+    fn pr_box_words_match_the_data() {
+        for l in [
+            tables::PR_PO_BOX_WORDS,
+            tables::PR_ROUTE_WORDS,
+            tables::PR_BOX_WORDS,
+        ] {
+            for w in l {
+                assert!(LEX.is_pr_box_word(w), "{w}");
+            }
+        }
+        assert!(!LEX.is_pr_box_word("BOX"));
     }
 
     #[test]
