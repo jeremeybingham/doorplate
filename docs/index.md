@@ -36,8 +36,8 @@ the [command-line guide](command-line.md), the [Rust guide](rust.md) and [pandas
     doorplate does not check that an address exists or can receive mail. Pub 28 formatting is not deliverability, and
     a warning such as `zip_city_mismatch` is a hint about the input, not a verdict.
 
-!!! note "Alpha"
-    Expect rough edges. The match key is versioned (`k6:`) and may get new versions as the parser improves, so store
-    the version prefix with your keys. Accuracy and speed are measurements on a few data sets, not guarantees.
+!!! note "Beta"
+    The API, the command-line options and the warning codes are stable from 0.7.0. The match key is versioned (`k6:`)
+    and may get a new version in a minor release as the parser improves, so store the version prefix with your keys. Accuracy and speed are measurements on a few data sets, not guarantees.
     If it parses your addresses badly, please
     [open an issue](https://github.com/jeremeybingham/doorplate/issues/new?template=misparse-or-messy-data.md).
