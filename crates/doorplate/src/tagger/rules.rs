@@ -839,7 +839,7 @@ impl Tagger<'_> {
                 if n + 1 == k {
                     // A cut-off word is not a directional: `RD NE` before
                     // `NEW SALISBURY` is the street's postdirectional.
-                    words[n].text.starts_with(t.text.as_str())
+                    words[n].text.starts_with(&*t.text)
                         && (t.text == words[n].text || self.lex.directional(&t.text).is_none())
                 } else {
                     t.text == words[n].text
@@ -969,13 +969,7 @@ impl Tagger<'_> {
             .collect();
         let code = self
             .lex
-            .state(
-                &state
-                    .iter()
-                    .map(|t| t.text.as_str())
-                    .collect::<Vec<_>>()
-                    .join(" "),
-            )
+            .state(&state.iter().map(|t| &*t.text).collect::<Vec<_>>().join(" "))
             .map(|l| l.value.code())?;
         let (_, _, repaired) = zip_repair(&join_ref(&self.toks[r.clone()]), zero_zip_state(code))?;
         Some(repaired)
@@ -1820,16 +1814,15 @@ impl Tagger<'_> {
             let rest = &self.toks[k + 1..k + 1 + m];
             let copy = body.iter().zip(rest).enumerate().all(|(i, (b, r))| {
                 if i + 1 == m {
-                    r.text.starts_with(&b.text)
+                    r.text.starts_with(&*b.text)
                 } else {
                     b.text == r.text
                 }
             });
             // `7848 NW 178S 7848 NW 178ST`, where the tokenizer split `178ST`:
             // the same comparison on the text without word breaks.
-            let glued = |ts: &[crate::tokenize::Token]| {
-                ts.iter().map(|t| t.text.as_str()).collect::<String>()
-            };
+            let glued =
+                |ts: &[crate::tokenize::Token]| ts.iter().map(|t| &*t.text).collect::<String>();
             let copy = copy || glued(&self.toks[k + 1..hi]).starts_with(&glued(body));
             if copy {
                 self.set(lo..k, Tag::Skip);
@@ -2930,11 +2923,7 @@ impl Tagger<'_> {
             .filter(|&k| self.tags[k] == Tag::State)
             .map(|k| &self.toks[k])
             .collect();
-        let text = toks
-            .iter()
-            .map(|t| t.text.as_str())
-            .collect::<Vec<_>>()
-            .join(" ");
+        let text = toks.iter().map(|t| &*t.text).collect::<Vec<_>>().join(" ");
         self.lex.state(&text).map(|l| l.value.code())
     }
 

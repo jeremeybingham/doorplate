@@ -253,14 +253,16 @@ impl Parser {
             FieldName::State,
             FieldName::Zip,
         ];
+        // Every field is cleaned first: the tokens borrow from the cleaned text (#841).
+        let cleaned = order.map(|f| fields.get(f).filter(|v| !null_field(f, v)).map(clean));
         let mut toks: Vec<Token> = Vec::new();
         let mut ranges = Vec::new();
         let mut seg = 0;
         let mut country = false;
-        for f in order {
+        for (f, c) in order.into_iter().zip(&cleaned) {
             let start = toks.len();
-            if let Some(v) = fields.get(f).filter(|v| !null_field(f, v)) {
-                let mut t = tokenize(&clean(v), Some(f), seg, &self.lex);
+            if let Some(c) = c {
+                let mut t = tokenize(c, Some(f), seg, &self.lex);
                 seg = t.last().map_or(seg, |t| t.seg) + 1;
                 // A field that is only a country goes, unless it is all
                 // there is to parse.

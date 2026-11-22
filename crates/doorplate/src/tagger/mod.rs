@@ -133,7 +133,7 @@ pub(crate) struct LineLengths {
 }
 
 pub(crate) struct Tagger<'a> {
-    toks: &'a [Token],
+    toks: &'a [Token<'a>],
     tags: Vec<Tag>,
     warnings: Vec<Warning>,
     decisions: Vec<Decision>,
@@ -184,7 +184,7 @@ impl Features {
     fn of(toks: &[Token], lex: Lexicons) -> Self {
         let (mut highway_prefix, mut box_word) = (false, false);
         for t in toks {
-            let w = t.text.as_str();
+            let w = &*t.text;
             highway_prefix = highway_prefix || lex.highway_may_occur(w);
             box_word = box_word
                 || lex.special_may_occur(w)
@@ -212,7 +212,7 @@ pub(crate) struct PlaceCtx {
 
 impl<'a> Tagger<'a> {
     fn new(
-        toks: &'a [Token],
+        toks: &'a [Token<'a>],
         lex: Lexicons,
         lens: LineLengths,
         hint: Option<&'static str>,
@@ -283,7 +283,7 @@ impl<'a> Tagger<'a> {
     }
 
     fn text(&self, i: usize) -> &'a str {
-        self.toks.get(i).map_or("", |t| t.text.as_str())
+        self.toks.get(i).map_or("", |t| &*t.text)
     }
 
     /// First token index of the segment that token `i` is in.
@@ -527,7 +527,7 @@ pub(crate) fn tag_fields(
         && l1.len() >= 4
         && crate::classify::house_number(&toks[l1.start].text).is_some()
         && lex.unit(&toks[l1.start + 1].text).is_some()
-        && matches!(toks[l2.start].text.as_str(), "#" | "NO")
+        && matches!(&*toks[l2.start].text, "#" | "NO")
         && l2.len() == 2
         && toks[l2.start + 1].text == toks[l1.start + 2].text
     {
@@ -690,7 +690,8 @@ mod tests {
 
     fn decisions(input: &str, hint: Option<&'static str>) -> Vec<Decision> {
         let lex = Lexicons::builtin();
-        let toks = tokenize(&clean(input), None, 0, &lex);
+        let c = clean(input);
+        let toks = tokenize(&c, None, 0, &lex);
         let lens = LineLengths {
             seg: Vec::new(),
             whole: Some(input.len()),

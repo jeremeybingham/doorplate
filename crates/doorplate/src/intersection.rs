@@ -83,7 +83,7 @@ pub(crate) fn find(toks: &[Token], lex: &Lexicons) -> Option<Range<usize>> {
 }
 
 /// The tokens without `cut`.
-pub(crate) fn remove(toks: &[Token], cut: &Range<usize>) -> Vec<Token> {
+pub(crate) fn remove<'a>(toks: &[Token<'a>], cut: &Range<usize>) -> Vec<Token<'a>> {
     toks[..cut.start]
         .iter()
         .chain(&toks[cut.end..])
