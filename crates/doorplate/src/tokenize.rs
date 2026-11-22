@@ -40,6 +40,39 @@ use crate::clean::Cleaned;
 use crate::lexicon::{Lexicons, MatchKind, Special, MAX_PLACE_WORDS};
 use crate::types::{FieldName, Span};
 
+use std::cell::RefCell;
+
+/// The two working vectors of `tokenize`, kept per thread and reused by the next call so a parse
+/// does not allocate them (#841).
+#[derive(Default)]
+struct Vecs {
+    pieces: Vec<(usize, usize, usize)>,
+    scan: Vec<(usize, bool, bool)>,
+}
+
+thread_local! {
+    static SCRATCH: RefCell<Vecs> = RefCell::new(Vecs::default());
+}
+
+/// The vectors for one call: taken empty from the thread's store, put back when dropped.
+struct Scratch(Vecs);
+
+impl Scratch {
+    fn take() -> Self {
+        // A nested call (none today) finds the store empty and gets fresh vectors.
+        Self(SCRATCH.try_with(|c| c.take()).unwrap_or_default())
+    }
+}
+
+impl Drop for Scratch {
+    fn drop(&mut self) {
+        let mut v = std::mem::take(&mut self.0);
+        v.pieces.clear();
+        v.scan.clear();
+        let _ = SCRATCH.try_with(|c| c.replace(v));
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct Token {
     /// Normalized text: uppercase, punctuation handled as above.
@@ -82,7 +115,9 @@ pub(crate) fn tokenize(
     let text = cleaned.text.as_str();
     let bytes = text.as_bytes();
     // Raw pieces: (start, end, segment) in cleaned byte offsets.
-    let mut pieces = Vec::with_capacity(bytes.len() / 4 + 1);
+    let mut scratch = Scratch::take();
+    let Vecs { pieces, scan } = &mut scratch.0;
+    pieces.reserve(bytes.len() / 4 + 1);
     let mut seg = seg0;
     let mut start = None;
     for (i, &b) in bytes.iter().enumerate() {
@@ -134,7 +169,7 @@ pub(crate) fn tokenize(
         });
     }
 
-    let edge = edge_groups(text, &mut pieces, lex);
+    let edge = edge_groups(text, pieces, lex);
     // `edge` is empty when the line has no `(`: every piece is `Edge::No`.
     let edge_at = |k: usize| edge.get(k).copied().unwrap_or(Edge::No);
 
@@ -153,7 +188,7 @@ pub(crate) fn tokenize(
     debug_assert!(pieces.windows(2).all(|w| w[0].2 <= w[1].2));
     // One vector for the three, so this costs one allocation: `(seg_end, anchor_at, anchor_from)`.
     let n = pieces.len();
-    let mut scan = vec![(n, false, false); n + 1];
+    scan.resize(n + 1, (n, false, false));
     for k in (0..n).rev() {
         // A piece that starts with a digit is no state (unless a layer adds one): skip the lookup (#839).
         let at = if !lex.state_may_start_with_digit()
