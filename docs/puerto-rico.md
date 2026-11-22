@@ -51,8 +51,8 @@ What Pub 28 does **not** say: anything about `KM` (kilometer markers on `CARR` r
 | `COND GARDEN HILLS PLAZA TORRE 2 APT 905` | street `COND ... TORRE 2`, unit, `missing_street_number`, `possibly_truncated` | R5 (`TORRE` is a building line) | gap |
 | `RES LAS MARGARITAS EDIF 1 APT 104` | street `RES ... EDIF 1`, unit, `missing_street_number`, `possibly_truncated` | R3, R5 | gap |
 | `EDIF 5 APT 12 RES LAS MARGARITAS` | street `EDIF 5`, the project name unparsed, three warnings | R3, R5 | gap |
-| `APARTADO 825` | no number, street `APARTADO 825`, `missing_street_number` | R8 (it is a PO Box) | gap, **key** |
-| `RUTA RURAL 3 BUZON 12000`, `RUTA ESTRELLA 1 BUZON 18` | street name holds all of it, `missing_street_number` | R8 | gap, **key** |
+| `APARTADO 825` | PO Box 825 (was: no number, street `APARTADO 825`, `missing_street_number`) | R8 (it is a PO Box) | fixed, **key** (#748) |
+| `RUTA RURAL 3 BUZON 12000`, `RUTA ESTRELLA 1 BUZON 18`, `RR 3 BUZON 7` | `RR 3 BOX 12000`, `HC 1 BOX 18`, `RR 3 BOX 7` (was: street name holds all of it, `missing_street_number`) | R8 | fixed, **key** (#748); the leading zero on the route and the hyphen in `17-A` are not changed (same as `HC 03 BOX 17-A` before) |
 | `RR 3 BOX 12000`, `HC 03 BOX 1050`, `PO BOX 1195` | read as rural route / highway contract / box; `HC 03` keys as route `3` | R8 | right |
 | `RR 2 BOX 1980 SECTOR EL BRINCO` | route and box right, `SECTOR EL BRINCO` unparsed with `unparsed_remainder` | R8 (sector dropped) | right (the text is reported, not kept) |
 | `BO PUEBLO CARR 2 KM 14.5` | no number, all in the street name; the key reads `KM 145` (the decimal point is dropped) | none | the key merges `KM 14.5` with `KM 145`; no Pub 28 source |
@@ -94,7 +94,7 @@ A PR rule keys on the state `PR` or a Puerto Rico ZIP (006, 007, 009), as `is_pu
 | #318 (`URB` after the street) | Source: R2 (both orders), I51.4. Rule: with a `CALLE`/`AVE` prefix street present, `URB NAME` is not part of the street. `NUMBER URB NAME` with no street prefix keeps `URB NAME` as the street (R3). | Done: a new `urbanization` field, in the USPS form and the key (above). |
 | #319 (street-first forms) | Source: R6 and I51.3 (the standard is number first). Cases: `CALLE NAME NUMBER`, `CALLE NAME NUMBER UNIT`, `AVE NAME NUMBER UNIT`. | Done: Puerto Rico only; the number is the house number, no new warning. |
 | #747: lettered and block-lot numbers | Source: R6 (`A-17` to `A17`, `BLQ`, `CASA`, `LOTE`, `NUM` dropped). | Done (above). `K7`-style lot codes in a split source's number column stay on the left-as-is list. |
-| New: Spanish box and route words | Source: R8. | Size; the PR-only scope. |
+| #748: Spanish box and route words | Source: R8. | Done: Puerto Rico only; `APARTADO`, `RUTA RURAL`, `RUTA ESTRELLA`, `BUZON`, `BZN` (lists in `special.toml`). |
 | New: condominium and `RES` building lines | Source: R3, R5 (`TORRE`, `EDIF`, name on its own line). | The `missing_street_number` choice (finding 6). |
 
 ## Next steps (in the epic's order)

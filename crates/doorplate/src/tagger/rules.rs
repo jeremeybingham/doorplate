@@ -2576,6 +2576,12 @@ impl Tagger<'_> {
             tags.push((v..v + 1, tag));
         };
 
+        if special.is_none() {
+            if let Some(m) = self.pr_box_match(lo, hi) {
+                return Some(m);
+            }
+        }
+
         if let Some((l, w)) = special {
             match l.value {
                 // Pub 28 section 261.
@@ -2617,33 +2623,8 @@ impl Tagger<'_> {
                 Special::RuralRoute | Special::HighwayContract => {
                     let form = join_ref(&self.toks[lo..lo + w]);
                     let ambiguous = lex.highway(&form).is_some() || lex.suffix(&form).is_some();
-                    if let Some((route, hash)) = self.value_at(lo + w, hi) {
-                        let bx = self.box_part(route + 1, hi);
-                        if bx.is_some() || !ambiguous {
-                            tags.push((lo..lo + w, Tag::Route));
-                            value(&mut tags, route, hash, Tag::RouteNumber);
-                            let mut end = route + 1;
-                            if let Some((word, v)) = bx {
-                                tags.push((word.start..v, Tag::Skip));
-                                tags.push((v..v + 1, Tag::BoxNumber));
-                                end = v + 1;
-                                // `RR 2 BOX 45 A`: a lone letter after a
-                                // numeric box is part of it (#95).
-                                if end < hi
-                                    && all_digits(self.text(v))
-                                    && is_letter(self.text(end))
-                                    && self.toks[end].seg == self.toks[v].seg
-                                {
-                                    tags.push((end..end + 1, Tag::BoxLetter));
-                                    end += 1;
-                                }
-                            }
-                            return Some(SpecialMatch {
-                                tags,
-                                end,
-                                units: true,
-                            });
-                        }
+                    if let Some(m) = self.route_match(lo, w, hi, ambiguous) {
+                        return Some(m);
                     }
                 }
                 Special::Box => {
@@ -2761,14 +2742,93 @@ impl Tagger<'_> {
         })
     }
 
+    /// A rural route or highway contract route of `w` words at `lo`, then its route number and
+    /// an optional box. `ambiguous` forms (`RD`, `RTE`, `ROUTE`) need the box.
+    fn route_match(&self, lo: usize, w: usize, hi: usize, ambiguous: bool) -> Option<SpecialMatch> {
+        let (route, hash) = self.value_at(lo + w, hi)?;
+        let bx = self.box_part(route + 1, hi);
+        if bx.is_none() && ambiguous {
+            return None;
+        }
+        let mut tags = vec![(lo..lo + w, Tag::Route)];
+        if hash {
+            tags.push((route - 1..route, Tag::Skip));
+        }
+        tags.push((route..route + 1, Tag::RouteNumber));
+        let mut end = route + 1;
+        if let Some((word, v)) = bx {
+            tags.push((word.start..v, Tag::Skip));
+            tags.push((v..v + 1, Tag::BoxNumber));
+            end = v + 1;
+            // `RR 2 BOX 45 A`: a lone letter after a numeric box is part of it (#95).
+            if end < hi
+                && all_digits(self.text(v))
+                && is_letter(self.text(end))
+                && self.toks[end].seg == self.toks[v].seg
+            {
+                tags.push((end..end + 1, Tag::BoxLetter));
+                end += 1;
+            }
+        }
+        Some(SpecialMatch {
+            tags,
+            end,
+            units: true,
+        })
+    }
+
+    /// The Puerto Rico Spanish box and route words (Pub 28 R8, `docs/puerto-rico.md`, #748), only
+    /// for an address in Puerto Rico: `APARTADO 825` is a PO Box; `RUTA RURAL 3 BUZON 12` is a
+    /// rural route and `RUTA ESTRELLA 1 BUZON 18` a highway contract route (the emitters write
+    /// `PO BOX`, `RR`, `HC` and `BOX`).
+    fn pr_box_match(&self, lo: usize, hi: usize) -> Option<SpecialMatch> {
+        let lex = self.lex;
+        // The word lookups are cheap, the place test is not: words first here, on a line start.
+        let t0 = self.text(lo);
+        let po = lex.is_pr_po_box_word(t0);
+        if !po && !lex.is_pr_box_word(t0) {
+            return None;
+        }
+        if lo + 1 >= hi || !self.in_puerto_rico() {
+            return None;
+        }
+        if po {
+            let (v, hash) = self.value_at(lo + 1, hi)?;
+            let mut tags = vec![(lo..lo + 1, Tag::PoBox)];
+            if hash {
+                tags.push((v - 1..v, Tag::Skip));
+            }
+            tags.push((v..v + 1, Tag::PoBoxNumber));
+            return Some(SpecialMatch {
+                tags,
+                end: v + 1,
+                units: true,
+            });
+        }
+        if lo + 2 < hi
+            && self.toks[lo].seg == self.toks[lo + 1].seg
+            && lex
+                .pr_route_kind(&join_ref(&self.toks[lo..lo + 2]))
+                .is_some()
+        {
+            return self.route_match(lo, 2, hi, false);
+        }
+        None
+    }
+
     /// `BOX 152` (or `PO BOX`, `#`) at `k`: the box word's range and the
     /// value's index.
     fn box_part(&self, k: usize, hi: usize) -> Option<(Range<usize>, usize)> {
         let lex = self.lex;
-        let (_, w) = longest_at(self.toks, k, self.special_hi(k, hi), |s| {
+        let w = match longest_at(self.toks, k, self.special_hi(k, hi), |s| {
             lex.special(s)
                 .filter(|l| matches!(l.value, Special::Box | Special::PoBox))
-        })?;
+        }) {
+            Some((_, w)) => w,
+            // `RR 3 BUZON 7`: the Spanish box word, in Puerto Rico (R8, #748).
+            None if k < hi && lex.is_pr_box_part_word(self.text(k)) && self.in_puerto_rico() => 1,
+            None => return None,
+        };
         let (v, _) = self.value_at(k + w, hi)?;
         Some((k..k + w, v))
     }

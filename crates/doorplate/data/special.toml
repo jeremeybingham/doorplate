@@ -472,3 +472,13 @@ urbanization_words = ["URB", "URBANIZACION"]
 # BLQ 199 CASA 31` is house number `199-31` on `CALLE 19` (#747). A `#` is
 # dropped the same way (handled in the tagger, it is not a word).
 number_words = ["BLOQUE", "BLQ", "BQ", "CASA", "LOTE", "NUM", "NUMERO"]
+# Spanish box and route words (R8, Pub 28 section 293 and I51.5 to I51.7; issue
+# #748), read only in Puerto Rico (a street named `RUTA` exists elsewhere):
+# `APARTADO 825` is `PO BOX 825`; `RUTA RURAL 3 BUZON 12` is `RR 3 BOX 12`;
+# `RUTA ESTRELLA 1 BUZON 18` is `HC 1 BOX 18`; `BUZON` and `BZN` are the box
+# word after a route (`RR 3 BUZON 7`).
+po_box_words = ["APARTADO"]
+route_words = ["RUTA"]
+rural_words = ["RURAL"]
+star_words = ["ESTRELLA"]
+box_words = ["BUZON", "BZN"]

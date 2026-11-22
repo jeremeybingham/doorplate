@@ -188,6 +188,7 @@ impl Features {
             highway_prefix = highway_prefix || lex.highway_may_occur(w);
             box_word = box_word
                 || lex.special_may_occur(w)
+                || lex.is_pr_box_word(w)
                 || matches!(
                     w,
                     "BOX" | "BX" | "CPO" | "UPO" | "CPU" | "UNX" | "UNY" | "CMB" | "CB"
