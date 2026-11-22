@@ -224,6 +224,7 @@ One row per `tests/corpus/*.jsonl`; a new file gets a row here and an id prefix 
 | `repeated-unit.jsonl` | `ru-` | The same unit on both lines, or twice on line 2, is kept once; two different units stay two |
 | `reso.jsonl` | `reso-` | Pin the emitters: RESO field values, written from `docs/reso-mapping.md` |
 | `road-letter.jsonl` | `rl-` | A letter after `ROAD` on one line |
+| `pr-private-road.jsonl` | `prr-` | `PR` plus a number: a private road outside Puerto Rico, the PR highway inside it (#314) |
 | `road-number.jsonl` | `rn-`, `cd-` | A number after a road word is the road's in a closed list of states and words (`PRIVATE ROAD 1234` in TX), a unit elsewhere; both spellings share a key |
 | `route-typos.jsonl` | `rty-` | Typos of rural route and highway contract prefixes (`RUR RTE 3 BOX 84`, `HRC 5 BOX 12M`) |
 | `rrbox.jsonl` | `rb-` | A lone letter after a numeric rural route or contract route box number is part of the box (`45A`) |

@@ -15,6 +15,8 @@ Planned for 0.7.0, the first beta: the `k6` key, the removal of the state data s
 
 ### Changed
 
+- **`PR` plus a route number outside Puerto Rico is a road, not the Puerto Rico highway** (`k6`, #314): `123 PR 462, AUSTIN, TX` reads street `PR 462` (a Texas private road); with state `PR` (or no state) it is still the highway `PR HIGHWAY 462`. The key changes for these rows.
+
 - **A name line with no building word is the attention line** (#726): `12 OAK AVE` / `THE GARRETT` (a leading `THE`, up to eight words) and `WOOD MILL LOFTS` / `1200 5TH ST` (a numbered street named by an ordinal) no longer leave `unparsed_remainder`, or the name as the street with the numbered line read as a unit. Key-affecting (`k6`): 613 property keys changed in the seven sources (612 in ny-corps, 1 in nc-voter), almost all the name-as-street shape (before-keys with no street number).
 
 - **A name, a unit letter or other text after a spaced hyphen or slash that follows a street suffix leaves the street** (`k6`, #341; extends #308): `9 PINECREST RD - OAK TWP` and `12 OAK AVE - QUILLBERRY` read the suffix as the suffix and the tail as the attention line (before, street `PINECREST RD - OAK TWP`); `12 OAK AVE - B` and `/ B 12` read unit `B` and `B 12`; text that is neither (`- SHOP 9`, `- S/SH`) goes to `unparsed_remainder`. A hyphen with no spaces inside a name is unchanged.

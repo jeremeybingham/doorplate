@@ -59,7 +59,7 @@ What Pub 28 does **not** say: anything about `KM` (kilometer markers on `CARR` r
 | `12 CLL LUNA`, `12 AVENIDA LUNA` | street name kept as written | R7 | right (not rewritten) |
 | `1 CALLE NORTE`, `12 CALLE OESTE` | `NORTE` and `OESTE` stay in the street name | R9 | right |
 | `PR 123 KM 4, ARECIBO PR` | read as the highway `PR 123`, number empty, street `KM 4` | none | see the guard below |
-| `PR 123, HOUSTON TX` | read as the highway `PR 123` | none | #314: a Texas private road, not Puerto Rico |
+| `PR 123, HOUSTON TX` | street `PR 123` (a Texas private road); in Puerto Rico still the highway `PR 123` | none | right (#314) |
 
 The pattern: the forms that Pub 28 gives as the standard (number then prefix and street, `COND` or `URB` with a number ahead, `RR`, `HC`, `PO BOX`) parse right. The gaps are in the forms real data uses instead: street first, `URB` before or after the street on one line, Spanish box and route words, and block-lot and lettered numbers with a hyphen. The cost is `missing_street_number` and a street name that holds the number, so the key of every such row is a street name, not a number plus street.
 
@@ -76,7 +76,7 @@ The pattern: the forms that Pub 28 gives as the standard (number then prefix and
 
 ## Guard
 
-A PR rule keys on the state `PR` or a Puerto Rico ZIP (006, 007, 009), as `is_puerto_rico` does in `tools/harness/probes.py`, with one more case: a one-line input with no state but a Spanish prefix (`CALLE`, `URB`) is a candidate, not a match. `PR` plus a number with no Puerto Rico state or ZIP (#314) stays a road. The current parser reads `PR 123, HOUSTON TX` as the highway `PR 123`; fixing that is #314, outside this epic.
+A PR rule keys on the state `PR` or a Puerto Rico ZIP (006, 007, 009), as `is_puerto_rico` does in `tools/harness/probes.py`, with one more case: a one-line input with no state but a Spanish prefix (`CALLE`, `URB`) is a candidate, not a match. `PR` plus a number with no Puerto Rico state or ZIP (#314) stays a road. The parser keeps `PR 123, HOUSTON TX` a road (#314, a `k6` rule).
 
 ## What this gives the rule issues
 
