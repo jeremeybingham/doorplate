@@ -7,6 +7,11 @@ change to what an input produces needs a new key version.
 
 ## [Unreleased]
 
+### Changed
+
+- **Faster: the `units` scan is skipped when the end of the line rules out a unit** (#837). A line ending in a plain word that is not a designator, a cut-off designator, a level word or a spelled number, with no designator before it and no digit in the three tokens before it, no longer runs the unit rules. 962.5M to 932.0M instructions over 20,000 parses (−3.18%, callgrind). No output changes: the output hash of the 76,421 suite inputs is equal, and the seven-source key comparison found 0 changed keys, warnings or unit fields.
+- **Faster: the anchor scan skips the state lookup for pieces that start with a digit** (#839). No shipped state spelling starts with a digit, so only a custom layer can say yes. −0.28% instructions over 20,000 parses (callgrind). No output changes: suite hash equal, 0 changed keys over the seven sources.
+
 ## [0.7.0] - 2026-11-22
 
 The first beta and the `k6` key release.

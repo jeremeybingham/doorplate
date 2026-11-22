@@ -4764,10 +4764,52 @@ impl Tagger<'_> {
         d > start + 1 && self.lex.suffix(self.text(d - 1)).is_some()
     }
 
+    /// Whether [`Self::units`] would read nothing from `floor..hi` (#837): true only when every
+    /// rule of its first round is ruled out by the last token and what sits just before it, so the
+    /// scan can be skipped. The last token is a plain word (letters only, two or more; no
+    /// parentheses, `#` or dash), so no value, pair or bare-unit rule applies; it is not the last
+    /// word of a unit key nor a cut-off designator (unless it is a street suffix, which
+    /// `is_cut_designator` refuses), nor a level word or a spelled number; the word before it is
+    /// not the last word of a unit key (`APT TD`) and is not a `#`; and none of the three tokens
+    /// that could hold the value of `UNIT 12 BLU SPA` has a digit. A custom layer defeats the gate.
+    fn no_unit_at_end(&self, floor: usize, hi: usize) -> bool {
+        let Some(last) = hi.checked_sub(1).filter(|&l| l >= floor) else {
+            return true;
+        };
+        let tok = &self.toks[last];
+        let t = &*tok.text;
+        let lex = self.lex;
+        if tok.paren || t.len() < 2 || !t.bytes().all(|c| c.is_ascii_alphabetic()) {
+            return false;
+        }
+        let class = lex.unit_end_class(t);
+        if class & 1 != 0
+            || (class & 2 != 0 && lex.suffix(t).is_none())
+            || lex.ends_level_phrase(t)
+            || spelled_number(t).is_some()
+        {
+            return false;
+        }
+        if last > floor {
+            let before = &self.toks[last - 1];
+            if before.is_hash() || lex.unit_end_class(&before.text) & 1 != 0 {
+                return false;
+            }
+        }
+        let from = floor + 1;
+        !(from..last)
+            .rev()
+            .take(3)
+            .any(|i| has_digit(&self.toks[i].text))
+    }
+
     /// Up to two units at the end of `floor..hi`, read from the right.
     /// `name_lo` is where the street name starts (for the bare-unit rule).
     /// Returns the new end of the street.
     fn units(&mut self, floor: usize, name_lo: usize, hi: usize, bare: bool) -> usize {
+        if self.no_unit_at_end(floor, hi) {
+            return hi;
+        }
         let lex = self.lex;
         let mut j = hi;
         let mut found: Vec<(Range<usize>, Range<usize>)> = Vec::new();

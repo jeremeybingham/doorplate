@@ -552,6 +552,29 @@ fn find_filtered_raw<'a, V>(
     find_filtered(filter, index, &normalize_key_cow(raw))
 }
 
+/// The words of [`Lexicons::unit_end_class`], each with its bits (1 last word of a unit key, 2
+/// strict prefix of a designator). The value carries a unit so the table has the `(key, value)` shape.
+fn unit_end_index() -> &'static [(&'static str, (u8, ()))] {
+    static INDEX: OnceLock<Vec<(&'static str, (u8, ()))>> = OnceLock::new();
+    INDEX.get_or_init(|| {
+        let mut words: std::collections::BTreeMap<&'static str, u8> = Default::default();
+        for (k, _) in tables::UNIT_INDEX {
+            let last = k.rsplit_once(' ').map_or(*k, |(_, w)| w);
+            *words.entry(last).or_default() |= 1;
+        }
+        for r in tables::UNITS {
+            for w in [r.abbr, r.name] {
+                for n in 2..w.len() {
+                    if w.is_char_boundary(n) {
+                        *words.entry(&w[..n]).or_default() |= 2;
+                    }
+                }
+            }
+        }
+        words.into_iter().map(|(k, c)| (k, (c, ()))).collect()
+    })
+}
+
 /// `find` on one of the keyed tables, with a filter of its own.
 macro_rules! find_in {
     ($index:expr, $key:expr) => {{
@@ -736,6 +759,19 @@ impl Lexicons {
             value: l.value,
             kind: MatchKind::Observed,
         })
+    }
+
+    /// What a word can be at the end of a street line, for the `units` gate (#837): bit 1 if it is
+    /// the last word of a unit key (`APT`, `FLOOR` in `TOP FLOOR`), bit 2 if it is a strict prefix
+    /// of two letters or more of a designator's abbreviation or name (a designator cut off at the
+    /// line limit, `UNI`). 0 means no unit rule can start from a line ending in this word
+    /// whatever sits before it, except those that read the word before it. A custom layer may add
+    /// any unit spelling, so with one every word says 3.
+    pub(crate) fn unit_end_class(&self, raw: &str) -> u8 {
+        if self.layer.is_some() {
+            return 3;
+        }
+        find_raw_in!(unit_end_index(), raw).map_or(0, |&(c, _)| c)
     }
 
     fn unit_base(&self, s: &str) -> Option<Lookup<UnitType>> {
@@ -2661,6 +2697,26 @@ mod tests {
         assert_eq!(normalize_key("north-west"), "NORTH-WEST");
         assert_eq!(normalize_key("\tNew\nYork"), "NEW YORK");
         assert_eq!(normalize_key("..."), "");
+    }
+
+    /// The `units` gate's word classes (#837) cover every last word of a unit key and every cut
+    /// prefix of a designator, in any case.
+    #[test]
+    fn unit_end_classes_cover_the_keys_and_the_cut_prefixes() {
+        for (k, _) in tables::UNIT_INDEX {
+            let last = k.rsplit(' ').next().unwrap();
+            assert_eq!(LEX.unit_end_class(last) & 1, 1, "{k}");
+            assert_eq!(LEX.unit_end_class(&last.to_lowercase()) & 1, 1, "{k}");
+        }
+        for u in LEX.units() {
+            for w in [u.abbr(), u.name()] {
+                for n in 2..w.len() {
+                    assert_eq!(LEX.unit_end_class(&w[..n]) & 2, 2, "{w}");
+                }
+            }
+        }
+        assert_eq!(LEX.unit_end_class("MAIN"), 0);
+        assert_eq!(LEX.unit_end_class("ST") & 1, 0);
     }
 
     /// The pair reject on a key (#672 C2) never hides a key of the table: every key is found,
