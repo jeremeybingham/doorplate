@@ -1039,6 +1039,26 @@ impl Lexicons {
         find_str(tables::PR_NUMBER_WORDS, &normalize_key_cow(s))
     }
 
+    /// A word that opens a Puerto Rico condominium or public-housing name (`COND`, `RES`, Pub 28
+    /// R3, R5; #749). Source: `data/special.toml` `[puerto_rico]` `project_words`.
+    pub(crate) fn is_pr_project_word(&self, s: &str) -> bool {
+        find_str(tables::PR_PROJECT_WORDS, &normalize_key_cow(s))
+    }
+
+    /// A Puerto Rico building word (`TORRE`, `EDIF`, Pub 28 I22; #749) as a unit type: the
+    /// building designator `BLDG`. The tagger tags it only in Puerto Rico, after a project name.
+    /// Source: `data/special.toml` `[puerto_rico]` `building_words`.
+    pub(crate) fn pr_building_unit(&self, s: &str) -> Option<Lookup<UnitType>> {
+        if !find_str(tables::PR_BUILDING_WORDS, &normalize_key_cow(s)) {
+            return None;
+        }
+        let l = self.unit_base("BLDG")?;
+        Some(Lookup {
+            value: l.value,
+            kind: MatchKind::Variant,
+        })
+    }
+
     /// A Puerto Rico Spanish box word (`APARTADO`, `RUTA`, `BUZON`, `BZN`, Pub 28 R8), for the
     /// first-word reject. Source: `data/special.toml` `[puerto_rico]`. Called on every token, so
     /// the shipped words are compared first (tokens are upper case); a test keeps that list equal
@@ -1861,6 +1881,19 @@ mod tests {
             }
         }
         assert!(!LEX.is_pr_box_word("BOX"));
+    }
+
+    #[test]
+    fn pr_building_words() {
+        for w in ["TORRE", "EDIF", "EDIFICIO"] {
+            assert_eq!(
+                LEX.pr_building_unit(w).map(|l| l.value.abbr()),
+                Some("BLDG"),
+                "{w}"
+            );
+        }
+        assert!(LEX.pr_building_unit("APT").is_none());
+        assert!(LEX.is_pr_project_word("COND") && LEX.is_pr_project_word("RES"));
     }
 
     #[test]

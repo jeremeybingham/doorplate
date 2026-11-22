@@ -482,3 +482,11 @@ route_words = ["RUTA"]
 rural_words = ["RURAL"]
 star_words = ["ESTRELLA"]
 box_words = ["BUZON", "BZN"]
+# Condominium and public-housing building lines (R3, R5; Pub 28 I21.3 and I22;
+# issue #749): `COND GARDEN HILLS TORRE 2 APT 905`, `RES LAS MARGARITAS EDIF 1
+# APT 104`, `EDIF 5 APT 12 RES LAS MARGARITAS`. After a project name that opens
+# with one of the `project_words`, a `building_words` word and its value is a
+# building unit (`BLDG 2`), not part of the street; the apartment is the second
+# unit. Read only in Puerto Rico (`TORRE` is a street name word elsewhere).
+project_words = ["COND", "CONDOMINIO", "RES", "RESIDENCIAL"]
+building_words = ["EDIF", "EDIFICIO", "TORRE"]
