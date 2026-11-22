@@ -85,16 +85,23 @@ cargo install doorplate-cli           # the `doorplate` command
 
 To build from source, see [Getting started](https://doorplate.readthedocs.io/en/latest/getting-started/#install).
 
-## Benchmarks
-| 0.6.2 | doorplate | usaddress |
-|---|---|---|
-| Whole address right, [benchmark suite](docs/benchmark-suite.md), `natural` stratum (16,001 addresses written in five styles) | 98.7% | 96.1% |
-| Whole address right, [geocode benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark) dev split (60,522 one-line addresses) | 94.4% | 88.1% |
-| Addresses per second from Python, one thread (suite inputs, 4 CPUs) | about 99,000 | about 9,200 |
+## Accuracy and speed
 
-Measured against [usaddress](https://github.com/datamade/usaddress) on a few data sets (the geocode benchmark is Yin, Li and
-Goldberg, [arXiv:2310.14360](https://arxiv.org/abs/2310.14360)), not promises for yours; every figure by build, the
-caveats and how to rerun them: [benchmarks](docs/benchmarks.md) and [speed, size and memory](docs/speed-and-size.md).
+| | doorplate | usaddress | libpostal |
+|---|---|---|---|
+| **Parser Score**, [parser showdown](https://github.com/jeremeybingham/address-parser-showdown) (hand-labeled golden set and four outside sets) | **90.9** | 84.7 | 80.8 |
+| Whole address right, showdown random public stratum (829 real address lines) | 93.7% | 93.0% | 91.3% |
+| Whole address right, [benchmark suite](docs/benchmark-suite.md), `natural` stratum (16,001 addresses in five styles) | 98.6% | 96.5% | 95.0% |
+| Whole address right, [geocode benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark) `dev` split (60,522 one-line addresses) | 94.4% | 88.4% | 79.9% |
+| Strings per second from Python, one process | about 72,000 | about 9,000 | about 14,600 |
+| Memory after loading | 27 MB | 27 MB | about 3 GB |
+
+Every row is from the showdown's pinned run (doorplate 0.6.0, and 0.6.2 has the same Parser Score; usaddress 0.5.16;
+libpostal with the Senzing model; default settings, 4 CPUs). The geocode benchmark is Yin, Li and Goldberg,
+[arXiv:2310.14360](https://arxiv.org/abs/2310.14360). doorplate's author built the showdown: the method, the conflict of interest and
+every prediction file are in [its report](https://github.com/jeremeybingham/address-parser-showdown/blob/main/report/REPORT.md). These are measurements on a few data sets, not
+promises for yours. doorplate's own benchmark suite, the other checks and the speed figures by build:
+[benchmarks](docs/benchmarks.md) and [speed, size and memory](docs/speed-and-size.md).
 
 ## What it does not do
 

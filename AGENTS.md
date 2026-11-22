@@ -24,7 +24,7 @@ imply otherwise in docs or code comments.
 | The public API surface and what is promised about it | [`docs/api-surface.md`](docs/api-surface.md) |
 | Coming from usaddress | [`docs/usaddress-compat.md`](docs/usaddress-compat.md) |
 | Sharing messy data without sharing the data (`doorplate anonymize`) | [`docs/anonymizing.md`](docs/anonymizing.md) |
-| Accuracy, speed and size (the only pages that hold figures), and how to rerun them | [`docs/benchmarks.md`](docs/benchmarks.md), [`docs/speed-and-size.md`](docs/speed-and-size.md), [`docs/running-benchmarks.md`](docs/running-benchmarks.md); the release tolerance: [`docs/change-checklist.md`](docs/change-checklist.md#release-tolerance-for-the-benchmarks) |
+| Accuracy, speed and size (the only pages that hold figures; the headline is the [parser showdown](https://github.com/jeremeybingham/address-parser-showdown) against usaddress and libpostal), and how to rerun them | [`docs/benchmarks.md`](docs/benchmarks.md), [`docs/speed-and-size.md`](docs/speed-and-size.md), [`docs/running-benchmarks.md`](docs/running-benchmarks.md); the release tolerance: [`docs/change-checklist.md`](docs/change-checklist.md#release-tolerance-for-the-benchmarks) |
 | The benchmark suite: what it holds and the rules that keep it fair (it is not a work list) | [`docs/benchmark-suite.md`](docs/benchmark-suite.md); data in [`benchmarks/suite/`](benchmarks/suite/README.md) |
 | How the parser works | [`docs/how-it-works.md`](docs/how-it-works.md) |
 | What is planned and what is not | [`docs/roadmap.md`](docs/roadmap.md); how issues are organized: [`docs/backlog.md`](docs/backlog.md) |
