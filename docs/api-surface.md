@@ -14,6 +14,7 @@ One name means one thing in every language. The names follow Pub 28's words (no 
 | Street name and suffix | `street_name`, `street_suffix` | same | same | same | `StreetName`, `StreetSuffix` |
 | Unit | `unit_type`, `unit_number` (and `second_unit_*`) | same | same | same | `UnitNumber` |
 | City, state | `city`, `state` | same | same | same | `City`, `StateOrProvince` |
+| Puerto Rico urbanization | `urbanization` | same | same | same | none |
 | ZIP | `zip5`, `zip4` | `zip5`, `zip4` | `zip5` | `zip5`, `zip4` | `PostalCode`, `PostalCodePlus4` |
 | Output forms | `to_usps`, `to_display`, `to_long`, `to_reso`, `to_usaddress_tags`, `tag` | the same names | `usps`, `reso`, flags | `usps_line1`, `usps_last_line` | |
 | Key, slug | `key(KeyOptions)`, `slug()` | `key(unit=False)`, `slug()` | `key`, `key_unit`, `slug` | `key`, `key_unit`, `slug` | |
@@ -42,12 +43,11 @@ The differences are deliberate: RESO uses its own Data Dictionary names, and Rus
 
 A rename or removal is announced one release ahead: the old name stays and works, the changelog says what replaces it and when it goes, Python raises
 a `DeprecationWarning` where the language allows and Rust uses `#[deprecated]`. A change that alters a key is never a deprecation: it is a new key version.
-Names may change before 1.0 with a note in the changelog while the project is an alpha (0.6.x). From the beta (0.7.0) the deprecation
-rule above is the only way a name changes.
+From 0.7.0, the first beta, this is the only way a name changes (before it, the alpha releases renamed with a changelog note).
 
 ## Is it stable enough for a beta?
 
-Yes, from 0.7.0. The three surfaces are settled, and the one planned break, the removal of the state data structure (#700; `state_data_version` left the diagnostics), landed in 0.7.0 itself. The `k5` held through 0.6.0, 0.6.1 and 0.6.2, and the `k6` is the key of the beta.
+Yes, from 0.7.0. The three surfaces are settled; the last planned break, the removal of the state data structure (#700: `state_data_version` left the diagnostics), landed in 0.7.0 itself, and `k6` is the key of the beta.
 
 A beta may still get a new key version, because accuracy fixes change what an input produces and a changed input is a changed key
 ([`key-format.md`](key-format.md)). What the beta promises is when: a new key version comes only in a minor release (0.8 and later), never in

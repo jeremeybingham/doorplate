@@ -62,7 +62,8 @@ fields give way (#614).
   input (and the field, for separate fields).
 - **Lexicons behind one interface.** The tagger never reads a table directly:
   everything goes through `Lexicons`, which merges the Pub 28 tables, the national
-  place list. There is no state-specific logic in the tagger.
+  place list and its curated rows. There is no state-specific logic in the tagger: even
+  the Puerto Rico rules ([`puerto-rico.md`](puerto-rico.md)) take their scope and words from `special.toml`.
 - **Emitters are read-only.** A new output format cannot change a parse.
 - **Rules plus a place list, no model.** There is no statistical model, no
   training and no model file. The place list is what separates a city from street
