@@ -62,7 +62,7 @@ The parser did something, or the input lacks a part. A parse with one of these i
 | `city_from_parentheses` | The row had no city (a placeholder such as `Not stated`) and line 1 ended in a place glued in parentheses (`7 OAK AVE(SPRINGFIELD)`); the place is the city. The key does not change. | Check the city. | Probe read: 14 of 14 labeled as the city (#741); not measured on a full run |
 | `default_state_applied` | A `default_state` hint decided a place or a reading; `state` stays empty. | Nothing. | 0 rows; only with the option |
 | `repeated_label` | Reported by `tag()` only: a usaddress label appears in two runs. | Nothing. | `tag()` only |
-| `ambiguous_token` | Reserved: defined, but the parser does not raise it today. | Nothing. | None |
+| `ambiguous_token` | Reserved: defined, but the parser does not raise it. | Nothing. | None |
 
 **Reading the group.** `missing_zip` is mild: the rest of the row is parsed without the ZIP's help, and the street-name
 boundary is a little less certain (5.7% against 3.1%).
