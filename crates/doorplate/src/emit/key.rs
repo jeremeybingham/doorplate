@@ -1,4 +1,4 @@
-//! Canonical match key (format `k5`). The spec, with the reasoning behind
+//! Canonical match key (format `k6`). The spec, with the reasoning behind
 //! each rule, is `docs/key-format.md`; changing what any input produces needs
 //! a new version prefix, never an in-place edit.
 
@@ -170,7 +170,7 @@ impl ParsedAddress {
             segs.push(esc(&format!("URB {u}")));
         }
 
-        let mut key = String::from(if located { "k5:" } else { "k5n:" });
+        let mut key = String::from(if located { "k6:" } else { "k6n:" });
         key.push(form);
         for s in &segs {
             key.push('|');
@@ -259,7 +259,7 @@ mod tests {
     #[test]
     fn spelling_variants_share_a_key() {
         let a = pk("123 N. Main Street, Apt 4, Miami FL 33101");
-        assert_eq!(a, "k5:S|123|N|MAIN|ST||FL|33101");
+        assert_eq!(a, "k6:S|123|N|MAIN|ST||FL|33101");
         assert_eq!(a, pk("123 north main st #4, miami, florida 33101-1234"));
         assert_eq!(a, pk("123 NORTH MAIN ST, MIAMI, FL 33101"));
     }
@@ -284,7 +284,7 @@ mod tests {
     fn unit_level_key() {
         let u = KeyOptions::unit();
         let a = key("123 N Main St Apt 4, Miami FL 33101", u).unwrap();
-        assert_eq!(a, "k5:S|123|N|MAIN|ST||FL|33101|4|");
+        assert_eq!(a, "k6:S|123|N|MAIN|ST||FL|33101|4|");
         assert_eq!(
             a,
             key("123 north main street #4, Miami FL 33101", u).unwrap()
@@ -306,25 +306,25 @@ mod tests {
 
     #[test]
     fn missing_zip_or_state_gets_the_n_prefix() {
-        assert_eq!(pk("123 Main St, Miami FL"), "k5n:S|123||MAIN|ST||FL|");
-        assert_eq!(pk("123 Main St"), "k5n:S|123||MAIN|ST|||");
-        assert!(pk("123 Main St, Miami 33101").starts_with("k5n:"));
-        assert!(pk("123 Main St, Miami FL 33101").starts_with("k5:"));
+        assert_eq!(pk("123 Main St, Miami FL"), "k6n:S|123||MAIN|ST||FL|");
+        assert_eq!(pk("123 Main St"), "k6n:S|123||MAIN|ST|||");
+        assert!(pk("123 Main St, Miami 33101").starts_with("k6n:"));
+        assert!(pk("123 Main St, Miami FL 33101").starts_with("k6:"));
     }
 
     #[test]
     fn special_forms_never_equal_a_street_key() {
-        assert_eq!(pk("PO Box 12, Tampa FL 33601"), "k5:P|12|FL|33601");
-        assert_eq!(pk("P.O. BOX 12, Tampa FL 33601"), "k5:P|12|FL|33601");
-        assert_eq!(pk("RR 2 Box 152, Ocala FL 34470"), "k5:R|RR|2|152|FL|34470");
+        assert_eq!(pk("PO Box 12, Tampa FL 33601"), "k6:P|12|FL|33601");
+        assert_eq!(pk("P.O. BOX 12, Tampa FL 33601"), "k6:P|12|FL|33601");
+        assert_eq!(pk("RR 2 Box 152, Ocala FL 34470"), "k6:R|RR|2|152|FL|34470");
         assert_eq!(
             pk("PSC 1650 Box 10, APO AE 09001"),
-            "k5:M|PSC|1650|10|APO|AE|09001"
+            "k6:M|PSC|1650|10|APO|AE|09001"
         );
-        assert_eq!(pk("General Delivery, Tampa FL 33601"), "k5:G|FL|33601");
+        assert_eq!(pk("General Delivery, Tampa FL 33601"), "k6:G|FL|33601");
         assert_eq!(
             pk("100 County Road 23, Ocala FL 34470"),
-            "k5:S|100||COUNTY ROAD 23|||FL|34470"
+            "k6:S|100||COUNTY ROAD 23|||FL|34470"
         );
     }
 

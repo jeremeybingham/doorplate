@@ -1162,7 +1162,7 @@ PARTIAL_KEY = re.compile(r"^k[0-9]+n:")
 
 
 def is_partial_key(key):
-    """A key without state and ZIP (`k5n:`, `k5n:`: the prefix of any version)."""
+    """A key without state and ZIP (`k5n:`, `k6n:`: the prefix of any version)."""
     return bool(PARTIAL_KEY.match(str(key)))
 
 

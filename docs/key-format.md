@@ -1,10 +1,10 @@
-# Canonical key and slug spec (version k5)
+# Canonical key and slug spec (version k6)
 
 This page specifies the **key** (below) and the **slug** (last section).
 
 The key is versioned, and a given version is a contract: stored keys must keep
 meaning the same thing, so any change to what an input produces needs a new version
-prefix (`k6:`) and an update here. `k5` is never edited in place.
+prefix (`k7:`) and an update here. `k6` is never edited in place.
 
 **This is an alpha release (a beta from 0.7.0, the `k6`).** Expect new key versions as the parser improves: every
 fix that changes how an input is read changes its key. From the beta on, a new version comes only in a minor release,
@@ -19,14 +19,14 @@ does not say the address exists or is deliverable (see README).
 ## Format
 
 ```
-k5:S|<number>|<predir>|<name>|<suffix>|<postdir>|<state>|<zip5>[|<unit>|<unit2>][|URB <urbanization>]
-k5:P|<box>|<state>|<zip5>
-k5:R|<RR|HC>|<route>|<box>|<state>|<zip5>
-k5:M|<kind>|<number>|<box>|<post office>|<state>|<zip5>
-k5:G|<state>|<zip5>
+k6:S|<number>|<predir>|<name>|<suffix>|<postdir>|<state>|<zip5>[|<unit>|<unit2>][|URB <urbanization>]
+k6:P|<box>|<state>|<zip5>
+k6:R|<RR|HC>|<route>|<box>|<state>|<zip5>
+k6:M|<kind>|<number>|<box>|<post office>|<state>|<zip5>
+k6:G|<state>|<zip5>
 ```
 
-- Prefix `k5:`, then a one-letter **form**, then segments separated by `|`.
+- Prefix `k6:`, then a one-letter **form**, then segments separated by `|`.
   Every form has a fixed number of segments, and an empty value leaves an
   empty segment (`...||...`). The one exception is the Puerto Rico
   urbanization (below), a last segment written only when it is set.
@@ -53,7 +53,7 @@ k5:G|<state>|<zip5>
   `3712A`) share a key. Elsewhere the hyphen stays (`20-22 W 45TH ST` in Manhattan is two numbers). The parsed
   `street_number` keeps what was written. A pair read with a space (`41 12 80TH AVE` in a New York City ZIP, Massachusetts or Hawaii, #313) keys like its hyphenated twin.
 - **Puerto Rico urbanization** (`k6`, #318): when the address has an urbanization (`27 CALLE LUNA URB LAS PALMAS`,
-  Puerto Rico only), form `S` ends with one more segment, `URB` and the name: `k5:S|27||CALLE LUNA|||PR|00926|URB LAS PALMAS`,
+  Puerto Rico only), form `S` ends with one more segment, `URB` and the name: `k6:S|27||CALLE LUNA|||PR|00926|URB LAS PALMAS`,
   and at unit level `...|PR|00926|||URB LAS PALMAS`. Pub 28 section 29 calls the urbanization the only element that tells
   apart two streets of the same name and numbers in one ZIP, so two such addresses must not share a key. The segment comes
   last and only when set, so no key without an urbanization changes, and the `URB ` text keeps it apart from a unit value.
@@ -74,8 +74,8 @@ k5:G|<state>|<zip5>
 
 ## Strong and partial keys
 
-A key with both a state and a ZIP5 uses the `k5:` prefix. If either is
-missing, the prefix is `k5n:` and the same body follows (`k5n:S|123||MAIN|ST||FL|`).
+A key with both a state and a ZIP5 uses the `k6:` prefix. If either is
+missing, the prefix is `k6n:` and the same body follows (`k6n:S|123||MAIN|ST||FL|`).
 A partial key matches less reliably, and it can never equal a located key, so
 the two kinds do not mix in a join by accident. `MissingState` or
 `MissingZip` is also set in the diagnostics.
@@ -112,7 +112,7 @@ Applied to every free-text segment (number, name, route, box, unit):
 Spelling variants (`North`/`N`, `Street`/`ST`, `Florida`/`FL`) are resolved by
 the parser through the Pub 28 tables, not by the key. Sources for those
 tables: `docs/usps-pub28-notes.md`. The key format itself (segments, form
-letters, dropped unit type, `k5n`) is this library's own convention, not a
+letters, dropped unit type, `k6n`) is this library's own convention, not a
 USPS rule.
 
 ## No key
@@ -125,15 +125,15 @@ address on it.
 
 ## Stability
 
-`k5` is the format as of version 0.6.0. The key is a function of the parse, and
+`k6` is the format as of version 0.7.0. The key is a function of the parse, and
 the parse is a function of the shipped tables and rules: a bug fix that changes what
-an input produces is a key change and needs `k6`. The slug and `place` are not part
+an input produces is a key change and needs `k7`. The slug and `place` are not part
 of the key and may change with parser improvements.
 
 **A custom layer can change a key.** A layer ([`custom-layers.md`](custom-layers.md), #3) adds spellings
 and words the shipped tables do not have, so the same input can parse, and key, differently with and
 without it, or with another layer. This is not a key change in the sense above (the format and the
-shipped rules are the same; `k5` stays `k5`), but stored keys are only comparable when they come from
+shipped rules are the same; `k6` stays `k6`), but stored keys are only comparable when they come from
 the same layer. Every parse reports the layer it used (`Diagnostics::custom_layer`: its name, version
 and a content fingerprint); store the fingerprint beside the keys, and re-key when the layer changes.
 A parse with no layer is identical to one from a build without the feature.
@@ -176,7 +176,8 @@ prefix is the only change to a key that no rule touched, so re-keying is a re-pa
 
 | Version | Release | Segment layout | What changed |
 |---|---|---|---|
-| `k5` | 0.6.0 (this page) | as `k4` | Some keys change, because 0.6.0 reads some inputs differently (the rules held for the `k5`, listed in [`CHANGELOG.md`](../CHANGELOG.md)). Frozen: a change to what an input produces needs `k6`. |
+| `k6` | 0.7.0 (this page) | as `k5`, plus an optional last segment `URB <name>` in form `S` (Puerto Rico, #318) | Some keys change, because 0.7.0 reads some inputs differently (the rules held for the `k6`, listed in [`CHANGELOG.md`](../CHANGELOG.md)): box and route words, glued words, tails after a spaced hyphen or slash, floors, `&` ranges, road numbers after the road type, grid numbers, the Puerto Rico forms and others. Two key rules changed: a period between two digits stays (`39.2 RD`, #750), and the urbanization segment. Keys with no urbanization keep the `k5` layout. Frozen: a change to what an input produces needs `k7`. |
+| `k5` | 0.6.0, retired in 0.7.0 | as `k4` | Some keys change, because 0.6.0 reads some inputs differently (the rules held for the `k5`, listed in [`CHANGELOG.md`](../CHANGELOG.md)). |
 | `k4` | 0.5.0, retired in 0.6.0 | as `k3` | Some keys change, because 0.5.0 reads some inputs differently. |
 | `k3` | 0.4.0, retired in 0.5.0 | as `k2` | Some keys change, because 0.4.0 reads some inputs differently. |
 | `k2` | 0.3.0, retired in 0.4.0 | as `k1` | Some keys change. 0.3.1 corrected the keys of inputs with a `%` care-of line or `IN CARE OF` (the care-of text had pushed the tail of line 1 into the street name). If you stored `k2` keys from 0.3.0 for such addresses, re-parse them. |

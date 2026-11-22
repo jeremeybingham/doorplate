@@ -2,7 +2,7 @@
 
 All notable changes are listed here, newest first. The project follows
 [Semantic Versioning](https://semver.org/). The canonical key format has its own
-version (currently `k5`), tracked separately in [`docs/key-format.md`](docs/key-format.md): a
+version (currently `k6`), tracked separately in [`docs/key-format.md`](docs/key-format.md): a
 change to what an input produces needs a new key version.
 
 ## [Unreleased]
@@ -19,6 +19,7 @@ Planned for 0.7.0, the first beta: the `k6` key, the removal of the state data s
 
 ### Changed
 
+- **Keys start `k6:` (and `k6n:`)**, no longer `k5:`: the key version of 0.7.0, with every rule marked `k6` below. Stored `k5` keys do not compare with `k6` keys; store the prefix and re-parse to re-key. The prefix is the only change to a key that no rule touched ([`docs/key-format.md`](docs/key-format.md)).
 - **Puerto Rico condominium and residencial building lines** (`k6`, #749): in Puerto Rico, after a project name that opens with `COND`, `CONDOMINIO`, `RES` or `RESIDENCIAL`, a building word (`TORRE`, `EDIF`, `EDIFICIO`) and its value read as the building unit `BLDG` and the apartment after it as the second unit: `COND VISTA REAL TORRE 2 APT 905` is street `COND VISTA REAL`, `BLDG 2`, `APT 905`; `EDIF 5 APT 12 RES LAS MARGARITAS` and the name on its own line above `TORRE 2 APT 905` read the same. Before, the building stayed in the street name with `possibly_truncated`, or the project name was left unparsed. `missing_street_number` stays when the text has no number (decision on #724). Outside Puerto Rico nothing changes. The unit-level key changes for these rows, and the property key where the building had been in the street name ([`docs/puerto-rico.md`](docs/puerto-rico.md)).
 - **Puerto Rico Spanish box and route words** (`k6`, #748): in Puerto Rico, `APARTADO 825` reads as the PO Box `825`, `RUTA RURAL 3 BUZON 12000` as `RR 3 BOX 12000`, `RUTA ESTRELLA 1 BUZON 18` as `HC 1 BOX 18`, and `BUZON` or `BZN` is the box word after `RR` or `HC`. Before, no box or route was read: the text was the street name with `missing_street_number`. Outside Puerto Rico (state `PR` or a 006, 007 or 009 ZIP) nothing changes, so a street named `RUTA` is safe. The key changes for these rows ([`docs/puerto-rico.md`](docs/puerto-rico.md)).
 
