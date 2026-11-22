@@ -86,7 +86,7 @@ Batches, pre-split fields, PO boxes, military and general delivery, and the `Ano
 Every row is from the showdown's pinned run (doorplate 0.6.0, and 0.6.2 has the same Parser Score; usaddress 0.5.16;
 libpostal with the Senzing model; default settings, 4 CPUs). The geocode benchmark is Yin, Li and Goldberg,
 [arXiv:2310.14360](https://arxiv.org/abs/2310.14360). doorplate's author built the showdown: the method, the conflict of interest and
-every prediction file are in [its report](https://github.com/jeremeybingham/address-parser-showdown/blob/main/report/REPORT.md). From Rust, one address takes 2 to 5 µs (criterion, 0.6.2). These are
+every prediction file are in [its report](https://github.com/jeremeybingham/address-parser-showdown/blob/main/report/REPORT.md). From Rust, one address takes 2 to 5 µs (criterion, the 0.7.0 release candidate). These are
 measurements on a few data sets, not promises for yours. doorplate's own benchmark suite, the other checks and the speed figures by build:
 [benchmarks](https://doorplate.readthedocs.io/en/latest/benchmarks/) and [speed, size and memory](https://doorplate.readthedocs.io/en/latest/speed-and-size/).
 
