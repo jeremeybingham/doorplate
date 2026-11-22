@@ -36,7 +36,8 @@ FIELDS = ("line1", "line2", "city", "state", "zip")
 COLUMNS = [
     "street_number", "street_dir_prefix", "street_name", "street_suffix", "street_dir_suffix", "unit_type", "unit_number",
     "second_unit_type", "second_unit_number", "city", "state", "zip5", "zip4", "place", "place_source", "highway", "po_box",
-    "rural_route", "general_delivery", "military", "military_post_office", "attention", "building", "usps_line1",
+    "rural_route", "general_delivery", "military", "military_post_office", "attention", "building", "urbanization",
+    "usps_line1",
     "usps_last_line", "key", "key_unit", "slug", "warnings", "unparsed",
 ]  # fmt: skip  (json::COLUMNS of the command-line tool; the check reads the wasm answer by position)
 

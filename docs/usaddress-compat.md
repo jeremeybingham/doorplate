@@ -102,6 +102,7 @@ What differs:
 | ZIP, ZIP+4 | `ZipCode` |
 | attention line | `Recipient` |
 | building name | `BuildingName` |
+| Puerto Rico urbanization (#318; the `URB` word has no label) | `LandmarkName` |
 | unparsed text, skipped copies | no label |
 
 A `#` takes the label of the token after it, as usaddress's data does (`# 234` is

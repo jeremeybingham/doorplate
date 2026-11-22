@@ -216,7 +216,7 @@ impl ParsedAddress {
     /// `USPSBoxGroupType` / `USPSBoxGroupID` / `USPSBoxType` / `USPSBoxID`;
     /// general delivery `USPSBoxType`; city and APO/FPO/DPO `PlaceName`;
     /// state `StateName`; ZIP `ZipCode`; attention line `Recipient`; building
-    /// `BuildingName`. A `#`
+    /// `BuildingName`; Puerto Rico urbanization `LandmarkName`. A `#`
     /// takes the label of the value after it, as in usaddress's own data.
     pub fn to_usaddress_tags(&self) -> Vec<UsaddressTag> {
         let mut tags = Vec::new();
@@ -308,6 +308,8 @@ impl ParsedAddress {
             Component::Zip5 | Component::Zip4 => "ZipCode",
             Component::Attention => "Recipient",
             Component::Building => "BuildingName",
+            // usaddress has no urbanization label; a named area is closest to a landmark.
+            Component::Urbanization => "LandmarkName",
             Component::Unparsed => return None,
         })
     }

@@ -597,6 +597,21 @@ fn gen_special(
         first_letters(&words)
     )
     .ok();
+
+    // The Puerto Rico forms (#318, #319, #747): the scope and three word lists.
+    let pctx = format!("{ctx} [puerto_rico]");
+    let pr = table(t, "puerto_rico", ctx)?;
+    for (key, name) in [
+        ("states", "PR_STATES"),
+        ("zip_prefixes", "PR_ZIP_PREFIXES"),
+        ("street_words", "PR_STREET_WORDS"),
+        ("urbanization_words", "PR_URBANIZATION_WORDS"),
+        ("number_words", "PR_NUMBER_WORDS"),
+    ] {
+        let mut words = key_list(pr, key, &pctx, true)?;
+        words.sort();
+        writeln!(out, "pub(crate) static {name}: &[&str] = &{words:?};\n").ok();
+    }
     Ok((highway_rows, state_highways))
 }
 

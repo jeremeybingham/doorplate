@@ -44,6 +44,7 @@ class Usps(TypedDict):
 
     line1: str | None
     line2: str | None
+    urbanization: str | None
     city: str | None
     state: str | None
     zip: str | None
@@ -92,6 +93,7 @@ class ParsedAddressDict(TypedDict):
     military_post_office: str | None
     attention: str | None
     building: str | None
+    urbanization: str | None
     city: str | None
     state: str | None
     zip5: str | None
@@ -166,6 +168,9 @@ class ParsedAddress:
     def building(self) -> str | None:
         """A building name that was on its own line."""
     @property
+    def urbanization(self) -> str | None:
+        """The Puerto Rico urbanization, the name without `URB` (`LAS PALMAS` in `27 CALLE LUNA URB LAS PALMAS`). Read only for an address in Puerto Rico (state `PR` or a ZIP starting 006, 007 or 009). It is in the `to_usps()` `urbanization` line and in the match key."""
+    @property
     def city(self) -> str | None:
         """The city as the input wrote it (upper case). It is never changed; see `place`."""
     @property
@@ -199,7 +204,7 @@ class ParsedAddress:
     def slug(self) -> str | None:
         """A URL-safe label, for display only. Use `key()` for identity."""
     def to_usps(self, max_line: int | None = None) -> Usps:
-        """The USPS Publication 28 form: `{line1, line2, city, state, zip, last_line}`. With `max_line`, a unit that does not fit on `line1` moves to `line2`."""
+        """The USPS Publication 28 form: `{line1, line2, urbanization, city, state, zip, last_line}`. With `max_line`, a unit that does not fit on `line1` moves to `line2`. `urbanization` is the Puerto Rico `URB` line (`URB LAS PALMAS`), which goes above the street line."""
     def to_display(self) -> Display:
         """Mixed case with Pub 28 abbreviations, `123 N Main St Apt 4`, for showing to people. Not a Pub 28 form (see `to_usps`)."""
     def to_long(self) -> Display:

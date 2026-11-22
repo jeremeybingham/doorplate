@@ -67,6 +67,8 @@ struct ExpectUsps {
     line2: Option<String>,
     /// `CITY ST ZIP`, as `UspsAddress::last_line`.
     last_line: Option<String>,
+    /// `URB NAME`, as `UspsAddress::urbanization` (Puerto Rico, #318).
+    urbanization: Option<String>,
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -101,6 +103,7 @@ struct Expect {
     military_post_office: Option<String>,
     attention: Option<String>,
     building: Option<String>,
+    urbanization: Option<String>,
     city: Option<String>,
     state: Option<String>,
     zip5: Option<String>,
@@ -139,7 +142,7 @@ struct ExpectMilitary {
 }
 
 /// Compared fields, in report order. `warnings` compares as a set.
-const FIELDS: [&str; 31] = [
+const FIELDS: [&str; 32] = [
     "street_number",
     "street_dir_prefix",
     "street_name",
@@ -157,6 +160,7 @@ const FIELDS: [&str; 31] = [
     "military_post_office",
     "attention",
     "building",
+    "urbanization",
     "city",
     "state",
     "zip5",
@@ -245,9 +249,18 @@ fn warnings_str<'a>(codes: impl IntoIterator<Item = &'a str>) -> Option<String> 
     }
 }
 
-fn usps_str(l1: &Option<String>, l2: &Option<String>, last: &Option<String>) -> String {
+fn usps_str(
+    l1: &Option<String>,
+    l2: &Option<String>,
+    last: &Option<String>,
+    urb: &Option<String>,
+) -> String {
     let f = |o: &Option<String>| o.clone().unwrap_or_default();
-    format!("[{}] [{}] [{}]", f(l1), f(l2), f(last))
+    let base = format!("[{}] [{}] [{}]", f(l1), f(l2), f(last));
+    match urb {
+        Some(u) => format!("[{u}] {base}"),
+        None => base,
+    }
 }
 
 /// `Name=value` pairs sorted by name, so the order a case lists them in
@@ -297,6 +310,7 @@ fn expected_values(c: &Case) -> Values {
     v.insert("military_post_office", e.military_post_office.clone());
     v.insert("attention", e.attention.clone());
     v.insert("building", e.building.clone());
+    v.insert("urbanization", e.urbanization.clone());
     v.insert("city", e.city.clone());
     v.insert("state", e.state.clone());
     v.insert("zip5", e.zip5.clone());
@@ -316,7 +330,10 @@ fn expected_values(c: &Case) -> Values {
         v.insert("slug", Some(k.clone()));
     }
     if let Some(u) = &c.usps {
-        v.insert("usps", Some(usps_str(&u.line1, &u.line2, &u.last_line)));
+        v.insert(
+            "usps",
+            Some(usps_str(&u.line1, &u.line2, &u.last_line, &u.urbanization)),
+        );
     }
     if let Some(r) = &c.reso {
         v.insert(
@@ -407,6 +424,7 @@ fn actual_values(a: &ParsedAddress) -> Values {
     );
     v.insert("attention", a.attention.clone());
     v.insert("building", a.building.clone());
+    v.insert("urbanization", a.urbanization.clone());
     v.insert("city", a.city.clone());
     v.insert("state", a.state.map(|s| s.code().to_string()));
     v.insert("zip5", a.zip5.clone());
@@ -428,6 +446,7 @@ fn actual_values(a: &ParsedAddress) -> Values {
             &u.line1,
             &u.line2,
             &(!last.is_empty()).then_some(last),
+            &u.urbanization,
         )),
     );
     let reso = a.to_reso().fields();
@@ -650,7 +669,7 @@ fn run_case(parser: &Parser, c: &Case) -> Values {
             v.insert("key", Some("none".to_string()));
             v.insert("key_unit", Some("none".to_string()));
             v.insert("slug", Some("none".to_string()));
-            v.insert("usps", Some(usps_str(&None, &None, &None)));
+            v.insert("usps", Some(usps_str(&None, &None, &None, &None)));
             v.insert("reso", Some(String::new()));
             v.insert("place", Some("none".to_string()));
             v.insert("address_type", Some("unknown".to_string()));

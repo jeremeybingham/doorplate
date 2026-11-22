@@ -281,6 +281,12 @@ impl PyParsedAddress {
         self.inner.building.as_deref()
     }
 
+    /// The Puerto Rico urbanization, the name without `URB`.
+    #[getter]
+    fn urbanization(&self) -> Option<&str> {
+        self.inner.urbanization.as_deref()
+    }
+
     /// The city as the input wrote it.
     #[getter]
     fn city(&self) -> Option<&str> {
@@ -384,9 +390,9 @@ impl PyParsedAddress {
         self.inner.slug()
     }
 
-    /// The USPS Publication 28 form: `{"line1", "line2", "city", "state",
-    /// "zip", "last_line"}`. With `max_line`, a unit that does not fit on
-    /// `line1` moves to `line2`.
+    /// The USPS Publication 28 form: `{"line1", "line2", "urbanization", "city",
+    /// "state", "zip", "last_line"}`. With `max_line`, a unit that does not fit on
+    /// `line1` moves to `line2`. `urbanization` is the Puerto Rico `URB` line.
     #[pyo3(signature = (max_line=None))]
     fn to_usps<'py>(
         &self,
@@ -400,6 +406,7 @@ impl PyParsedAddress {
         let d = PyDict::new(py);
         d.set_item("line1", u.line1.clone())?;
         d.set_item("line2", u.line2.clone())?;
+        d.set_item("urbanization", u.urbanization.clone())?;
         d.set_item("city", u.city.clone())?;
         d.set_item("state", u.state.clone())?;
         d.set_item("zip", u.zip.clone())?;
@@ -486,6 +493,7 @@ impl PyParsedAddress {
             "military_post_office",
             "attention",
             "building",
+            "urbanization",
             "city",
             "state",
             "zip5",
@@ -749,6 +757,7 @@ fn column_of(parsed: &[Option<ParsedAddress>], name: &str) -> Option<Vec<Option<
         "military_post_office" => |a| a.military_post_office.map(|m| m.abbr().to_string()),
         "attention" => |a| a.attention.clone(),
         "building" => |a| a.building.clone(),
+        "urbanization" => |a| a.urbanization.clone(),
         "city" => |a| a.city.clone(),
         "state" => |a| a.state.map(|s| s.code().to_string()),
         "zip5" => |a| a.zip5.clone(),
@@ -764,6 +773,7 @@ fn column_of(parsed: &[Option<ParsedAddress>], name: &str) -> Option<Vec<Option<
         },
         "usps_line1" => |a| a.to_usps().line1,
         "usps_line2" => |a| a.to_usps().line2,
+        "usps_urbanization" => |a| a.to_usps().urbanization,
         "usps_last_line" => |a| Some(a.to_usps().last_line()),
         _ => return None,
     };

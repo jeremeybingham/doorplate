@@ -278,7 +278,14 @@ How the tagger (`crates/doorplate/src/tagger/`) reads an address, grouped by the
 
 ### Puerto Rico
 
-Section 29 and Appendices D5, H and I were read for #332; the rules, the parser's result for each form and the open decisions are in [`puerto-rico.md`](puerto-rico.md). No parse rule here cites them yet; each rule issue adds its row when it lands.
+Section 29 and Appendices D5, H and I were read for #332; the rules, the parser's result for each form and the open decisions are in [`puerto-rico.md`](puerto-rico.md) (R1 to R11 there). Every rule below applies only in Puerto Rico: the state `PR` or a ZIP starting 006, 007 or 009 (`[puerto_rico]` in `special.toml`); elsewhere the reading is unchanged. The word lists are data in the same section.
+
+| Rule | Source |
+|---|---|
+| A lettered house number with a hyphen or space is written without it: `A-17 CALLE AMAPOLA` and `A 17 CALLE AMAPOLA` read number `A17` (#747). | §29 R6 (`C19`, not `C-19`); I51.3. |
+| A block and a house number are one number joined by a hyphen: `199-31 CALLE 19`, and `CALLE 19 BLQ 199 CASA 31` reads `199-31`. `BLOQUE`, `BLQ`, `BQ`, `CASA`, `LOTE`, `NUM`, `NUMERO` and `#` before a number are dropped (#747). | §29 R6 (the block-lot form and the words to drop). |
+| A number after the street (`CALLE LUNA 123`, `AVE PONCE DE LEON 1500 APT 4`, `CALLE DEL SOL 210 2B`) is the house number when the street starts with a Spanish street word and keeps a word of its own; `CALLE 19` stays the street with `missing_street_number`, and a number after `KM` is not read. No new warning (#319). Spanish street words: `AVE`, `AVENIDA`, `CALLE`, `CALLEJON`, `CLL`, `CAM`, `CAMINITO`, `CAMINO`, `CARR`, `CARRETERA`, `CERRADA`, `CIRCULO`, `CMT`, `ENTRADA`, `PASEO`, `PLACITA`, `PSO`, `VEREDA`, `VIA`; `CIR`, `VIS` and `ENT` are left out, as English suffixes too. | §29 R6 and I51.3 (the standard is number first; the trailing number moves ahead); R1 and Appendix H (the street words); the street-first rows of the private sources (`puerto-rico.md`, finding 3). |
+| `URB NAME` (or `URBANIZACION`) before or after a street with a Spanish street word, on the street line or a line of its own, is the urbanization: `urbanization` holds `NAME`, the USPS form writes `URB NAME` above the street line, the key adds it as a last segment. `1234 URB LOS OLMOS` (no Spanish street word) keeps `URB LOS OLMOS` as the street. The standalone names of R4 (`EXT`, `VILLA`, ...) are not read (#318). | §29 R2 (both orders, URB before the name), R3 (the urbanization as the street); §292 (the urbanization line above the delivery line). |
 
 ### Left as it is on purpose
 

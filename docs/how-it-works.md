@@ -76,7 +76,7 @@ fields give way (#614).
 `ParsedAddress` holds the street number, pre- and postdirectional, street name,
 suffix, `highway` (state, prefix and route), first and second unit (type and
 number), `po_box`, `rural_route` (RR or HC, route, box), `general_delivery`,
-`military` and `military_post_office`, `attention`, `building`, city, state, ZIP5,
+`military` and `military_post_office`, `attention`, `building`, `urbanization` (Puerto Rico), city, state, ZIP5,
 ZIP+4, `place`, `diagnostics` and `source` (the original text and the spans).
 `Diagnostics` holds the warnings, the unparsed remainder and the library version.
 

@@ -1750,6 +1750,17 @@ impl Tagger<'_> {
                 return lo;
             }
         }
+        // Puerto Rico: `URB LAS PALMAS, 27 CALLE LUNA` is the urbanization, as the
+        // USPS form writes it above the street (Pub 28 R2, #318).
+        if names == 1
+            && e > lo + 1
+            && lex.is_urbanization_word(self.text(lo))
+            && self.in_puerto_rico()
+        {
+            self.set(lo..lo + 1, Tag::Skip);
+            self.set(lo + 1..e, Tag::Urbanization);
+            return e;
+        }
         self.set(lo..e, Tag::Attention);
         e
     }
@@ -3254,6 +3265,9 @@ impl Tagger<'_> {
     }
 
     fn street_from(&mut self, lo: usize, hi: usize) {
+        if self.puerto_rico_street(lo, hi) {
+            return;
+        }
         let mut i = lo;
         let t0 = self.text(i);
         if is_glued_ordinal(t0) {
@@ -3455,6 +3469,208 @@ impl Tagger<'_> {
             line_end = j;
         }
         self.street_body(i, line_end, hi.min(line_end));
+    }
+
+    /// Whether the address is in Puerto Rico: its state, or its ZIP (data read through
+    /// `Lexicons`, decision on #332). A `default_state` hint counts as the state.
+    pub(super) fn in_puerto_rico(&self) -> bool {
+        let zip5 = (0..self.toks.len())
+            .find(|&k| self.tags[k] == Tag::Zip)
+            .and_then(|k| zip_parts(self.text(k)))
+            .map(|(z5, _)| z5);
+        self.lex.in_puerto_rico(self.places.map(|c| c.state), zip5)
+    }
+
+    /// The Puerto Rico street forms (Pub 28 section 29 and Appendix I, `docs/puerto-rico.md`),
+    /// only for an address in Puerto Rico:
+    /// - `URB LAS FLORES 12 CALLE 3`, `27 CALLE LUNA URB LAS PALMAS`: the urbanization before
+    ///   or after a street that has a Spanish street word is its own part (R2, #318). With no
+    ///   such word (`1234 URB LOS OLMOS`, R3) the urbanization is the street, as before.
+    /// - `CALLE LUNA 12`, `AVE PONCE DE LEON 1500 APT 4`: the number after the street is the
+    ///   house number (R6, #319). A single number right after the street word (`CALLE 19`) is
+    ///   the street's.
+    /// - `A-17 CALLE AMAPOLA`, `CALLE 19 BLQ 199 CASA 31`: a lettered number loses its hyphen and
+    ///   a block and house number are joined by one, the block and house words dropped (R6, #747).
+    ///
+    /// Returns whether it tagged the street.
+    fn puerto_rico_street(&mut self, lo: usize, hi: usize) -> bool {
+        // The place test first: it is cheap, and outside Puerto Rico nothing below applies
+        // (the word lookups cost +1.3% of instructions on rows with no Puerto Rico in them).
+        if hi < lo + 2 || !self.in_puerto_rico() {
+            return false;
+        }
+        let lex = self.lex;
+        let t0 = self.text(lo);
+        let unnumbered = house_number(t0).is_none();
+        let urb_first = lex.is_urbanization_word(t0);
+        let street_first = unnumbered && lex.is_pr_street_word(t0);
+        let number_first = unnumbered
+            && (lex.is_pr_number_word(t0)
+                || self.toks[lo].is_hash()
+                || is_letter(t0)
+                || is_hyphen_lettered(t0));
+        let urb_after = (lo + 1..hi - 1).find(|&k| lex.is_urbanization_word(self.text(k)));
+        if !(urb_first || street_first || number_first || urb_after.is_some()) {
+            return false;
+        }
+        if urb_first {
+            // The street starts at a house number before a street word, else at a street word.
+            let start = (lo + 2..hi)
+                .find(|&k| {
+                    self.pr_number(k, hi)
+                        .is_some_and(|e| e + 1 < hi && lex.is_pr_street_word(self.text(e)))
+                })
+                .or_else(|| (lo + 2..hi - 1).find(|&k| lex.is_pr_street_word(self.text(k))));
+            let Some(k) = start else {
+                return false;
+            };
+            self.set(lo..lo + 1, Tag::Skip);
+            self.set(lo + 1..k, Tag::Urbanization);
+            self.street_from(k, hi);
+            return true;
+        }
+        if let Some(u) = urb_after.filter(|&u| (lo..u).any(|k| lex.is_pr_street_word(self.text(k))))
+        {
+            // The name runs to the end of its line or comma segment, or to a unit.
+            let seg = self.toks[u].seg;
+            let seg_end = (u + 1..hi).find(|&k| self.toks[k].seg != seg).unwrap_or(hi);
+            let e = (u + 2..seg_end)
+                .find(|&k| {
+                    k + 1 < seg_end
+                        && lex.unit(self.text(k)).is_some()
+                        && has_digit(self.text(k + 1))
+                })
+                .unwrap_or(seg_end);
+            self.set(u..u + 1, Tag::Skip);
+            self.set(u + 1..e, Tag::Urbanization);
+            if e < hi {
+                self.units(e, e, hi, true);
+            }
+            self.street_from(lo, u);
+            // The street ends at the urbanization, not at a cut-off line.
+            if self.incomplete.is_some_and(|k| k < u) {
+                self.incomplete = None;
+            }
+            return true;
+        }
+        if number_first {
+            let Some(end) = self
+                .pr_number(lo, hi)
+                .filter(|&e| e + 1 < hi && lex.is_pr_street_word(self.text(e)))
+            else {
+                return false;
+            };
+            self.tag_pr_number(lo, end);
+            self.street_from(end, hi);
+            return true;
+        }
+        if !street_first {
+            return false;
+        }
+        let seg = self.toks[lo].seg;
+        for k in lo + 2..hi {
+            if self.toks[k].seg != seg {
+                break;
+            }
+            // `CARR 2 KM 14`: a kilometer marker is not a house number.
+            if self.text(k - 1) == "KM" {
+                continue;
+            }
+            let Some(end) = self.pr_number(k, hi) else {
+                continue;
+            };
+            // After the number: the end, another line, a unit, or one last value (`210 2B`).
+            let next_ends = end == hi
+                || self.toks[end].seg != seg
+                || lex.unit(self.text(end)).is_some()
+                || self.toks[end].is_hash()
+                || (has_digit(self.text(end)) && (end + 1 == hi || self.toks[end + 1].seg != seg));
+            if !next_ends {
+                continue;
+            }
+            self.tag_pr_number(k, end);
+            if end < hi {
+                let j = self.units(end, lo, hi, true);
+                // `CALLE DEL SOL 210 2B`: one value after the house number is a bare unit.
+                if j == end + 1
+                    && self.tags[end] == Tag::Untagged
+                    && is_unit_value(self.text(end))
+                    && !self.tags.contains(&Tag::UnitNumber(0))
+                {
+                    self.set(end..end + 1, Tag::UnitNumber(0));
+                    self.decide(Decision::BareUnit);
+                }
+            }
+            self.street_body(lo, k, k);
+            // The name ends at the house number, not at a cut-off line.
+            if self.incomplete == Some(k - 1) {
+                self.incomplete = None;
+            }
+            return true;
+        }
+        false
+    }
+
+    /// A Puerto Rico house number at `k`: an optional block or house word (`BLQ`, `CASA`, `#`),
+    /// the number (`12`, `A17`, `A-17`, `A 17`), then optionally a house word and a second number
+    /// (`BLQ 199 CASA 31`). Returns its end; all of it is on `k`'s line or comma segment.
+    fn pr_number(&self, k: usize, hi: usize) -> Option<usize> {
+        let seg = self.toks.get(k)?.seg;
+        let ok = |i: usize| i < hi && self.toks[i].seg == seg;
+        let marker = |i: usize| {
+            ok(i) && (self.lex.is_pr_number_word(self.text(i)) || self.toks[i].is_hash())
+        };
+        let part = |i: usize| -> Option<usize> {
+            if !ok(i) {
+                return None;
+            }
+            let t = self.text(i);
+            if is_letter(t) && ok(i + 1) && all_digits(self.text(i + 1)) {
+                Some(i + 2)
+            } else if is_hyphen_lettered(t)
+                || (house_number(t).is_some() && !t.bytes().all(|c| c == b'0'))
+            {
+                Some(i + 1)
+            } else {
+                None
+            }
+        };
+        let start = if marker(k) { k + 1 } else { k };
+        let end = part(start)?;
+        Some(if marker(end) {
+            part(end + 1).unwrap_or(end)
+        } else {
+            end
+        })
+    }
+
+    /// Tags the Puerto Rico house number `k..end` that [`Self::pr_number`] found.
+    fn tag_pr_number(&mut self, k: usize, end: usize) {
+        let mut first = true;
+        let mut i = k;
+        while i < end {
+            let t = self.text(i);
+            if self.lex.is_pr_number_word(t) || self.toks[i].is_hash() {
+                self.set(i..i + 1, Tag::Skip);
+                i += 1;
+                continue;
+            }
+            let tag = if !first {
+                Tag::StreetNumberBlock
+            } else if is_hyphen_lettered(t) {
+                Tag::StreetNumberLettered
+            } else {
+                Tag::StreetNumber
+            };
+            self.set(i..i + 1, tag);
+            // `A 17`: the letter and its number are one house number (`A17`).
+            if is_letter(t) && i + 1 < end && all_digits(self.text(i + 1)) {
+                self.set(i + 1..i + 2, Tag::StreetNumberTail);
+                i += 1;
+            }
+            i += 1;
+            first = false;
+        }
     }
 
     /// A street cut across lines (`8725 NW` / `18 TER`, `5424 EDGEWATER` /
@@ -4776,4 +4992,15 @@ impl Tagger<'_> {
         }
         j
     }
+}
+
+/// `A-17`: one letter, a hyphen and a number, the lettered Puerto Rico house number written with
+/// a hyphen (Pub 28 R6 drops it).
+fn is_hyphen_lettered(t: &str) -> bool {
+    let b = t.as_bytes();
+    b.len() >= 3
+        && b.len() <= 7
+        && b[0].is_ascii_alphabetic()
+        && b[1] == b'-'
+        && b[2..].iter().all(u8::is_ascii_digit)
 }

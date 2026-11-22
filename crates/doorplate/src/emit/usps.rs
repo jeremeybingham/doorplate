@@ -20,6 +20,10 @@ pub struct UspsAddress {
     /// *above* `line1` (sections 213.3, 343.1, 356); [`Self::lines`] gives
     /// that order.
     pub line2: Option<String>,
+    /// The Puerto Rico urbanization line, `URB` and the name (`URB LAS PALMAS`), from
+    /// [`ParsedAddress::urbanization`]. Pub 28 section 292 puts it above the street line;
+    /// [`Self::lines`] gives that order. Not set for a dual address written as its PO Box.
+    pub urbanization: Option<String>,
     /// City, or the military post office (`APO`, `FPO`, `DPO`).
     pub city: Option<String>,
     /// Two-letter state code.
@@ -34,11 +38,11 @@ impl UspsAddress {
         join([&self.city, &self.state, &self.zip])
     }
 
-    /// The non-empty lines in mailpiece order: `line2` (a wrapped unit),
+    /// The non-empty lines in mailpiece order: the urbanization, `line2` (a wrapped unit),
     /// `line1`, then the last line.
     pub fn lines(&self) -> Vec<String> {
         let last = Some(self.last_line());
-        [&self.line2, &self.line1, &last]
+        [&self.urbanization, &self.line2, &self.line1, &last]
             .into_iter()
             .filter_map(|l| l.clone())
             .filter(|l| !l.is_empty())
@@ -84,9 +88,15 @@ impl ParsedAddress {
             Some(z4) => format!("{z5}-{z4}"),
             None => z5.clone(),
         });
+        let urbanization = self
+            .urbanization
+            .as_deref()
+            .filter(|_| !self.is_dual())
+            .map(|u| format!("URB {}", plain(u)));
         UspsAddress {
             line1,
             line2,
+            urbanization,
             city: self
                 .military_post_office
                 .map(|p| p.abbr().to_string())

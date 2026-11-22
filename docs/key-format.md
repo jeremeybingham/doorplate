@@ -19,7 +19,7 @@ does not say the address exists or is deliverable (see README).
 ## Format
 
 ```
-k5:S|<number>|<predir>|<name>|<suffix>|<postdir>|<state>|<zip5>[|<unit>|<unit2>]
+k5:S|<number>|<predir>|<name>|<suffix>|<postdir>|<state>|<zip5>[|<unit>|<unit2>][|URB <urbanization>]
 k5:P|<box>|<state>|<zip5>
 k5:R|<RR|HC>|<route>|<box>|<state>|<zip5>
 k5:M|<kind>|<number>|<box>|<post office>|<state>|<zip5>
@@ -28,7 +28,8 @@ k5:G|<state>|<zip5>
 
 - Prefix `k5:`, then a one-letter **form**, then segments separated by `|`.
   Every form has a fixed number of segments, and an empty value leaves an
-  empty segment (`...||...`).
+  empty segment (`...||...`). The one exception is the Puerto Rico
+  urbanization (below), a last segment written only when it is set.
 - Forms: `S` street, `P` PO Box, `R` rural or highway contract route, `M`
   military or Department of State line, `G` general delivery. Because the
   form is part of the key, a PO Box key can never equal a street key.
@@ -51,6 +52,12 @@ k5:G|<state>|<zip5>
   digits, a hyphen, two digits and an optional letter is dropped, so `37-12 82ND ST` and `3712 82ND ST` (and `37-12A` and
   `3712A`) share a key. Elsewhere the hyphen stays (`20-22 W 45TH ST` in Manhattan is two numbers). The parsed
   `street_number` keeps what was written. A pair read with a space (`41 12 80TH AVE` in a New York City ZIP, Massachusetts or Hawaii, #313) keys like its hyphenated twin.
+- **Puerto Rico urbanization** (`k6`, #318): when the address has an urbanization (`27 CALLE LUNA URB LAS PALMAS`,
+  Puerto Rico only), form `S` ends with one more segment, `URB` and the name: `k5:S|27||CALLE LUNA|||PR|00926|URB LAS PALMAS`,
+  and at unit level `...|PR|00926|||URB LAS PALMAS`. Pub 28 section 29 calls the urbanization the only element that tells
+  apart two streets of the same name and numbers in one ZIP, so two such addresses must not share a key. The segment comes
+  last and only when set, so no key without an urbanization changes, and the `URB ` text keeps it apart from a unit value.
+  Lettered house numbers key as written without the hyphen (`A-17` is `A17`), and block numbers keep it (`199-31`), #747.
 - `M`: `<kind>` is CPR, OPC, PSC, UPR or UNIT; `<post office>` is APO, FPO or
   DPO (empty when absent).
 - `<state>` is the USPS code. `<zip5>` is five digits.

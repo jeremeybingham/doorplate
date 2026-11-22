@@ -33,6 +33,12 @@ pub(crate) enum Tag {
     StreetNumber,
     /// The second part of a house number written in two (`12 345` for `12345`), joined to the first.
     StreetNumberTail,
+    /// A Puerto Rico lettered house number written with a hyphen (`A-17`): the hyphen is
+    /// dropped (`A17`, Pub 28 R6, #747).
+    StreetNumberLettered,
+    /// A Puerto Rico house number after its block number (`BLQ 199 CASA 31`), joined to the
+    /// block with a hyphen (`199-31`, Pub 28 R6, #747).
+    StreetNumberBlock,
     PreDir,
     Name,
     Suffix,
@@ -50,6 +56,8 @@ pub(crate) enum Tag {
     Attention,
     /// A building name (`EAST TOWER`).
     Building,
+    /// A Puerto Rico urbanization name, without its `URB` word (Pub 28 R2, #318).
+    Urbanization,
     /// RR or HC word.
     Route,
     RouteNumber,
@@ -360,7 +368,9 @@ impl<'a> Tagger<'a> {
         let street_like = has(&self.tags, Tag::Name)
             || has(&self.tags, Tag::Suffix)
             || has(&self.tags, Tag::HighwayRoute);
-        if street_like && !has(&self.tags, Tag::StreetNumber) && !self.zero_number {
+        let numbered =
+            has(&self.tags, Tag::StreetNumber) || has(&self.tags, Tag::StreetNumberLettered);
+        if street_like && !numbered && !self.zero_number {
             self.warn(Warning::MissingStreetNumber);
         }
         // A care-of or attention line and nothing that could be a door (`C/O ACME TIRE`): no
@@ -624,6 +634,20 @@ pub(crate) fn tag_fields(
     // (`SR 60` is `STATE ROAD 60` in Florida), #110.
     let state_at = (t.tags.get(state.start) == Some(&Tag::State)).then_some(state);
     t.places = t.place_ctx(state_at, zip_at);
+    // Puerto Rico: an urbanization on its own address line (`27 CALLE LUNA` / `URB LAS
+    // PALMAS`, either order) is the urbanization, not an attention line (Pub 28 R2, #318).
+    if !l1.is_empty() && l2.len() >= 2 && l2.start == l1.end && t.in_puerto_rico() {
+        let urb = |r: &Range<usize>| lex.is_urbanization_word(&toks[r.start].text);
+        if urb(&l2) && end >= l2.end && line.start < l2.start {
+            t.set(l2.start..l2.start + 1, Tag::Skip);
+            t.set(l2.start + 1..l2.end, Tag::Urbanization);
+            end = l2.start;
+        } else if urb(&l1) && l1.len() >= 2 && line.start == l1.start && l2.end <= end {
+            t.set(l1.start..l1.start + 1, Tag::Skip);
+            t.set(l1.start + 1..l1.end, Tag::Urbanization);
+            line.start = l2.start;
+        }
+    }
     let s2 = t.drop_repeated_state(line.start, end);
     if s2 < end {
         t.repeated();

@@ -45,7 +45,7 @@ text, is null in every column. The default columns are `street_number`,
 `unit_type`, `unit_number`, `city`, `state`, `zip5`, `zip4`, `address_type`, `key`,
 `slug` and `warnings` (codes joined by commas). `AVAILABLE_COLUMNS` in either module
 lists the rest (`key_unit`, `usps_line1`, `usps_line2`, `usps_last_line`, `po_box`,
-`attention`, `building`, `unparsed`, ...). They are built over `parse_many`.
+`attention`, `building`, `urbanization`, `usps_urbanization`, `unparsed`, ...). They are built over `parse_many`.
 
 **DuckDB.** `pip install "doorplate[duckdb]"`, then register two functions on a connection and use them in SQL:
 

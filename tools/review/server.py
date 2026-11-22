@@ -92,7 +92,7 @@ VERDICTS = ("right", "corrected", "unclear", "junk", "dual", "insufficient", "no
 MAP_REASONS = ("name_suffix", "numbers_out_of_order", "other")  # why a map-checked row cannot be fixed by a rule
 COMPONENTS = ("StreetNumber", "StreetDirPrefix", "StreetName", "StreetSuffix", "StreetDirSuffix", "Highway", "UnitType",
               "UnitNumber", "SecondUnitType", "SecondUnitNumber", "PoBox", "RuralRoute", "GeneralDelivery", "Military",
-              "MilitaryPostOffice", "Attention", "Building", "City", "State", "Zip5", "Zip4", "Unparsed")  # the page's names
+              "MilitaryPostOffice", "Attention", "Building", "Urbanization", "City", "State", "Zip5", "Zip4", "Unparsed")  # the page's names
 MAX_LABELS = 200
 USADDRESS_GRADES = ("full", "mostly")  # how right usaddress was on a labeled comparison answer (#461)
 COMPARE_VERDICTS = ("doorplate_right", "usaddress_right", "both_right", "both_wrong")  # for a comparison row

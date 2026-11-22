@@ -426,3 +426,49 @@ words = ["BEACH", "CENTER", "CREEK", "FOREST", "FORT", "GARDEN", "GLEN", "GREEN"
 # names seen in input and Florida address data. The tagger takes a name ending in
 # one of these only after the street or its unit (see docs/usps-pub28-notes.md).
 words = ["ANNEX", "BUILDING", "CENTER", "CENTRE", "COMPLEX", "HALL", "PAVILION", "PLAZA", "TOWER", "TOWERS", "WING"]
+
+[puerto_rico]
+# The Puerto Rico street forms (Pub 28 section 29 and Appendix I, read in
+# docs/puerto-rico.md, rules R1, R2 and R6; issues #318, #319 and #747). The
+# rules that use these lists run only for an address in Puerto Rico: the state
+# is one of `states`, or the ZIP starts with one of `zip_prefixes` (decision on
+# #332). Outside that scope nothing here applies (`PR 123, HOUSTON TX` stays a
+# road, #314).
+states = ["PR"]
+zip_prefixes = ["006", "007", "009"]
+# Spanish words that open a street name and stay part of it (R1, R7, Appendix
+# H): `CALLE LUNA`, `AVE PONCE DE LEON`. A line that starts with one of these
+# and ends in a house number is the street-first form (`CALLE LUNA 12`); Pub 28
+# writes the number first (R6), so the trailing number is the house number
+# (#319). Only the Spanish spellings and the Appendix H short forms that are not
+# also English street words (`CIR`, `VIS`, `ENT` are left out).
+street_words = [
+  "AVE",
+  "AVENIDA",
+  "CALLE",
+  "CALLEJON",
+  "CLL",
+  "CAM",
+  "CAMINITO",
+  "CAMINO",
+  "CARR",
+  "CARRETERA",
+  "CERRADA",
+  "CIRCULO",
+  "CMT",
+  "ENTRADA",
+  "PASEO",
+  "PLACITA",
+  "PSO",
+  "VEREDA",
+  "VIA",
+]
+# The words that name an urbanization (R2): `URB LAS PALMAS`. With a street
+# that has one of the `street_words` on the line, `URB NAME` is the
+# urbanization, not part of the street (#318). `1234 URB LOS OLMOS` (R3: the
+# urbanization stands in for the street) stays the street.
+urbanization_words = ["URB", "URBANIZACION"]
+# Block and house words that Pub 28 drops from a house number (R6): `CALLE 19
+# BLQ 199 CASA 31` is house number `199-31` on `CALLE 19` (#747). A `#` is
+# dropped the same way (handled in the tagger, it is not a word).
+number_words = ["BLOQUE", "BLQ", "BQ", "CASA", "LOTE", "NUM", "NUMERO"]
