@@ -612,6 +612,8 @@ fn gen_special(
         ("rural_words", "PR_RURAL_WORDS"),
         ("star_words", "PR_STAR_WORDS"),
         ("box_words", "PR_BOX_WORDS"),
+        ("project_words", "PR_PROJECT_WORDS"),
+        ("building_words", "PR_BUILDING_WORDS"),
     ] {
         let mut words = key_list(pr, key, &pctx, true)?;
         words.sort();

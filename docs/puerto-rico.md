@@ -48,9 +48,9 @@ What Pub 28 does **not** say: anything about `KM` (kilometer markers on `CARR` r
 | `COND LAS AMAPOLAS, SAN JUAN PR` | no number, street `COND LAS AMAPOLAS`, `missing_street_number` | R5 (number 1 when none) | decision needed (see below) |
 | `COND DEL MAR APT 103` | street `COND DEL MAR`, unit `APT 103`, `missing_street_number` | R5 | same |
 | `1 COND VERDE APT 1120`, `3 VISTA SUITES APT 104` | number 1 / 3, street, unit | R5 | right |
-| `COND GARDEN HILLS PLAZA TORRE 2 APT 905` | street `COND ... TORRE 2`, unit, `missing_street_number`, `possibly_truncated` | R5 (`TORRE` is a building line) | gap |
-| `RES LAS MARGARITAS EDIF 1 APT 104` | street `RES ... EDIF 1`, unit, `missing_street_number`, `possibly_truncated` | R3, R5 | gap |
-| `EDIF 5 APT 12 RES LAS MARGARITAS` | street `EDIF 5`, the project name unparsed, three warnings | R3, R5 | gap |
+| `COND VISTA REAL TORRE 2 APT 905`; field form: line 1 `COND VISTA REAL`, line 2 `TORRE 2 APT 905` | street `COND VISTA REAL`, unit `BLDG 2`, second unit `APT 905`, `missing_street_number` (was: street `COND ... TORRE 2`, `possibly_truncated`) | R5 (`TORRE` is a building line) | fixed, **key** (#749) |
+| `RES LAS MARGARITAS EDIF 1 APT 104` | street `RES LAS MARGARITAS`, `BLDG 1`, `APT 104`, `missing_street_number` (was: street `RES ... EDIF 1`, `possibly_truncated`) | R3, R5 | fixed, **key** (#749) |
+| `EDIF 5 APT 12 RES LAS MARGARITAS` | street `RES LAS MARGARITAS`, `BLDG 5`, `APT 12`, `missing_street_number` (was: street `EDIF 5`, the project name unparsed, three warnings) | R3, R5 | fixed, **key** (#749) |
 | `APARTADO 825` | PO Box 825 (was: no number, street `APARTADO 825`, `missing_street_number`) | R8 (it is a PO Box) | fixed, **key** (#748) |
 | `RUTA RURAL 3 BUZON 12000`, `RUTA ESTRELLA 1 BUZON 18`, `RR 3 BUZON 7` | `RR 3 BOX 12000`, `HC 1 BOX 18`, `RR 3 BOX 7` (was: street name holds all of it, `missing_street_number`) | R8 | fixed, **key** (#748); the leading zero on the route and the hyphen in `17-A` are not changed (same as `HC 03 BOX 17-A` before) |
 | `RR 3 BOX 12000`, `HC 03 BOX 1050`, `PO BOX 1195` | read as rural route / highway contract / box; `HC 03` keys as route `3` | R8 | right |
@@ -95,7 +95,7 @@ A PR rule keys on the state `PR` or a Puerto Rico ZIP (006, 007, 009), as `is_pu
 | #319 (street-first forms) | Source: R6 and I51.3 (the standard is number first). Cases: `CALLE NAME NUMBER`, `CALLE NAME NUMBER UNIT`, `AVE NAME NUMBER UNIT`. | Done: Puerto Rico only; the number is the house number, no new warning. |
 | #747: lettered and block-lot numbers | Source: R6 (`A-17` to `A17`, `BLQ`, `CASA`, `LOTE`, `NUM` dropped). | Done (above). `K7`-style lot codes in a split source's number column stay on the left-as-is list. |
 | #748: Spanish box and route words | Source: R8. | Done: Puerto Rico only; `APARTADO`, `RUTA RURAL`, `RUTA ESTRELLA`, `BUZON`, `BZN` (lists in `special.toml`). |
-| New: condominium and `RES` building lines | Source: R3, R5 (`TORRE`, `EDIF`, name on its own line). | The `missing_street_number` choice (finding 6). |
+| #749: condominium and `RES` building lines | Source: R3, R5 (`TORRE`, `EDIF`, name on its own line). | Done: Puerto Rico only; after `COND`/`RES` and a name, `TORRE`/`EDIF`/`EDIFICIO` and a value are the unit `BLDG`; `missing_street_number` stays (decision on #724). Not read: a building line after a numbered street (`12 CALLE LUNA EDIF 3`), which the regular unit rules leave as they were. |
 
 ## Next steps (in the epic's order)
 

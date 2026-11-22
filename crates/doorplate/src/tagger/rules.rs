@@ -3559,6 +3559,9 @@ impl Tagger<'_> {
         if hi < lo + 2 || !self.in_puerto_rico() {
             return false;
         }
+        if self.pr_building_line(lo, hi) {
+            return true;
+        }
         let lex = self.lex;
         let t0 = self.text(lo);
         let unnumbered = house_number(t0).is_none();
@@ -3669,6 +3672,97 @@ impl Tagger<'_> {
             return true;
         }
         false
+    }
+
+    /// A Puerto Rico condominium or public-housing building line (Pub 28 R3, R5, I21.3 and
+    /// I22; #749), only called inside Puerto Rico:
+    /// - `COND GARDEN HILLS TORRE 2 APT 905`, `RES LAS MARGARITAS EDIF 1 APT 104`: after a project
+    ///   name (`COND`, `RES` and at least one name word), a building word and its value are the
+    ///   first unit (`BLDG 2`) and a unit after it the second; the project name is the street.
+    /// - `EDIF 5 APT 12 RES LAS MARGARITAS`: the same with the building first.
+    ///
+    /// The street keeps `missing_street_number` when the text has no number (decision on #724).
+    /// Returns whether it tagged the street.
+    fn pr_building_line(&mut self, lo: usize, hi: usize) -> bool {
+        let lex = self.lex;
+        // A building word at `k` with a value right after it on the same segment.
+        let building = |k: usize| {
+            k + 1 < hi
+                && self.toks[k + 1].seg == self.toks[k].seg
+                && lex.pr_building_unit(self.text(k)).is_some()
+                && {
+                    let v = self.text(k + 1);
+                    is_unit_value(v) && (has_digit(v) || is_letter(v))
+                }
+        };
+        // A unit (`APT 905`, `# 905`) that fills `a..b` exactly, on one segment.
+        let unit_at = |a: usize, b: usize| {
+            b == a + 2
+                && self.toks[a].seg == self.toks[a + 1].seg
+                && (self.toks[a].is_hash() || lex.unit(self.text(a)).is_some())
+                && is_unit_value(self.text(a + 1))
+        };
+        let project = |p: usize| p + 1 < hi && lex.is_pr_project_word(self.text(p));
+        if building(lo) {
+            let p = if project(lo + 2) {
+                lo + 2
+            } else if lo + 4 < hi && unit_at(lo + 2, lo + 4) && project(lo + 4) {
+                lo + 4
+            } else {
+                return false;
+            };
+            self.tag_pr_units(lo, (p == lo + 4).then_some(lo + 2));
+            self.street_from(p, hi);
+            // The units ahead of the name make its segment long, not a cut-off name: judge the
+            // name's own length.
+            let name_len: usize = (p..hi).map(|k| self.text(k).len() + 1).sum();
+            if self.incomplete.is_some_and(|i| i >= p) && name_len <= super::TRUNCATION_MIN_LEN {
+                self.incomplete = None;
+            }
+            return true;
+        }
+        let s = if house_number(self.text(lo)).is_some() {
+            lo + 1
+        } else {
+            lo
+        };
+        if !project(s) {
+            return false;
+        }
+        let Some(k) = (s + 2..hi).find(|&k| building(k)) else {
+            return false;
+        };
+        let after = k + 2;
+        let second = if after == hi {
+            None
+        } else if unit_at(after, hi) {
+            Some(after)
+        } else {
+            return false;
+        };
+        self.tag_pr_units(k, second);
+        self.street_from(lo, k);
+        // The name ends at the building, not at a cut-off line.
+        if self.incomplete.is_some_and(|i| i < k) {
+            self.incomplete = None;
+        }
+        true
+    }
+
+    /// Tags the building word at `b` and its value as the first unit, and a designator (or `#`)
+    /// and value at `second` as the second unit (#749).
+    fn tag_pr_units(&mut self, b: usize, second: Option<usize>) {
+        self.set(b..b + 1, Tag::UnitType(0));
+        self.set(b + 1..b + 2, Tag::UnitNumber(0));
+        if let Some(u) = second {
+            let ty = if self.toks[u].is_hash() {
+                Tag::Skip
+            } else {
+                Tag::UnitType(1)
+            };
+            self.set(u..u + 1, ty);
+            self.set(u + 1..u + 2, Tag::UnitNumber(1));
+        }
     }
 
     /// A Puerto Rico house number at `k`: an optional block or house word (`BLQ`, `CASA`, `#`),
