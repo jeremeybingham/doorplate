@@ -3649,7 +3649,11 @@ impl Tagger<'_> {
     /// KENT, nor a military code) inside a highway name.
     fn highway_state(&self, s: &str) -> Option<()> {
         let l = self.lex.state(s)?;
-        (l.kind != MatchKind::Variant && l.value.kind() != StateKind::Military).then_some(())
+        // `PR` before a route number is Puerto Rico's highway only in Puerto Rico; in any other
+        // state it is a private road (Texas: `PR 462`, #314).
+        let elsewhere = l.value.code() == "PR" && self.places.is_some_and(|c| c.state != "PR");
+        (l.kind != MatchKind::Variant && l.value.kind() != StateKind::Military && !elsewhere)
+            .then_some(())
     }
 
     /// After a highway route: a postdirectional and a suffix, anything else
