@@ -115,7 +115,7 @@ nothing out. `tools/compare/test_libpostal_provider.py` tests the mapping on inv
 
 These are notes from the first run, before the showdown existed, with this repository's own scorers; the published
 figures are the showdown's ([`benchmarks.md`](benchmarks.md#the-parser-showdown)). The table is kept because the reading
-notes under it still explain the gaps the showdown measured. One run: libpostal commit `25099c5`, the Senzing 1.2.0 parser (data checksum `7afb91d6ef19`), and doorplate on a 0.6.0 pre-release build (`main` on that
+notes under it still explain the gaps the showdown measured. One run: libpostal commit `25099c5`, the Senzing 1.2.0 parser (data checksum `7afb91d6ef19`), and doorplate on a 0.6.0 pre-release build of that
 date; the accuracy rows were not re-run for the release). The two speed rows are a later run of all three in one session, on
 0.6.1 (`9f2418b`, the same parser code as the tag) on 2026-11-13, usaddress from its cache. Accuracy is the share of records right (whole address, on the fields both have), with common labels, and the suite's
 intervals are 95% Wilson. Speed is the best-of-N method on an otherwise idle machine, with the suite's 4-CPU, 8 GB profile. Timings

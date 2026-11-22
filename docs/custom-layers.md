@@ -362,7 +362,7 @@ Every parse made with a layer reports it in `Diagnostics::custom_layer`: the lay
 `None`.
 
 **A layer can change a key.** `123 Oak Trayl` has no suffix without the layer above and has `TRL` with it, and the key differs.
-That is not a new key version (`k5` is still the format and the shipped rules are unchanged), but stored keys are only comparable when
+That is not a new key version (`k6` is still the format and the shipped rules are unchanged), but stored keys are only comparable when
 they came from the same layer. Store the fingerprint beside the keys, and re-key when it changes
 ([`key-format.md`](key-format.md), "Stability"). A parse with no layer, or with an empty one, is identical to a build without the
 feature: 100,000 sampled rows gave the same keys, USPS lines and warnings, at the same speed.
