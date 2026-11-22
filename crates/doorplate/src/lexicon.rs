@@ -1039,6 +1039,41 @@ impl Lexicons {
         find_str(tables::PR_NUMBER_WORDS, &normalize_key_cow(s))
     }
 
+    /// A Puerto Rico Spanish box word (`APARTADO`, `RUTA`, `BUZON`, `BZN`, Pub 28 R8), for the
+    /// first-word reject. Source: `data/special.toml` `[puerto_rico]`. Called on every token, so
+    /// the shipped words are compared first (tokens are upper case); a test keeps that list equal
+    /// to the data.
+    pub(crate) fn is_pr_box_word(&self, s: &str) -> bool {
+        matches!(s, "APARTADO" | "RUTA" | "BUZON" | "BZN")
+    }
+
+    /// `APARTADO`: the Spanish word for a PO Box (R8, #748).
+    pub(crate) fn is_pr_po_box_word(&self, s: &str) -> bool {
+        find_str(tables::PR_PO_BOX_WORDS, &normalize_key_cow(s))
+    }
+
+    /// `BUZON`, `BZN`: the box word after a Puerto Rico route (R8, #748).
+    pub(crate) fn is_pr_box_part_word(&self, s: &str) -> bool {
+        find_str(tables::PR_BOX_WORDS, &normalize_key_cow(s))
+    }
+
+    /// The route kind of the two words `RUTA RURAL` (rural route) or `RUTA ESTRELLA` (highway
+    /// contract), as the one-line form `"RUTA RURAL"` (R8, #748).
+    pub(crate) fn pr_route_kind(&self, form: &str) -> Option<crate::types::RouteKind> {
+        let (a, b) = form.split_once(' ')?;
+        if !find_str(tables::PR_ROUTE_WORDS, &normalize_key_cow(a)) {
+            return None;
+        }
+        let b = normalize_key_cow(b);
+        if find_str(tables::PR_RURAL_WORDS, &b) {
+            Some(crate::types::RouteKind::Rural)
+        } else if find_str(tables::PR_STAR_WORDS, &b) {
+            Some(crate::types::RouteKind::HighwayContract)
+        } else {
+            None
+        }
+    }
+
     /// A word that opens a neighborhood or district name before a city
     /// (`DOWNTOWN` in `DOWNTOWN MIAMI`). Source: `data/special.toml` `[area]`.
     pub(crate) fn is_area_word(&self, s: &str) -> bool {
@@ -1812,6 +1847,20 @@ mod tests {
             assert_eq!(LEX.state(s.code()).unwrap().value, s);
             assert_eq!(LEX.state(s.name()).unwrap().value, s);
         }
+    }
+
+    #[test]
+    fn pr_box_words_match_the_data() {
+        for l in [
+            tables::PR_PO_BOX_WORDS,
+            tables::PR_ROUTE_WORDS,
+            tables::PR_BOX_WORDS,
+        ] {
+            for w in l {
+                assert!(LEX.is_pr_box_word(w), "{w}");
+            }
+        }
+        assert!(!LEX.is_pr_box_word("BOX"));
     }
 
     #[test]

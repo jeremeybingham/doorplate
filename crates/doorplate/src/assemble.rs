@@ -293,11 +293,15 @@ pub(crate) fn assemble(
                 record(addr, Component::PoBox);
             }
             Tag::Route => {
-                route_kind = lex.special(&text).and_then(|l| match l.value {
-                    Special::RuralRoute => Some(RouteKind::Rural),
-                    Special::HighwayContract => Some(RouteKind::HighwayContract),
-                    _ => None,
-                });
+                route_kind = lex
+                    .special(&text)
+                    .and_then(|l| match l.value {
+                        Special::RuralRoute => Some(RouteKind::Rural),
+                        Special::HighwayContract => Some(RouteKind::HighwayContract),
+                        _ => None,
+                    })
+                    // `RUTA RURAL`, `RUTA ESTRELLA`: tagged only in Puerto Rico (#748).
+                    .or_else(|| lex.pr_route_kind(&text));
                 record(addr, Component::RuralRoute);
             }
             Tag::RouteNumber => {

@@ -607,6 +607,11 @@ fn gen_special(
         ("street_words", "PR_STREET_WORDS"),
         ("urbanization_words", "PR_URBANIZATION_WORDS"),
         ("number_words", "PR_NUMBER_WORDS"),
+        ("po_box_words", "PR_PO_BOX_WORDS"),
+        ("route_words", "PR_ROUTE_WORDS"),
+        ("rural_words", "PR_RURAL_WORDS"),
+        ("star_words", "PR_STAR_WORDS"),
+        ("box_words", "PR_BOX_WORDS"),
     ] {
         let mut words = key_list(pr, key, &pctx, true)?;
         words.sort();

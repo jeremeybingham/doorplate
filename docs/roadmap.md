@@ -48,7 +48,7 @@ Done before the rules: #700. Every regular rule measured at P2 or above is merge
 - **Boxes and routes:** #304 (glued box and route words) and #598 (`PO DRAWER C`), both P3, in on the owner's priorities. Done: #538 (`STAR RT`), #734 (a name line before a PO Box).
 - **Names beside the street:** #341 (` - WORD` after the suffix; the rule is decided, its review queue decides which tails it covers) and #726 (a name line with no building word; the reading is decided, the rule waits on a second queue and moves to 0.8 if that queue is not read before the release). Done: #310.
 - **Bug:** #787 (a span from the unit-in-the-city rule on an empty line 2).
-- **Puerto Rico (#332), after the rules:** #748, #749, and #92 (the Pub 28 sources); #318, #319 and #747 shipped together (the urbanization field, street-first and lettered numbers). Left from #318: the standalone urbanization names (R4). A Puerto Rico rule that misses the release moves to 0.8.
+- **Puerto Rico (#332), after the rules:** #749 and #92 (the Pub 28 sources); #748 (Spanish box and route words) is done; #318, #319 and #747 shipped together (the urbanization field, street-first and lettered numbers). Left from #318: the standalone urbanization names (R4). A Puerto Rico rule that misses the release moves to 0.8.
 - **Done in the other groups:** spellings #289, #375, #471 (one data PR; #725 closed with no rule); house numbers #311, #617, #274; units #294, #693, #499, #498, #272; one-line separators #732, #733, #736; Puerto Rico guard #314 (Texas `PR 462` stays a road); others #519, #327, #357, #244, #553, #750 (a period between two digits stays in the key).
 
 Issues below the P2 line are in on the owner's priorities or as members of a group; the list may be cut later.

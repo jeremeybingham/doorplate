@@ -19,6 +19,8 @@ Planned for 0.7.0, the first beta: the `k6` key, the removal of the state data s
 
 ### Changed
 
+- **Puerto Rico Spanish box and route words** (`k6`, #748): in Puerto Rico, `APARTADO 825` reads as the PO Box `825`, `RUTA RURAL 3 BUZON 12000` as `RR 3 BOX 12000`, `RUTA ESTRELLA 1 BUZON 18` as `HC 1 BOX 18`, and `BUZON` or `BZN` is the box word after `RR` or `HC`. Before, no box or route was read: the text was the street name with `missing_street_number`. Outside Puerto Rico (state `PR` or a 006, 007 or 009 ZIP) nothing changes, so a street named `RUTA` is safe. The key changes for these rows ([`docs/puerto-rico.md`](docs/puerto-rico.md)).
+
 - **Puerto Rico street-first and lettered house numbers** (`k6`, #319, #747): in Puerto Rico, `CALLE LUNA 123` and `AVE PONCE DE LEON 1500 APT 4` read the trailing number as the house number (before, the number stayed in the street name with `missing_street_number`); `A-17 CALLE AMAPOLA` and `A 12 CALLE LUNA` read `A17` and `A12`; `CALLE 19 BLQ 199 CASA 31` reads `199-31` on `CALLE 19` (the words `BLQ`, `BLOQUE`, `CASA`, `LOTE`, `NUM`, `NUMERO` and `#` are dropped). `CALLE 19` alone stays the street, and `CARR 2 KM 14` is unchanged. Rows outside Puerto Rico do not change. The key changes for these rows ([`docs/puerto-rico.md`](docs/puerto-rico.md)).
 
 - **`PR` plus a route number outside Puerto Rico is a road, not the Puerto Rico highway** (`k6`, #314): `123 PR 462, AUSTIN, TX` reads street `PR 462` (a Texas private road); with state `PR` (or no state) it is still the highway `PR HIGHWAY 462`. The key changes for these rows.
