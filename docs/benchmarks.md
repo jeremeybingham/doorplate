@@ -1,29 +1,173 @@
 # Benchmarks: accuracy
 
-Figures: 0.6.0 (`a6a7df4`), measured 2026-11-12, unless a table names another build (0.5.1 is `c68760e`; 0.6.2 is `041c38d`, measured 2026-11-14: the speed and size rows, and the v1 suite, geocode and corpus runs, which gave the 0.6.0 figures again, because 0.6.1 and 0.6.2 change no output); one machine (Intel Core i9-9900K, WSL2); usaddress 0.5.16.
-Speed, size and memory are on [their own page](speed-and-size.md); how to rerun each benchmark is in [`running-benchmarks.md`](running-benchmarks.md).
-A three-way comparison with usaddress and libpostal on one neutral schema, with a hand-labeled golden set, a
-pre-registered score, every prediction file and the threats to validity (this library's author built it):
-[the address-parser-showdown report](https://github.com/jeremeybingham/address-parser-showdown/blob/main/report/REPORT.md). Its figures are its own; they are not copied here.
-Why these figures have barely moved since 0.4.1 while the rules kept changing real rows: the [0.6.1 blog post](https://jeremeybingham.github.io/doorplate/2026/11/13/doorplate-0-6-1.html).
+doorplate is measured three ways, in this order of weight:
+
+1. **[The parser showdown](#the-parser-showdown)**, the headline: doorplate, usaddress and libpostal on one neutral
+   schema, scored on a hand-labeled golden set and four outside sets, in a repository of its own.
+2. **[The benchmark suite](#the-benchmark-suite)**: 19,586 labeled addresses in this repository, doorplate against
+   usaddress, with the strata and blind spots broken out.
+3. **[The geocode benchmark](#geocode-benchmark-one-line-no-commas)** and the **[other checks](#other-checks)**: outside
+   sets, each with a reason it is not a headline.
+
+**Builds.** doorplate 0.6.0 (`a6a7df4`) unless a table names another build. 0.6.1 and 0.6.2 change no output, and this
+repository's runners on 0.6.2 (`041c38d`) gave the same figures. usaddress 0.5.16; libpostal commit `25099c5` with the Senzing 1.2.0
+model. One machine (Intel Core i9-9900K, WSL2).
+
+Speed, size and memory are on [their own page](speed-and-size.md); how to rerun each benchmark is in
+[`running-benchmarks.md`](running-benchmarks.md). Why the figures have barely moved since 0.4.1 while the rules kept
+changing real rows: the [0.6.1 blog post](https://jeremeybingham.github.io/doorplate/2026/11/13/doorplate-0-6-1.html).
 
 ## Summary
 
-| | Build | doorplate | usaddress |
+| | doorplate | usaddress | libpostal |
 |---|---|---|---|
-| [Benchmark suite](#the-benchmark-suite), whole suite (19,586), whole address right, coarse: **v2** (v1) | 0.6.0 (`a6a7df4`) | **95.6%** (94.4%) | 85.5% |
-| Benchmark suite, `natural` stratum (16,001): **v2** (v1) | 0.6.0 (`a6a7df4`) | **98.7%** (98.5%) | 96.1% |
-| [Geocode benchmark](#geocode-benchmark-one-line-no-commas), `dev` split (60,522), whole address right, coarse | 0.6.0 (`a6a7df4`) | 94.4% | 88.1% |
-| Addresses per second, one thread, suite inputs (`parse_tokens` / `usaddress.parse`) | 0.6.2 (`041c38d`) | 98,830 | 9,150 |
-| Addresses per second, `parse_many` on 4 threads (usaddress has no batch call) | 0.6.2 (`041c38d`) | 426,574 | |
-| One address in Rust (criterion, median of the corpus shapes) | 0.6.2 (`041c38d`) | 2 to 5 µs | |
-| Installed size (wheel / package and dependencies); import time | 0.6.2 (`041c38d`) | 2.5 MB; 1 ms | 4.8 MB; 10 ms |
+| **[Parser showdown](#the-parser-showdown): Parser Score** (golden set and four outside sets) | **90.9** | 84.7 | 80.8 |
+| Showdown, random public stratum (829 real address lines), whole address right | 93.7% | 93.0% | 91.3% |
+| [Benchmark suite](#the-benchmark-suite), `natural` stratum (16,001), whole address right, `v2` | 98.7% | 96.1% | |
+| Benchmark suite, whole suite (19,586), whole address right, `v2` | 95.6% | 85.5% | |
+| [Geocode benchmark](#geocode-benchmark-one-line-no-commas), `dev` split (60,522), whole address right | 94.4% | 88.1% | |
+| Strings per second, one process ([showdown](speed-and-size.md#against-usaddress-and-libpostal)) | 72,028 | 8,952 | 14,577 |
+| Memory after loading, one process (showdown) | 27 MB | 27 MB | 2,958 MB |
 
-Read the suite's `natural` stratum as the estimate for ordinary input, and the geocode `dev` split for one-line street
-addresses with input errors. Accuracy uses usaddress's labels, folded into the coarse set (`docs/usaddress-compat.md`,
-"Scoring rules"); a whole address is right only when every token is.
+- **Read the Parser Score first**, and the random public stratum beside it: it is the closest thing to a random sample
+  of real US address lines, and there the three parsers are within 2.5 points.
+- **The suite and geocode rows** come from this repository's own runners, which score doorplate against usaddress only.
+  The showdown scored libpostal on the same sets ([by part](#by-part)).
+- **"Whole address right"** means every scored part of the record is right. Each section says which parts it scores.
 
-## Reading the figures across versions
+## The parser showdown
+
+[address-parser-showdown](https://github.com/jeremeybingham/address-parser-showdown) compares doorplate, usaddress and
+libpostal on equal terms. Each parser is read through an adapter into one neutral label schema; predictions are scored
+as character spans, so how a parser splits words does not decide the score; reasonable conventions (a letter after the
+house number, `#` before a unit) are listed as accepted readings before any scoring; every parser runs at default
+settings; and every prediction file is committed. The full method, the error analysis by shape and the threats to
+validity are in [the report](https://github.com/jeremeybingham/address-parser-showdown/blob/main/report/REPORT.md)
+(also as a [PDF with charts](https://github.com/jeremeybingham/address-parser-showdown/blob/main/report/REPORT.pdf)).
+
+- **The sets.** A golden set of 2,439 hand-labeled records in three tiers fixed by shape (`normal`, `hard`,
+  `nightmare`), drawn from public records at random, from hand templates and from clean ordinary forms; four outside
+  sets (two parts of this repository's suite, Senzing's US rows and the geocode benchmark's `dev` split); and each
+  parser's own test files, reported apart.
+- **The run.** v0.1.0, the pinned run of 2026-11-16: doorplate 0.6.0, usaddress 0.5.16, libpostal with the Senzing
+  1.2.0 model. doorplate 0.6.2 has the same Parser Score ([releases](#by-doorplate-release)).
+- **Conflict of interest.** doorplate's author built the showdown, labeled the golden set and wrote the report. Labels
+  were made blind to every parser's output, the score formula was fixed before the first run, a private twin of the
+  golden set guards against tuning, and every prediction is published. That reduces the conflict; it does not remove
+  it. There is one labeler.
+
+### Parser Score
+
+| | doorplate | usaddress | libpostal |
+|---|---|---|---|
+| **Parser Score** (95% interval) | **90.9** (89.8 to 92.0) | 84.7 (83.4 to 86.0) | 80.8 (79.5 to 82.2) |
+| Field F1 score (95% interval) | 97.6 (97.3 to 97.9) | 95.7 (95.3 to 96.1) | 93.4 (92.8 to 93.9) |
+
+The Parser Score is whole-record accuracy on the coarse parts (house number, street, unit, PO box, route, city, state,
+ZIP), weighted half on the golden set's three tiers (one sixth each) and half on the four outside sets (one eighth
+each). Speed and cost are never part of it. The ranking is the same in every sensitivity row of the report: equal
+weights, doubtful records put back, and each set left out in turn.
+
+### By part
+
+Whole address right, coarse parts (95% Wilson intervals are in the report):
+
+| Part | Records | doorplate | usaddress | libpostal |
+|---|---|---|---|---|
+| Golden set, `normal` | 1,568 | 95.0% | 93.6% | 91.8% |
+| Golden set, `hard` | 556 | 91.2% | 88.5% | 70.9% |
+| Golden set, `nightmare` | 226 | 69.0% | 51.3% | 54.0% |
+| Benchmark suite, `natural` | 16,001 | 98.6% | 96.5% | 95.0% |
+| Benchmark suite, `hand` | 1,000 | 95.8% | 91.1% | 84.0% |
+| Senzing's US rows (OpenStreetMap tags) | 2,172 | 98.1% | 90.6% | 98.8% |
+| Geocode benchmark, `dev` | 60,522 | 94.4% | 88.4% | 79.9% |
+| *Reported apart, not in the score:* | | | | |
+| Benchmark suite, `hard` (drawn from doorplate's and usaddress's blind spots) | 2,585 | 73.4% | 25.7% | 69.0% |
+| usaddress's tests, `us50_test_tagged` (its home set) | 687 | 96.8% | 100.0% | 95.3% |
+| usaddress's tests, `labeled` (its home set) | 146 | 81.5% | 100.0% | 68.5% |
+| libpostal's `test_us_parses` (its home set) | 53 | 84.9% | 88.7% | 94.3% |
+
+### The random public stratum
+
+The golden set by where its records came from:
+
+| Group | Records | doorplate | usaddress | libpostal |
+|---|---|---|---|---|
+| **Public records, random draw** | 829 | **93.7%** (91.9 to 95.2) | 93.0% (91.1 to 94.5) | 91.3% (89.2 to 93.0) |
+| Clean ordinary forms | 346 | 99.1% | 99.1% | 97.7% |
+| Hand templates, all tiers | 1,038 | 87.6% | 81.4% | 72.3% |
+
+On the random stratum, doorplate and usaddress cannot be told apart at this size (exact McNemar test: 15 records only
+doorplate reads right, 9 only usaddress, p = 0.31). libpostal is behind both (p = 0.001 against doorplate, p = 0.04
+against usaddress).
+
+### How to read the showdown
+
+- **On ordinary address lines the three are close.** Most of the Parser Score's spread comes from rarer shapes: rural
+  routes, military lines, units in unusual places and typos. If your data is mostly ordinary street lines, weigh the
+  random stratum; if it has those shapes, weigh the tiers.
+- **libpostal has no route label**, so every rural route in the gold is a miss for it by construction, not a fault of
+  its model.
+- **Each parser leads on its own home set**, which is why the home sets are kept out of the score.
+- **The suite and geocode figures here differ from this page's own by a few tenths** (`natural` 98.6% here against
+  98.7% below; usaddress 96.5% against 96.1%). The showdown scores coarse parts as character spans with its own label
+  mapping; the suite scores usaddress's labels token by token. Each figure is right for its own scorer.
+- **The shipped golden text has invented values** in place of real names and numbers. Scoring the 1,312 public records
+  on their real text moved each parser by about one point at most and did not change the order.
+
+### By doorplate release
+
+The showdown's [releases appendix](https://github.com/jeremeybingham/address-parser-showdown/blob/main/report/RELEASES.md)
+runs the last point release of each minor version on the same sets, gold and scorer, with the usaddress and libpostal
+predictions of the pinned run unchanged:
+
+| | 0.1.0 | 0.2.0 | 0.3.1 | 0.4.1 | 0.5.1 | 0.6.2 | usaddress | libpostal |
+|---|---|---|---|---|---|---|---|---|
+| Parser Score | 87.3 | 87.3 | 87.6 | 88.7 | 89.4 | **90.9** | 84.7 | 80.8 |
+| Golden set, `normal` | 94.0% | 94.0% | 94.0% | 94.3% | 94.6% | 94.8% | 93.6% | 91.8% |
+| Golden set, `hard` | 88.5% | 88.5% | 88.5% | 90.5% | 91.0% | 91.2% | 88.5% | 70.9% |
+| Golden set, `nightmare` | 54.0% | 54.0% | 54.0% | 57.1% | 60.2% | 69.0% | 51.3% | 54.0% |
+
+Releases less than about 1.5 points apart have overlapping intervals: read the curve, not a single step. These are
+today's sets and conventions applied to old releases, not what was measured at the time. On `normal`, 0.6.2 reads about 3
+records fewer than the pinned run's 0.6.0 (94.8% against 95.0%), too few to move the Parser Score; the appendix does not
+say which records.
+
+## The benchmark suite
+
+19,586 labeled addresses in `benchmarks/suite/` that neither library's rules, model or tests were made from:
+anonymized National Address Database points, TIGER street names, templates for boxes, routes, military and general
+delivery, and 1,000 hand-labeled shapes. Gold labels come from the field each token was written from. Run under a fixed
+4-CPU, 8 GB profile (`python benchmarks/suite.py all`; specification: [`benchmark-suite.md`](benchmark-suite.md)).
+It compares doorplate with usaddress only (the showdown runs libpostal on its `natural` and `hand` strata,
+[above](#by-part)), and it breaks the result down further than the showdown does: by stratum, writing style, address
+type and blind spot.
+
+Scoring uses usaddress's labels, folded into the coarse set ([`usaddress-compat.md`](usaddress-compat.md#scoring-rules)),
+and a whole address is right only when every token is. `v1` is the frozen scoring; `v2` scores the same records and also
+accepts a letter A to D after the house number in the unit ([below](#reading-the-figures-across-versions)).
+
+**Whole address right, coarse** (intervals are 95% Wilson):
+
+| | Records | 0.6.0 (`a6a7df4`), v2 | 0.6.0, v1 | 0.5.1 (`c68760e`), v1 | usaddress |
+|---|---|---|---|---|---|
+| `natural` stratum | 16,001 | 98.7% | 98.5% | 98.5% (98.3 to 98.7) | 96.1% (95.8 to 96.4) |
+| Whole suite | 19,586 | 95.6% | 94.4% | 93.4% (93.1 to 93.8) | 85.5% (85.0 to 86.0) |
+| `hard` stratum | 2,585 | 76.4% | 69.0% | 61.8% (59.9 to 63.6) | 18.3% (16.9 to 19.8) |
+| `hand` stratum | 1,000 | 95.2% | 95.1% | 94.3% (92.7 to 95.6) | 89.1% (87.0 to 90.9) |
+
+- **Which row to read.** `natural` is a random draw by state population: the estimate for ordinary input. `hard` holds
+  the records in each blind-spot class of either library, so it is low for both by design. The whole suite blends 80%
+  `natural`, 15% `hard` and 5% `hand`.
+- **Shared labels** leave out records whose gold labels include one doorplate does not model (a street premodifier, a
+  recipient line, landmarks, a country): 0.6.0 96.1% (v2) and 94.9% (v1) of 18,814 records; 0.5.1 96.0% (95.7 to
+  96.3) against usaddress 87.9% (87.4 to 88.4) of 18,401, and `natural` 98.8% against 96.4% of 15,472. The set grew
+  with the prefix labels, so the two builds are not on the same records. A trailing `USA` is not counted against doorplate.
+- **Tokens right:** 0.6.0 99.1% (v2), 98.9% (v1); 0.5.1 98.8%; usaddress 96.8%.
+- **Paired, all records, v1** (both right / only doorplate / only usaddress / neither): 0.6.0 16,113 / 2,378 / 633 /
+  462; 0.5.1 16,264 / 2,035 / 482 / 805.
+
+### Reading the figures across versions
 
 | Benchmark suite, whole suite (19,586), all records | v1 (frozen) | v2 (letter convention) |
 |---|---|---|
@@ -54,32 +198,7 @@ usaddress is 85.5% in every cell.
 - **A glued letter** (`123B ELM ST`) stays in the house number and keys apart from the spaced one; it raises
   `glued_number_letter`.
 
-## The benchmark suite
-
-19,586 labeled addresses in `benchmarks/suite/` that neither library's rules, model or tests were made from:
-anonymized National Address Database points, TIGER street names, templates for boxes, routes, military and general
-delivery, and 1,000 hand-labeled shapes. Gold labels come from the field each token was written from. Run under a fixed
-4-CPU, 8 GB profile (`python benchmarks/suite.py all`; specification: [`benchmark-suite.md`](benchmark-suite.md)).
-
-**Whole address right, coarse** (intervals are 95% Wilson):
-
-| | Records | 0.6.0 (`a6a7df4`), v2 | 0.6.0, v1 | 0.5.1 (`c68760e`), v1 | usaddress |
-|---|---|---|---|---|---|
-| `natural` stratum | 16,001 | 98.7% | 98.5% | 98.5% (98.3 to 98.7) | 96.1% (95.8 to 96.4) |
-| Whole suite | 19,586 | 95.6% | 94.4% | 93.4% (93.1 to 93.8) | 85.5% (85.0 to 86.0) |
-| `hard` stratum | 2,585 | 76.4% | 69.0% | 61.8% (59.9 to 63.6) | 18.3% (16.9 to 19.8) |
-| `hand` stratum | 1,000 | 95.2% | 95.1% | 94.3% (92.7 to 95.6) | 89.1% (87.0 to 90.9) |
-
-- **Which row to read.** `natural` is a random draw by state population: the estimate for ordinary input. `hard` holds
-  the records in each blind-spot class of either library, so it is low for both by design. The whole suite blends 80%
-  `natural`, 15% `hard` and 5% `hand`.
-- **Shared labels** leave out records whose gold labels include one doorplate does not model (a street premodifier, a
-  recipient line, landmarks, a country): 0.6.0 96.1% (v2) and 94.9% (v1) of 18,814 records; 0.5.1 96.0% (95.7 to
-  96.3) against usaddress 87.9% (87.4 to 88.4) of 18,401, and `natural` 98.8% against 96.4% of 15,472. The set grew
-  with the prefix labels, so the two builds are not on the same records. A trailing `USA` is not counted against doorplate.
-- **Tokens right:** 0.6.0 99.1% (v2), 98.9% (v1); 0.5.1 98.8%; usaddress 96.8%.
-- **Paired, all records, v1** (both right / only doorplate / only usaddress / neither): 0.6.0 16,113 / 2,378 / 633 /
-  462; 0.5.1 16,264 / 2,035 / 482 / 805.
+### By style, address type and blind spot
 
 By how the record is written (0.6.0, v1, all strata):
 
@@ -114,7 +233,9 @@ Blind spots (0.6.0, v1, `hard` stratum, the class is the first token that differ
 
 The number prefix is labelled since 0.6.0 (0.5.1 scored 0.0% on both classes).
 
-**doorplate only** (no usaddress counterpart; 0.6.0, v1):
+### What only doorplate does
+
+No usaddress counterpart (0.6.0, v1):
 
 | Measure | Result |
 |---|---|
@@ -129,6 +250,8 @@ The number prefix is labelled since 0.6.0 (0.5.1 scored 0.0% on both classes).
 
 Key stability is below 100% because a spelled-out unit or direction and its abbreviation are one record to a person,
 and merging them is a rule of the key format ([`key-format.md`](key-format.md)).
+
+### The private twin, and how to read the suite
 
 **The private twin** (the same recipe with an unpublished seed, 0.5.0; the 0.6.0 run covered only the doorplate-only track: fields input 99.2% of 17,675 records): `natural` 98.4%, whole suite 93.2%, within 0.4
 points of the public figures, so nothing here has been tuned to the public set.
@@ -163,7 +286,8 @@ Whole address right, coarse, by build (0.4.0 equals 0.4.1 and 0.5.0 equals 0.5.1
 | test (30,622; optimistic) | 96.7% | 96.8% | 96.7% | 96.7% | 88.2% |
 
 On `dev` (0.6.0), tokens are right for 98.8% against usaddress's 97.6%, and the whole address in the fine label set
-for 84.3% against 80.2%.
+for 84.3% against 80.2%. The showdown scores libpostal at 79.9% on the same split ([by part](#by-part)): on one line
+with no commas, its `road` often runs on into a rare or misspelled city ([`libpostal-compat.md`](libpostal-compat.md)).
 
 - **Read `dev`, not `test`.** The rules and place list were first written while reading `test`'s errors; later fixes
   were made against `train80` and checked on `dev`. The held-out `train20` moves with the fitted splits, so there is no
@@ -224,13 +348,13 @@ best 149). Scored the same way (`benchmarks/geocode_paper_compare.py`, entity le
 
 ## Other checks
 
-Secondary sets, each with a reason it is not a headline. Only aggregates of the private sets are published
+Secondary sets, each with a reason it is not a headline, scored by this repository's tools (doorplate and usaddress). Only aggregates of the private sets are published
 ([`data-policy.md`](data-policy.md)).
 
 | Set | What it is | doorplate | usaddress | Read with care |
 |---|---|---|---|---|
 | [fastaddress](https://github.com/vinvomero/fastaddress)'s hand-labeled addresses (0.6.0) | 273 in-scope owner mailing addresses as county assessors wrote them (recipients, care-of, boxes); `compare_usaddress.py gold` | whole address 72.5%, tokens 94.9%; fine 60.4% and 92.1% | 59.3%, 92.9%; fine 48.0% and 89.9% | Selected, not sampled: over-represents usaddress's mistakes. Their `clean` set is usaddress's own output (87.3% against 100%). 0.5.1 scored 73.3% here: the letter convention |
-| [Senzing's libpostal test set](https://github.com/Senzing/libpostal-data) (0.6.0) | 2,233 US rows of OpenStreetMap tags written as one line; house number, road, city, state and ZIP all right | 97.0%; with no state (554 rows) 94.0% | 89.5%; 70.0% | Clean and uniform, not messy. Not comparable with Senzing's own figure; libpostal was not run. Read once for a rule, so later scores are optimistic |
+| [Senzing's libpostal test set](https://github.com/Senzing/libpostal-data) (0.6.0) | 2,233 US rows of OpenStreetMap tags written as one line; house number, road, city, state and ZIP all right | 97.0%; with no state (554 rows) 94.0% | 89.5%; 70.0% | Clean and uniform, not messy. Not comparable with Senzing's own figure; libpostal's score on these rows is in the [showdown](#by-part). Read once for a rule, so later scores are optimistic |
 | [MessyStreets](https://github.com/EdGaere/MessyStreets) (Gaere and von Wangenheim, SIGSPATIAL '26, DOI 10.1145/3841645.3843362) | US-like web addresses from schema.org markup; gold and silver are held out, raw is the work list (table below) | gold: city 91.7%, street name 88.3% | | Labels are page markup, not hand-checked: a miss is a question, not a bug count |
 | usaddress's own test files (0.6.0) | 2,248 addresses not in usaddress's training files | 99.1% | 100.0% | usaddress's regression tests: a compatibility check, not a contest |
 | Golden corpus (0.6.2) | 1,279 whole addresses written with the parser (`doorplate corpus test`) | 1,275 (99.7%) | | A regression set: says nothing about new data |

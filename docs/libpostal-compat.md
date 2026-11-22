@@ -3,12 +3,15 @@
 [libpostal](https://github.com/openvenues/libpostal) is a C library that parses and normalizes street addresses from
 anywhere in the world with a statistical model. `doorplate` is a US-only parser that works with rules and place data and
 also standardizes, builds a key and reports diagnostics. This page compares the two: what each does, where the outputs
-line up, and the first measurements (one run, 2026-11-07, to be repeated).
+line up, and how they were measured.
 
-The figures in "Measured so far" are notes from that first run, not the published figures. The published three-way
-comparison (doorplate 0.6.0, usaddress and libpostal with the Senzing model, on one neutral schema with a hand-labeled
-golden set) is [the address-parser-showdown report](https://github.com/jeremeybingham/address-parser-showdown/blob/main/report/REPORT.md); this library's own figures are in
-[`benchmarks.md`](benchmarks.md) and [`speed-and-size.md`](speed-and-size.md). The facts about libpostal come from its
+**The figures are the parser showdown's**: doorplate, usaddress and libpostal with the Senzing model, on one neutral
+schema with a hand-labeled golden set. On its Parser Score doorplate has 90.9, usaddress 84.7 and libpostal 80.8; on
+ordinary public address lines the three are within 2.5 points. The tables are in
+[`benchmarks.md`](benchmarks.md#the-parser-showdown) (accuracy) and
+[`speed-and-size.md`](speed-and-size.md#against-usaddress-and-libpostal) (speed, memory, install size); the method is in
+[the showdown report](https://github.com/jeremeybingham/address-parser-showdown/blob/main/report/REPORT.md). The
+[notes from the first run](#notes-from-the-first-run-2026-11-07) below came before it and explain some of the gaps. The facts about libpostal come from its
 README and from Senzing's model repository, read on 2026-11-07; what those pages do not say is marked as not stated.
 Examples are invented. This library formats and parses; it does not validate that an address exists or can receive mail.
 
@@ -77,7 +80,8 @@ libpostal is built (`./configure ... MODEL=senzing`); its data is about 2.2 GB, 
   fetches, or how to choose one after the build. The build on 2026-11-07 fetched the Senzing **1.2.0 parser**.
 - Senzing's own figure (4.3% better than the default on its test set) is not a comparison with libpostal.
 - Every libpostal figure therefore carries the libpostal commit, the model version and a checksum of the data directory,
-  which the comparison tools print. Senzing's published US score is in [`benchmarks.md`](benchmarks.md#other-checks).
+  which the comparison tools print. doorplate's and libpostal's scores on Senzing's US rows are in
+  [`benchmarks.md`](benchmarks.md#by-part).
 
 ## Running the comparison
 
@@ -107,9 +111,11 @@ with a gold label. `suburb`, `city_district`, `island` and `state_district` coun
 `entrance` as `Occupancy`. *Shared labels* leaves out records with a gold label libpostal cannot produce; *all records* leaves
 nothing out. `tools/compare/test_libpostal_provider.py` tests the mapping on invented addresses.
 
-## Measured so far (2026-11-07; one run, before the release)
+## Notes from the first run (2026-11-07)
 
-One run: libpostal commit `25099c5`, the Senzing 1.2.0 parser (data checksum `7afb91d6ef19`), and doorplate on a 0.6.0 pre-release build (`main` on that
+These are notes from the first run, before the showdown existed, with this repository's own scorers; the published
+figures are the showdown's ([`benchmarks.md`](benchmarks.md#the-parser-showdown)). The table is kept because the reading
+notes under it still explain the gaps the showdown measured. One run: libpostal commit `25099c5`, the Senzing 1.2.0 parser (data checksum `7afb91d6ef19`), and doorplate on a 0.6.0 pre-release build (`main` on that
 date; the accuracy rows were not re-run for the release). The two speed rows are a later run of all three in one session, on
 0.6.1 (`9f2418b`, the same parser code as the tag) on 2026-11-13, usaddress from its cache. Accuracy is the share of records right (whole address, on the fields both have), with common labels, and the suite's
 intervals are 95% Wilson. Speed is the best-of-N method on an otherwise idle machine, with the suite's 4-CPU, 8 GB profile. Timings
@@ -167,8 +173,9 @@ How to read it:
 - Cost beside accuracy: install effort, model size, load time, memory and addresses per second, with the load time apart from the
   per-address speed. Defaults only: no retraining of either side.
 
-The full comparison, with a hand-labeled golden set (planned in issue [#616](https://github.com/jeremeybingham/doorplate/issues/616)), is
-[the address-parser-showdown report](https://github.com/jeremeybingham/address-parser-showdown/blob/main/report/REPORT.md): its method, results, error analysis by shape and threats to validity.
+The parser showdown was built to meet these needs (issue [#616](https://github.com/jeremeybingham/doorplate/issues/616)):
+[its report](https://github.com/jeremeybingham/address-parser-showdown/blob/main/report/REPORT.md) has the method,
+results, error analysis by shape and threats to validity, and its figures are in [`benchmarks.md`](benchmarks.md#the-parser-showdown).
 
 ## Sources
 

@@ -74,15 +74,21 @@ Batches, pre-split fields, PO boxes, military and general delivery, and the `Ano
 
 ## Accuracy and speed
 
-| 0.6.2 | doorplate | usaddress |
-|---|---|---|
-| Whole address right, [benchmark suite](https://doorplate.readthedocs.io/en/latest/benchmark-suite/), `natural` stratum (16,001 addresses written in five styles) | 98.7% | 96.1% |
-| Whole address right, [geocode benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark) dev split (60,522 one-line addresses) | 94.4% | 88.1% |
-| One address in Rust (median of the corpus shapes, criterion) | 2 to 5 µs | |
+| | doorplate | usaddress | libpostal |
+|---|---|---|---|
+| **Parser Score**, [parser showdown](https://github.com/jeremeybingham/address-parser-showdown) (hand-labeled golden set and four outside sets) | **90.9** | 84.7 | 80.8 |
+| Whole address right, showdown random public stratum (829 real address lines) | 93.7% | 93.0% | 91.3% |
+| Whole address right, [benchmark suite](https://doorplate.readthedocs.io/en/latest/benchmark-suite/), `natural` stratum (16,001 addresses in five styles) | 98.6% | 96.5% | 95.0% |
+| Whole address right, [geocode benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark) `dev` split (60,522 one-line addresses) | 94.4% | 88.4% | 79.9% |
+| Strings per second from Python, one process | about 72,000 | about 9,000 | about 14,600 |
+| Memory after loading | 27 MB | 27 MB | about 3 GB |
 
-Measured against the Python library [usaddress](https://github.com/datamade/usaddress) on a few data sets, not promises for
-yours; every figure by build, the caveats and how to rerun them: [benchmarks](https://doorplate.readthedocs.io/en/latest/benchmarks/)
-and [speed, size and memory](https://doorplate.readthedocs.io/en/latest/speed-and-size/).
+Every row is from the showdown's pinned run (doorplate 0.6.0, and 0.6.2 has the same Parser Score; usaddress 0.5.16;
+libpostal with the Senzing model; default settings, 4 CPUs). The geocode benchmark is Yin, Li and Goldberg,
+[arXiv:2310.14360](https://arxiv.org/abs/2310.14360). doorplate's author built the showdown: the method, the conflict of interest and
+every prediction file are in [its report](https://github.com/jeremeybingham/address-parser-showdown/blob/main/report/REPORT.md). From Rust, one address takes 2 to 5 µs (criterion, 0.6.2). These are
+measurements on a few data sets, not promises for yours. doorplate's own benchmark suite, the other checks and the speed figures by build:
+[benchmarks](https://doorplate.readthedocs.io/en/latest/benchmarks/) and [speed, size and memory](https://doorplate.readthedocs.io/en/latest/speed-and-size/).
 
 ## Disclaimer
 

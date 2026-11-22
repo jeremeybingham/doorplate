@@ -1,9 +1,39 @@
 # Speed, size and memory
 
-Figures: 0.6.2 (`041c38d`, the parser code of the release), measured 2026-11-14, unless a table names another build (the command-line, DataFrame and DuckDB
-figures were not re-run for the release); one machine (Intel Core i9-9900K, Linux on WSL2), so read
-the ratios. Accuracy is on [Benchmarks: accuracy](benchmarks.md); how to rerun these scripts and profile the engine is in
-[Running the benchmarks](running-benchmarks.md).
+The headline is the [parser showdown](#against-usaddress-and-libpostal)'s cost table: doorplate, usaddress and libpostal
+timed on the same strings in one session. The sections after it are doorplate's own measurements, in more detail and by
+build: Rust, Python, DataFrames, size and memory, and speed by version.
+
+**Builds.** 0.6.2 (`041c38d`, the parser code of the release), measured 2026-11-14, unless a table names another build
+(the command-line, DataFrame and DuckDB figures were not re-run for the release). One machine (Intel Core i9-9900K, Linux
+on WSL2), so read the ratios. Accuracy is on [Benchmarks: accuracy](benchmarks.md); how to rerun these scripts and
+profile the engine is in [Running the benchmarks](running-benchmarks.md).
+
+## Against usaddress and libpostal
+
+From the [showdown report](https://github.com/jeremeybingham/address-parser-showdown/blob/main/report/REPORT.md), section 8:
+the pinned run of 2026-11-16 (doorplate 0.6.0, usaddress 0.5.16, libpostal with the Senzing 1.2.0 model). 100,000
+strings (the golden set's 2,439 repeated), median of 5 passes, 4 CPUs; each parser's own Python call is timed, without
+the adapter.
+
+| | doorplate | usaddress | libpostal |
+|---|---|---|---|
+| Strings per second, one process | **72,028** | 8,952 | 14,577 |
+| Strings per second, 4 processes | **223,510** | 28,054 | 43,951 |
+| Load time (import and first parse) | 0.003 s | 0.012 s | 3.480 s |
+| Memory after loading, one process | 27 MB | 27 MB | 2,958 MB |
+| Memory, 4 processes together | 37 MB | 42 MB | 11,771 MB |
+| Install size | 4.9 MB | 4.8 MB | 2,993 MB |
+
+- **doorplate is about 8 times as fast as usaddress and 5 times as fast as libpostal** in one process. libpostal needs
+  about 3 GB of memory and disk per process, where the other two need under 30 MB.
+- **Speed varies 5 to 14% between runs** on this machine (the showdown's run of 2026-11-15 measured 64,876, 8,395 and
+  12,818 strings per second), so read the ratios.
+- **0.6.2 is faster.** The showdown's [releases appendix](https://github.com/jeremeybingham/address-parser-showdown/blob/main/report/RELEASES.md)
+  timed 0.6.2 at 113,315 strings per second in one process and 317,934 in four, in a session of its own (usaddress and
+  libpostal were not re-timed there). doorplate's own figures for 0.6.2 follow.
+- These figures time one string per call. doorplate's batch call, `parse_many`, runs on several threads in one process
+  with the GIL released ([Python](#python) below); neither of the others has one.
 
 ## Speed
 
