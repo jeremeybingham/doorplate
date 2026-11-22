@@ -261,22 +261,35 @@ pub(crate) fn tokenize<'a>(
             _ => {}
         }
     }
+    // Gates (#842): each pass needs a character the cleaned text must hold, so the whole token
+    // walk is skipped when it is absent. Every `-` and `/` token comes from a `-` or `/` byte;
+    // a segment gap comes from a comma or semicolon, or from a parenthesized group that
+    // `edge_groups` split off.
+    let dash = bytes.contains(&b'-');
+    let slash = bytes.contains(&b'/');
+    let comma = bytes.iter().any(|&b| b == b',' || b == b';' || b == b'(');
     pass("join_split_grid_number", &mut out, |o| {
         join_split_grid_number(o, lex)
     });
     pass("join_lost_fraction", &mut out, |o| {
         join_lost_fraction(o, lex)
     });
-    pass("join_directional_comma", &mut out, |o| {
-        join_directional_comma(o, lex)
-    });
-    pass("drop_unit_separators", &mut out, |o| {
-        drop_unit_separators(o, lex)
-    });
-    pass("join_unit_hyphen", &mut out, |o| join_unit_hyphen(o, lex));
-    pass("join_zip_hyphen", &mut out, |o| join_zip_hyphen(o, lex));
-    if field.is_none() {
-        pass("dash_separator", &mut out, |o| dash_separator(o, lex));
+    if comma {
+        pass("join_directional_comma", &mut out, |o| {
+            join_directional_comma(o, lex)
+        });
+    }
+    if dash || slash {
+        pass("drop_unit_separators", &mut out, |o| {
+            drop_unit_separators(o, lex)
+        });
+    }
+    if dash {
+        pass("join_unit_hyphen", &mut out, |o| join_unit_hyphen(o, lex));
+        pass("join_zip_hyphen", &mut out, |o| join_zip_hyphen(o, lex));
+        if field.is_none() {
+            pass("dash_separator", &mut out, |o| dash_separator(o, lex));
+        }
     }
     out
 }
@@ -737,9 +750,6 @@ fn join_split_grid_number(out: &mut Vec<Token>, lex: &Lexicons) {
 /// house number, and a unit designator or box word next (`5 1 2 STE 100`) keeps the digits
 /// apart.
 fn join_lost_fraction(out: &mut Vec<Token>, lex: &Lexicons) {
-    if house_number(out.first().map_or("", |t| &*t.text)).is_none() {
-        return;
-    }
     let half_at = |k: usize| {
         matches!(
             (
@@ -760,6 +770,9 @@ fn join_lost_fraction(out: &mut Vec<Token>, lex: &Lexicons) {
     } else {
         return;
     };
+    if house_number(out.first().map_or("", |t| &*t.text)).is_none() {
+        return;
+    }
     let Some(word) = out.get(k + 2) else {
         return;
     };
