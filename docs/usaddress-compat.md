@@ -139,6 +139,10 @@ The benchmark suite scores the letter-after-number reading as a convention in it
 
 ## How the two are compared
 
+The headline comparison, with libpostal as well, is the parser showdown ([`benchmarks.md`](benchmarks.md#the-parser-showdown)):
+doorplate 90.9, usaddress 84.7 on its Parser Score, and too close to tell apart on ordinary public address lines. This
+section is how this repository's own tools compare the two.
+
 `tools/compare/compare_usaddress.py` runs both parsers on the same strings and
 scores them by the same rules; `benchmarks/suite.py` (the benchmark suite) uses the
 same rules on its own labeled addresses. `doorplate` produces usaddress's labels with

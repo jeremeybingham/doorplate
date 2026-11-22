@@ -1,12 +1,13 @@
 # Benchmarks: how to run them
 
-Results: [`benchmarks.md`](benchmarks.md). The suite's specification and fairness rules:
+Results: [`benchmarks.md`](benchmarks.md) (the parser showdown first, then the suite and the other sets). The suite's specification and fairness rules:
 [`benchmark-suite.md`](benchmark-suite.md).
 
 ## Which one do I run?
 
 | I want to know | Run | Needs |
 |---|---|---|
+| How doorplate compares with usaddress and libpostal on a hand-labeled golden set (the headline) | `just all` in [address-parser-showdown](https://github.com/jeremeybingham/address-parser-showdown) (its report, section 11) | that repository; a pinned libpostal build (about 3 GB) |
 | How accurate doorplate is next to usaddress, on addresses neither was made from | `python benchmarks/suite.py compare` | the extension; `usaddress` |
 | What only doorplate does: fields input, Pub 28 output, key stability, warnings | `python benchmarks/suite.py doorplate` | the extension |
 | Speed and memory under a fixed profile (4 CPUs, 8 GB) | `python benchmarks/suite.py speed` | the extension; `usaddress` |
@@ -27,7 +28,7 @@ its score says nothing about accuracy on new data. **usaddress's own test files*
 compatibility check, not a contest. `accuracy.py` prints both beside the geocode benchmark so the three
 are never mistaken for each other.
 
-If you want one answer, run the suite. Read its fairness rules before using a result to decide what to
+The headline figures are the showdown's, rerun in its own repository. If you want one answer from this repository, run the suite. Read its fairness rules before using a result to decide what to
 change: the suite is not a work list.
 
 ## Setup (once)
