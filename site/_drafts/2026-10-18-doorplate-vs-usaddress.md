@@ -44,8 +44,7 @@ a.warnings                        # []
 ## How it differs from usaddress
 
 `usaddress` is a learned model: a conditional random field tags each token. doorplate
-is rules plus data: the Pub 28 tables, a national place and ZIP list, and optional
-state packs. The last line (ZIP, state, city) is read right to left, then the delivery
+is rules plus data: the Pub 28 tables and a national place and ZIP list. The last line (ZIP, state, city) is read right to left, then the delivery
 line from both ends, and the place list tells a city from street words when there are
 no commas.
 

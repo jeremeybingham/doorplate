@@ -1,20 +1,21 @@
 # The backlog: how issues are organized
 
 The rules for sorting issues, the labels and milestones, and how work moves from an issue to a release. The current plan is
-in [`roadmap.md`](roadmap.md). **Last reviewed 2026-11-19.**
+in [`roadmap.md`](roadmap.md). **Last reviewed 2026-11-22.**
 
 ## The release plan
 
 | Milestone | What it is |
 |---|---|
-| **0.6.x** | Point releases with no key change: speed, tooling and documentation. No tracker is open (#673 closed with 0.6.1) |
-| **0.7.0** | The first beta and the `k6`: the removal of the state packs (#700, done), the Puerto Rico rules, and the `version:K` issues measured at P2 or above; the list is on [`roadmap.md`](roadmap.md) |
+| **0.7.0** | The first beta and the `k6` (checklist #810, tracker #724); closes with the release |
+| **0.7.x** | Point releases with no key change: speed, tooling, documentation and opt-in output |
+| **0.8.0** | The `k7`: the `version:K` issues measured at P2 or above, first the regressions the 0.7.0 key comparison found; the list is on [`roadmap.md`](roadmap.md) |
 | **Later** | Wanted or known, not planned: new API surface, parse rules below the P2 line, anything waiting on demand or a decision. The list by kind is on [`roadmap.md`](roadmap.md), "Waiting" |
 | **Tooling** | Tooling not planned for a release (harness, review tool, benchmarks and CI items waiting for a rule or a decision): never shipped, never closed |
 | **Won't Do** | Decided against, with the reason: tracker #417 |
 
-Earlier releases are in [`CHANGELOG.md`](../CHANGELOG.md). `main` is the 0.6 line and carries a `-dev` version until the release pull request
-sets the release version; 0.5.x patches, if any, are cut from `release/0.5.x` and ported back. The project has few users, so a patch release
+Earlier releases are in [`CHANGELOG.md`](../CHANGELOG.md). `main` carries a `-dev` version until the release pull request
+sets the release version; 0.7.x patches, if any, are cut from `release/0.7.x` once `main` carries `k7` work, and ported back. The project has few users, so a patch release
 needs a good reason: a wrong key or a panic on valid input, a security or supply-chain problem, or a broken published artifact.
 
 **Key-affecting rules merge to `main` unreleased**, as ordinary pull requests, each measured against the frozen keys of the last key release with
@@ -30,9 +31,9 @@ reports the last release's version. A pull request that says its keys do not cha
 
 | Label | Meaning |
 |---|---|
-| `research` | An issue whose first output is a measurement or a decision, not code . It says what outcome would close it |
+| `research` | An issue whose first output is a measurement or a decision, not code. It says what outcome would close it |
 | `size:S` / `M` / `L` / `D` | Hours; a day or two; several pull requests or a design; a decision with no code |
-| `version:K` | Changes a key (the number, directionals, street name, suffix, state, ZIP or unit; place data that moves the street/city split). Held for the next key release (the `k6`); it can merge to `main` unreleased, measured row by row against the frozen keys |
+| `version:K` | Changes a key (the number, directionals, street name, suffix, state, ZIP or unit; place data that moves the street/city split). Held for the next key release (the `k7`, 0.8.0); it can merge to `main` unreleased, measured row by row against the frozen keys |
 | `version:B` | Breaks an API: removes or renames a public thing |
 | `version:O` | Changes output without a key: a warning, a new field, a new opt-in API |
 | `version:N` | No user-visible change: docs, tooling, tests, internal |
@@ -45,7 +46,7 @@ reports the last release's version. A pull request that says its keys do not cha
 | `tracker` | A meta issue that lists other issues |
 
 The milestone says **which release**; `version:` says **what kind of change**; `area:` says **which part of the
-project**. An issue that is `version:K` is in the 0.7.0 milestone (the `k6`) once it is planned, and in Later until then.
+project**. An issue that is `version:K` is in the 0.8.0 milestone (the `k7`) once it is planned, and in Later until then.
 
 ## Where an issue comes from
 
@@ -69,7 +70,7 @@ The issues of a release are ordered by a score, not by feel: `rows affected x ha
   by definition. Rows affected are the probe matches times the reviewed miss share, weighted by source where the evidence ledger has it. Two guards: an estimate resting on
   fewer than 5 misses among the reviewed cards is placed one band below its raw band until a larger queue confirms it; an issue with 200 or more probe matches and no reviewed
   miss share is "unmeasured" and waits for a queue, not a guessed band. An issue whose probe matches are under 200 is P3 for good. Only an issue measured P2 or above leaves `Later`,
-  except by the owner's priorities (the 0.7.0 order on #724 promotes rules in the owner's focus areas, and the other members of their groups, below the line). A review queue's share is larger than the rows share (a comparison queue holds
+  except by the owner's priorities (the 0.7.0 order on #724 promoted rules in the owner's focus areas, and the other members of their groups, below the line). A review queue's share is larger than the rows share (a comparison queue holds
   only the rows the two parsers disagree on), so both are looked at.
 
 Refresh the numbers after each batch of rules (the same probes are the before and after of a rule PR) and when a source is added.
