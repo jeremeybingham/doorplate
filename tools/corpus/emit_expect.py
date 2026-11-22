@@ -137,6 +137,8 @@ def key(e,unit):
     elif e.get("street_name") or e.get("highway"):
         body=["S",queens_number(e),e.get("street_dir_prefix",""),name_text(e,True),e.get("street_suffix",""),e.get("street_dir_suffix",""),st,z]
         if unit: body+=[e.get("unit_number",""),e.get("second_unit_number","")]
+        # Puerto Rico (#318): the urbanization is a last segment, only when set.
+        if e.get("urbanization"): body+=["URB "+e["urbanization"]]
     else: return None
     return pre+body[0]+":"[:0]+"|".join([body[0]]+[keyseg(x) for x in body[1:]])[1:] if False else pre+"|".join([body[0]]+[keyseg(x) for x in body[1:]])
 
@@ -178,6 +180,13 @@ def reso(e):
     if ua: r["UnparsedAddress"]=ua
     return r
 
+def usps(e):
+    u={"line1":line1(e)}
+    if (l:=last_line(e)): u["last_line"]=l
+    # Puerto Rico (Pub 28 section 292, #318): `URB NAME` above the street line; not for a dual address.
+    if e.get("urbanization") and not dual(e): u["urbanization"]="URB "+plain(e["urbanization"])
+    return u
+
 def eligible(c):
     e=c["expect"]
     if set(c.get("warnings",[]))&SKIP_WARN or e.get("unparsed"): return None
@@ -193,9 +202,7 @@ def add(c, with_reso):
         new={"key":"none","key_unit":"none","slug":"none","usps":{}}
     else:
         new["key"]=key(e,False); new["key_unit"]=key(e,True); new["slug"]=slug(e)
-        u={"line1":line1(e)}
-        if (l:=last_line(e)): u["last_line"]=l
-        new["usps"]=u
+        new["usps"]=usps(e)
         if with_reso: new["reso"]=reso(e)
     changed=False
     out=collections.OrderedDict()
@@ -215,9 +222,7 @@ def computed(c):
     kind=eligible(c)
     if kind!="ok": return {}
     e=c["expect"]
-    u={"line1":line1(e)}
-    if (l:=last_line(e)): u["last_line"]=l
-    out={"key":key(e,False),"key_unit":key(e,True),"slug":slug(e),"usps":u}
+    out={"key":key(e,False),"key_unit":key(e,True),"slug":slug(e),"usps":usps(e)}
     if e.get("state") and e.get("zip5"): out["reso"]=reso(e)
     return out
 

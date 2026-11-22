@@ -49,7 +49,7 @@ argument, one address per line from standard input, and a blank line is reported
 
 `--usps`, `--display`, `--long`, `--usaddress` and `--tag` choose one output form and replace the JSON record. The
 default record has `input`, `components`, `warnings`, `unparsed`, `key`, `key_unit`, `slug`, `usps`, `reso`, the
-shape fields that apply (`po_box`, `rural_route`, `military`, ...), `place` and `provenance`. The warning codes are on
+shape fields that apply (`po_box`, `rural_route`, `military`, ...), `place` and `provenance`. A Puerto Rico address with an urbanization adds `urbanization` to `components` and to `usps` (`URB LAS PALMAS`, a line above the street; `--usps` prints it first), and `parse-file` writes it in `addr_urbanization`. The warning codes are on
 the [Warnings](warnings.md) page and the key is in [The match key](key-format.md).
 
 ## `doorplate parse-file`

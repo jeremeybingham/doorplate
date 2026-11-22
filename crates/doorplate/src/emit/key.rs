@@ -163,6 +163,12 @@ impl ParsedAddress {
                     .unwrap_or_default(),
             );
         }
+        // The Puerto Rico urbanization tells apart two streets of the same name in one ZIP
+        // (Pub 28 section 292, #318): a last segment, `URB` and the name, only when there is one,
+        // so no other key changes.
+        if let Some(u) = self.urbanization.as_deref().filter(|_| form == 'S') {
+            segs.push(esc(&format!("URB {u}")));
+        }
 
         let mut key = String::from(if located { "k5:" } else { "k5n:" });
         key.push(form);

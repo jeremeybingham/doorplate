@@ -46,6 +46,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let a = hinted.parse("100 Main St, Miami")?;
     println!("{:?} (state field: {:?})", a.to_display().lines(), a.state);
 
+    // Puerto Rico: the urbanization is its own field, a line above the street in the
+    // USPS form, and part of the key (it tells apart same-named streets in one ZIP).
+    let a = parser.parse("CALLE LUNA 27 URB LAS PALMAS, SAN JUAN PR 00926")?;
+    println!("urbanization  {:?}", a.urbanization);
+    println!("usps          {:?}", a.to_usps().lines());
+    println!("key           {:?}", a.key(KeyOptions::property()));
+
     // A batch of lines (parallel with the `rayon` feature).
     let lines = ["1 Main St, Miami FL", "PO Box 5, Tampa FL"];
     for a in parser.parse_many(&lines).into_iter().flatten() {

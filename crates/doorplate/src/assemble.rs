@@ -145,6 +145,19 @@ pub(crate) fn assemble(
                     n.push_str(&text);
                 }
             }
+            // `A-17` is `A17` (Pub 28 R6, #747).
+            Tag::StreetNumberLettered => {
+                set_once(&mut addr.street_number, text.replace('-', ""));
+                record(addr, Component::StreetNumber);
+            }
+            // `BLQ 199 CASA 31` is `199-31` (Pub 28 R6, #747).
+            Tag::StreetNumberBlock => {
+                if let Some(n) = &mut addr.street_number {
+                    n.push('-');
+                    n.push_str(&text.replace(['-', ' '], ""));
+                    record(addr, Component::StreetNumber);
+                }
+            }
             Tag::PreDir => {
                 // `NO` for north before a name (#470) is tagged by the tagger's own rule.
                 let word = if text == "NO" { "N" } else { &text };
@@ -270,6 +283,10 @@ pub(crate) fn assemble(
             Tag::Building => {
                 set_once(&mut addr.building, text.into_owned());
                 record(addr, Component::Building);
+            }
+            Tag::Urbanization => {
+                set_once(&mut addr.urbanization, text.into_owned());
+                record(addr, Component::Urbanization);
             }
             Tag::PoBoxNumber => {
                 set_once(&mut addr.po_box, text.into_owned());

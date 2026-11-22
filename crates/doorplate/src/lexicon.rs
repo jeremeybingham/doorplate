@@ -1011,6 +1011,34 @@ impl Lexicons {
         })
     }
 
+    /// Whether an address with this state code or 5-digit ZIP is in Puerto Rico, where the
+    /// Puerto Rico street forms apply (#318, #319, #747; decision on #332).
+    /// Source: `data/special.toml` `[puerto_rico]` `states` and `zip_prefixes`.
+    pub(crate) fn in_puerto_rico(&self, state: Option<&str>, zip5: Option<&str>) -> bool {
+        state.is_some_and(|s| find_str(tables::PR_STATES, s))
+            || zip5
+                .and_then(|z| z.get(..3))
+                .is_some_and(|p| find_str(tables::PR_ZIP_PREFIXES, p))
+    }
+
+    /// A Spanish word that opens a Puerto Rico street name (`CALLE`, `AVE`, Pub 28 R1).
+    /// Source: `data/special.toml` `[puerto_rico]` `street_words`.
+    pub(crate) fn is_pr_street_word(&self, s: &str) -> bool {
+        find_str(tables::PR_STREET_WORDS, &normalize_key_cow(s))
+    }
+
+    /// A word that names a Puerto Rico urbanization (`URB`, Pub 28 R2).
+    /// Source: `data/special.toml` `[puerto_rico]` `urbanization_words`.
+    pub(crate) fn is_urbanization_word(&self, s: &str) -> bool {
+        find_str(tables::PR_URBANIZATION_WORDS, &normalize_key_cow(s))
+    }
+
+    /// A block or house word dropped from a Puerto Rico house number (`BLQ`, `CASA`, Pub 28 R6).
+    /// Source: `data/special.toml` `[puerto_rico]` `number_words`.
+    pub(crate) fn is_pr_number_word(&self, s: &str) -> bool {
+        find_str(tables::PR_NUMBER_WORDS, &normalize_key_cow(s))
+    }
+
     /// A word that opens a neighborhood or district name before a city
     /// (`DOWNTOWN` in `DOWNTOWN MIAMI`). Source: `data/special.toml` `[area]`.
     pub(crate) fn is_area_word(&self, s: &str) -> bool {

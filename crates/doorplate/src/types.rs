@@ -430,6 +430,8 @@ pub enum Component {
     MilitaryPostOffice,
     Attention,
     Building,
+    /// A Puerto Rico urbanization ([`ParsedAddress::urbanization`]).
+    Urbanization,
     City,
     State,
     Zip5,
@@ -774,6 +776,11 @@ pub struct ParsedAddress {
     /// A building name after the street or its unit (`EAST TOWER`,
     /// `ANNEX BUILDING`), as written. Not part of any emitted address.
     pub building: Option<String>,
+    /// The Puerto Rico urbanization (Pub 28 section 292), the name without its `URB` word
+    /// (`LAS PALMAS` in `27 CALLE LUNA URB LAS PALMAS`). Pub 28 calls it the only part that
+    /// tells apart two streets of the same name in one ZIP, so the USPS line and the key carry it.
+    /// Read only for an address in Puerto Rico.
+    pub urbanization: Option<String>,
     /// The city as the input wrote it.
     pub city: Option<String>,
     /// The place the city stands for, from the curated rows, or the ZIP's
@@ -820,6 +827,7 @@ impl ParsedAddress {
             military_post_office: None,
             attention: None,
             building: None,
+            urbanization: None,
             city: None,
             place: None,
             state: None,

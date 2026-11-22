@@ -70,16 +70,16 @@ def test_missing_binaries_are_not_run(tmp_path):
 
 
 def native_like_csv(path, apostrophe_rows):
-    """A CSV shaped like the native tool's output: 35 columns, `"` quoting, apostrophes in the street text (invented rows)."""
+    """A CSV shaped like the native tool's output: 36 columns, `"` quoting, apostrophes in the street text (invented rows)."""
     cols = ["line1", "line2", "city", "state", "zip"] + [f"addr_{c}" for c in phase_g_check.COLUMNS]
-    assert len(cols) == 35
+    assert len(cols) == 36
     lines = [",".join(cols)]
     for i in range(apostrophe_rows):
-        row = [f"{i} AVENUE 'O'", "", "CHICAGO", "IL", "60633"] + [""] * 30
+        row = [f"{i} AVENUE 'O'", "", "CHICAGO", "IL", "60633"] + [""] * 31
         row[5 + 2] = f"AVENUE 'O' {i}"
         lines.append(",".join(row))
     # a quoted field with a comma and a doubled quote must still be one field
-    row = ['"1 ""MAIN"", ST"', "", "X", "IL", "60633"] + [""] * 30
+    row = ['"1 ""MAIN"", ST"', "", "X", "IL", "60633"] + [""] * 31
     lines.append(",".join(row))
     path.write_text("\n".join(lines) + "\n")
 
@@ -97,7 +97,7 @@ class Recorder:
 
 def test_native_csv_dialect_is_pinned(tmp_path):
     # #579: left to its sniffer, DuckDB read_csv chose `'` as the escape character on a 500,000-row chunk of the real sources
-    # ("escape = ' (Auto-Detected)") and read a row as 34 columns instead of 35. The sniffer's guess depends on the whole file, so
+    # ("escape = ' (Auto-Detected)") and read a row as 35 columns instead of 36. The sniffer's guess depends on the whole file, so
     # no small invented file reproduces it; what the tool must do is never guess: comma, `"` quote and `"` escape (RFC 4180, which
     # is how the native tool writes).
     f = tmp_path / "native.csv"
@@ -109,13 +109,13 @@ def test_native_csv_dialect_is_pinned(tmp_path):
 
 
 def test_native_csv_rows_read_back_whole(tmp_path):
-    # apostrophes, a quoted field with a comma and doubled quotes: all 35 columns, one row each
+    # apostrophes, a quoted field with a comma and doubled quotes: all 36 columns, one row each
     f = tmp_path / "native.csv"
     native_like_csv(f, 300)
     con = duckdb.connect()
     phase_g_check.read_native_csv(con, f)
     assert con.execute("select count(*), count(distinct i) from nat").fetchone() == (301, 301)
-    assert len(con.execute("describe nat").fetchall()) == 36  # i plus 35 columns
+    assert len(con.execute("describe nat").fetchall()) == 37  # i plus 36 columns
     assert con.execute("select line1 from nat where i = 300").fetchone()[0] == '1 "MAIN", ST'
     assert con.execute("select count(*) from nat where line1 like '%''O''%'").fetchone()[0] == 300
 
@@ -126,7 +126,7 @@ def test_the_chunk_that_failed_the_away_run(tmp_path):
     con = duckdb.connect()
     phase_g_check.read_native_csv(con, os.environ["DOORPLATE_TEST_FAILING_CSV"])
     assert con.execute("select count(*) from nat").fetchone()[0] > 100_000
-    assert len(con.execute("describe nat").fetchall()) == 36
+    assert len(con.execute("describe nat").fetchall()) == 37
 
 
 def test_error_log_keeps_the_traceback_local(tmp_path, monkeypatch, capsys):

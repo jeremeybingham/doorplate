@@ -170,13 +170,13 @@
     SecondUnitNumber: ["Unit 2 no.", "unit"], PoBox: ["PO box", "special"], RuralRoute: ["Rural route", "special"],
     GeneralDelivery: ["General delivery", "special"], Military: ["Military", "special"],
     MilitaryPostOffice: ["Military post office", "special"], Attention: ["Attention", "note"],
-    Building: ["Building", "note"], City: ["City", "city"], State: ["State", "state"], Zip5: ["ZIP", "zip"],
+    Building: ["Building", "note"], Urbanization: ["Urbanization", "note"], City: ["City", "city"], State: ["State", "state"], Zip5: ["ZIP", "zip"],
     Zip4: ["ZIP+4", "zip"], Unparsed: ["Not placed", "unparsed"]
   };
   // The labeler's keys, most-used parts first (as the parser showdown's labeler).
   var LABELS = ["StreetNumber", "StreetDirPrefix", "StreetName", "StreetSuffix", "StreetDirSuffix", "UnitType", "UnitNumber",
                 "City", "State", "Zip5", "Highway", "SecondUnitType", "SecondUnitNumber", "PoBox", "RuralRoute", "GeneralDelivery",
-                "Military", "MilitaryPostOffice", "Attention", "Building", "Zip4", "Unparsed"];
+                "Military", "MilitaryPostOffice", "Attention", "Building", "Urbanization", "Zip4", "Unparsed"];
   var KEYS = "1234567890qwertyuiopasdfgh", KEYOF = {};
   LABELS.forEach(function (c, i) { KEYOF[KEYS[i]] = c; });
   // The verdicts of each kind of queue. `fix`: a correction, saved as the labels; `enter`: what Enter saves.

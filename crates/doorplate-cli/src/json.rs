@@ -65,6 +65,7 @@ fn components(a: &ParsedAddress) -> Vec<(&'static str, String)> {
     );
     put("attention", a.attention.clone());
     put("building", a.building.clone());
+    put("urbanization", a.urbanization.clone());
     put("city", a.city.clone());
     put("state", a.state.map(|s| s.to_string()));
     put("zip5", a.zip5.clone());
@@ -139,6 +140,7 @@ impl Serialize for Record<'_> {
             &UspsJson {
                 line1: &usps.line1,
                 line2: &usps.line2,
+                urbanization: &usps.urbanization,
                 last_line: usps.last_line(),
             },
         )?;
@@ -160,14 +162,19 @@ impl Serialize for Record<'_> {
 struct UspsJson<'a> {
     line1: &'a Option<String>,
     line2: &'a Option<String>,
+    /// Written only when set (Puerto Rico), so other records keep their shape.
+    urbanization: &'a Option<String>,
     last_line: String,
 }
 
 impl Serialize for UspsJson<'_> {
     fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
-        let mut m = s.serialize_map(Some(3))?;
+        let mut m = s.serialize_map(None)?;
         m.serialize_entry("line1", self.line1)?;
         m.serialize_entry("line2", self.line2)?;
+        if let Some(u) = self.urbanization {
+            m.serialize_entry("urbanization", u)?;
+        }
         m.serialize_entry("last_line", &self.last_line)?;
         m.end()
     }
@@ -245,7 +252,7 @@ pub fn tag_record(input: &str, a: Option<&ParsedAddress>) -> Value {
 }
 
 /// Columns `doorplate parse-file` appends, in order.
-pub const COLUMNS: [&str; 30] = [
+pub const COLUMNS: [&str; 31] = [
     "street_number",
     "street_dir_prefix",
     "street_name",
@@ -269,6 +276,7 @@ pub const COLUMNS: [&str; 30] = [
     "military_post_office",
     "attention",
     "building",
+    "urbanization",
     "usps_line1",
     "usps_last_line",
     "key",

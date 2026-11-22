@@ -248,11 +248,11 @@ permalink: /demo/
     SecondUnitNumber: ["Unit 2 no.", "unit"], PoBox: ["PO box", "special"], RuralRoute: ["Rural route", "special"],
     GeneralDelivery: ["General delivery", "special"], Military: ["Military", "special"],
     MilitaryPostOffice: ["Military post office", "special"], Attention: ["Attention", "note"],
-    Building: ["Building", "note"], City: ["City", "city"], State: ["State", "state"], Zip5: ["ZIP", "zip"],
+    Building: ["Building", "note"], Urbanization: ["Urbanization", "note"], City: ["City", "city"], State: ["State", "state"], Zip5: ["ZIP", "zip"],
     Zip4: ["ZIP+4", "zip"], Unparsed: ["Not placed", "unparsed"]
   };
   var LEGEND = [["number", "Number"], ["dir", "Direction"], ["street", "Street name"], ["suffix", "Suffix"],
-    ["unit", "Unit"], ["special", "PO box, route, military"], ["note", "Attention, building"],
+    ["unit", "Unit"], ["special", "PO box, route, military"], ["note", "Attention, building, urbanization"],
     ["city", "City"], ["state", "State"], ["zip", "ZIP"], ["unparsed", "Not placed"]];
   var EXAMPLES = ["123 north main street apt 4, Miami FL 33101", "% ACME CORP, 21-77 31st st, flushing ny 11354",
     "PO BOX 123 ORLANDO FL 32801", "RR 2 BOX 152 ocala fl 34482", "1204 e. 5th ave suite 200 austin tx 78701",
@@ -279,7 +279,8 @@ permalink: /demo/
     street_suffix: "Suffix", street_dir_suffix: "Postdirectional", highway: "Highway", unit_type: "Unit type",
     unit_number: "Unit number", second_unit_type: "Second unit type", second_unit_number: "Second unit number",
     po_box: "PO box", rural_route: "Rural route", general_delivery: "General delivery", military: "Military box",
-    military_post_office: "Military post office", attention: "Attention", building: "Building", city: "City",
+    military_post_office: "Military post office", attention: "Attention", building: "Building",
+    urbanization: "Urbanization", city: "City",
     state: "State", zip5: "ZIP", zip4: "ZIP+4" };
 
   var enc = new TextEncoder(), dec = new TextDecoder(), wasm;

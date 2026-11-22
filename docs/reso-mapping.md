@@ -84,6 +84,7 @@ The Data Dictionary has no field for these, so they are folded into
 | Dual address: street and PO Box (Pub 28 section 215) | the street's name; the box is not emitted | street fields and units from the street; `UnparsedAddress` uses the street line (choice 8) |
 | Attention or care-of line (`ATTN ...`, `C/O ...`, section 214) | not applicable | not emitted |
 | Building name (`EAST TOWER`) | not applicable | not emitted |
+| Puerto Rico urbanization (`URB LAS PALMAS`, Pub 28 section 29; #318) | not applicable | not emitted (`UnparsedAddress` uses the USPS line 1, without it); read `urbanization`. The Data Dictionary has no address field for it; `SubdivisionName` (a listing's subdivision or community) is close and left as a possible later choice, not checked against the DD for this |
 
 The text is the same as the USPS emitter's delivery line (Pub 28 sections
 237, 238.1, 239, 241 to 261), so the two outputs agree. The PO Box and route

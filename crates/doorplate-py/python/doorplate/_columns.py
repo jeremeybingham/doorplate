@@ -38,6 +38,7 @@ _DERIVED: dict[str, Callable[[ParsedAddress], str | None]] = {
     "warnings": lambda a: ",".join(a.warnings),
     "usps_line1": lambda a: a.to_usps()["line1"],
     "usps_line2": lambda a: a.to_usps()["line2"],
+    "usps_urbanization": lambda a: a.to_usps()["urbanization"],
     "usps_last_line": lambda a: a.to_usps()["last_line"],
 }
 
@@ -57,6 +58,7 @@ _ATTRIBUTES = frozenset(
         "military_post_office",
         "attention",
         "building",
+        "urbanization",
         "city",
         "state",
         "zip5",

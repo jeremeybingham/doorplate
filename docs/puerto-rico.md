@@ -4,7 +4,7 @@ Research for the Puerto Rico epic (#332, reading task #92). It reads the Puerto 
 
 Read: section 29 (291 to 295), Appendix D5, Appendix H, Appendix I (I1 to I5). The examples in these sections are images; they were read, and the addresses below are invented analogs of the same shapes. Not read here: Appendix J (U.S. Virgin Islands), which is outside the epic. Pub 28 was last changed in October 2024 (see `tools/pub28/verify.py`); it has not changed these pages.
 
-The parser results are from `main` at `52d6aa2` (0.6.2), `parse` on one-line input unless a field form is named. "Warnings" lists the codes the parse returned.
+The parser results are from `main` at `52d6aa2` (0.6.2), `parse` on one-line input unless a field form is named; the rows marked fixed were updated when #318, #319 and #747 landed (one pull request), with what the parse was before. "Warnings" lists the codes the parse returned.
 
 ## What Pub 28 says
 
@@ -34,17 +34,17 @@ What Pub 28 does **not** say: anything about `KM` (kilometer markers on `CARR` r
 | `150 CALLE A, SAN JUAN PR`, `125 CALLE MAIN` | number, street `CALLE ...` | R1, R7 | right; the prefix stays in the name |
 | `12 CALLE LUNA ST` | suffix `ST` after `CALLE LUNA` | R7 | not changed to anything: the parser keeps what it sees |
 | `A17 CALLE 1`, `199-31 CALLE 19` | number `A17` / `199-31` | R6 | right |
-| `A-17 CALLE AMAPOLA` | no number, street `A-17 CALLE AMAPOLA`, `missing_street_number` | R6 (hyphen is the wrong form) | gap, **key** |
-| `CALLE 19 BLQ 199 CASA 31` | no number, whole line is the street name, `missing_street_number` | R6 (`BLQ`, `CASA` words) | gap, **key** |
+| `A-17 CALLE AMAPOLA` | number `A17`, street `CALLE AMAPOLA` (was: no number, `missing_street_number`) | R6 (hyphen is the wrong form) | fixed, **key** (#747) |
+| `CALLE 19 BLQ 199 CASA 31` | number `199-31`, street `CALLE 19` (was: the whole line the street, `missing_street_number`) | R6 (`BLQ`, `CASA` words) | fixed, **key** (#747) |
 | `1234 URB LOS OLMOS, PONCE PR` | number 1234, street `URB LOS OLMOS` | R3 | right |
-| `27 CALLE LUNA URB LAS PALMAS` | number 27, street `CALLE LUNA URB LAS PALMAS`, no warning | R2 (URB is not part of the street) | gap, **key** (#318) |
-| `URB LAS FLORES, CALLE 3 B-12` (one line) | street `URB LAS FLORES`, `CALLE 3 B-12` unparsed, `missing_street_number`, `unparsed_remainder` | R2, R6 | gap, **key** (#318) |
-| `URB LAS FLORES CALLE 3 B12` | no number, street `URB LAS FLORES CALLE 3 B12`, `missing_street_number` | R2, R6 | gap, **key** |
-| `URB LAS FLORES 12 CALLE 3` | no number, street `URB LAS FLORES 12 CALLE 3`, `missing_street_number` | R2 | gap, **key** |
-| `EXT VISTA BELLA 12 CALLE 4` | no number, street holds all of it, `missing_street_number` | R4 | gap, **key** |
-| field form: line 1 `27 CALLE LUNA`, line 2 `URB LAS PALMAS` (either order of the two lines) | number 27, street `CALLE LUNA`; the urbanization lands in `attention` and is **absent from `to_usps()` and from the key** | R2 | the urbanization is lost; two urbanizations with the same street and number in one ZIP get the same key. **key** |
-| `CALLE LUNA 123, SAN JUAN PR`, `CALLE DEL SOL 210 2B` | no number, number stays in the street name, `missing_street_number` | R6 (street-first is the incorrect form) | gap, **key** (#319); the number is read from the end |
-| `AVE PONCE DE LEON 1500 APT 4` | no number, street `AVE PONCE DE LEON 1500`, unit `APT 4` | R6 | same shape, **key** (#319) |
+| `27 CALLE LUNA URB LAS PALMAS` | number 27, street `CALLE LUNA`, urbanization `LAS PALMAS` (was: street `CALLE LUNA URB LAS PALMAS`) | R2 (URB is not part of the street) | fixed, **key** (#318) |
+| `URB LAS FLORES, CALLE 3 B-12` (one line) | number `B12`, street `CALLE 3`, urbanization `LAS FLORES` (was: street `URB LAS FLORES`, the rest unparsed) | R2, R6 | fixed, **key** (#318, #747) |
+| `URB LAS FLORES CALLE 3 B12` | number `B12`, street `CALLE 3`, urbanization `LAS FLORES` | R2, R6 | fixed, **key** (#318) |
+| `URB LAS FLORES 12 CALLE 3` | number 12, street `CALLE 3`, urbanization `LAS FLORES` | R2 | fixed, **key** (#318) |
+| `EXT VISTA BELLA 12 CALLE 4` | no number, street holds all of it, `missing_street_number` | R4 | gap, **key**; the standalone names are not read yet (a follow-up to #318) |
+| field form: line 1 `27 CALLE LUNA`, line 2 `URB LAS PALMAS` (either order of the two lines) | number 27, street `CALLE LUNA`, urbanization `LAS PALMAS`, in `to_usps()` above the street line and in the key (was: in `attention`, lost from both) | R2 | fixed, **key** (#318) |
+| `CALLE LUNA 123, SAN JUAN PR`, `CALLE DEL SOL 210 2B` | number 123 / 210 (with unit `2B`), street `CALLE ...` (was: the number in the street name, `missing_street_number`) | R6 (street-first is the incorrect form) | fixed, **key** (#319) |
+| `AVE PONCE DE LEON 1500 APT 4` | number 1500, street `AVE PONCE DE LEON`, unit `APT 4` | R6 | fixed, **key** (#319) |
 | `COND LAS AMAPOLAS, SAN JUAN PR` | no number, street `COND LAS AMAPOLAS`, `missing_street_number` | R5 (number 1 when none) | decision needed (see below) |
 | `COND DEL MAR APT 103` | street `COND DEL MAR`, unit `APT 103`, `missing_street_number` | R5 | same |
 | `1 COND VERDE APT 1120`, `3 VISTA SUITES APT 104` | number 1 / 3, street, unit | R5 | right |
@@ -65,14 +65,23 @@ The pattern: the forms that Pub 28 gives as the standard (number then prefix and
 
 ## Findings
 
-1. **The urbanization is dropped (R2).** In the field form it goes to `attention` and never reaches `to_usps()` or the key; in one-line input it is either glued to the street name or left unparsed. Pub 28 calls it the only element that tells two same-named streets apart in a ZIP. A rule that reads `URB` as its own part is not enough unless the key keeps it too; that is a key decision for the owner (below).
+1. **The urbanization is dropped (R2; fixed by #318, see above).** In the field form it goes to `attention` and never reaches `to_usps()` or the key; in one-line input it is either glued to the street name or left unparsed. Pub 28 calls it the only element that tells two same-named streets apart in a ZIP. A rule that reads `URB` as its own part is not enough unless the key keeps it too; that is a key decision for the owner (below).
 2. **The #318 rule has support (R2).** Both orders (`URB` before the street, `URB` after the street) are in Pub 28's own figures, so reading `URB NAME` after a street as the urbanization is a Pub 28 reading, not only a data habit. The case `NUMBER URB NAME` (R3) is different: the urbanization stands in for the street and the current parse is right. The rule must tell them apart by whether a street (`CALLE`, `AVE` and the R1 prefixes) is present.
-3. **#319 is a data-cleaning reading, not a Pub 28 rule (R6).** Pub 28 gives only the number-first order and says to move a trailing number ahead of the prefix. Reading `CALLE DEL SOL 210` as number 210 is the same move; it can be written as "the standardized form is number first", but the street-first rows in real data (FMCSA, FCC) are what justify it, and the review queue is the way to measure it.
+3. **#319 is a data-cleaning reading, not a Pub 28 rule (R6; done, Puerto Rico only).** Pub 28 gives only the number-first order and says to move a trailing number ahead of the prefix. Reading `CALLE DEL SOL 210` as number 210 is the same move; it can be written as "the standardized form is number first", but the street-first rows in real data (FMCSA, FCC) are what justify it, and the review queue is the way to measure it.
 4. **Numbered streets are why the order matters (R6).** `CALLE 19 21` could be street 19, house 21 or the reverse; the prefix rule is Pub 28's reason for always writing `CALLE` before a street number. A rule must not read the last number of `CALLE NN` as a house number when the prefix is followed by only one number.
 5. **Spanish box and route words are a separate, small rule (R8).** `APARTADO`, `BUZON`, `BZN`, `RUTA RURAL`, `RUTA ESTRELLA` map to the existing box, RR and HC kinds. They are unambiguous in PR and in states with a Spanish-speaking population, but a street named `RUTA` exists, so scope them to Puerto Rico first. Evidence for the size of this one is still to be measured.
 6. **Condominium and residencial names with no number (R5).** Pub 28 asks for the number 1. We cannot invent a number in a parse (the parser reports what the text holds), so the open choice is whether `missing_street_number` stays on `COND LAS AMAPOLAS`. The 0.7.0 policy is that warnings are stable from 0.7.0; a change here would be a rule change that removes a warning, not a new code.
 7. **`KM` has no source.** The decimal point lost in the key (`KM 14.5` equals `KM 145`) is a separate defect in the number normalization and applies outside Puerto Rico. It needs its own issue; not part of this epic.
 8. **R9 and R11 need no rule.** Spanish directionals are rare and the parser keeps them in the street name, which is what a name such as `CALLE NORTE` needs. The last-line rule is about validity, which the library does not judge.
+
+## What the rules for #318, #319 and #747 do
+
+All three apply only inside Puerto Rico: the state `PR`, or a ZIP starting 006, 007 or 009 (`[puerto_rico]` in `crates/doorplate/data/special.toml`). Outside it every reading is unchanged, and a row with no state or ZIP is not in scope.
+
+- **Lettered and block numbers (#747, R6).** `A-17` and `A 17` are the house number `A17`; a block and house number are joined by a hyphen (`199-31`, also from `BLQ 199 CASA 31`). The words `BLOQUE`, `BLQ`, `BQ`, `CASA`, `LOTE`, `NUM`, `NUMERO` and `#` before a number are dropped.
+- **Street first (#319, R6).** After a Spanish street word (`CALLE`, `AVE`, `CARR`, `PASEO`, `CAMINO`, `VIA` and the rest of the list), a number at the end of the street, before a unit or a new segment, is the house number, with no new warning. The street must keep a word of its own after the street word, so `CALLE 19` stays the street with `missing_street_number`, and a number right after `KM` is never read (`CARR 2 KM 14` is unchanged). One value after the number is a bare unit (`CALLE DEL SOL 210 2B`).
+- **The urbanization (#318, R2).** `URB NAME` (or `URBANIZACION`) before or after a street with a Spanish street word, on the same line or its own line, goes in the new `urbanization` field (`LAS PALMAS`, without `URB`). `NUMBER URB NAME` with no Spanish street word stays the street (R3). The USPS form writes `URB NAME` on a line above the street line (Pub 28 section 292); the key adds it as a last segment (`docs/key-format.md`). RESO has no field for it, so the RESO output leaves it out.
+- **Not done here:** the standalone urbanization names of R4 (`EXT`, `VILLA`, `BO`, `RES` and the I51.4 list); `CIR`, `VIS` and `ENT` are not Spanish street words here because they are also English suffixes.
 
 ## Guard
 
@@ -82,9 +91,9 @@ A PR rule keys on the state `PR` or a Puerto Rico ZIP (006, 007, 009), as `is_pu
 
 | Issue | What the research settles | What is still open |
 |---|---|---|
-| #318 (`URB` after the street) | Source: R2 (both orders), I51.4. Rule: with a `CALLE`/`AVE` prefix street present, `URB NAME` is not part of the street. `NUMBER URB NAME` with no street prefix keeps `URB NAME` as the street (R3). | Where the urbanization goes in the output and the key (finding 1). `version:K`. |
-| #319 (street-first forms) | Source: R6 and I51.3 (the standard is number first). Cases: `CALLE NAME NUMBER`, `CALLE NAME NUMBER UNIT`, `AVE NAME NUMBER UNIT`. | A rule scope: Puerto Rico only (state or ZIP), or any state. Whether the number is the house number or still `missing_street_number` with the number kept apart. `version:K`. |
-| New: lettered and block-lot numbers | Source: R6 (`A-17` to `A17`, `BLQ`, `CASA`, `LOTE`, `NUM` dropped). | Corpus size from the seven sources (`K7`-style lot codes are on the left-as-is list in `usps-pub28-notes.md`, which this would revisit). |
+| #318 (`URB` after the street) | Source: R2 (both orders), I51.4. Rule: with a `CALLE`/`AVE` prefix street present, `URB NAME` is not part of the street. `NUMBER URB NAME` with no street prefix keeps `URB NAME` as the street (R3). | Done: a new `urbanization` field, in the USPS form and the key (above). |
+| #319 (street-first forms) | Source: R6 and I51.3 (the standard is number first). Cases: `CALLE NAME NUMBER`, `CALLE NAME NUMBER UNIT`, `AVE NAME NUMBER UNIT`. | Done: Puerto Rico only; the number is the house number, no new warning. |
+| #747: lettered and block-lot numbers | Source: R6 (`A-17` to `A17`, `BLQ`, `CASA`, `LOTE`, `NUM` dropped). | Done (above). `K7`-style lot codes in a split source's number column stay on the left-as-is list. |
 | New: Spanish box and route words | Source: R8. | Size; the PR-only scope. |
 | New: condominium and `RES` building lines | Source: R3, R5 (`TORRE`, `EDIF`, name on its own line). | The `missing_street_number` choice (finding 6). |
 
