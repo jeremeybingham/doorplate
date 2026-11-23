@@ -4,7 +4,7 @@
 
 - **Checked against the TDS submission guidelines (pasted 2026-11-23).** What the draft now does, and what is left to
   you:
-  - *Title and subtitle:* a short title with a longer subtitle under it, no capitals-only words. Alternatives below.
+  - *Title and subtitle:* a short title with a longer subtitle under it, no capitals-only words.
   - *Message up front:* the introduction states the idea, why it matters and how the article proves it (three claims, a
     benchmark). Counter-arguments are answered in the text (the conflict of interest, the AI section).
   - *Facts and sources:* every dataset and outside work is linked at first mention and listed under "References" in
@@ -19,14 +19,15 @@
     Rewrite it in your own words, or at least read the Author Terms and ask the editors before submitting. The article's
     disclosure covers the code, not the text.
   - *Data rights (point 11), your decision:* TDS is commercial and asks you to confirm each dataset permits commercial
-    use. Only aggregate scores appear, and no records are shown, but: the geocode benchmark (Yin, Li and Goldberg) states
-    **no license**, and the Senzing test data is of mixed provenance (OpenStreetMap, libpostal tests, bug reports). Email
-    the benchmark's authors for permission, or drop that row and the sentences that use it; forward any permission to
-    publication@towardsdatascience.com. usaddress's and libpostal's test data are MIT; the golden set is public records
+    use. Neither dataset is in the doorplate software or package, and the article says so: only benchmark scores appear, and
+    no records are shown. Both are cited ([3] Yin, Li and Goldberg, arXiv:2310.14360, whose repository states **no
+    license**; [4] Senzing/libpostal-data, mixed provenance) and the rights are as stated in those citations. Forward any
+    permission to publication@towardsdatascience.com. usaddress's and libpostal's test data are MIT; the golden set is public records
     plus invented strings. The 290 million rows are counts only.
-  - *Images (point 10):* add at least one of your own charts with the caption "Image by author". The charts in
-    `site/_social/showdown/` are from the **older** run (doorplate 90.9); regenerate them with the 0.7.1 figures (91.8,
-    90.7 to 92.9) first. Suggested: the Parser Score chart with intervals as the featured image, and the per-part chart.
+  - *Images (point 10):* three of your own charts from `site/_social/showdown/` (#866, the 0.7.1 run), each captioned
+    "Image by author": `score.png` (Parser Score with intervals) as the featured image, `parts.png` in the results, and
+    `history.png` in "Claim 2". They are linked by relative path (`../showdown/`); upload them in the TDS form and
+    replace the links.
   - *Code:* code blocks, not screenshots, each with text around it. OK.
   - *Originality and timing:* publishing on TDS first gives the best chance of being featured, so keep it off the project
     blog and Medium until TDS answers.
@@ -45,17 +46,18 @@
   that issue's bottom-up estimate, not a measurement.
 - **Length:** about 3,100 words (code blocks and references included) without these notes. The pasted guidelines set
   no limit.
-- **Title options** (short title; the subtitle stays as written):
-  1. "A Faster, Rules-Based Replacement for usaddress"
-  2. "Parsing US Addresses Without a Model"
+- **Title** (chosen by you, 2026-11-23; the subtitle stays as written): "Parsing US Addresses Without a Model"
   3. "Replacing usaddress With One Import"
 
 ---
 
-# A Faster, Rules-Based Replacement for usaddress
+# Parsing US Addresses Without a Model
 
 *I built a US address parser from hand-written rules instead of a trained model, then benchmarked it against usaddress
 and libpostal. Here is how far its claims of compatibility, speed and accuracy hold, and where it still loses.*
+
+![Parser Score: doorplate 91.8, usaddress 84.7, libpostal 80.8, with 95% bootstrap intervals](../showdown/score.png)
+*Image by author*
 
 If you have worked with US address data, you have probably used [usaddress](https://github.com/datamade/usaddress) [1].
 DataMade's library takes a string like `123 N Main St Apt 4, Miami FL 33101` and labels each token: the house number,
@@ -172,6 +174,12 @@ For batches, `parse_many` releases Python's global interpreter lock (GIL) and pa
 speeds, `parse_many` would get through 10 million addresses in about 30 seconds on 4 CPUs, where a loop of usaddress
 calls would take about 20 minutes (estimated from the rates above, not timed).
 
+Both numbers improved release by release. Scoring every release on the same data, the Parser Score rose from 87.3
+(0.1.0) to 91.8 (0.7.1), and single-process speed from 31,433 to 113,770 strings per second.
+
+![Parser Score and speed by doorplate release, 0.1.0 to 0.7.1](../showdown/history.png)
+*Image by author*
+
 ## Claim 3: more accurate
 
 This is the claim that needs the most care, so here is how it was measured.
@@ -192,7 +200,8 @@ The data:
   training data could not be checked.
 - **Four outside sets**, scored as neutral parts. These include the `dev` split (60,522 one-line addresses) of the
   geocoding address-parsing benchmark of Yin, Li and Goldberg ([arXiv:2310.14360](https://arxiv.org/abs/2310.14360)) [3],
-  and the US rows of Senzing's libpostal test data [4].
+  and the US rows of Senzing's libpostal test data [4]. Neither dataset is part of doorplate or its package: only the
+  benchmark scores computed on them are published, and the rights to the data are as stated in the two citations.
 - **Each parser's own test files**, reported separately, since every parser does best on its own tests.
 
 The headline is a **Parser Score**: coarse record accuracy, half from the golden set's three tiers and half from the
@@ -222,6 +231,9 @@ What the numbers say, and what they don't:
   long tail of these, and they are often the records you most need to get right.
 - **doorplate does not win everywhere.** libpostal is slightly ahead on the Senzing set built from OpenStreetMap, and
   usaddress and libpostal each lead on their own test files.
+
+![Record accuracy per part of the benchmark for doorplate, usaddress and libpostal](../showdown/parts.png)
+*Image by author*
 
 ### The conflict of interest
 
