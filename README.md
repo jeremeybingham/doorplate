@@ -28,7 +28,7 @@ receive mail. Pub 28 formatting is not deliverability, and validation needs
 postal-service-certified data; warnings such as `zip_city_mismatch` are hints about the
 input, not verdicts.
 
-> **Beta release (0.7.0).** The API, the command-line options and the warning codes are stable: a name changes only after a deprecation. The match key may still get a new version in a minor release (store the prefix with your keys).
+> **Beta release (0.7.1).** The API, the command-line options and the warning codes are stable: a name changes only after a deprecation. The match key may still get a new version in a minor release (store the prefix with your keys).
 > The match key is versioned (`k6:`) and later versions will probably change it, so store
 > the prefix with your keys and plan to re-key. `k6` has only been checked on the project's own data (public records). Accuracy and speed are measurements on a few datasets, not guarantees.
 >
