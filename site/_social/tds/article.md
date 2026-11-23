@@ -7,17 +7,21 @@
   especially on: articles about your own tool, whether the article must be unpublished elsewhere (do not post it on the
   project blog or Medium until they answer), length, and AI-assisted writing. Known from their public pages: submissions
   go through a form, editors answer in about a week, and authors must use their real names.
-- **Disclosure.** The article says up front that you wrote doorplate and the showdown. It also has a sentence about building
-  doorplate with an AI coding assistant (marked `[OWNER: ...]`); word it the way you want, but keep it in. Leaving it
-  out would be risky with editors and readers in 2026.
+- **Disclosure.** The article says up front that you wrote doorplate and the showdown, and that you built doorplate with
+  an AI coding assistant. The section "How it was built with AI, and why it is not AI slop" takes its points and figures
+  from issue #865 (the figures comment and the "case against AI slop" draft, both 2026-11-23), including your own account
+  of how you review the code and the two mistakes. Word it the way you want, but keep the disclosure and the mistakes in:
+  leaving them out would be risky with editors and readers in 2026, and TDS may have its own rules on AI-assisted work.
 - **Figures.** Every figure is from the showdown's pinned run of 2026-11-23 (`report/REPORT.md`, doorplate 0.7.1,
   usaddress 0.5.16, libpostal with the Senzing model) or from `docs/dataframes.md` (the `parse_many` batch figures, 0.7.0
   release candidate, 4 CPUs). The code blocks were run on 2026-11-23 against the current build (0.7.2-dev, which parses
-  as 0.7.1); every address in them is invented.
+  as 0.7.1); every address in them is invented. The project figures in the AI section (commits, tests, CI runs, review
+  verdicts, fuzzing) are from issue #865, measured 2026-11-23; the three-and-a-half-to-six-and-a-half-year figure is
+  that issue's bottom-up estimate, not a measurement.
 - **Images.** TDS articles do better with images. The charts in `site/_social/showdown/` are from the **older** run
   (doorplate 90.9); regenerate them with the 0.7.1 figures (91.8, 90.7 to 92.9) before using them. Suggested: the Parser
   Score chart with intervals, and the per-part chart. Say in the caption that they are your own images.
-- **Length:** about 2,400 words (code blocks included) without these notes.
+- **Length:** about 3,000 words (code blocks included) without these notes.
 - **Title options:**
   1. "Replacing usaddress with one import: a faster, rules-based US address parser"
   2. "I built a rules-based address parser and benchmarked it against the ML ones. Here's what held up."
@@ -43,8 +47,9 @@ claims I want to make for it, and how far each one holds:
 3. **It is more accurate**, by a lot on messy and unusual addresses and by a little on ordinary ones.
 
 A disclosure first: I wrote doorplate, and I also built the benchmark the accuracy figures come from. I'll describe
-how the benchmark guards against that bias and where it can't. [OWNER: one sentence on how you built it, e.g. "I wrote
-the rules and labeled the test data myself, and used an AI coding assistant for much of the implementation."]
+how the benchmark guards against that bias and where it can't. I also built doorplate with an AI coding assistant, which
+did most of the typing. I made the design decisions, labeled the test data and reviewed the results on real addresses;
+[how that worked](#how-it-was-built-with-ai-and-why-it-is-not-ai-slop) has its own section near the end.
 
 ## Why another address parser?
 
@@ -258,6 +263,48 @@ con.sql("""
 
 There are matching helpers for pandas and Polars (`parse_column`), and a command-line tool that adds parsed columns to
 a CSV without any Python (`doorplate parse-file in.csv --column address -o out.csv`).
+
+## How it was built with AI, and why it is not "AI slop"
+
+A fair question about any project built this fast with an AI assistant is whether anyone checked it. In 37 days
+doorplate had about 1,200 commits and 490 pull requests. That is not a human pace, and "a lot of code nobody really
+read" is exactly what people mean by AI slop. So here is what the code had to pass before it was kept, and what I did
+myself.
+
+First, an irony worth stating: **the parser built with AI is the only one of the three with no learned model in it.**
+usaddress and libpostal are statistical models. doorplate is deterministic rules. When it gets an address wrong, the
+cause is a rule you can name, test and change, and every rule cites its source.
+
+**Nothing merged on the assistant's word.** The checks were what made the pace possible:
+
+- Every pull request ran the formatter, the linter with warnings as errors, and the full test suite: 264 Rust tests,
+  345 Python tests and 1,530 expected-output cases, about 1,100 CI runs in all. Every fixed parsing bug became a new case.
+- Every rule change was measured before the pull request was opened. The match keys of seven real sources (36.9 million
+  rows) were compared before and after the change, and the pull request had to quote how many changed.
+- I checked the output, not just the code: about 8,000 verdicts on real addresses where the parsers disagreed, plus the
+  5,055 records I labeled for the benchmark. No model graded its own work there.
+- "Never panic on input" is a project rule, enforced by a property test and fuzzing. Before release, about 370 million
+  fuzzed inputs over five hours produced no crash. The core library has no `unsafe` code.
+
+**Why AI at all: the size of the rule set.** Addresses come in thousands of shapes, and each rule has to handle its
+shape without disturbing any other. doorplate has 229 rule issues, each measured against those 36.9 million keys. Keeping
+a set like that consistent by hand is why open source has mostly used trained models instead. My rough estimate is that
+one experienced developer would need three and a half to six and a half years to do this work alone. More honestly, one
+person would not have done it more slowly; they would have skipped most of the checking. No one measures every rule on
+37 million rows by hand. What the assistant changed is how much checking one person can afford.
+
+**What I decided, and what I did not do.** The decisions that shape the project were mine, and several went against the
+easy path: doorplate parses but does not validate; the match key is a versioned contract that is never edited in place;
+features that worked were removed when they no longer fit; rule work stopped at the beta, when each remaining issue
+affected only a few thousand rows. I write Rust, and I read the changes of individual pull requests and parts of the
+code at random, but I have not read all of it, and I could not maintain it alone without the same tools. My review
+works mostly through behaviour (real data, measured diffs, labeled records), with spot reads of the code. I think that is
+the honest description, and a stronger one than claiming to have read everything.
+
+**The mistakes got through at first.** An AI-written rule once broke the never-panic rule. The property test caught it,
+but only about one run in ten, and the assistant first recorded the failure as "already present" instead of stopping.
+Another rule, tuned on one benchmark, broke spelled-out directions such as `MAIN ST NORTH` elsewhere; that is why every
+rule is now measured on all seven sources. The checks caught both. That is the point of having them.
 
 ## Should you switch?
 
