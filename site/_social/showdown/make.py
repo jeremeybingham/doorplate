@@ -3,10 +3,11 @@
     score.html  -> score.png   1080 x 760   Parser Score with 95% intervals (site/assets/showdown-score.png)
     parts.html  -> parts.png   1080 x 900   record accuracy per part          (site/assets/showdown-parts.png)
     speed.html  -> speed.png   1080 x 560   speed, memory, install size       (site/assets/showdown-speed.png)
+    history.html -> history.png 1080 x 720  Parser Score and speed by doorplate release (runs/doorplate-releases/releases.md)
 
-Every figure is copied from report/REPORT.md of address-parser-showdown (v0.1.0, run 2026-11-16, sections 7.2, 7.3, 8).
+Every figure is copied from report/REPORT.md of address-parser-showdown (run 2026-11-23, doorplate 0.7.1, sections 7.2, 7.3, 8).
     uv venv /tmp/pw && uv pip install -p /tmp/pw/bin/python playwright
-    /tmp/pw/bin/python make.py [path/to/chrome]
+    /tmp/pw/bin/python make.py [path/to/chrome] [--assets]
 """
 
 import pathlib, shutil, sys
@@ -20,26 +21,39 @@ FONT = '"DejaVu Sans","Helvetica Neue",Arial,sans-serif'
 
 # Report 7.2: score, low, high
 SCORE = {
-    "doorplate": (90.9, 89.8, 92.0),
+    "doorplate": (91.8, 90.7, 92.9),
     "usaddress": (84.7, 83.4, 86.0),
     "libpostal": (80.8, 79.5, 82.2),
 }
 # Report 7.3: coarse record accuracy (neutral and golden parts)
 PARTS = [
-    ("Golden: normal (1,568)", 95.0, 93.6, 91.8),
-    ("Golden: hard (556)", 91.2, 88.5, 70.9),
-    ("Golden: nightmare (226)", 69.0, 51.3, 54.0),
+    ("Golden: normal (1,568)", 94.9, 93.6, 91.8),
+    ("Golden: hard (556)", 92.4, 88.5, 70.9),
+    ("Golden: nightmare (226)", 73.0, 51.3, 54.0),
     ("Suite: natural (16,001)", 98.6, 96.5, 95.0),
-    ("Suite: hand (1,000)", 95.8, 91.1, 84.0),
+    ("Suite: hand (1,000)", 96.3, 91.1, 84.0),
     ("Senzing US: osm (2,172)", 98.1, 90.6, 98.8),
     ("Geocode dev (60,522)", 94.4, 88.4, 79.9),
 ]
 # Report 8: one process, strings per second; memory MB after loading; install MB
 SPEED = [
-    ("Strings per second (1 process)", (72028, 8952, 14577), "{:,.0f}"),
-    ("Memory after loading (MB)", (27, 27, 2958), "{:,.0f}"),
-    ("Install size (MB)", (4.9, 4.8, 2993.1), "{:,.1f}"),
+    ("Strings per second (1 process)", (116534, 8947, 15565), "{:,.0f}"),
+    ("Memory after loading (MB)", (25, 27, 2958), "{:,.0f}"),
+    ("Install size (MB)", (6.5, 4.8, 2993.1), "{:,.1f}"),
 ]
+
+# releases.md: release, Parser Score, strings per second (1 process); all on the 2026-11-16 gold
+HISTORY = [
+    ("0.1.0", 87.3, 31433),
+    ("0.2.0", 87.3, 39736),
+    ("0.3.1", 87.6, 39275),
+    ("0.4.1", 88.7, 41143),
+    ("0.5.1", 89.4, 73944),
+    ("0.6.2", 90.9, 113315),
+    ("0.7.0", 91.8, 105833),
+    ("0.7.1", 91.8, 113770),
+]
+C_SCORE, C_SPEED = "#2a78d6", "#d9731a"
 
 CSS = f"""*{{box-sizing:border-box;margin:0;padding:0}}html,body{{background:#fff}}
 body{{font-family:{FONT};color:{INK};overflow:hidden;padding:36px 48px 24px}}
@@ -91,10 +105,10 @@ def score():
         )
     s.append("</svg>")
     body = (
-        f"<h1>Parser Score: doorplate 90.9, usaddress 84.7, libpostal 80.8</h1>"
+        f"<h1>Parser Score: doorplate 91.8, usaddress 84.7, libpostal 80.8</h1>"
         f'<div class="sub">Coarse record accuracy, half on the golden set&rsquo;s three tiers and half on four neutral sets. The black line is the 95% bootstrap interval; the axis starts at 70.</div>'
         + "".join(s)
-        + '<div class="foot">address-parser-showdown v0.1.0, run 2026-11-16, formula v1 fixed before the first run. The ranking holds with every set left out.</div>'
+        + '<div class="foot">address-parser-showdown run 2026-11-23 (doorplate 0.7.1), formula v1 fixed before the first run. The ranking holds with every set left out.</div>'
     )
     return page("Parser Score", 1080, 700, body)
 
@@ -154,12 +168,62 @@ def speed():
         g.append("</svg>")
         s.append("".join(g))
     body = (
-        "<h1>Five to eight times faster, in 27 MB</h1>"
+        "<h1>Seven to thirteen times faster, in 25 MB</h1>"
         '<div class="sub">100,000 strings, median of 5 passes, i9-9900K under WSL2. Speed is never part of the Parser Score.</div>'
         f'<div style="display:flex;gap:12px">{"".join(s)}</div>'
-        '<div class="foot">With 4 processes: 223,510 / 28,054 / 43,951 strings per second. Load time: 0.003 s / 0.012 s / 3.48 s.</div>'
+        '<div class="foot">With 4 processes: 360,696 / 27,999 / 45,837 strings per second. Load time: 0.001 s / 0.011 s / 4.325 s.</div>'
     )
     return page("Speed and size", 1080, 560, body)
+
+
+def history():
+    w, h = 984, 440
+    x0, x1, yt, yb = 90, 890, 20, 380
+    n = len(HISTORY)
+    X = lambda i: x0 + i * (x1 - x0) / (n - 1)
+    Ys = lambda v: yb - (v - 80) / (100 - 80) * (yb - yt)
+    Yv = lambda v: yb - v / 120000 * (yb - yt)
+    s = [f'<svg width="{w}" height="{h}" xmlns="http://www.w3.org/2000/svg">']
+    for t in range(80, 101, 5):
+        s.append(
+            f'<line x1="{x0}" x2="{x1}" y1="{Ys(t)}" y2="{Ys(t)}" stroke="{RULE}"/>'
+            f'<text x="{x0 - 10}" y="{Ys(t) + 6}" text-anchor="end" font-size="16" fill="{C_SCORE}">{t}</text>'
+        )
+    for t in range(0, 120001, 30000):
+        s.append(
+            f'<text x="{x1 + 14}" y="{Yv(t) + 6}" font-size="16" fill="{C_SPEED}">{t // 1000}k</text>'
+        )
+    for i, (r, sc, sp) in enumerate(HISTORY):
+        s.append(
+            f'<text x="{X(i)}" y="{yb + 30}" text-anchor="middle" font-size="18" fill="{INK2}">{r}</text>'
+        )
+    for key, Y, col, idx in (("score", Ys, C_SCORE, 1), ("speed", Yv, C_SPEED, 2)):
+        pts = " ".join(f"{X(i)},{Y(row[idx])}" for i, row in enumerate(HISTORY))
+        s.append(
+            f'<polyline points="{pts}" fill="none" stroke="{col}" stroke-width="5" stroke-linejoin="round"/>'
+        )
+        for i, row in enumerate(HISTORY):
+            s.append(f'<circle cx="{X(i)}" cy="{Y(row[idx])}" r="6" fill="{col}"/>')
+    # end labels
+    s.append(
+        f'<text x="{X(0) + 34}" y="{Ys(87.3) - 16}" text-anchor="middle" font-size="19" font-weight="800" fill="{C_SCORE}">87.3</text>'
+        f'<text x="{X(n-1) - 34}" y="{Ys(91.8) + 36}" text-anchor="middle" font-size="19" font-weight="800" fill="{C_SCORE}">91.8</text>'
+        f'<text x="{X(0) + 40}" y="{Yv(31433) + 34}" text-anchor="middle" font-size="19" font-weight="800" fill="{C_SPEED}">31,433</text>'
+        f'<text x="{X(n-1) - 40}" y="{Yv(113770) - 18}" text-anchor="middle" font-size="19" font-weight="800" fill="{C_SPEED}">113,770</text>'
+    )
+    s.append("</svg>")
+    leg = (
+        '<div class="leg">'
+        f'<span><i style="background:{C_SCORE}"></i>Parser Score (left axis)</span>'
+        f'<span><i style="background:{C_SPEED}"></i>Strings per second, 1 process (right axis)</span></div>'
+    )
+    body = (
+        "<h1>Accuracy and speed, release by release</h1>"
+        '<div class="sub">Parser Score rose from 87.3 to 91.8 and speed from 31,433 to 113,770 strings per second, 0.1.0 to 0.7.1.</div>'
+        + leg + "".join(s)
+        + '<div class="foot">Every release scored on the same gold and sets (2026-11-16); usaddress scores 84.7 and libpostal 80.8. Speed: one process, i9-9900K under WSL2; it varies 5 to 14% between runs. Source: address-parser-showdown, runs/doorplate-releases.</div>'
+    )
+    return page("doorplate releases", 1080, 720, body)
 
 
 def main():
@@ -167,7 +231,7 @@ def main():
 
     chrome = (
         sys.argv[1]
-        if len(sys.argv) > 1
+        if len(sys.argv) > 1 and not sys.argv[1].startswith("--")
         else str(
             pathlib.Path.home()
             / ".cache/ms-playwright/chromium-1243/chrome-linux64/chrome"
@@ -177,6 +241,7 @@ def main():
         ("score", score(), 1080, 700),
         ("parts", parts(), 1080, None),
         ("speed", speed(), 1080, 560),
+        ("history", history(), 1080, 720),
     ]
     with sync_playwright() as p:
         b = p.chromium.launch(executable_path=chrome)
@@ -193,7 +258,8 @@ def main():
                 path=str(HERE / f"{name}.png"),
                 clip={"x": 0, "y": 0, "width": w, "height": h},
             )
-            shutil.copy(HERE / f"{name}.png", ASSETS / f"showdown-{name}.png")
+            if "--assets" in sys.argv:  # overwrites the images the published post uses
+                shutil.copy(HERE / f"{name}.png", ASSETS / f"showdown-{name}.png")
         b.close()
 
 
