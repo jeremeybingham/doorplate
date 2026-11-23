@@ -1064,6 +1064,15 @@ impl Lexicons {
                 .is_some_and(|p| find_str(tables::PR_ZIP_PREFIXES, p))
     }
 
+    /// Whether a ZIP that starts with byte `b` can be a Puerto Rico ZIP (a first-digit test before
+    /// the ZIP is split, #843). Source: `data/special.toml` `[puerto_rico]` `zip_prefixes`.
+    #[inline]
+    pub(crate) fn pr_zip_may_start(&self, b: u8) -> bool {
+        tables::PR_ZIP_PREFIXES
+            .iter()
+            .any(|p| p.as_bytes().first() == Some(&b))
+    }
+
     /// A Spanish word that opens a Puerto Rico street name (`CALLE`, `AVE`, Pub 28 R1).
     /// Source: `data/special.toml` `[puerto_rico]` `street_words`.
     pub(crate) fn is_pr_street_word(&self, s: &str) -> bool {
@@ -1160,6 +1169,14 @@ impl Lexicons {
     /// or a placeholder phrase of the layer's (#468, #419).
     pub(crate) fn is_city_placeholder_phrase(&self, key: &str) -> bool {
         self.in_words(tables::CITY_PLACEHOLDERS, key, |l| &l.words.placeholder)
+    }
+
+    /// [`Lexicons::is_city_placeholder_phrase`] for the text of a city, before it is normalized:
+    /// the first-letter reject (#703 G7) skips the normalization for the cities that no phrase
+    /// starts like (#843).
+    pub(crate) fn is_city_placeholder_text(&self, s: &str) -> bool {
+        !self.first_letter_rules_out(s, tables::CITY_PLACEHOLDER_FIRST)
+            && self.is_city_placeholder_phrase(&normalize_key_cow(s))
     }
 
     /// Whether `s` cannot normalize to a word of a shipped list whose first letters are `mask`

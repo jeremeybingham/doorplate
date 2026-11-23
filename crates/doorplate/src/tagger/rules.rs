@@ -3529,11 +3529,23 @@ impl Tagger<'_> {
     /// Whether the address is in Puerto Rico: its state, or its ZIP (data read through
     /// `Lexicons`, decision on #332). A `default_state` hint counts as the state.
     pub(super) fn in_puerto_rico(&self) -> bool {
+        // The state decides most addresses: test it before the ZIP is looked for, and test the
+        // ZIP's first digit before it is split (#843).
+        let state = self.places.map(|c| c.state);
+        if self.lex.in_puerto_rico(state, None) {
+            return true;
+        }
         let zip5 = (0..self.toks.len())
             .find(|&k| self.tags[k] == Tag::Zip)
-            .and_then(|k| zip_parts(self.text(k)))
+            .map(|k| self.text(k))
+            .filter(|z| {
+                z.bytes()
+                    .next()
+                    .is_some_and(|b| self.lex.pr_zip_may_start(b))
+            })
+            .and_then(zip_parts)
             .map(|(z5, _)| z5);
-        self.lex.in_puerto_rico(self.places.map(|c| c.state), zip5)
+        self.lex.in_puerto_rico(None, zip5)
     }
 
     /// The Puerto Rico street forms (Pub 28 section 29 and Appendix I, `docs/puerto-rico.md`),
