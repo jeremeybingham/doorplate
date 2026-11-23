@@ -13,7 +13,7 @@ use std::sync::OnceLock;
 
 use doorplate::{
     Anonymizer, CustomLayer, Fields, Highway, KeyOptions, OptionsError,
-    ParseError as CoreParseError, ParseOptions, ParsedAddress, Parser, PlaceKind,
+    ParseError as CoreParseError, ParseOptions, ParsedAddress, Parser, PlaceKind, SuffixForm,
 };
 use pyo3::exceptions::{PyTypeError, PyValueError};
 use pyo3::prelude::*;
@@ -428,10 +428,21 @@ impl PyParsedAddress {
     }
 
     /// RESO Data Dictionary 2.0 and 2.1 fields by name; a field with no value is left
-    /// out.
-    fn to_reso<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyDict>> {
+    /// out. `suffix_form` is `"abbreviation"` (default, `ST`) or `"word"` (the 2.1
+    /// lookup value, `Street`).
+    #[pyo3(signature = (suffix_form="abbreviation"))]
+    fn to_reso<'py>(&self, py: Python<'py>, suffix_form: &str) -> PyResult<Bound<'py, PyDict>> {
+        let form = match suffix_form {
+            "abbreviation" => SuffixForm::Abbreviation,
+            "word" => SuffixForm::Word,
+            _ => {
+                return Err(PyValueError::new_err(
+                    "suffix_form must be \"abbreviation\" or \"word\"",
+                ))
+            }
+        };
         let d = PyDict::new(py);
-        for (k, v) in self.inner.to_reso().fields() {
+        for (k, v) in self.inner.to_reso_with(form).fields() {
             d.set_item(k, v)?;
         }
         Ok(d)
@@ -509,7 +520,7 @@ impl PyParsedAddress {
         d.set_item("key_unit", a.key(true))?;
         d.set_item("slug", a.slug())?;
         d.set_item("usps", a.to_usps(py, None)?)?;
-        d.set_item("reso", a.to_reso(py)?)?;
+        d.set_item("reso", a.to_reso(py, "abbreviation")?)?;
         // The same group the command-line JSON carries (#85).
         let provenance = PyDict::new(py);
         provenance.set_item("library_version", a.inner.diagnostics.library_version)?;

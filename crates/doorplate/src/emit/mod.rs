@@ -10,6 +10,6 @@ mod usps;
 
 pub use display::DisplayAddress;
 pub use key::KeyOptions;
-pub use reso::ResoAddress;
+pub use reso::{ResoAddress, SuffixForm};
 pub use usaddress::{AddressType, TaggedAddress, UsaddressTag};
 pub use usps::UspsAddress;

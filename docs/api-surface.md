@@ -16,7 +16,7 @@ One name means one thing in every language. The names follow Pub 28's words (no 
 | City, state | `city`, `state` | same | same | same | `City`, `StateOrProvince` |
 | Puerto Rico urbanization | `urbanization` | same | same | same | none |
 | ZIP | `zip5`, `zip4` | `zip5`, `zip4` | `zip5` | `zip5`, `zip4` | `PostalCode`, `PostalCodePlus4` |
-| Output forms | `to_usps`, `to_display`, `to_long`, `to_reso`, `to_usaddress_tags`, `tag` | the same names | `usps`, `reso`, flags | `usps_line1`, `usps_last_line` | |
+| Output forms | `to_usps`, `to_display`, `to_long`, `to_reso` (`to_reso_with`, `SuffixForm` in Rust), `to_usaddress_tags`, `tag` | the same names | `usps`, `reso`, flags | `usps_line1`, `usps_last_line` | |
 | Key, slug | `key(KeyOptions)`, `slug()` | `key(unit=False)`, `slug()` | `key`, `key_unit`, `slug` | `key`, `key_unit`, `slug` | |
 | Diagnostics | `diagnostics.warnings`, `.unparsed` | `warnings`, `unparsed` | `warnings`, `unparsed` | `warnings`, `unparsed` | |
 | Provenance | `diagnostics.library_version` | `library_version` | `provenance.*` | none | |

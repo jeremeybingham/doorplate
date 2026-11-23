@@ -1,7 +1,7 @@
 //! JSON and flat-column views of a [`ParsedAddress`]. Read-only: the CLI
 //! formats what the parser produced and never re-parses it.
 
-use doorplate::{Highway, KeyOptions, ParsedAddress, PlaceKind, UsaddressTag};
+use doorplate::{Highway, KeyOptions, ParsedAddress, PlaceKind, SuffixForm, UsaddressTag};
 use serde::ser::{SerializeMap, Serializer};
 use serde::Serialize;
 use serde_json::{json, Value};
@@ -79,10 +79,16 @@ fn warning_codes(a: &ParsedAddress) -> Vec<&'static str> {
 
 /// The full record printed by `doorplate parse`. It serializes straight to the
 /// writer: no `Value` tree is built (the tree was about half of the CLI's cost).
-pub struct Record<'a>(pub &'a ParsedAddress);
+pub struct Record<'a>(pub &'a ParsedAddress, pub SuffixForm);
 
+#[allow(dead_code)] // the wasm build includes this file and calls it
 pub fn record(a: &ParsedAddress) -> Record<'_> {
-    Record(a)
+    Record(a, SuffixForm::Abbreviation)
+}
+
+/// As [`record`], with the `reso` object's `StreetSuffix` in the given form.
+pub fn record_with(a: &ParsedAddress, suffix_form: SuffixForm) -> Record<'_> {
+    Record(a, suffix_form)
 }
 
 /// A map written from pairs, in order.
@@ -126,7 +132,7 @@ impl Serialize for Record<'_> {
     fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
         let a = self.0;
         let usps = a.to_usps();
-        let reso = a.to_reso().fields();
+        let reso = a.to_reso_with(self.1).fields();
         let mut m = s.serialize_map(Some(11))?;
         m.serialize_entry("input", &a.source.original)?;
         m.serialize_entry("components", &Pairs(&components(a)))?;

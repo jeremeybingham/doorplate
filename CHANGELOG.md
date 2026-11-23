@@ -7,6 +7,10 @@ change to what an input produces needs a new key version.
 
 ## [Unreleased]
 
+### Added
+
+- **RESO 2.1 `StreetSuffix` word as an option** (#729). `to_reso(suffix_form="word")` (Python), `to_reso_with(SuffixForm::Word)` (Rust) and `doorplate parse --suffix-form word` (the `reso` object) write the 2.1 lookup value (`Street`) instead of the Pub 28 abbreviation (`ST`). The default is unchanged, and no key, parse or other output changes.
+
 ### Changed
 
 - **Faster: the `units` scan is skipped when the end of the line rules out a unit** (#837). A line ending in a plain word that is not a designator, a cut-off designator, a level word or a spelled number, with no designator before it and no digit in the three tokens before it, no longer runs the unit rules. 962.5M to 932.0M instructions over 20,000 parses (−3.18%, callgrind). No output changes: the output hash of the 76,421 suite inputs is equal, and the seven-source key comparison found 0 changed keys, warnings or unit fields.

@@ -45,7 +45,7 @@ The 16 fields of the issue (the 12 emitted, plus `StreetSuffixModifier`,
 | `StateOrProvince` lookup values (65) | | the same; used by 21 fields instead of 19 |
 | `Country` lookup values (246) | | the same |
 
-- **`StreetSuffix` values.** The 2.1 values are full words with the capital letter first (`Street`, `Avenue`, `Boulevard`, `Stravenue`, `Trailer`, ...), 206 of them; none is a Pub 28 abbreviation. The lookup stays open, so `ST` is still a legal value, but a server that enforces the enumerations would reject it, and one that matches on the 2.1 words would not recognize it. The emitter is unchanged (choice 1). Whether to offer the 2.1 word as an option is a follow-up issue (#729).
+- **`StreetSuffix` values.** The 2.1 values are full words with the capital letter first (`Street`, `Avenue`, `Boulevard`, `Stravenue`, `Trailer`, ...), 206 of them; none is a Pub 28 abbreviation. The lookup stays open, so `ST` is still a legal value, but a server that enforces the enumerations would reject it, and one that matches on the 2.1 words would not recognize it. The default is unchanged (choice 1); `suffix_form` offers the 2.1 word (below).
 - **Change log items that do not reach us.** The unit-field renames (plural to singular, 12 fields) and the 42 fields moved to "Open with Enumerations" include no field we emit except `StreetSuffix`. The 90 new Property fields include one in the *Location* group, `CountrySubdivision`, which is a part of the `UniversalParcelID`, not an address part. No Address-group field is new, renamed or removed.
 
 ## Field table
@@ -58,7 +58,7 @@ Types, lengths and lookup status are as the Data Dictionary pages give them.
 | `StreetNumberNumeric` | Number | 10 | | leading digits of `street_number` | DD: "the integer portion of the street number". `123-125`, `12A` and `123 1/2` give 123, 12, 123. Empty when the number starts with no digit or has more than 10 digits. A derived value. |
 | `StreetDirPrefix` | String List, Single | 15 | `StreetDirection`, open with enumerations | `street_dir_prefix` | Lookup values are `E N NE NW S SE SW W`, the Pub 28 abbreviations. |
 | `StreetName` | String | 50 | | `street_name`, or a folded form (below) | |
-| `StreetSuffix` | String List, Single | 25 | `StreetSuffix`: open, no standard values in 2.0; open with enumerations (206 full-word values) in 2.1 | `street_suffix` abbreviation | See choice 1. |
+| `StreetSuffix` | String List, Single | 25 | `StreetSuffix`: open, no standard values in 2.0; open with enumerations (206 full-word values) in 2.1 | `street_suffix` abbreviation, or the 2.1 word with `suffix_form` | See choice 1. |
 | `StreetDirSuffix` | String List, Single | 15 | `StreetDirection` | `street_dir_suffix` | As the prefix. |
 | `UnitNumber` | String | 25 | | `unit_type` + `unit_number`, then the second unit | DD definition: the unit "that should appear following the street suffix or, if it exists, the street suffix direction (e.g., Apt G, #55)". The field holds the designator with the number. See choice 3. |
 | `City` | String List, Single | 50 | `City`, open | `city`, or the military post office | |
@@ -105,7 +105,7 @@ box numbers could instead go in `StreetAdditionalInfo` (choice 2).
 The Data Dictionary pages give definitions, types and lookups but not
 conventions, so these are choices, not facts from the Data Dictionary.
 
-1. **`StreetSuffix` form.** The Pub 28 abbreviation (`ST`), as `to_usps()`. In 2.0 the lookup is open and defines no values. In 2.1 it lists full words (`Street`), none an abbreviation; `ST` is still allowed because the lookup is open. Kept as is; the full-word form is a follow-up issue (#729).
+1. **`StreetSuffix` form.** The Pub 28 abbreviation (`ST`), as `to_usps()`, by default. In 2.0 the lookup is open and defines no values. In 2.1 it lists full words (`Street`), none an abbreviation; `ST` is still allowed because the lookup is open. **Decision (2026-11-22, #729):** the default stays the abbreviation (a default change would be a behavior change), and an option writes the 2.1 word: `to_reso(suffix_form="word")` in Python, `to_reso_with(SuffixForm::Word)` in Rust, `--suffix-form word` on `doorplate parse` (the `reso` object). Nothing else in the output changes. The word is the Pub 28 Appendix C1 primary name with a capital first letter (`Avenue`, `Boulevard`, `Stravenue`, `Throughway`); `ANNEX` is the one spelling that differs, because 2.1 writes `Anex`. The 2.1 list also has four plurals (`Parks`, `Parkways`, `Spurs`, `Walks`) that the library never emits, since it maps them to the singular. All 202 suffixes of `suffixes.toml` map to a value in the 206 (a test reads the list in `crates/doorplate/tests/data/reso-2.1-street-suffix.txt`, taken from the lookup page on 2026-11-22). The option does not check values against a server's lookups.
 2. **PO Box, route and box numbers** stay in `StreetName`; `StreetAdditionalInfo` is not used.
 3. **`#` units** keep the designator (`#55`), as the Data Dictionary's example does. The USPS line writes `# 55`, by design.
 4. **State codes outside the lookup** (`PR`, `GU`, `AA`, …) pass through with no warning: the lookup is open with enumerations, but a server that enforces them would reject these.

@@ -9,6 +9,7 @@ doorplate parse --line1 "412 N HARBOR ST" --line2 "APT 3B" --city Tampa --state 
 doorplate parse "281 EVELYN DR DOTHAN" --default-state AL    # state hint
 doorplate parse "123 N Main St, Miami FL 33101" --display    # mixed case; --long spells words out (not Pub 28)
 doorplate parse "123 N Main St, Miami FL 33101" --tag        # usaddress-style joined labels
+doorplate parse "123 N Main St, Miami FL 33101" --suffix-form word   # reso StreetSuffix "Street", not "ST"
 doorplate parse -  < addresses.txt                           # one address per line, JSON lines out
 doorplate anonymize in.csv --column address -o shareable.csv   # same shape, other digits and names
 doorplate parse "123 Oak Trayl, Miami FL 33101" --custom-layer DIR   # your own spellings and places

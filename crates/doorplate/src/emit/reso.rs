@@ -30,8 +30,9 @@ pub struct ResoAddress {
     /// with its prefix and route, a PO Box, rural route, military box or
     /// `GENERAL DELIVERY` line.
     pub street_name: Option<String>,
-    /// `StreetSuffix`: the Pub 28 abbreviation (`ST`). The Data Dictionary
-    /// defines no standard values for this field.
+    /// `StreetSuffix`: the Pub 28 abbreviation (`ST`), or with
+    /// [`SuffixForm::Word`] the 2.1 lookup word (`Street`). Data Dictionary
+    /// 2.0 defines no standard values for this field.
     pub street_suffix: Option<String>,
     /// `StreetDirSuffix`: a `StreetDirection` lookup value.
     pub street_dir_suffix: Option<String>,
@@ -48,6 +49,45 @@ pub struct ResoAddress {
     pub postal_code_plus4: Option<String>,
     /// `UnparsedAddress`: `LINE1, CITY, ST ZIP`, with missing parts left out.
     pub unparsed_address: Option<String>,
+}
+
+/// Which form `StreetSuffix` takes in [`ParsedAddress::to_reso_with`].
+///
+/// RESO Data Dictionary 2.1 made the `StreetSuffix` lookup "Open with
+/// Enumerations": 206 full words (`Street`) and no abbreviations. 2.0 defined
+/// no values. The abbreviation stays legal because the lookup is open, but a
+/// server that enforces the 2.1 values rejects it.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[non_exhaustive]
+pub enum SuffixForm {
+    /// The Pub 28 abbreviation: `ST`. The default, and what
+    /// [`ParsedAddress::to_reso`] writes.
+    #[default]
+    Abbreviation,
+    /// The 2.1 lookup word, capital first: `Street`.
+    Word,
+}
+
+/// The 2.1 `StreetSuffix` value for a Pub 28 suffix name: the name with a
+/// capital first letter, except `ANNEX`, which 2.1 spells `Anex`. The other
+/// differences between the 2.1 list and the Pub 28 names are plurals
+/// (`Parks`, `Parkways`, `Spurs`, `Walks`) that this library never emits
+/// (it maps them to the singular).
+fn suffix_word(name: &str) -> String {
+    if name == "ANNEX" {
+        return "Anex".to_string();
+    }
+    let mut out = String::with_capacity(name.len());
+    let mut start = true;
+    for c in name.chars() {
+        if start {
+            out.extend(c.to_uppercase());
+        } else {
+            out.extend(c.to_lowercase());
+        }
+        start = c == ' ';
+    }
+    out
 }
 
 /// Longest `StreetNumberNumeric` the Data Dictionary suggests, in digits.
@@ -110,7 +150,15 @@ impl ParsedAddress {
     /// The address as RESO Data Dictionary 2.0 and 2.1 Property address fields.
     /// Components the parse did not find are `None`;
     /// [`Diagnostics`](crate::Diagnostics) says what was missing or unparsed.
+    ///
+    /// `StreetSuffix` is the Pub 28 abbreviation; [`to_reso_with`](Self::to_reso_with)
+    /// can write the 2.1 word instead.
     pub fn to_reso(&self) -> ResoAddress {
+        self.to_reso_with(SuffixForm::Abbreviation)
+    }
+
+    /// As [`to_reso`](Self::to_reso), with `StreetSuffix` in the given form.
+    pub fn to_reso_with(&self, suffix_form: SuffixForm) -> ResoAddress {
         let usps = self.to_usps();
         let street_number = self.street_number.as_deref().map(plain);
 
@@ -156,7 +204,10 @@ impl ParsedAddress {
             street_suffix: self
                 .street_suffix
                 .filter(|_| !box_road)
-                .map(|s| s.abbr().to_string()),
+                .map(|s| match suffix_form {
+                    SuffixForm::Word => suffix_word(s.name()),
+                    _ => s.abbr().to_string(),
+                }),
             street_dir_suffix: self
                 .street_dir_suffix
                 .filter(|_| !box_road)
@@ -196,7 +247,8 @@ fn leading_number(s: &str) -> Option<u64> {
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 mod tests {
-    use crate::{Parser, ResoAddress};
+    use super::suffix_word;
+    use crate::{Lexicons, Parser, ResoAddress, SuffixForm};
 
     fn reso(input: &str) -> ResoAddress {
         Parser::new().parse(input).unwrap().to_reso()
@@ -320,5 +372,52 @@ mod tests {
         let r = reso(&format!("1 {long} St, Miami FL 33101"));
         assert_eq!(r.street_name.as_deref().map(str::len), Some(60));
         assert_eq!(r.length_overruns(), ["StreetName"]);
+    }
+
+    #[test]
+    fn suffix_word_form() {
+        let a = Parser::new()
+            .parse("123 N Main Street Apt 4, Miami FL 33101")
+            .unwrap();
+        assert_eq!(a.to_reso().street_suffix, s("ST"));
+        assert_eq!(a.to_reso_with(SuffixForm::default()).street_suffix, s("ST"));
+        let w = a.to_reso_with(SuffixForm::Word);
+        assert_eq!(w.street_suffix, s("Street"));
+        // Only StreetSuffix differs.
+        assert_eq!(
+            ResoAddress {
+                street_suffix: s("ST"),
+                ..w
+            },
+            a.to_reso()
+        );
+        let a = Parser::new().parse("1 Main Anex, Miami FL 33101").unwrap();
+        assert_eq!(
+            a.to_reso_with(SuffixForm::Word).street_suffix,
+            s("Anex"),
+            "{:?}",
+            a.street_suffix
+        );
+        let a = Parser::new().parse("1 Main, Miami FL 33101").unwrap();
+        assert_eq!(a.to_reso_with(SuffixForm::Word).street_suffix, None);
+    }
+
+    /// Every suffix this library emits has a value in the 2.1 `StreetSuffix`
+    /// lookup (`tests/data/reso-2.1-street-suffix.txt`, read from
+    /// `https://dd.reso.org/DD2.1/lookups/StreetSuffix/` on 2026-11-22).
+    #[test]
+    fn suffix_words_are_in_the_21_lookup() {
+        let lookup: Vec<&str> = include_str!("../../tests/data/reso-2.1-street-suffix.txt")
+            .lines()
+            .filter(|l| !l.is_empty())
+            .collect();
+        assert_eq!(lookup.len(), 206);
+        let mut n = 0;
+        for sfx in Lexicons::builtin().suffixes() {
+            let w = suffix_word(sfx.name());
+            assert!(lookup.contains(&w.as_str()), "{} -> {w}", sfx.name());
+            n += 1;
+        }
+        assert_eq!(n, 202);
     }
 }
