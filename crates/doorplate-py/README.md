@@ -82,17 +82,16 @@ pytest tests
 
 | | doorplate | usaddress | libpostal |
 |---|---|---|---|
-| **Parser Score**, [parser showdown](https://github.com/jeremeybingham/address-parser-showdown) (hand-labeled golden set and four outside sets; 0.7.0 provisional) | **91.8** | 84.7 | 80.8 |
+| **Parser Score**, [parser showdown](https://github.com/jeremeybingham/address-parser-showdown) (hand-labeled golden set and four outside sets; doorplate 0.7.0) | **91.8** | 84.7 | 80.8 |
 | Whole address right, showdown random public stratum (829 real address lines) | 93.7% | 93.0% | 91.3% |
 | Whole address right, [benchmark suite](https://doorplate.readthedocs.io/en/latest/benchmark-suite/), `natural` stratum (16,001 addresses in five styles) | 98.6% | 96.5% | 95.0% |
 | Whole address right, [geocode benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark) `dev` split (60,522 one-line addresses) | 94.4% | 88.4% | 79.9% |
 | Strings per second from Python, one process | about 72,000 | about 9,000 | about 14,600 |
 | Memory after loading | 27 MB | 27 MB | about 3 GB |
 
-The doorplate Parser Score is provisional: doorplate 0.7.0 from a scratch build of the release candidate, scored on the
-sets of the showdown's pinned run of 2026-11-16 next to that run's usaddress 0.5.16 and libpostal (Senzing model); the
-official figure follows the showdown rerun on the 0.7.0 release build. The other rows are from the pinned run (doorplate
-0.6.0, which 0.7.0 matches on those three sets; default settings, 4 CPUs). The geocode benchmark is Yin, Li and Goldberg,
+The doorplate Parser Score is the published 0.7.0 release (0.7.1 scores the same), scored on the sets of the showdown's
+pinned run of 2026-11-16 next to that run's usaddress 0.5.16 and libpostal (Senzing model). The other rows are from the
+pinned run (doorplate 0.6.0, which 0.7.0 matches on those three sets; default settings, 4 CPUs). The geocode benchmark is Yin, Li and Goldberg,
 [arXiv:2310.14360](https://arxiv.org/abs/2310.14360). doorplate's author built the showdown: the method, the conflict of interest and
 every prediction file are in [its report](https://github.com/jeremeybingham/address-parser-showdown/blob/main/report/REPORT.md). These are measurements on a few data sets, not
 promises for yours. doorplate's own benchmark suite, the other checks and the speed figures by build:

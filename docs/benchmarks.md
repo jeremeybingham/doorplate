@@ -10,7 +10,7 @@ doorplate is measured three ways, in this order of weight:
    sets, each with a reason it is not a headline.
 
 **Builds.** doorplate 0.7.0 release candidate (`41c95be`, measured 2026-11-22) unless a table names another build; the
-showdown figures for 0.7.0 are provisional ([below](#the-parser-showdown)). usaddress 0.5.16; libpostal commit `25099c5`
+showdown figures are the published 0.7.0 release's ([below](#the-parser-showdown)). usaddress 0.5.16; libpostal commit `25099c5`
 with the Senzing 1.2.0 model. One machine (Intel Core i9-9900K, WSL2).
 
 Speed, size and memory are on [their own page](speed-and-size.md); how to rerun each benchmark is in
@@ -21,7 +21,7 @@ changing real rows: the [0.6.1 blog post](https://jeremeybingham.github.io/doorp
 
 | | doorplate | usaddress | libpostal |
 |---|---|---|---|
-| **[Parser showdown](#the-parser-showdown): Parser Score** (golden set and four outside sets; 0.7.0 provisional) | **91.8** | 84.7 | 80.8 |
+| **[Parser showdown](#the-parser-showdown): Parser Score** (golden set and four outside sets; doorplate 0.7.0) | **91.8** | 84.7 | 80.8 |
 | Showdown, random public stratum (829 real address lines), whole address right | 93.7% | 93.0% | 91.3% |
 | [Benchmark suite](#the-benchmark-suite), `natural` stratum (16,001), whole address right, `v2` | 98.7% | 96.1% | |
 | Benchmark suite, whole suite (19,586), whole address right, `v2` | 95.6% | 85.5% | |
@@ -58,10 +58,9 @@ validity are in [the report](https://github.com/jeremeybingham/address-parser-sh
 
 ### Parser Score
 
-**Provisional (0.7.0).** The doorplate column of the showdown tables is doorplate 0.7.0 from a scratch build of the release
-candidate (wheel `523212dd`, built from `41c95be`, run with the showdown's `tools.releases --wheel`). usaddress and libpostal
-are from the 2026-11-16 run, on the same sets, gold and scorer. The official figures follow the showdown rerun on the
-0.7.0 release build.
+**Official (0.7.0).** The doorplate column of the showdown tables is the published doorplate 0.7.0 wheel from PyPI, run by the
+showdown's `tools.releases` (appendix row 0.7.0). usaddress and libpostal are from the 2026-11-16 run, on the same sets,
+gold and scorer. It scores what the scratch build of the release candidate did (every figure below is unchanged).
 
 | | doorplate | usaddress | libpostal |
 |---|---|---|---|
@@ -76,7 +75,7 @@ doubtful records in). The pinned run's doorplate 0.6.0 scored 90.9 (89.8 to 92.0
 
 ### By part
 
-Whole address right, coarse parts (doorplate 0.7.0 provisional; 95% Wilson intervals are in the report; 0.6.0 in brackets where it differs):
+Whole address right, coarse parts (doorplate 0.7.0; 95% Wilson intervals are in the report; 0.6.0 in brackets where it differs):
 
 | Part | Records | doorplate | usaddress | libpostal |
 |---|---|---|---|---|
@@ -95,7 +94,7 @@ Whole address right, coarse parts (doorplate 0.7.0 provisional; 95% Wilson inter
 
 ### The random public stratum
 
-The golden set by where its records came from (doorplate 0.7.0 provisional):
+The golden set by where its records came from (doorplate 0.7.0):
 
 | Group | Records | doorplate | usaddress | libpostal |
 |---|---|---|---|---|
@@ -126,9 +125,9 @@ against doorplate, p < 0.001; p = 0.04 against usaddress). doorplate's 0.7.0 gai
 
 The showdown's [releases appendix](https://github.com/jeremeybingham/address-parser-showdown/blob/main/report/RELEASES.md)
 runs the last point release of each minor version on the same sets, gold and scorer, with the usaddress and libpostal
-predictions of the pinned run unchanged. The 0.7.0 column is the scratch build above, not yet an appendix row:
+predictions of the pinned run unchanged. 0.7.1 is a speed release with the same predictions as 0.7.0, so it scores the same:
 
-| | 0.1.0 | 0.2.0 | 0.3.1 | 0.4.1 | 0.5.1 | 0.6.2 | 0.7.0 (provisional) | usaddress | libpostal |
+| | 0.1.0 | 0.2.0 | 0.3.1 | 0.4.1 | 0.5.1 | 0.6.2 | 0.7.0 | usaddress | libpostal |
 |---|---|---|---|---|---|---|---|---|---|
 | Parser Score | 87.3 | 87.3 | 87.6 | 88.7 | 89.4 | 90.9 | **91.8** | 84.7 | 80.8 |
 | Golden set, `normal` | 94.0% | 94.0% | 94.0% | 94.3% | 94.6% | 94.8% | 94.9% | 93.6% | 91.8% |
