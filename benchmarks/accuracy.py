@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 """Accuracy: golden corpus, usaddress's test files and the geocode benchmark.
 
-    python benchmarks/accuracy.py
+    python benchmarks/accuracy.py [--with-libpostal [--libpostal-home DIR]]
 
 Needs the release CLI and `usaddress` (pip install usaddress). The geocode
 benchmark is not in the repository (`docs/running-benchmarks.md` says how to get it);
-without it that part is skipped. Prints Markdown.
+without it that part is skipped. `--with-libpostal` adds libpostal (the Senzing build,
+`docs/libpostal-compat.md`) to each geocode split, scored with all three parsers on the
+common label set. Prints Markdown.
 """
+import argparse
 import re
 import sys
 import tempfile
@@ -43,7 +46,30 @@ def table_row(report, first_cell, cells=11):
     return None
 
 
+def common_rows(report):
+    """The `all` and `shared` rows of the common-label table (libpostal), and the pins line above it."""
+    _, _, rest = report.partition("## Common labels, with libpostal")
+    if not rest:
+        return None, []
+    pins = next((line for line in rest.splitlines() if line.startswith("libpostal commit")), "")
+    rows = []
+    for line in rest.splitlines():
+        cells = [c.strip() for c in line.strip("|").split("|")]
+        if line.startswith("| ") and cells[0] in ("all", "shared"):
+            rows.append(cells)
+        if line.startswith("### Seen"):
+            break
+    return pins, rows
+
+
 def main():
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("--with-libpostal", action="store_true", help="add libpostal to the geocode splits (common label set)")
+    ap.add_argument("--libpostal-home", help="the libpostal build folder (default: $LIBPOSTAL_HOME or ~/projects/libpostal-senzing)")
+    args = ap.parse_args()
+    lp_args = ["--with-libpostal"] if args.with_libpostal else []
+    if args.with_libpostal and args.libpostal_home:
+        lp_args += ["--libpostal-home", args.libpostal_home]
     need_cli()
     print(f"# Accuracy\n\nMachine: {machine()}\n")
     print("Scores are for addresses written one to a line unless noted. \"Coarse\" folds street parts")
@@ -69,6 +95,8 @@ def main():
     splits = [
         ("dev", "Geocode benchmark, dev split (never read while writing rules)"),
         ("train", "Geocode benchmark, train split (never read while writing rules)"),
+        ("train80", "Geocode benchmark, train80 (80% of train; rules were fixed against it)"),
+        ("train20_heldout", "Geocode benchmark, train20 (20% of train, held out, never read)"),
         ("test", "Geocode benchmark, test split (read while writing rules: optimistic)"),
     ]
     found = False
@@ -77,7 +105,7 @@ def main():
         if not xml.exists():
             continue
         found = True
-        rep = compare("gold", str(xml))
+        rep = compare("gold", str(xml), *lp_args)
         row = table_row(rep, f"{split}_usaddress.xml")
         print(f"## {title} ({row[1] if row else '?'} one-line addresses)\n")
         if row:
@@ -86,6 +114,18 @@ def main():
             print(f"| Whole address (coarse) | {row[5]} | {row[6]} |")
             print(f"| Tokens (fine) | {row[7]} | {row[8]} |")
             print(f"| Whole address (fine) | {row[9]} | {row[10]} |\n")
+        pins, rows = common_rows(rep)
+        if len(rows) == 2 and rows[0][1] == rows[1][1]:
+            rows = rows[:1]  # no gold label here is one libpostal cannot produce: `shared` repeats `all`
+        if rows:
+            note = (" *Shared* leaves out the addresses with a gold label libpostal cannot produce." if len(rows) > 1
+                    else " Every gold label here is one libpostal can produce.")
+            print(f"With libpostal, on the common label set ({pins.split('. Model load')[0]}).{note}\n")
+            print("| Addresses | Count | Ours: whole | usaddress: whole | libpostal: whole | Ours: tokens | usaddress: tokens | libpostal: tokens |")
+            print("|---|---|---|---|---|---|---|---|")
+            for r in rows:
+                print("| " + " | ".join(r) + " |")
+            print()
     if not found:
         print("## Geocode benchmark\n\nSkipped: `local-data/geocode-benchmark/` is not here.\n")
 

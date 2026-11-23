@@ -77,7 +77,9 @@ libpostal is built (`./configure ... MODEL=senzing`); its data is about 2.2 GB, 
 
 - Neither the README nor Senzing's repository
   ([`Senzing/libpostal-data`](https://github.com/Senzing/libpostal-data), Apache-2.0) says which model version `MODEL=senzing`
-  fetches, or how to choose one after the build. The build on 2026-11-07 fetched the Senzing **1.2.0 parser**.
+  fetches, or how to choose one after the build. The build on 2026-11-07 fetched the Senzing **1.2.0 parser**; the
+  rebuild of 2026-11-23 for the showdown's second pinned run fetched the same (parser v1.2.0, base data v1.1.0, language
+  classifier v1.1.0, read from the version files of the downloaded data) and gave the same predictions.
 - Senzing's own figure (4.3% better than the default on its test set) is not a comparison with libpostal.
 - Every libpostal figure therefore carries the libpostal commit, the model version and a checksum of the data directory,
   which the comparison tools print. doorplate's and libpostal's scores on Senzing's US rows are in
@@ -114,7 +116,8 @@ nothing out. `tools/compare/test_libpostal_provider.py` tests the mapping on inv
 ## Notes from the first run (2026-11-07)
 
 These are notes from the first run, before the showdown existed, with this repository's own scorers; the published
-figures are the showdown's ([`benchmarks.md`](benchmarks.md#the-parser-showdown)). The table is kept because the reading
+figures are the showdown's ([`benchmarks.md`](benchmarks.md#the-parser-showdown)) and the suite and geocode runs of
+2026-11-23 ([`benchmarks.md`](benchmarks.md#with-libpostal)). The table is kept because the reading
 notes under it still explain the gaps the showdown measured. One run: libpostal commit `25099c5`, the Senzing 1.2.0 parser (data checksum `7afb91d6ef19`), and doorplate on a 0.6.0 pre-release build of that
 date; the accuracy rows were not re-run for the release). The two speed rows are a later run of all three in one session, on
 0.6.1 (`9f2418b`, the same parser code as the tag) on 2026-11-13, usaddress from its cache. Accuracy is the share of records right (whole address, on the fields both have), with common labels, and the suite's
@@ -156,9 +159,9 @@ How to read it:
 - **Senzing's test set.** It is the nearest thing to held-out data, but nearly all of it is OpenStreetMap address tags written out as
   one line: clean, uniform input, close to what libpostal was trained on. libpostal leads doorplate there by one point, with intervals
   that overlap at the edges. Senzing's own US failure rate (4.58% in v1.2.0) uses a definition of failure that is not stated.
-- **Cost.** On one thread doorplate (`parse_tokens`) takes about a fifth of libpostal's time, and on four threads or processes it is
-  about 6.5 times as fast (0.6.1; the speed figures are from one run). libpostal's README claims 10 to 30 thousand
-  addresses per second per thread; this is inside that range. The Senzing model is about 3 GB per process and loads in 4 to 6 s; the
+- **Cost.** On one thread doorplate (`parse_tokens`) takes about a sixth of libpostal's time, and on four threads or processes it is
+  about 8.5 times as fast (the suite's `speed` on the code of 0.7.1, 2026-11-23; one run; 0.6.1 gave a fifth and 6.5 times). libpostal's README claims 10 to 30 thousand
+  addresses per second per thread; this is inside that range. The Senzing model is about 3 GB per process and loads in 3.5 to 6 s; the
   default model (1.8 GB of data) was not measured. libpostal runs in its own processes, because a `parse_address` call holds the
   Python GIL, and each process loads its own copy of the model: four workers took about 11,760 MB together against 253 MB for doorplate's
   `parse_many` on all threads of one process.
