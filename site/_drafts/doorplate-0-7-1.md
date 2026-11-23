@@ -6,6 +6,8 @@ date: 2026-11-23
 tags: [python, rust, address-parsing, open-source, puerto-rico]
 ---
 
+![doorplate 0.7.1: the first beta, more accurate, faster, and better in Puerto Rico. Parser Score by release: 0.1.0 87.3, 0.2.0 87.3, 0.3.1 87.6, 0.4.1 88.7, 0.5.1 89.4, 0.6.2 90.9, 0.7.0 91.8, 0.7.1 91.8, against usaddress 84.7 and libpostal 80.8. Puerto Rico rows flagged 38.2%, down from 45.4% in 0.6.2. 5.76 µs per parse, 10% less than 0.7.0. No parse changes in 0.7.1.]({{ site.baseurl }}/assets/doorplate-0-7-1.png)
+
 [doorplate](https://github.com/jeremeybingham/doorplate) 0.7.1 is out. It is the first release after the **beta**: 0.7.0 made doorplate a beta, and
 0.7.1 adds speed on top of it with no change to what any address parses to. Together they bring more accuracy and more speed, and much better handling
 of addresses in Puerto Rico. doorplate is an open-source US address parser written in Rust, with a
