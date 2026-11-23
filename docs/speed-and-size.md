@@ -32,11 +32,11 @@ the adapter.
 - **0.6.2 is faster.** The showdown's [releases appendix](https://github.com/jeremeybingham/address-parser-showdown/blob/main/report/RELEASES.md)
   timed 0.6.2 at 113,315 strings per second in one process and 317,934 in four, in a session of its own (usaddress and
   libpostal were not re-timed there). doorplate's own figures for 0.6.2 follow.
-- **0.7.0 (provisional).** A scratch build of the 0.7.0 release candidate (wheel `523212dd`, `41c95be`), timed by the
-  same appendix script in a session of its own, made 101,625 strings per second in one process and 316,432 in four
-  (usaddress and libpostal not re-timed). That is 10% below 0.6.2 in one process and level in four; the engine retake
-  [below](#speed-by-version) puts the cost of the 0.7.0 rules at 4.3% more instructions and 7% more time per parse, and
-  the rest is within this machine's spread.
+- **0.7.0 and 0.7.1.** The appendix timed the published wheels, each in a session of its own (usaddress and libpostal not
+  re-timed). 0.7.0 made 105,833 strings per second in one process and 309,258 in four: 7% below 0.6.2 in one process and
+  3% below in four. That fits the engine retake [below](#speed-by-version), which puts the cost of the 0.7.0 rules at 4.3%
+  more instructions and 7% more time per parse. 0.7.1 (same predictions as 0.7.0) made 113,770 and 334,536, level with
+  0.6.2 in one process and 5% above it in four; sessions differ by several percent, so read the ratios.
 - These figures time one string per call. doorplate's batch call, `parse_many`, runs on several threads in one process
   with the GIL released ([Python](#python) below); neither of the others has one.
 
