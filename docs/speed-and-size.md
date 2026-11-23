@@ -5,7 +5,8 @@ timed on the same strings in one session. The sections after it are doorplate's 
 build: Rust, Python, DataFrames, size and memory, and speed by version.
 
 **Builds.** The 0.7.0 release candidate (`41c95be`), measured 2026-11-22, unless a table names another build
-(the command-line figure was not re-run). One machine (Intel Core i9-9900K, Linux
+(the command-line figure was not re-run). 0.7.1 changes no parse output and is faster than 0.7.0; its figures are in
+[Speed by version](#speed-by-version). One machine (Intel Core i9-9900K, Linux
 on WSL2), so read the ratios. Accuracy is on [Benchmarks: accuracy](benchmarks.md); how to rerun these scripts and
 profile the engine is in [Running the benchmarks](running-benchmarks.md).
 
@@ -197,6 +198,15 @@ divided by 20,000 parses). These are the figures in the [0.6.1 blog post](https:
 The 0.6.2 column was measured on 2026-11-14 at `041c38d` with the same method, in a session of its own with `v0.6.1` rebuilt beside it, three alternating rounds (0.6.2: 5.98, 5.97 and 6.00 µs; 0.6.1: 7.91, 7.93 and 8.00 µs; instructions 46,986 and 62,696 per parse). The older columns are the 2026-11-13 session, whose 0.6.1 figure (8.10 µs) is 2% above this session's, so compare 0.6.2 with the 0.6.1 of its own session: 0.6.2 takes 24.6% less time than 0.6.1 (1.32x the parses per second) and 25.1% fewer instructions. Between 0.6.0 and 0.6.2 that is 1.87x the parses per second on the 2026-11-13 figures.
 
 The 0.7.0 column is the release candidate (`41c95be`), measured on 2026-11-22 with the same method beside `v0.6.2` rebuilt, three alternating rounds (0.7.0: 6.39, 6.48 and 6.43 µs; 0.6.2: 6.03, 6.00 and 5.99 µs). Instructions: 48,264 per parse against 46,259 for 0.6.2 built in the same session (the callgrind guard script, `tools/perf/callgrind_guard.sh v0.6.2`; this compiler counts about 1.6% fewer than the 2026-11-14 session's for the same tag). **0.7.0 takes 7.2% more time and 4.3% more instructions per parse than 0.6.2**, the cost of the 0.7.0 rules: every rule PR passed the 1% guard, and the per-PR steps on CI add up to +4.5% (the largest: #738 and #785, +0.67% each; #816, +0.54%; #814, +0.49%; #735 and #792, +0.48% each). As with 0.5.0 and 0.6.0, the release that adds rules costs time.
+
+0.7.1 has no parse change: it skips scans that cannot match and reuses buffers instead of allocating them. Measured on 2026-11-22 on `main` (`5be8669`, the code of `v0.7.1`, tag `a285d97`) in an alternating session against `v0.6.2` and `v0.7.0` rebuilt, one pinned CPU, three rounds, best of five:
+
+| | 0.6.2 | 0.7.0 | 0.7.1 |
+|---|---|---|---|
+| Wall time per parse (µs) | 6.06 | 6.39 | 5.76 |
+| Instructions per parse (callgrind) | 46,259 | 48,264 | 42,076 |
+
+0.7.1 takes 9.9% less time and 12.8% fewer instructions than 0.7.0, and 4.9% less time and 9.0% fewer instructions than 0.6.2. The goal was 5% less time than 0.6.2 (5.70 µs); it was missed by about 1%, and the release shipped at 5.76 µs. The instruction counts are from `tools/perf/callgrind_guard.sh` at the code of `v0.7.1` against `v0.6.2` and `v0.7.0` (the 0.6.2 and 0.7.0 counts equal the figures above). The 0.6.2 and 0.7.0 wall times of this session differ from the columns above (5.98 and 6.43 µs) because wall time on this machine varies between sessions; compare columns of one table only.
 
 0.6.1 takes 27% less time than 0.6.0 (1.38x the parses per second) and 30% fewer instructions; the changelog's −27.6% is the sum of
 the #672 steps on their own bases. The rule releases cost time: 0.5.0 took 10% longer than 0.4.1, 0.6.0 6% longer than 0.5.1 (4% more
