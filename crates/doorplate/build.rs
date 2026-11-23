@@ -572,6 +572,12 @@ fn gen_special(
         "pub(crate) static CITY_PLACEHOLDERS: &[&str] = &{city_phrases:?};\n"
     )
     .ok();
+    writeln!(
+        out,
+        "pub(crate) const CITY_PLACEHOLDER_FIRST: u32 = {};\n",
+        first_letters(&city_phrases)
+    )
+    .ok();
 
     let actx = format!("{ctx} [area]");
     let mut area = key_list(table(t, "area", ctx)?, "words", &actx, true)?;
