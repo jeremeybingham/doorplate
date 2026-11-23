@@ -2,38 +2,62 @@
 
 ## Notes for the owner (delete before submitting)
 
-- **Submission guidelines not read.** towardsdatascience.com returned 403 to automated fetches, so this draft has not been
-  checked against the [submission guidelines](https://towardsdatascience.com/submission-guidelines/). Read them first,
-  especially on: articles about your own tool, whether the article must be unpublished elsewhere (do not post it on the
-  project blog or Medium until they answer), length, and AI-assisted writing. Known from their public pages: submissions
-  go through a form, editors answer in about a week, and authors must use their real names.
+- **Checked against the TDS submission guidelines (pasted 2026-11-23).** What the draft now does, and what is left to
+  you:
+  - *Title and subtitle:* a short title with a longer subtitle under it, no capitals-only words. Alternatives below.
+  - *Message up front:* the introduction states the idea, why it matters and how the article proves it (three claims, a
+    benchmark). Counter-arguments are answered in the text (the conflict of interest, the AI section).
+  - *Facts and sources:* every dataset and outside work is linked at first mention and listed under "References" in
+    their format (`[N] N. Name, Title (Year), Source`). Years were checked on GitHub and arXiv; libpostal's is its first
+    release (2016).
+  - *Conclusion, not promotional:* the last section is now "Conclusion: should you switch?", opening with a summary of the
+    three claims. The bug-report request and the separate install block are gone (they read as a call to action); the
+    install command and the demo stay in one sentence.
+  - *Original work (point 12), your decision:* TDS asks that the article be "entirely your own original work" and that you
+    be "the sole creator of each and every element". This draft was written by an AI assistant from your project
+    material. The pasted guidelines do not mention AI-written text, but the Author Terms and Conditions (not read) may.
+    Rewrite it in your own words, or at least read the Author Terms and ask the editors before submitting. The article's
+    disclosure covers the code, not the text.
+  - *Data rights (point 11), your decision:* TDS is commercial and asks you to confirm each dataset permits commercial
+    use. Only aggregate scores appear, and no records are shown, but: the geocode benchmark (Yin, Li and Goldberg) states
+    **no license**, and the Senzing test data is of mixed provenance (OpenStreetMap, libpostal tests, bug reports). Email
+    the benchmark's authors for permission, or drop that row and the sentences that use it; forward any permission to
+    publication@towardsdatascience.com. usaddress's and libpostal's test data are MIT; the golden set is public records
+    plus invented strings. The 290 million rows are counts only.
+  - *Images (point 10):* add at least one of your own charts with the caption "Image by author". The charts in
+    `site/_social/showdown/` are from the **older** run (doorplate 90.9); regenerate them with the 0.7.1 figures (91.8,
+    90.7 to 92.9) first. Suggested: the Parser Score chart with intervals as the featured image, and the per-part chart.
+  - *Code:* code blocks, not screenshots, each with text around it. OK.
+  - *Originality and timing:* publishing on TDS first gives the best chance of being featured, so keep it off the project
+    blog and Medium until TDS answers.
+  - *Also yours:* a real-name author profile with a photo and bio; precise tags (suggested: Python, Data Engineering,
+    Open Source, Rust, Data Cleaning); feedback from a friend before you submit.
 - **Disclosure.** The article says up front that you wrote doorplate and the showdown, and that you built doorplate with
   an AI coding assistant. The section "How it was built with AI, and why it is not AI slop" takes its points and figures
   from issue #865 (the figures comment and the "case against AI slop" draft, both 2026-11-23), including your own account
-  of how you review the code and the two mistakes. Word it the way you want, but keep the disclosure and the mistakes in:
-  leaving them out would be risky with editors and readers in 2026, and TDS may have its own rules on AI-assisted work.
+  of how you review the code and the two mistakes. Word it the way you want, but keep the disclosure and the mistakes in.
+  The guidelines ask you to answer counter-arguments, and this section does that for the most common one in 2026.
 - **Figures.** Every figure is from the showdown's pinned run of 2026-11-23 (`report/REPORT.md`, doorplate 0.7.1,
   usaddress 0.5.16, libpostal with the Senzing model) or from `docs/dataframes.md` (the `parse_many` batch figures, 0.7.0
   release candidate, 4 CPUs). The code blocks were run on 2026-11-23 against the current build (0.7.2-dev, which parses
   as 0.7.1); every address in them is invented. The project figures in the AI section (commits, tests, CI runs, review
   verdicts, fuzzing) are from issue #865, measured 2026-11-23; the three-and-a-half-to-six-and-a-half-year figure is
   that issue's bottom-up estimate, not a measurement.
-- **Images.** TDS articles do better with images. The charts in `site/_social/showdown/` are from the **older** run
-  (doorplate 90.9); regenerate them with the 0.7.1 figures (91.8, 90.7 to 92.9) before using them. Suggested: the Parser
-  Score chart with intervals, and the per-part chart. Say in the caption that they are your own images.
-- **Length:** about 3,000 words (code blocks included) without these notes.
-- **Title options:**
-  1. "Replacing usaddress with one import: a faster, rules-based US address parser"
-  2. "I built a rules-based address parser and benchmarked it against the ML ones. Here's what held up."
-  3. "Parsing US addresses at 100,000 per second, without a model"
+- **Length:** about 3,100 words (code blocks and references included) without these notes. The pasted guidelines set
+  no limit.
+- **Title options** (short title; the subtitle stays as written):
+  1. "A Faster, Rules-Based Replacement for usaddress"
+  2. "Parsing US Addresses Without a Model"
+  3. "Replacing usaddress With One Import"
 
 ---
 
-# Replacing usaddress with one import: a faster, rules-based US address parser
+# A Faster, Rules-Based Replacement for usaddress
 
-*What I learned building doorplate, how it compares with usaddress and libpostal, and where it still loses.*
+*I built a US address parser from hand-written rules instead of a trained model, then benchmarked it against usaddress
+and libpostal. Here is how far its claims of compatibility, speed and accuracy hold, and where it still loses.*
 
-If you have worked with US address data, you have probably used [usaddress](https://github.com/datamade/usaddress).
+If you have worked with US address data, you have probably used [usaddress](https://github.com/datamade/usaddress) [1].
 DataMade's library takes a string like `123 N Main St Apt 4, Miami FL 33101` and labels each token: the house number,
 the street name, the suffix, the unit, the city. It is the default choice in Python, and for good reason: it is small,
 easy to install and usually right.
@@ -49,7 +73,7 @@ claims I want to make for it, and how far each one holds:
 A disclosure first: I wrote doorplate, and I also built the benchmark the accuracy figures come from. I'll describe
 how the benchmark guards against that bias and where it can't. I also built doorplate with an AI coding assistant, which
 did most of the typing. I made the design decisions, labeled the test data and reviewed the results on real addresses;
-[how that worked](#how-it-was-built-with-ai-and-why-it-is-not-ai-slop) has its own section near the end.
+how that worked has its own section near the end.
 
 ## Why another address parser?
 
@@ -62,12 +86,12 @@ lists and web forms contain things like:
 - `123 OAKBLVD`, two words with the space lost
 - units in odd places, units written twice, and cities that start with a compass word (`S Elgin`)
 
-usaddress is a conditional random field (CRF), a statistical model trained on labeled examples. libpostal, the other
+usaddress is a conditional random field (CRF), a statistical model trained on labeled examples. libpostal [2], the other
 common choice, is also a CRF, trained on OpenStreetMap and OpenAddresses data. Both are good at the shapes they were
 trained on. When they get something wrong, the fix is to add training data and retrain, which few users do.
 
 doorplate takes the opposite approach: **hand-written rules plus a list of place names**, with no learned model. Every
-rule cites its source (USPS Publication 28 where one exists), and every misparse that gets fixed becomes a test case.
+rule cites its source (USPS Publication 28 [5] where one exists), and every misparse that gets fixed becomes a test case.
 That has costs: someone has to write the rules, and a rule can only handle shapes someone has seen. It also has
 benefits:
 
@@ -167,8 +191,8 @@ The data:
   training files, libpostal's test sources and the geocode benchmark, so that no parser had seen it. libpostal's
   training data could not be checked.
 - **Four outside sets**, scored as neutral parts. These include the `dev` split (60,522 one-line addresses) of the
-  geocoding address-parsing benchmark of Yin, Li and Goldberg ([arXiv:2310.14360](https://arxiv.org/abs/2310.14360)),
-  and the US rows of Senzing's libpostal test data.
+  geocoding address-parsing benchmark of Yin, Li and Goldberg ([arXiv:2310.14360](https://arxiv.org/abs/2310.14360)) [3],
+  and the US rows of Senzing's libpostal test data [4].
 - **Each parser's own test files**, reported separately, since every parser does best on its own tests.
 
 The headline is a **Parser Score**: coarse record accuracy, half from the golden set's three tiers and half from the
@@ -212,7 +236,7 @@ can't see. What I did about it:
 
 What it doesn't cover: the hand labels are still mine, and one of the four neutral sets (doorplate's own benchmark suite)
 was built by me too. Leaving that set out lowers all three scores but keeps the order (89.9, 81.7, 77.9). The full method
-is in the [report](https://github.com/jeremeybingham/address-parser-showdown/blob/main/report/REPORT.md). If you think
+is in the [report](https://github.com/jeremeybingham/address-parser-showdown/blob/main/report/REPORT.md) [6]. If you think
 the method is unfair to usaddress or libpostal, I'd like to hear how.
 
 ## Beyond parsing: a key for deduplication
@@ -306,7 +330,13 @@ but only about one run in ten, and the assistant first recorded the failure as "
 Another rule, tuned on one benchmark, broke spelled-out directions such as `MAIN ST NORTH` elsewhere; that is why every
 rule is now measured on all seven sources. The checks caught both. That is the point of having them.
 
-## Should you switch?
+## Conclusion: should you switch?
+
+Each of the three claims holds, within limits. The compatibility module replaces `usaddress` with one import, but its
+labels can differ on rare shapes. The speed gain is large and easy to reproduce. The accuracy gain is clear on messy and
+unusual addresses and too small to measure on clean ones. Building with rules instead of a model costs a lot of rule
+writing, and an AI assistant is what made that possible for one person. In return, every answer can be traced to a rule
+and every rule to a source.
 
 - **Yes, probably**, if you parse large files and speed matters, if your data is messy (public records, mailing lists,
   free-text forms), or if you need standardized output or a dedup key and have been building those yourself.
@@ -314,18 +344,29 @@ rule is now measured on all seven sources. The checks caught both. That is the p
 - **No**, if you need addresses outside the US (libpostal covers the world) or need to know an address is deliverable
   (that takes a validation service).
 
-You can try it without installing anything: the [in-browser demo](https://jeremeybingham.github.io/doorplate/demo/)
-parses as you type and runs on your machine, so nothing is sent anywhere. Otherwise:
-
-```sh
-pip install doorplate
-```
-
 doorplate is in beta: from version 0.7 the API and warning codes are stable. Its rules have been tested on about 290
-million rows of public records, but your data will have shapes mine doesn't. If it gets your addresses wrong, a bug
-report with a sample is the most useful thing you can send. `doorplate anonymize` changes the names and digits but keeps
-the shape, so you can share the problem without sharing the data.
+million rows of public records, but your data will have shapes mine doesn't. The fastest way to find out is to run both
+parsers on a sample of your own file. The package is `pip install doorplate`, and the
+[in-browser demo](https://jeremeybingham.github.io/doorplate/demo/) runs on your machine, so no address leaves it.
 
 *doorplate is open source under the MIT or Apache 2.0 license. Code: [github.com/jeremeybingham/doorplate](https://github.com/jeremeybingham/doorplate).
 Documentation: [doorplate.readthedocs.io](https://doorplate.readthedocs.io/en/latest/). Benchmark and report:
 [address-parser-showdown](https://github.com/jeremeybingham/address-parser-showdown). All images are by the author.*
+
+## References
+
+[1] DataMade, [usaddress](https://github.com/datamade/usaddress) (2014), GitHub
+
+[2] A. Barrentine, [libpostal](https://github.com/openvenues/libpostal) (2016), GitHub
+
+[3] Z. Yin, D. Li and D. W. Goldberg, [Is ChatGPT a game changer for geocoding: a benchmark for geocoding address
+parsing techniques](https://arxiv.org/abs/2310.14360) (2023), ACM SIGSPATIAL GeoSearch Workshop 2023; data at
+[zhengcongyin/geocoding-address-parsing-benchmark](https://github.com/zhengcongyin/geocoding-address-parsing-benchmark)
+
+[4] Senzing, [libpostal-data test data v1.2.0](https://github.com/Senzing/libpostal-data) (2025), GitHub
+
+[5] United States Postal Service, [Publication 28: Postal Addressing Standards](https://pe.usps.com/text/pub28/welcome.htm)
+(online edition, read October 2026), USPS
+
+[6] J. Bingham, [address-parser-showdown: report](https://github.com/jeremeybingham/address-parser-showdown/blob/main/report/REPORT.md)
+(2026), GitHub
