@@ -19,6 +19,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("display       {:?}", a.to_display().lines());
     println!("long          {:?}", a.to_long().lines());
     println!("reso          {:?}", a.to_reso().fields());
+    println!(
+        "reso (word) {:?}",
+        a.to_reso_with(doorplate::SuffixForm::Word).street_suffix
+    );
     println!("key           {:?}", a.key(KeyOptions::property()));
     println!("slug          {:?}", a.slug());
 

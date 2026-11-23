@@ -31,6 +31,11 @@ def test_parse_components_and_formats():
     assert a.slug() == "123-n-main-st-apt-4-miami-fl-33101"
     assert a.to_reso()["StreetName"] == "MAIN"
     assert a.to_reso()["UnparsedAddress"] == "123 N MAIN ST APT 4, MIAMI, FL 33101"
+    assert a.to_reso()["StreetSuffix"] == "ST"
+    assert a.to_reso(suffix_form="abbreviation")["StreetSuffix"] == "ST"
+    assert a.to_reso(suffix_form="word")["StreetSuffix"] == "Street"
+    with pytest.raises(ValueError):
+        a.to_reso(suffix_form="long")
     assert a.address_type() == "street"
     assert a.input == "123 north main street apt 4, Miami FL 33101"
 

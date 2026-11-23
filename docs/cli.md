@@ -40,6 +40,7 @@ argument, one address per line from standard input, and a blank line is reported
 | `--line1 X`, `--line2 X`, `--city X`, `--state X`, `--zip X` | Parse pre-split fields instead of a one-line address. Any may be omitted |
 | `--default-state ST` | A lookup hint for input with no state (a USPS code or a state name). It never fills `state` |
 | `--custom-layer DIR` | Use a [custom layer](custom-layers.md) on top of the shipped tables. Every record reports it in `provenance.custom_layer`; a layer can change a key |
+| `--suffix-form abbreviation\|word` | The `StreetSuffix` of the `reso` object: the Pub 28 abbreviation (`ST`, the default) or the RESO Data Dictionary 2.1 lookup word (`Street`). See [RESO mapping](reso-mapping.md) |
 | `--pretty` | Indent the JSON |
 | `--usps` | Print only the Publication 28 lines, as text |
 | `--display` | Print mixed case with Pub 28 abbreviations (`123 N Main St Apt 4`), for people. Not a Pub 28 form |
@@ -126,7 +127,9 @@ usage:
                                  (--display: mixed case, `123 N Main St`; --long: spelled out,
                                  `123 North Main Street`; neither is a Pub 28 form.
                                  --usaddress: tokens with usaddress labels;
-                                 --tag: joined by label, like usaddress.tag())
+                                 --tag: joined by label, like usaddress.tag();
+                                 --suffix-form word: the `reso` StreetSuffix as the RESO 2.1
+                                 word, `Street`, not the abbreviation `ST` (the default))
   doorplate parse-file IN.csv --column NAME [--line2 NAME] [--city NAME] [--state NAME]
                   [--zip NAME] [-o OUT.csv] [--default-state ST] [--custom-layer DIR]
                                  --default-state: look cities up in ST when the

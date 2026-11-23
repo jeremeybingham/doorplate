@@ -2,7 +2,7 @@
 //!
 //! ```text
 //! doorplate parse "<address>" [--pretty] [--usps | --display | --long | --usaddress | --tag]
-//!                 [--default-state ST] [--custom-layer DIR]
+//!                 [--default-state ST] [--custom-layer DIR] [--suffix-form abbreviation|word]
 //! doorplate parse --line1 X [--line2 X] [--city X] [--state X] [--zip X]
 //! doorplate parse            (no argument or "-": one address per stdin line, JSONL out)
 //! doorplate parse-file IN.csv --column NAME [-o OUT.csv] [--default-state ST]
@@ -18,6 +18,7 @@ mod json;
 
 use doorplate::{
     corpus, Anonymizer, CustomLayer, Fields, ParseError, ParseOptions, ParsedAddress, Parser,
+    SuffixForm,
 };
 use std::fs::File;
 use std::io::{self, BufRead, Write};
@@ -32,7 +33,9 @@ const USAGE: &str = "usage:
                                  (--display: mixed case, `123 N Main St`; --long: spelled out,
                                  `123 North Main Street`; neither is a Pub 28 form.
                                  --usaddress: tokens with usaddress labels;
-                                 --tag: joined by label, like usaddress.tag())
+                                 --tag: joined by label, like usaddress.tag();
+                                 --suffix-form word: the `reso` StreetSuffix as the RESO 2.1
+                                 word, `Street`, not the abbreviation `ST` (the default))
   doorplate parse-file IN.csv --column NAME [--line2 NAME] [--city NAME] [--state NAME]
                   [--zip NAME] [-o OUT.csv] [--default-state ST] [--custom-layer DIR]
                                  --default-state: look cities up in ST when the
@@ -214,6 +217,7 @@ fn parse_cmd(args: &[String]) -> Result<ExitCode, CliError> {
             "--zip",
             "--default-state",
             "--custom-layer",
+            "--suffix-form",
         ],
         &[
             "--pretty",
@@ -224,6 +228,13 @@ fn parse_cmd(args: &[String]) -> Result<ExitCode, CliError> {
             "--tag",
         ],
     )?;
+    if let Some(v) = o.value("--suffix-form") {
+        if !matches!(v, "abbreviation" | "word") {
+            return Err(CliError::Usage(
+                "--suffix-form is \"abbreviation\" or \"word\"".into(),
+            ));
+        }
+    }
     let parser = parser_for(&o)?;
     let fields = Fields {
         line1: o.value("--line1").map(str::to_string),
@@ -235,7 +246,7 @@ fn parse_cmd(args: &[String]) -> Result<ExitCode, CliError> {
     let have_fields = o
         .values
         .iter()
-        .any(|(k, _)| k != "--default-state" && k != "--custom-layer");
+        .any(|(k, _)| k != "--default-state" && k != "--custom-layer" && k != "--suffix-form");
     let out = io::stdout();
     let mut out = out.lock();
     if have_fields {
@@ -274,6 +285,14 @@ fn parse_cmd(args: &[String]) -> Result<ExitCode, CliError> {
             Ok(worst)
         }
         _ => Err(CliError::Usage("give one address (quote it)".into())),
+    }
+}
+
+/// The `--suffix-form` given (checked in `parse_cmd`): the `reso` object's `StreetSuffix`.
+fn suffix_form(o: &Opts) -> SuffixForm {
+    match o.value("--suffix-form") {
+        Some("word") => SuffixForm::Word,
+        _ => SuffixForm::Abbreviation,
     }
 }
 
@@ -318,9 +337,9 @@ fn print_parsed(out: &mut impl Write, a: &ParsedAddress, o: &Opts) -> io::Result
         // One buffer, one write: stdout is line-buffered and a record is one line.
         let mut buf = Vec::with_capacity(2048);
         if pretty {
-            serde_json::to_writer_pretty(&mut buf, &json::record(a))?;
+            serde_json::to_writer_pretty(&mut buf, &json::record_with(a, suffix_form(o)))?;
         } else {
-            serde_json::to_writer(&mut buf, &json::record(a))?;
+            serde_json::to_writer(&mut buf, &json::record_with(a, suffix_form(o)))?;
         }
         buf.push(b'\n');
         return out.write_all(&buf);

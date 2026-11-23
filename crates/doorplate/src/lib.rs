@@ -45,7 +45,8 @@ mod types;
 
 pub use anonymize::{Anonymized, Anonymizer};
 pub use emit::{
-    AddressType, DisplayAddress, KeyOptions, ResoAddress, TaggedAddress, UsaddressTag, UspsAddress,
+    AddressType, DisplayAddress, KeyOptions, ResoAddress, SuffixForm, TaggedAddress, UsaddressTag,
+    UspsAddress,
 };
 pub use input::Fields;
 pub use layer::{CustomLayer, LayerInfo};
