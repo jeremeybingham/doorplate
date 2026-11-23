@@ -11,6 +11,10 @@ change to what an input produces needs a new key version.
 
 - **libpostal in the geocode benchmark.** `benchmarks/accuracy.py --with-libpostal` scores doorplate, usaddress and libpostal (the Senzing build) on the common label set for each geocode split, now including `train80` and `train20_heldout`; `benchmarks/geocode_paper_compare.py --with-libpostal` adds a five-label table (street parts merged) for all three. No library change.
 
+### Changed
+
+- **Figures from the showdown's second pinned run** (2026-11-23, doorplate 0.7.1, the rebuilt libpostal): the summary, the README tables and the speed page now quote its speed and memory (doorplate about 117,000 strings per second in one process, 13 times usaddress and 7.5 times libpostal); the Parser Score (91.8) is unchanged. `docs/benchmarks.md` adds libpostal to the benchmark suite (common labels), the geocode splits and a five-label paper table; `docs/speed-and-size.md` adds libpostal to the suite's `speed` table.
+
 ## [0.7.1] - 2026-11-22
 
 A speed release: no key change, no parse change, no new warning.
