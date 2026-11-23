@@ -12,8 +12,8 @@ Results: [`benchmarks.md`](benchmarks.md) (the parser showdown first, then the s
 | What only doorplate does: fields input, Pub 28 output, key stability, warnings | `python benchmarks/suite.py doorplate` | the extension |
 | Speed and memory under a fixed profile (4 CPUs, 8 GB) | `python benchmarks/suite.py speed` | the extension; `usaddress` |
 | All three of the above (about 20 seconds) | `python benchmarks/suite.py all` | the extension; `usaddress` |
-| Accuracy on one-line street addresses from an outside data set | `python benchmarks/accuracy.py` | the CLI; `usaddress`; the geocode benchmark (not in the repository) |
-| The geocode benchmark scored as its paper does (F1 per label, Parsing Score), next to the paper's models | `python benchmarks/geocode_paper_compare.py [test] [dev] [train]` | the extension; `usaddress`; the geocode benchmark |
+| Accuracy on one-line street addresses from an outside data set | `python benchmarks/accuracy.py [--with-libpostal]` | the CLI; `usaddress`; the geocode benchmark (not in the repository) |
+| The geocode benchmark scored as its paper does (F1 per label, Parsing Score), next to the paper's models | `python benchmarks/geocode_paper_compare.py [--with-libpostal] [test] [dev] [train]` | the extension; `usaddress`; the geocode benchmark |
 | Whether a parse-rule fix generalizes instead of overfitting | `split_geocode_train.py`, then `tools/compare/city_diff.py` | the geocode benchmark |
 | Python speed of `parse`, `parse_many`, `parse_fields` against usaddress (and `fastaddress` when it is installed) | `python benchmarks/speed_python.py [N]` | the extension; `usaddress`; optionally `fastaddress` |
 | Speed of batches and of pandas, Polars and DuckDB frames | `python crates/doorplate-py/benchmarks/bench_batch.py [N]` | the extension; the frame libraries |
@@ -95,6 +95,12 @@ place data were first written while reading the `test` split's errors, so `test`
 and `train` were not read for that, but `dev`'s most common error classes have since been looked at. So fix
 against `train`, check on `dev`, and use `dev` as the estimate (94.4% on the 0.7.0 release candidate, see [`benchmarks.md`](benchmarks.md), for data of that shape:
 one line, US street addresses, a city and a state).
+
+With `--with-libpostal` (libpostal built as in [`libpostal-compat.md`](libpostal-compat.md); its folder is
+`--libpostal-home`, else `$LIBPOSTAL_HOME`, else `~/projects/libpostal-senzing`), `accuracy.py` adds a table per
+split scoring doorplate, usaddress and libpostal on the common label set, and `geocode_paper_compare.py` adds a
+five-label table (house number, road with its directions and type merged, city, state, ZIP) for all three. libpostal
+gets no paper Parsing Score there: its `road` covers the four street labels the score weighs one by one.
 
 ### Fixing against `train` without overfitting
 

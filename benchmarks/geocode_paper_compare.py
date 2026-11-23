@@ -1,11 +1,16 @@
 """doorplate and usaddress on the geocode benchmark, scored the way its paper (Yin, Li and Goldberg, arXiv:2310.14360, Table 4)
 reports: F1 per label, the overall F1 and the weighted Parsing Score (weights from Texas A&M's geocoder).
 
-    python benchmarks/geocode_paper_compare.py [test] [dev] [train]
+    python benchmarks/geocode_paper_compare.py [--with-libpostal] [test] [dev] [train]
 
 Needs the extension, `usaddress` and the splits in `local-data/geocode-benchmark/` (see `docs/running-benchmarks.md`).
 Entity level (an exact span with its B/I tags) and token level are both printed; the paper does not say which it used.
 A leading road word such as `COUNTY ROAD` counts as street, as the benchmark labels it. Prints scores only.
+
+`--with-libpostal` adds libpostal (the Senzing build, `docs/libpostal-compat.md`; `$LIBPOSTAL_HOME`). libpostal gives the
+whole street, direction and type included, as one `road`, so it gets no per-label F1 on the paper's eight labels and no
+Parsing Score. Instead all three parsers are also scored on five labels: house number, ROAD (predirectional, street,
+road type and postdirectional as one), city, state and postal code.
 """
 import collections
 import sys
@@ -20,6 +25,9 @@ import usaddress
 SPLITS = ROOT / "local-data" / "geocode-benchmark"
 LAB = ["HOUSENUM", "PREDIRECTIONAL", "STREET", "ROADTYPE", "POSTDIRECTIONAL", "CITY", "STATE", "POSTAL"]
 W = dict(zip(LAB, [20, 7, 45, 10, 4, 17, 1, 45]))
+ROAD_PARTS = {"PREDIRECTIONAL", "STREET", "ROADTYPE", "POSTDIRECTIONAL"}
+LAB5 = ["HOUSENUM", "ROAD", "CITY", "STATE", "POSTAL"]
+LP2B = {"AddressNumber": "HOUSENUM", "StreetName": "ROAD", "PlaceName": "CITY", "StateName": "STATE", "ZipCode": "POSTAL"}
 UA2B = {"AddressNumber": "HOUSENUM", "StreetNamePreDirectional": "PREDIRECTIONAL", "StreetName": "STREET", "StreetNamePreType": "STREET", "StreetNamePreModifier": "STREET", "StreetNamePostType": "ROADTYPE",
         "StreetNamePostDirectional": "POSTDIRECTIONAL", "PlaceName": "CITY", "StateName": "STATE", "ZipCode": "POSTAL"}
 
@@ -57,6 +65,25 @@ def entities(tags):
     if cur: out.add(cur)
     return out
 
+def retag(labs):
+    """B-/I- tags from a list of labels (None is O): a run of one label is one entity."""
+    tags, prev = [], None
+    for l in labs:
+        if l is None: tags.append("O"); prev = None
+        else: tags.append(("I-" if l == prev else "B-") + l); prev = l
+    return tags
+
+def merge_road(tags):
+    """The same tags with the four street parts folded into one ROAD label."""
+    labs = [None if t == "O" else t.split("-", 1)[1] for t in tags]
+    return retag(["ROAD" if l in ROAD_PARTS else l for l in labs])
+
+def libpostal_tags(toks, parsed):
+    """Five-label tags (merge_road's set) of one address from libpostal's [(value, label)] pieces."""
+    s = " ".join(toks)
+    spans = C.libpostal_spans(s, parsed)
+    return retag([LP2B.get(C.overlap_label(sp, spans)) if sp else None for sp in C.byte_spans_ci(s, toks)])
+
 def predict_tags(lib, toks):
     s = " ".join(toks)
     try:
@@ -69,37 +96,65 @@ def predict_tags(lib, toks):
     for sp in gold_sp:
         l = C.norm(C.overlap_label(sp, spans)) if sp else None
         labs.append(UA2B.get(l))
-    tags, prev = [], None
-    for l in labs:
-        if l is None: tags.append("O"); prev = None
-        else: tags.append(("I-" if l == prev else "B-") + l); prev = l
-    return tags
+    return retag(labs)
 
-def run(split, libs=("dp", "ua"), limit=None):
-    res = {lib: {"ent": collections.defaultdict(lambda: [0, 0, 0]), "tok": collections.defaultdict(lambda: [0, 0, 0]), "addr": 0, "n": 0} for lib in libs}
-    for k, rec in enumerate(read(SPLITS / f"{split}.txt")):
-        if limit and k >= limit: break
+def new_counts():
+    return {"ent": collections.defaultdict(lambda: [0, 0, 0]), "tok": collections.defaultdict(lambda: [0, 0, 0]), "addr": 0, "n": 0}
+
+def tally(r, gold, ptags, labels):
+    """Add one address to r: entity and token true positives, false positives and misses per label, and the whole address."""
+    ge, pe = entities(gold), entities(ptags)
+    r["n"] += 1
+    strip = lambda tags: [t.split("-")[-1] for t in tags]
+    r["addr"] += strip(gold) == strip(ptags)
+    for lab in labels:
+        g = {e for e in ge if e[0] == lab}; p = {e for e in pe if e[0] == lab}
+        tp = len(g & p); r["ent"][lab][0] += tp; r["ent"][lab][1] += len(p) - tp; r["ent"][lab][2] += len(g) - tp
+        for gt, pt in zip(gold, ptags):
+            gl = gt.split("-", 1)[1] if gt != "O" else None; pl = pt.split("-", 1)[1] if pt != "O" else None
+            if gl == lab and pl == lab: r["tok"][lab][0] += 1
+            elif pl == lab: r["tok"][lab][1] += 1
+            elif gl == lab: r["tok"][lab][2] += 1
+
+def run(split, libs=("dp", "ua"), limit=None, with_libpostal=False):
+    """{lib: counts on the paper's eight labels}, and with libpostal {lib5: counts on the five merged labels} for all three."""
+    recs = list(read(SPLITS / f"{split}.txt"))[:limit]
+    lp = C.libpostal_run([" ".join(t for t, _ in rec) for rec in recs])["results"] if with_libpostal else None
+    res = {lib: new_counts() for lib in libs}
+    res5 = {lib: new_counts() for lib in (*libs, "lp")} if with_libpostal else {}
+    for k, rec in enumerate(recs):
         toks = [t for t, _ in rec]; gold = [g if g != "O" else "O" for _, g in rec]
-        ge = entities(gold)
+        gold5 = merge_road(gold) if with_libpostal else None
         for lib in libs:
-            ptags = predict_tags(lib, toks); pe = entities(ptags)
-            r = res[lib]
-            r["n"] += 1
-            strip = lambda tags: [t.split("-")[-1] for t in tags]
-            r["addr"] += strip(gold) == strip(ptags)
-            for lab in LAB:
-                g = {e for e in ge if e[0] == lab}; p = {e for e in pe if e[0] == lab}
-                tp = len(g & p); r["ent"][lab][0] += tp; r["ent"][lab][1] += len(p) - tp; r["ent"][lab][2] += len(g) - tp
-                for gt, pt in zip(gold, ptags):
-                    gl = gt.split("-", 1)[1] if gt != "O" else None; pl = pt.split("-", 1)[1] if pt != "O" else None
-                    if gl == lab and pl == lab: r["tok"][lab][0] += 1
-                    elif pl == lab: r["tok"][lab][1] += 1
-                    elif gl == lab: r["tok"][lab][2] += 1
-    return res
+            ptags = predict_tags(lib, toks)
+            tally(res[lib], gold, ptags, LAB)
+            if with_libpostal:
+                tally(res5[lib], gold5, merge_road(ptags), LAB5)
+        if with_libpostal:
+            tally(res5["lp"], gold5, libpostal_tags(toks, lp[k]), LAB5)
+    return res, res5
 
 def f1(tp, fp, fn):
     p = tp / (tp + fp) if tp + fp else 0; r = tp / (tp + fn) if tp + fn else 0
     return 2 * p * r / (p + r) if p + r else 0
+
+NAMES = (("dp", "doorplate"), ("ua", "usaddress"), ("lp", "libpostal"))
+
+def show5(split, res5):
+    """The five-label table (street parts merged into ROAD) for doorplate, usaddress and libpostal, entity level."""
+    if not res5:
+        return
+    pins = C.libpostal_pins()
+    print(f"\n### {split}: five labels, street parts merged (with libpostal {pins['commit'][:7]}, parser model {pins['parser_model']})")
+    print("\n| Entity F1 | " + " | ".join(nm for lib, nm in NAMES if lib in res5) + " |")
+    print("|---" * (1 + len(res5)) + "|")
+    for lab in LAB5:
+        print(f"| {lab} | " + " | ".join(f"{f1(*res5[lib]['ent'][lab]):.5f}" for lib, _ in NAMES if lib in res5) + " |")
+    def micro(r, kind):
+        return f1(*(sum(r[kind][l][i] for l in LAB5) for i in range(3)))
+    print("| **Overall F1** | " + " | ".join(f"{micro(res5[lib], 'ent'):.5f}" for lib, _ in NAMES if lib in res5) + " |")
+    print("| Token-level F1 | " + " | ".join(f"{micro(res5[lib], 'tok'):.5f}" for lib, _ in NAMES if lib in res5) + " |")
+    print("| Whole address | " + " | ".join(f"{100 * res5[lib]['addr'] / res5[lib]['n']:.2f}%" for lib, _ in NAMES if lib in res5) + " |")
 
 def show(split, res):
     print(f"\n### {split}")
@@ -114,5 +169,9 @@ def show(split, res):
         print(f"{nm:10} whole address (all 8 labels' tokens right): {r['addr']}/{r['n']} = {100*r['addr']/r['n']:.2f}%")
 
 if __name__ == "__main__":
-    for split in sys.argv[1:] or ["test"]:
-        show(split, run(split))
+    args = sys.argv[1:]
+    with_lp = "--with-libpostal" in args
+    for split in [a for a in args if a != "--with-libpostal"] or ["test"]:
+        res, res5 = run(split, with_libpostal=with_lp)
+        show(split, res)
+        show5(split, res5)

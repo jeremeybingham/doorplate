@@ -7,6 +7,10 @@ change to what an input produces needs a new key version.
 
 ## [Unreleased]
 
+### Added
+
+- **libpostal in the geocode benchmark.** `benchmarks/accuracy.py --with-libpostal` scores doorplate, usaddress and libpostal (the Senzing build) on the common label set for each geocode split, now including `train80` and `train20_heldout`; `benchmarks/geocode_paper_compare.py --with-libpostal` adds a five-label table (street parts merged) for all three. No library change.
+
 ## [0.7.1] - 2026-11-22
 
 A speed release: no key change, no parse change, no new warning.
