@@ -7,6 +7,14 @@ change to what an input produces needs a new key version.
 
 ## [Unreleased]
 
+## [0.7.1] - 2026-11-22
+
+A speed release: no key change, no parse change, no new warning.
+
+- **Keys and parsing are the same as 0.7.0.** Keys start `k6:` still; every speed change below was checked against the 0.7.0 build (the output hash of the suite inputs equal, and the seven-source key comparison with 0 changed keys, warnings or unit fields).
+- **Faster.** About 10% less time per parse than 0.7.0 and about 5% less than 0.6.2 on the pinned `profile_loop` (5.76 µs, against 6.39 µs for 0.7.0 and 6.06 µs for 0.6.2, one alternating session on one machine; the 5.70 µs goal was missed by about 1%). The speed page, [`docs/speed-and-size.md`](docs/speed-and-size.md), is updated after the release.
+- **New, optional.** The RESO 2.1 `StreetSuffix` word (`Street`) is an option; the default output is unchanged.
+
 ### Added
 
 - **RESO 2.1 `StreetSuffix` word as an option** (#729). `to_reso(suffix_form="word")` (Python), `to_reso_with(SuffixForm::Word)` (Rust) and `doorplate parse --suffix-form word` (the `reso` object) write the 2.1 lookup value (`Street`) instead of the Pub 28 abbreviation (`ST`). The default is unchanged, and no key, parse or other output changes.

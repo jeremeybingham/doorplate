@@ -8,7 +8,7 @@ in [`roadmap.md`](roadmap.md). **Last reviewed 2026-11-22.**
 | Milestone | What it is |
 |---|---|
 | **0.7.0** | The first beta and the `k6` (checklist #810, tracker #724); closes with the release |
-| **0.7.x** | Point releases with no key change: speed, tooling, documentation and opt-in output |
+| **0.7.x** | Point releases with no key change: speed, tooling, documentation and opt-in output (tracker #836; 0.7.1 is the speed release) |
 | **0.8.0** | The `k7`: the `version:K` issues measured at P2 or above, first the regressions the 0.7.0 key comparison found; the list is on [`roadmap.md`](roadmap.md) |
 | **Later** | Wanted or known, not planned: new API surface, parse rules below the P2 line, anything waiting on demand or a decision. The list by kind is on [`roadmap.md`](roadmap.md), "Waiting" |
 | **Tooling** | Tooling not planned for a release (harness, review tool, benchmarks and CI items waiting for a rule or a decision): never shipped, never closed |
