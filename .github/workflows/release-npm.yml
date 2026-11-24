@@ -1,0 +1,62 @@
+name: Release npm
+# Builds the WebAssembly file in CI, tests the package and publishes `doorplate` to npm through
+# trusted publishing (OIDC, no stored token) with provenance. Runs when a version tag is pushed.
+# The npm trusted publisher is configured for this file name and the `npm` environment.
+# A manual run builds and tests, then stops before publishing.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  publish:
+    # Never runs from a fork or the archived development repository.
+    if: github.repository == 'jeremeybingham/doorplate'
+    runs-on: ubuntu-latest
+    environment: npm
+    permissions:
+      contents: read
+      id-token: write
+    defaults:
+      run:
+        working-directory: crates/doorplate-js
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@v2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+      - name: The tag matches the workspace version and package.json
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          crate=$(cargo metadata --no-deps --format-version 1 \
+            | python3 -c "import json,sys; print(next(p['version'] for p in json.load(sys.stdin)['packages'] if p['name']=='doorplate'))")
+          pkg=$(node -p "require('./package.json').version")
+          test "v$crate" = "${GITHUB_REF_NAME}" || { echo "tag ${GITHUB_REF_NAME} != crate version v$crate"; exit 1; }
+          test "$pkg" = "$crate" || { echo "package.json $pkg != crate version $crate"; exit 1; }
+      - name: Build the wasm in CI (a locally built file is never published)
+        run: |
+          rm -f doorplate.wasm
+          npm run build:wasm
+          npm ci
+      - run: npm test
+      - run: npm run types
+      - name: Packed size stays under 2.5 MB
+        run: |
+          size=$(npm pack --json | jq '.[0].size')
+          echo "packed: $size bytes"
+          test "$size" -lt 2500000
+      - name: Publish
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          # A pre-release version (0.7.2-dev, 0.8.0-rc.1) must never become `latest`.
+          tag=latest
+          case "$(node -p "require('./package.json').version")" in *-*) tag=next ;; esac
+          npm publish --provenance --access public --tag "$tag"
