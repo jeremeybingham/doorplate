@@ -1870,6 +1870,9 @@ impl Tagger<'_> {
     fn attention(&mut self, lo: usize, hi: usize) -> (usize, usize) {
         let lex = self.lex;
         let word = |k: usize| {
+            if !lex.attention_may_occur(&self.toks[k].text) {
+                return None;
+            }
             longest_at(self.toks, k, self.special_hi(k, hi), |s| {
                 lex.special(s).filter(|l| l.value == Special::Attention)
             })
