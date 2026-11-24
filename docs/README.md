@@ -13,7 +13,7 @@ New to the project? Read the [project README](../README.md), then
 | Page | What it covers |
 |---|---|
 | [`index.md`](index.md), [`getting-started.md`](getting-started.md) | The home page of the site; install, a first parse, what it does not do |
-| [`python.md`](python.md), [`command-line.md`](command-line.md), [`rust.md`](rust.md) | The tour for each way of using it: Python, the command, the Rust crate |
+| [`python.md`](python.md), [`command-line.md`](command-line.md), [`rust.md`](rust.md), [`javascript.md`](javascript.md) | The tour for each way of using it: Python, the command, the Rust crate, JavaScript (WebAssembly) |
 | [`dataframes.md`](dataframes.md) | pandas, Polars and DuckDB: a column, a table or a file, with timings |
 | [`README.md`](../README.md) | What it is, quickstart, install, the benchmarks at a glance, what it does not do, and links to the guides |
 | [`crates/doorplate-py/README.md`](../crates/doorplate-py/README.md) | The Python package (PyPI): install, quickstart, links to the guides |

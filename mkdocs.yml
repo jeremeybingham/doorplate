@@ -88,6 +88,7 @@ nav:
   - Python:
       - Python guide: python.md
       - Python reference: python-api.md
+      - JavaScript guide: javascript.md
       - Examples: https://github.com/jeremeybingham/doorplate/tree/main/examples
   - Command line:
       - Command-line guide: command-line.md

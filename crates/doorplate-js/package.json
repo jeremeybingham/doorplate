@@ -1,0 +1,44 @@
+{
+  "name": "doorplate",
+  "version": "0.7.2-dev",
+  "description": "Parse US addresses into components, a stable match key and USPS-style lines. Rust compiled to WebAssembly; runs in Node and in the browser, nothing leaves the machine.",
+  "type": "module",
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "default": "./src/index.js"
+    },
+    "./doorplate.wasm": "./doorplate.wasm",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "src",
+    "doorplate.wasm",
+    "LICENSE-MIT",
+    "LICENSE-APACHE",
+    "NOTICE"
+  ],
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build:wasm": "cargo build -p doorplate-wasm --target wasm32-unknown-unknown --release && cp ../../target/wasm32-unknown-unknown/release/doorplate_wasm.wasm doorplate.wasm",
+    "test": "node --test",
+    "types": "tsc --noEmit -p test/tsconfig.json"
+  },
+  "devDependencies": {
+    "typescript": "~5.6.0"
+  },
+  "license": "MIT OR Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jeremeybingham/doorplate.git",
+    "directory": "crates/doorplate-js"
+  },
+  "homepage": "https://doorplate.readthedocs.io/",
+  "bugs": "https://github.com/jeremeybingham/doorplate/issues",
+  "keywords": ["address", "address-parser", "usps", "geocoding", "webassembly", "wasm", "normalization", "pub28"]
+}

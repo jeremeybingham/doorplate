@@ -9,6 +9,8 @@ change to what an input produces needs a new key version.
 
 ### Added
 
+- **A JavaScript package, `crates/doorplate-js` (#878, not published yet).** The wasm build of the demo with an `init()` loader, `parse`, `parseFields` and `parseBatch`, TypeScript types, tests against the native `doorplate parse` (`tools/js_fixtures.py`) and a CI job on Node 18, 20 and 22. Packed 2.0 MB; no key or output change. Guide: `docs/javascript.md`.
+
 - **libpostal in the geocode benchmark.** `benchmarks/accuracy.py --with-libpostal` scores doorplate, usaddress and libpostal (the Senzing build) on the common label set for each geocode split, now including `train80` and `train20_heldout`; `benchmarks/geocode_paper_compare.py --with-libpostal` adds a five-label table (street parts merged) for all three. No library change.
 
 ### Changed

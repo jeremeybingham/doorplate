@@ -30,9 +30,45 @@ jobs:
         run: cargo build -p doorplate-wasm --target wasm32-unknown-unknown --release
       - name: Each package carries the same license files and NOTICE as the repository root
         run: |
-          for d in crates/doorplate crates/doorplate-cli crates/doorplate-py; do
+          for d in crates/doorplate crates/doorplate-cli crates/doorplate-py crates/doorplate-js; do
             for f in LICENSE-MIT LICENSE-APACHE NOTICE; do cmp "$f" "$d/$f"; done
           done
+
+  # The JavaScript package (#878): the demo's wasm plus a loader, tested against the native parser's records.
+  node:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: [18, 20, 22]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@v2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Build the wasm and install
+        working-directory: crates/doorplate-js
+        run: |
+          npm run build:wasm
+          npm ci
+      - name: Fixtures are current (native records regenerate to the committed file)
+        run: |
+          cargo build --release -p doorplate-cli
+          python3 tools/js_fixtures.py
+          git diff --exit-code crates/doorplate-js/test/fixtures.json
+      - run: npm test
+        working-directory: crates/doorplate-js
+      - run: npm run types
+        working-directory: crates/doorplate-js
+      - name: Packed size stays under 2.5 MB
+        working-directory: crates/doorplate-js
+        run: |
+          size=$(npm pack --json | jq '.[0].size')
+          echo "packed: $size bytes"
+          test "$size" -lt 2500000
 
   # Line coverage of the Rust code, uploaded to Codecov. A separate job: the instrumented rebuild
   # takes a few minutes and must not slow the `rust` job. Informational only (see codecov.yml).
