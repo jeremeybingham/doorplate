@@ -1,6 +1,6 @@
 {
   "name": "doorplate",
-  "version": "0.7.2-dev",
+  "version": "0.7.2",
   "description": "Parse US addresses into components, a stable match key and USPS-style lines. Rust compiled to WebAssembly; runs in Node and in the browser, nothing leaves the machine.",
   "type": "module",
   "main": "./src/index.js",

@@ -2,13 +2,12 @@
 
 The `doorplate` npm package is the Rust parser compiled to WebAssembly (`crates/doorplate-wasm`, the same file
 the [live demo](https://jeremeybingham.github.io/doorplate/demo/) runs) with a small loader around it
-(`crates/doorplate-js`). It is on npm as [`doorplate`](https://www.npmjs.com/package/doorplate). Until 0.7.2 is released, only the
-pre-release `0.7.2-dev` exists, under the `next` tag.
+(`crates/doorplate-js`). It is on npm as [`doorplate`](https://www.npmjs.com/package/doorplate).
 
 ## Install and use
 
 ```sh
-npm install doorplate@next      # plain `npm install doorplate` once 0.7.2 is released
+npm install doorplate
 ```
 
 Node 18 or newer; ES modules only (`import`, not `require`, although Node 22 can `require()` an ES module). Nothing
