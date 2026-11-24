@@ -84,6 +84,6 @@ names are used only to say what the output follows or is compared with.
 ## More
 - [Documentation site](https://doorplate.readthedocs.io/en/latest/): the [command-line guide](https://doorplate.readthedocs.io/en/latest/command-line/) and [reference](https://doorplate.readthedocs.io/en/latest/cli/), [custom layers](https://doorplate.readthedocs.io/en/latest/custom-layers/), [anonymizing](https://doorplate.readthedocs.io/en/latest/anonymizing/), the [key](https://doorplate.readthedocs.io/en/latest/key-format/) and [how it works](https://doorplate.readthedocs.io/en/latest/how-it-works/).
 - [Project README](https://github.com/jeremeybingham/doorplate#readme).
-- The library is [`doorplate`](https://crates.io/crates/doorplate); the Python package is [`doorplate` on PyPI](https://pypi.org/project/doorplate/).
+- The library is [`doorplate`](https://crates.io/crates/doorplate); the Python package is [`doorplate` on PyPI](https://pypi.org/project/doorplate/); the JavaScript package is [`doorplate` on npm](https://www.npmjs.com/package/doorplate).
 
 Licensed under either of MIT or Apache-2.0 at your option.

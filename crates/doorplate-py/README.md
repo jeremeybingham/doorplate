@@ -113,7 +113,7 @@ names are used only to say what the output follows or is compared with.
 
 ## More
 - [Documentation site](https://doorplate.readthedocs.io/en/latest/): the [key](https://doorplate.readthedocs.io/en/latest/key-format/), [warnings](https://doorplate.readthedocs.io/en/latest/warnings/) and [how it works](https://doorplate.readthedocs.io/en/latest/how-it-works/).
-- [Project README](https://github.com/jeremeybingham/doorplate#readme): what it does, the Rust library, the command-line tool.
+- [Project README](https://github.com/jeremeybingham/doorplate#readme): what it does, the Rust library, the command-line tool, the JavaScript package.
 - [Examples](https://github.com/jeremeybingham/doorplate/tree/main/examples): a notebook tour and a pipeline for each DataFrame library.
 
 Licensed under either of MIT or Apache-2.0 at your option.
