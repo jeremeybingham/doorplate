@@ -32,7 +32,7 @@
 
 use std::ops::Range;
 
-use super::{Decision, PlaceCtx, Tag, Tagger};
+use super::{Decision, PlaceCtx, PlaceHit, Tag, Tagger};
 use crate::classify::{
     all_digits, has_digit, house_number, is_bare_unit, is_cut_designator, is_fraction,
     is_glued_ordinal, is_grid_number, is_grid_part, is_letter, is_lettered_route, is_ordinal,
@@ -513,6 +513,7 @@ impl Tagger<'_> {
         let first_number = lo < hi && house_number(self.text(lo)).is_some();
         let min = if first_number { lo + 2 } else { lo };
         let mut best: Option<(usize, bool)> = None;
+        let mut best_hit = None;
         for k in min.max(hi.saturating_sub(MAX_PLACE_WORDS))..hi {
             let run = &self.toks[k..hi];
             if run.iter().any(|t| has_digit(&t.text) || t.is_hash()) {
@@ -529,7 +530,17 @@ impl Tagger<'_> {
             // agrees with it and not with the longer one.
             if !matches!(best, Some((_, a)) if a || !agrees) {
                 best = Some((k, agrees));
+                best_hit = Some((k, hit));
             }
+        }
+        // Kept for `place::resolve`, which asks for the same city text (#874). The text is
+        // built only for the run chosen, once per call.
+        if let Some((k, hit)) = best_hit {
+            *self.place_hit.borrow_mut() = Some(PlaceHit {
+                state: ctx.state,
+                text: (*join_ref(&self.toks[k..hi])).to_owned(),
+                hit,
+            });
         }
         if best.is_some() && ctx.hinted {
             self.hint_used.set(true);

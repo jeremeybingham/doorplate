@@ -122,6 +122,17 @@ pub(crate) struct Tagged {
     /// The letter read as a unit after the house number is the same as the unit written at the
     /// end (`123 B ELM ST APT B`, #693): one unit written twice, so `assemble` drops the copy.
     pub letter_repeats_unit: bool,
+    /// The last place the tagger looked up and found for the city, for `place::resolve` to reuse
+    /// when the assembled city is the same text (#874).
+    pub place_hit: Option<PlaceHit>,
+}
+
+/// A curated-place lookup the tagger made: the state and text asked, and the answer.
+#[derive(Clone)]
+pub(crate) struct PlaceHit {
+    pub state: &'static str,
+    pub text: String,
+    pub hit: crate::lexicon::Lookup<crate::types::Place>,
 }
 
 /// Lengths used for the truncation check.
@@ -163,6 +174,8 @@ pub(crate) struct Tagger<'a> {
     hint: Option<&'static str>,
     /// Whether a place found under the hint decided a tag.
     hint_used: std::cell::Cell<bool>,
+    /// The place found by the last `place_city` call that found one (#874).
+    place_hit: std::cell::RefCell<Option<PlaceHit>>,
     /// Feature bits of the input, set once by one pass over the tokens (#672 D1): a rule group
     /// whose bit is clear cannot match anywhere in the input and is skipped.
     features: Features,
@@ -234,6 +247,7 @@ impl<'a> Tagger<'a> {
             places: None,
             hint,
             hint_used: std::cell::Cell::new(false),
+            place_hit: std::cell::RefCell::new(None),
             features: Features::of(toks, lex),
         }
     }
@@ -453,6 +467,7 @@ impl<'a> Tagger<'a> {
             warnings: self.warnings,
             decisions: self.decisions,
             letter_repeats_unit,
+            place_hit: self.place_hit.into_inner(),
         }
     }
 }
