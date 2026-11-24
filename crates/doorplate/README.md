@@ -108,6 +108,6 @@ names are used only to say what the output follows or is compared with.
 ## More
 - [Rust guide](https://doorplate.readthedocs.io/en/latest/rust/), [API documentation](https://docs.rs/doorplate) and the [documentation site](https://doorplate.readthedocs.io/en/latest/) (how it works, the match key, warnings, custom layers).
 - [Project README](https://github.com/jeremeybingham/doorplate#readme): what it does, accuracy and speed, the Python package.
-- For CSV files without code, [`doorplate-cli`](https://crates.io/crates/doorplate-cli); for pandas, Polars and DuckDB, the [Python package](https://pypi.org/project/doorplate/).
+- For CSV files without code, [`doorplate-cli`](https://crates.io/crates/doorplate-cli); for pandas, Polars and DuckDB, the [Python package](https://pypi.org/project/doorplate/); for Node and the browser, the [npm package](https://www.npmjs.com/package/doorplate).
 
 Licensed under either of MIT or Apache-2.0 at your option.

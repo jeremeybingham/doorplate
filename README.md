@@ -9,15 +9,17 @@
 [![docs.rs](https://docs.rs/doorplate/badge.svg)](https://docs.rs/doorplate)
 [![PyPI](https://img.shields.io/pypi/v/doorplate.svg)](https://pypi.org/project/doorplate/)
 [![PyPI Downloads](https://static.pepy.tech/personalized-badge/doorplate?period=weekly&units=INTERNATIONAL_SYSTEM&left_color=BLACK&right_color=GREEN&left_text=downloads%2Fweek)](https://pepy.tech/projects/doorplate)
+[![npm](https://img.shields.io/npm/v/doorplate.svg)](https://www.npmjs.com/package/doorplate)
 [![Wheels](https://github.com/jeremeybingham/doorplate/actions/workflows/wheels.yml/badge.svg)](https://github.com/jeremeybingham/doorplate/actions/workflows/wheels.yml)
 [![License: MIT OR Apache-2.0](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue.svg)](#license)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](crates/doorplate-py/README.md)
 [![Rust 1.80+](https://img.shields.io/badge/rustc-1.80%2B-orange.svg)](Cargo.toml)
 
 Parse US addresses into components, with USPS Publication 28 and RESO output, a canonical
-match key, a URL-safe slug, and diagnostics. A Rust library with a Python package and a
-command-line tool (abi3 wheels for Python 3.10 and later); no runtime dependencies, no data
-to download, no machine-learned model, and parsing never panics.
+match key, a URL-safe slug, and diagnostics. A Rust library with a Python package (abi3 wheels
+for Python 3.10 and later), a JavaScript package (WebAssembly, for Node and the browser) and a
+command-line tool; no runtime dependencies, no data to download, no machine-learned model, and
+parsing never panics.
 
 **[Try it in your browser](https://jeremeybingham.github.io/doorplate/demo/)**: type an address and watch it
 be taken apart, with the output, as you type, or drop in a CSV file and download it with the parsed columns added (the
@@ -132,7 +134,7 @@ every page, for GitHub readers). Start with [Getting started](https://doorplate.
 
 | Page | Contents |
 |---|---|
-| [Python guide](https://doorplate.readthedocs.io/en/latest/python/), [command-line guide](https://doorplate.readthedocs.io/en/latest/command-line/), [Rust guide](https://doorplate.readthedocs.io/en/latest/rust/) | The tours, one per way of using it; the reference is [Python](https://doorplate.readthedocs.io/en/latest/python-api/), [command line](https://doorplate.readthedocs.io/en/latest/cli/) and [docs.rs](https://docs.rs/doorplate) |
+| [Python guide](https://doorplate.readthedocs.io/en/latest/python/), [command-line guide](https://doorplate.readthedocs.io/en/latest/command-line/), [Rust guide](https://doorplate.readthedocs.io/en/latest/rust/), [JavaScript guide](https://doorplate.readthedocs.io/en/latest/javascript/) | The tours, one per way of using it; the reference is [Python](https://doorplate.readthedocs.io/en/latest/python-api/), [command line](https://doorplate.readthedocs.io/en/latest/cli/), [docs.rs](https://docs.rs/doorplate) and the [npm package](https://www.npmjs.com/package/doorplate) |
 | [pandas, Polars and DuckDB](https://doorplate.readthedocs.io/en/latest/dataframes/) | A column, split fields, a table or a CSV file, one call per shape; runnable versions in [`examples/`](examples/README.md) |
 | [`docs/how-it-works.md`](docs/how-it-works.md), [`docs/places.md`](docs/places.md) | The pipeline and the design choices; the place data |
 | [`docs/key-format.md`](docs/key-format.md), [`docs/warnings.md`](docs/warnings.md) | The match key (the contract); what each warning tells you |

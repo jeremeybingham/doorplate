@@ -19,6 +19,13 @@ cargo add doorplate                   # the library
 cargo install doorplate-cli           # the `doorplate` command
 ```
 
+**JavaScript** (Node 18 or later, or a browser through a bundler; WebAssembly, no dependencies; the
+[JavaScript guide](javascript.md)):
+
+```sh
+npm install doorplate
+```
+
 Wheels are built for Linux (x86_64, aarch64), macOS (universal2) and Windows (x64), and tested on Python 3.10 and 3.13.
 
 **From source** (Rust 1.80 or later; the Python extension needs 1.83):

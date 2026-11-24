@@ -1,7 +1,7 @@
 # doorplate
 
 Parse US addresses into components, with USPS Publication 28 and RESO output, a canonical match key, a URL-safe
-slug, and diagnostics. A Rust library with a Python package and a command-line tool; no runtime dependencies, no data
+slug, and diagnostics. A Rust library with a Python package, a JavaScript package (WebAssembly) and a command-line tool; no runtime dependencies, no data
 to download, no machine-learned model, and parsing never panics.
 
 ```python
@@ -19,7 +19,7 @@ a.key()                # "k6:S|123|N|MAIN|ST||FL|33101"
 | If you want to | Go to |
 |---|---|
 | Install it and parse an address | [Getting started](getting-started.md) |
-| Use it from Python, a shell, Rust or a DataFrame | [Python](python.md), [Command line](command-line.md), [Rust](rust.md), [pandas, Polars and DuckDB](dataframes.md) |
+| Use it from Python, a shell, Rust, JavaScript or a DataFrame | [Python](python.md), [Command line](command-line.md), [Rust](rust.md), [JavaScript](javascript.md), [pandas, Polars and DuckDB](dataframes.md) |
 | Understand what it does and why | [How it works](how-it-works.md), [Warnings](warnings.md), [The match key](key-format.md) |
 | See how accurate and fast it is | [Accuracy and speed](benchmarks.md) |
 | Add your own spellings, or share messy data safely | [Custom layers](custom-layers.md), [Anonymizing](anonymizing.md) |
@@ -30,7 +30,7 @@ a.key()                # "k6:S|123|N|MAIN|ST||FL|33101"
 | Fix a bug, add a rule, run the tools | [Development](change-checklist.md): the checklist, the tools, the tests, the benchmarks, the roadmap |
 
 Install and a first parse are in [Getting started](getting-started.md); the tours are the [Python guide](python.md),
-the [command-line guide](command-line.md), the [Rust guide](rust.md) and [pandas, Polars and DuckDB](dataframes.md).
+the [command-line guide](command-line.md), the [Rust guide](rust.md), the [JavaScript guide](javascript.md) and [pandas, Polars and DuckDB](dataframes.md).
 
 !!! warning "It parses and formats; it does not validate"
     doorplate does not check that an address exists or can receive mail. Pub 28 formatting is not deliverability, and

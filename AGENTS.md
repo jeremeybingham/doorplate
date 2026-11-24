@@ -6,8 +6,10 @@ and adds the project's own process requirements.
 
 `doorplate` parses US addresses into components, USPS Publication 28 and RESO Data
 Dictionary 2.0 output, a canonical match key and a slug, with diagnostics. It is a
-pure-Rust library (`crates/doorplate`), a command-line tool (`crates/doorplate-cli`)
-and a Python package built with PyO3 and maturin (`crates/doorplate-py`). **It formats
+pure-Rust library (`crates/doorplate`), a command-line tool (`crates/doorplate-cli`),
+a Python package built with PyO3 and maturin (`crates/doorplate-py`) and a JavaScript
+package for npm, the core compiled to WebAssembly (`crates/doorplate-js`, built from
+`crates/doorplate-wasm`). **It formats
 and parses; it does not validate that an address exists or can receive mail.** Do not
 imply otherwise in docs or code comments.
 
@@ -17,6 +19,7 @@ imply otherwise in docs or code comments.
 |---|---|
 | Install and a first parse (Python) | [`crates/doorplate-py/README.md`](crates/doorplate-py/README.md) (PyPI: `pip install doorplate`) |
 | Install and a first parse (Rust) | [`crates/doorplate/README.md`](crates/doorplate/README.md) (`cargo add doorplate`), API on [docs.rs](https://docs.rs/doorplate) |
+| Install and a first parse (JavaScript) | [`crates/doorplate-js/README.md`](crates/doorplate-js/README.md) (npm: `npm install doorplate`), guide in [`docs/javascript.md`](docs/javascript.md) |
 | The command-line tool | [`crates/doorplate-cli/README.md`](crates/doorplate-cli/README.md) (`cargo install doorplate-cli`) |
 | Runnable examples (notebook, pandas and Polars pipelines, Rust) | [`examples/README.md`](examples/README.md) |
 | What the match key is and when it changes | [`docs/key-format.md`](docs/key-format.md) |
@@ -102,4 +105,4 @@ Plain `cargo test` needs no Python. Rust 1.80 or later; the Python extension nee
 - `docs/`: design notes and the sources of every rule. `tools/`: verification, fuzzing,
   corpus, comparison, the harness (`tools/harness/`, offline, private data) and the
   ingest tool that turns any address source into one record format (`tools/ingest/`; `tools/review/`, a local page where a person labels the hard rows of a run, #122; specs for
-  private sources live with their data in `local-data/`; `inventory.py` there tabulates what is in `local-data/`). `site/`: the blog and the live demo, published to GitHub Pages (`site/README.md`); `crates/doorplate-wasm/`: the core compiled to WebAssembly for the demo. `benchmarks/`: speed, accuracy and size scripts, and the benchmark suite (`benchmarks/suite.py`, its data in `benchmarks/suite/v1/`, which is frozen, and `v2/`, the same records scored with the letter convention; its generator, `tools/benchsuite/`, needs private data).
+  private sources live with their data in `local-data/`; `inventory.py` there tabulates what is in `local-data/`). `site/`: the blog and the live demo, published to GitHub Pages (`site/README.md`); `crates/doorplate-wasm/`: the core compiled to WebAssembly for the demo and the npm package (`crates/doorplate-js/`). `benchmarks/`: speed, accuracy and size scripts, and the benchmark suite (`benchmarks/suite.py`, its data in `benchmarks/suite/v1/`, which is frozen, and `v2/`, the same records scored with the letter convention; its generator, `tools/benchsuite/`, needs private data).
