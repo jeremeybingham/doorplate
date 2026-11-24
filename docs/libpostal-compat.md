@@ -19,7 +19,7 @@ Examples are invented. This library formats and parses; it does not validate tha
 
 | | libpostal | doorplate |
 |---|---|---|
-| Language, license | C; MIT. Official bindings for Python (`pypostal`, installed as `postal`), Ruby, Go, Java, PHP and NodeJS; others are unofficial | Rust; MIT or Apache-2.0. A Python package and a command-line tool |
+| Language, license | C; MIT. Official bindings for Python (`pypostal`, installed as `postal`), Ruby, Go, Java, PHP and NodeJS; others are unofficial | Rust; MIT or Apache-2.0. A Python package, a command-line tool and an npm package (WebAssembly) |
 | Scope | The world: the parser is trained for every inhabited country; normalization covers "60+ languages" | The United States only, by design |
 | How it parses | A conditional random field (CRF) trained on over a billion addresses (OpenStreetMap, OpenAddresses and templates for formatting addresses) | Rules, a lexicon and place data; no model to train or ship |
 | What it returns | `parse_address`: a flat list of labeled pieces. `expand_address`: normalized variants of the input | Components, USPS Publication 28 lines, RESO fields, a key, a slug, warnings and byte spans |

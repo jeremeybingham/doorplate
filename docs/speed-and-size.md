@@ -141,6 +141,7 @@ for `parse_many` on the same strings (an older run on all 14 threads, not repeat
 | `doorplate` CLI binary (release, as built) | 6.8 MB (6.6 MB stripped) |
 | `doorplate` wheel (abi3, one wheel per platform) | 2.5 MB (6.6 MB unpacked) |
 | The extension module inside it | 6.4 MB |
+| The npm package (`crates/doorplate-js`), packed | 2.0 MB (5.5 MB unpacked, 1.5 MB brotli); the `.wasm` is mostly the place and street tables. In Node 20: init 25 ms, `parse` about 60 µs, `parseBatch` about 26 µs a row (2026-11-24) |
 | `usaddress` and its dependencies, installed | 4.8 MB (the model is 0.1 MB; the rest is python-crfsuite) |
 
 The binary and the extension are 1.5 MB larger than in 0.6.1 (5.2 to 6.7 MB, 4.8 to 6.3 MB): from 0.6.2 `build.rs` writes the place and

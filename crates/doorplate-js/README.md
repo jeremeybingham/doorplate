@@ -4,8 +4,9 @@ Parse US addresses into components, a stable match key and USPS-style lines. The
 WebAssembly: it runs in Node and in the browser, with no dependencies and no network access. In a browser page
 the addresses never leave the visitor's machine.
 
-> **Beta, not yet published to npm.** The package is built from the same wasm as the
+> **Beta.** The package is built from the same wasm as the
 > [live demo](https://jeremeybingham.github.io/doorplate/demo/) and checked against the native build.
+> Until 0.7.2 is released, install the pre-release: `npm install doorplate@next`.
 
 ```js
 import { init } from "doorplate";
