@@ -7,6 +7,10 @@ change to what an input produces needs a new key version.
 
 ## [Unreleased]
 
+## [0.7.2] - 2026-11-24
+
+No parse output and no match key changed: `k6` keys are the same as in 0.7.1 and 0.7.0.
+
 ### Added
 
 - **A JavaScript package, `crates/doorplate-js` (#878).** The wasm build of the demo with an `init()` loader, `parse`, `parseFields` and `parseBatch`, TypeScript types, tests against the native `doorplate parse` (`tools/js_fixtures.py`) and a CI job on Node 18, 20 and 22. Packed 2.0 MB; no key or output change. On npm as `doorplate` (`0.7.2-dev` under the `next` tag until the release); `.github/workflows/release-npm.yml` publishes from CI with provenance. Guide: `docs/javascript.md`.
@@ -14,6 +18,8 @@ change to what an input produces needs a new key version.
 - **libpostal in the geocode benchmark.** `benchmarks/accuracy.py --with-libpostal` scores doorplate, usaddress and libpostal (the Senzing build) on the common label set for each geocode split, now including `train80` and `train20_heldout`; `benchmarks/geocode_paper_compare.py --with-libpostal` adds a five-label table (street parts merged) for all three. No library change.
 
 ### Changed
+
+- **Faster (0.7.0 to 0.7.2).** On one pinned CPU, 0.7.2 takes 5.27 µs per parse against 6.34 µs for 0.7.0 (16.9% less time) and 5.72 µs for 0.7.1 (7.9% less), and 37,945 instructions against 48,910 and 42,789 (22.4% and 11.3% fewer). `parse_many` into DataFrames and the suite's `speed` command gain similarly (`docs/speed-and-size.md`). Accuracy figures stay at 0.7.0; the 0.7.2 row of the showdown's releases appendix is speed only.
 
 - **Slightly faster parsing, about 0.35% fewer instructions per parse** (callgrind, 20,000 parses). The place search builds each word's place key once for all the runs of words it tries, and `assemble` reuses the lookup of the state run that the address state already made. Keys, warnings and units are unchanged.
 

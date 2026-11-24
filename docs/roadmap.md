@@ -4,7 +4,7 @@ What is planned, what waits, and what is not planned. Priorities follow the data
 addresses `doorplate` sees, the sooner the items below can happen ([Sharing messy data](../CONTRIBUTING.md#sharing-messy-data)).
 Labels, milestones and ordering: [`backlog.md`](backlog.md). What each release changed is in [`CHANGELOG.md`](../CHANGELOG.md).
 
-**Last reviewed 2026-11-22.** 0.7.0 is the first **beta** and cuts the `k6`; 0.7.1 is a speed release with no key change. Next: 0.8.0 (the `k7`).
+**Last reviewed 2026-11-24.** 0.7.0 is the first **beta** and cuts the `k6`; 0.7.1 and 0.7.2 are speed releases with no key change; 0.7.2 adds the npm package. Next: 0.8.0 (the `k7`).
 Open trackers: #724 and #332 (closed with the 0.7.0 release), #761 (glued strings, Later), #417 (decided against).
 
 ## Stability: beta from 0.7.0
@@ -18,6 +18,7 @@ Open trackers: #724 and #332 (closed with the 0.7.0 release), #761 (glued string
 
 ## Released
 
+- **0.7.2, speed and the npm package, no key change** (checklist #882, npm #878). About 8% less time per parse than 0.7.1 and 17% less than 0.7.0 (22% fewer instructions than 0.7.0); the `doorplate` package on npm (wasm, ESM, `init()` then `parse`, `parseFields`, `parseBatch`). Output and keys are the same as 0.7.1.
 - **0.7.1, speed, no key change** (tracker #836). About 10% less time per parse than 0.7.0 and about 5% less than 0.6.2, from gating
   scans that the line cannot need and reusing per-parse buffers; the RESO 2.1 full-word suffix as an option (#729). Output and keys are
   the same as 0.7.0.
@@ -29,12 +30,12 @@ Open trackers: #724 and #332 (closed with the 0.7.0 release), #761 (glued string
 - **0.6.2 and 0.6.1:** speed, no key change (about 25% and 27% less time per parse than the release before). Blog post:
   [doorplate 0.6.1](https://jeremeybingham.github.io/doorplate/2026/11/13/doorplate-0-6-1.html).
 
-## Next: after 0.7.1
+## Next: after 0.7.2
 
 Point releases carry speed, tooling, documentation and opt-in output, never a key change; a 0.7.x patch is cut from
 `release/0.7.x` once `main` carries `k7` work. A CI guard fails a pull request that adds more than 1% instructions per parse.
 
-- **Post and figures (#835):** the 0.7.1 speed figures, the official showdown figures after the rerun, the post.
+- **Post and figures (#835):** the 0.7.2 speed figures, the official showdown figures after the rerun, the post.
 - **Speed, later (#712):** the remaining leads (PGO, a duplicate-input memo, a smaller `ParsedAddress`, shape-first) and the last 1% of the goal.
 - **Puerto Rico follow-ups (#818, #833) and usaddress dependents (#723, #728, #731):** pudl was 86.0% in agreement on 0.7.0, not good enough to ask yet; the parse changes wait for 0.8.0.
 

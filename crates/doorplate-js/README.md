@@ -25,8 +25,8 @@ dp.parseBatch(["1 Main St, Reno NV 89501", "..."]); // { columns, rows } like `d
 read a sibling file, such as Cloudflare Workers. Node 18 or newer; ES modules only. Bundlers (Vite, webpack 5,
 Next) pick up `doorplate.wasm` through `new URL(..., import.meta.url)`.
 
-**Size and speed:** the package is 2.0 MB packed (5.5 MB unpacked, 1.5 MB with brotli), mostly place and street
-tables. In Node, init takes about 25 ms, one `parse` about 60 µs, and `parseBatch` about 26 µs a row.
+**Size and speed:** the package is 2.0 MB packed (5.6 MB unpacked, 1.5 MB with brotli), mostly place and street
+tables. In Node, init takes about 22 ms, one `parse` about 53 µs, and `parseBatch` about 23 µs a row.
 
 Guide: [JavaScript](https://doorplate.readthedocs.io/en/latest/javascript/). The records, the key and the
 warning codes are the same as the command line and Python.
