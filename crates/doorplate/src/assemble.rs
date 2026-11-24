@@ -9,33 +9,44 @@
 use crate::classify::{
     all_digits, is_fraction, is_ordinal, join, spelled_number, spelled_ordinal, zip_parts,
 };
+use crate::lexicon::Lookup;
 use crate::lexicon::{Lexicons, MatchKind, Special};
 use crate::tagger::{Tag, Tagged};
 use crate::tokenize::Token;
 use crate::types::{
     Component, ComponentSpan, Highway, MilitaryBox, ParsedAddress, RouteKind, RuralRoute, Span,
-    Warning,
+    StateCode, Warning,
 };
 use crate::FieldName;
 
 /// The state of the address before it is assembled: the tagged state, else
 /// the main place's state for the tagged ZIP. The curated rows read some
 /// spellings differently (`SR` is STATE ROAD in Florida).
-fn address_state(runs: &[(Tag, &[Token])], lex: &Lexicons) -> Option<&'static str> {
+///
+/// The second value is the lookup of the first `State` run (`None` when there is no such run,
+/// `Some(None)` when it is not a state), which the `State` arm reuses (#875).
+fn address_state(
+    runs: &[(Tag, &[Token])],
+    lex: &Lexicons,
+) -> (Option<&'static str>, Option<Option<Lookup<StateCode>>>) {
     let text_of = |tag: Tag| {
         runs.iter()
             .find(|(t, _)| *t == tag)
             .map(|(_, run)| crate::classify::join_ref(run))
     };
-    if let Some(l) = text_of(Tag::State).and_then(|t| lex.state(&t)) {
-        return Some(l.value.code());
+    let first = text_of(Tag::State).map(|t| lex.state(&t));
+    if let Some(Some(l)) = first {
+        return (Some(l.value.code()), first);
     }
-    let text = text_of(Tag::Zip)?;
-    let z5 = match zip_parts(&text) {
-        Some((z5, _)) => z5.to_string(),
-        None => crate::classify::zip_repair(&text, true)?.0,
+    let from_zip = || {
+        let text = text_of(Tag::Zip)?;
+        let z5 = match zip_parts(&text) {
+            Some((z5, _)) => z5.to_string(),
+            None => crate::classify::zip_repair(&text, true)?.0,
+        };
+        Some(lex.zip_places(&z5)?.main().state())
     };
-    Some(lex.zip_places(&z5)?.main().state())
+    (from_zip(), first)
 }
 
 /// Original text for a span (single-line input or one field).
@@ -75,7 +86,7 @@ pub(crate) fn assemble(
 
     // The address's own state; with none, the parser's `default_state`.
     addr.source.spans.reserve(toks.len() + 1);
-    let own_state = address_state(&runs, lex);
+    let (own_state, mut first_state) = address_state(&runs, lex);
     let state = own_state.or(hint);
     let hinted = own_state.is_none() && hint.is_some();
     let mut unparsed: Vec<String> = Vec::new();
@@ -375,7 +386,11 @@ pub(crate) fn assemble(
                 record(addr, Component::City);
             }
             Tag::State => {
-                if let Some(l) = lex.state(&text) {
+                let found = match first_state.take() {
+                    Some(f) => f,
+                    None => lex.state(&text),
+                };
+                if let Some(l) = found {
                     addr.state.get_or_insert(l.value);
                     record(addr, Component::State);
                 }

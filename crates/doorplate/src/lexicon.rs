@@ -1578,20 +1578,30 @@ impl Lexicons {
     /// `"BOCA RATOM"` -> BOCA RATON ([`MatchKind::Variant`]). `None` when
     /// neither the national list nor curated rows have it.
     pub fn place(&self, state: &str, s: &str) -> Option<Lookup<Place>> {
-        self.with_place_key(Some(state), s, |key| {
-            if let Some((i, kind)) = find_place(key) {
-                return Some(Lookup {
-                    value: place_row(i)?,
-                    kind,
-                });
-            }
-            let layer = self.layer?;
-            let &(i, kind) = layer.place_index.get(key)?;
-            Some(Lookup {
-                value: *layer.places.get(i)?,
+        self.with_place_key(Some(state), s, |key| self.place_by_key(key))
+    }
+
+    /// [`Self::place`] on a finished key (`STATE|` and the words' keys, see [`Self::place_word_key`]).
+    pub(crate) fn place_by_key(&self, key: &str) -> Option<Lookup<Place>> {
+        if let Some((i, kind)) = find_place(key) {
+            return Some(Lookup {
+                value: place_row(i)?,
                 kind,
-            })
+            });
+        }
+        let layer = self.layer?;
+        let &(i, kind) = layer.place_index.get(key)?;
+        Some(Lookup {
+            value: *layer.places.get(i)?,
+            kind,
         })
+    }
+
+    /// The place key of one token's text, appended to `out`. The key of a run of tokens is the
+    /// keys of its tokens one after the other, so a caller that asks about several runs of the
+    /// same tokens builds each token's key once (#875).
+    pub(crate) fn place_word_key(&self, s: &str, out: &mut String) {
+        self.place_key_into(s, out);
     }
 
     /// Whether `s` names a place (by name, not a listed misspelling) in any
