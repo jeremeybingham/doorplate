@@ -6,7 +6,6 @@ the addresses never leave the visitor's machine.
 
 > **Beta.** The package is built from the same wasm as the
 > [live demo](https://jeremeybingham.github.io/doorplate/demo/) and checked against the native build.
-> Until 0.7.2 is released, install the pre-release: `npm install doorplate@next`.
 
 ```js
 import { init } from "doorplate";
