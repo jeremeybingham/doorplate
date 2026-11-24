@@ -47,8 +47,8 @@ import.meta.url))` in a browser or bundler (checked with Vite). Pass your own so
 
 ## Size, speed, privacy
 
-2.0 MB packed, 5.5 MB unpacked, 1.5 MB brotli; init about 25 ms; one `parse` about 60 µs, `parseBatch` about
-26 µs a row (Node 20, 2026-11-24, `docs/speed-and-size.md` has the native figures). Nothing is uploaded and the
+2.0 MB packed, 5.6 MB unpacked, 1.5 MB brotli; init about 22 ms; one `parse` about 53 µs, `parseBatch` about
+23 µs a row (Node 20, 2026-11-24, `docs/speed-and-size.md` has the native figures). Nothing is uploaded and the
 package loads no third-party script; its only network use is fetching its own `.wasm` in a browser.
 
 ## Not in this package yet

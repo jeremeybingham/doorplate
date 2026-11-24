@@ -38,6 +38,6 @@ the [command-line guide](command-line.md), the [Rust guide](rust.md) and [pandas
 
 !!! note "Beta"
     The API, the command-line options and the warning codes are stable from 0.7.0. The match key is versioned (`k6:`)
-    and may get a new version in a minor release as the parser improves, so store the version prefix with your keys. Accuracy and speed are measurements on a few data sets, not guarantees.
+    and may get a new version in a minor release as the parser improves. Accuracy and speed are measurements on a few data sets, not guarantees.
     If it parses your addresses badly, please
     [open an issue](https://github.com/jeremeybingham/doorplate/issues/new?template=misparse-or-messy-data.md).

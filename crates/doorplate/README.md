@@ -15,7 +15,7 @@ parsing never panics.
 This library formats and parses; it **does not validate** that an address exists or
 can receive mail.
 
-> **Beta release (0.7.1).** The API, the command-line options and the warning codes are stable: a name changes only after a deprecation. The match key may still get a new version in a minor release (store the prefix with your keys).
+> **Beta release (0.7.1).** The API, the command-line options and the warning codes are stable: a name changes only after a deprecation. The match key may still get a new version in a minor release.
 > The match key is versioned (`k6:`) and later versions will probably change it, so store
 > the prefix with your keys and plan to re-key. `k6` has only been checked on the project's own data (public records). Accuracy and speed are measurements on a few datasets, not guarantees.
 >
@@ -86,7 +86,7 @@ Batches, pre-split fields, PO boxes, military and general delivery, and the `Ano
 Every row is from the showdown's pinned run of 2026-11-23: the published doorplate 0.7.1 (it parses exactly as 0.7.0),
 usaddress 0.5.16 and libpostal (Senzing model), at default settings on 4 CPUs. The geocode benchmark is Yin, Li and Goldberg,
 [arXiv:2310.14360](https://arxiv.org/abs/2310.14360). doorplate's author built the showdown: the method, the conflict of interest and
-every prediction file are in [its report](https://github.com/jeremeybingham/address-parser-showdown/blob/main/report/REPORT.md). From Rust, one address takes 2 to 5 µs (criterion, the 0.7.0 release candidate). These are
+every prediction file are in [its report](https://github.com/jeremeybingham/address-parser-showdown/blob/main/report/REPORT.md). From Rust, one address takes 1.6 to 4.5 µs (criterion, 0.7.2). These are
 measurements on a few data sets, not promises for yours. doorplate's own benchmark suite, the other checks and the speed figures by build:
 [benchmarks](https://doorplate.readthedocs.io/en/latest/benchmarks/) and [speed, size and memory](https://doorplate.readthedocs.io/en/latest/speed-and-size/).
 
