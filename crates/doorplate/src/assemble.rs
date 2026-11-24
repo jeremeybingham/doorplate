@@ -54,6 +54,7 @@ pub(crate) fn assemble(
         warnings,
         decisions,
         letter_repeats_unit,
+        place_hit: _,
     } = tagged;
     addr.diagnostics.decisions = decisions;
     for w in warnings {

@@ -13,10 +13,16 @@
 
 use crate::classify::{house_number, NumberShape};
 use crate::lexicon::{Lexicons, MatchKind, ZipPlaces};
+use crate::tagger::PlaceHit;
 use crate::types::{ParsedAddress, Place, PlaceMatch, PlaceSource, Warning};
 
-pub(crate) fn resolve(addr: &mut ParsedAddress, lex: &Lexicons, hint: Option<&'static str>) {
-    resolve_place(addr, lex, hint);
+pub(crate) fn resolve(
+    addr: &mut ParsedAddress,
+    lex: &Lexicons,
+    hint: Option<&'static str>,
+    seen: Option<&PlaceHit>,
+) {
+    resolve_place(addr, lex, hint, seen);
     queens_number(addr);
 }
 
@@ -47,7 +53,12 @@ fn queens_number(addr: &mut ParsedAddress) {
     }
 }
 
-fn resolve_place(addr: &mut ParsedAddress, lex: &Lexicons, hint: Option<&'static str>) {
+fn resolve_place(
+    addr: &mut ParsedAddress,
+    lex: &Lexicons,
+    hint: Option<&'static str>,
+    seen: Option<&PlaceHit>,
+) {
     let zip = addr.zip5.as_deref().and_then(|z| lex.zip_places(z));
     // The state written on the address wins; with none, the ZIP's.
     // With neither a state nor a known ZIP, the parser's `default_state`.
@@ -72,9 +83,11 @@ fn resolve_place(addr: &mut ParsedAddress, lex: &Lexicons, hint: Option<&'static
     // `VILLAGE OF PINECREST`: the name as written first (`CITY OF INDUSTRY` is
     // a place), then what follows the prefix, then a cut-off one.
     let bare = lex.strip_place_prefix(city);
-    let found = lookup(lex, state, city)
+    // The tagger's own lookup of this very text is reused, not repeated (#874).
+    let reuse = seen.filter(|h| h.state == state && h.text == city);
+    let found = lookup(lex, state, city, reuse)
         .or_else(|| {
-            let m = lookup(lex, state, bare?)?;
+            let m = lookup(lex, state, bare?, None)?;
             Some(PlaceMatch {
                 source: PlaceSource::Variant,
                 ..m
@@ -105,12 +118,15 @@ fn resolve_place(addr: &mut ParsedAddress, lex: &Lexicons, hint: Option<&'static
 
 /// The city by name or listed spelling. A trailing copy of the state
 /// (`BOCA RATON FL` in a city field) is ignored.
-fn lookup(lex: &Lexicons, state: &str, city: &str) -> Option<PlaceMatch> {
-    let hit = lex.place(state, city).or_else(|| {
-        let (head, last) = city.rsplit_once(' ')?;
-        let same = lex.state(last)?.value.code() == state;
-        same.then(|| lex.place(state, head)).flatten()
-    })?;
+fn lookup(lex: &Lexicons, state: &str, city: &str, reuse: Option<&PlaceHit>) -> Option<PlaceMatch> {
+    let hit = reuse
+        .map(|h| h.hit)
+        .or_else(|| lex.place(state, city))
+        .or_else(|| {
+            let (head, last) = city.rsplit_once(' ')?;
+            let same = lex.state(last)?.value.code() == state;
+            same.then(|| lex.place(state, head)).flatten()
+        })?;
     let source = match hit.kind {
         MatchKind::Standard => PlaceSource::Name,
         _ => PlaceSource::Variant,

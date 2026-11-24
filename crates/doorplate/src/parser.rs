@@ -164,7 +164,7 @@ impl Parser {
             whole: Some(input.trim().chars().count()),
         };
         let cut = intersection::find(&toks, &self.lex);
-        let tagged = match &cut {
+        let mut tagged = match &cut {
             Some(c) => {
                 let kept = intersection::remove(&toks, c);
                 let mut t = tag_line(&kept, self.lex, lens, self.default_state);
@@ -174,6 +174,7 @@ impl Parser {
             None => tag_line(&toks, self.lex, lens, self.default_state),
         };
         let mut addr = ParsedAddress::empty(input.to_string(), InputKind::SingleLine, None);
+        let place_hit = tagged.place_hit.take();
         assemble(
             &mut addr,
             &toks,
@@ -182,7 +183,7 @@ impl Parser {
             self.default_state,
             &|s: &Span| input.get(s.start..s.end),
         );
-        place::resolve(&mut addr, &self.lex, self.default_state);
+        place::resolve(&mut addr, &self.lex, self.default_state, place_hit.as_ref());
         addr.diagnostics.custom_layer = self.lex.layer();
         if country {
             addr.diagnostics.warn(Warning::CountryIgnored);
@@ -287,7 +288,7 @@ impl Parser {
             whole: None,
         };
         let cut = intersection::find(&toks, &self.lex);
-        let tagged = match &cut {
+        let mut tagged = match &cut {
             Some(c) => {
                 let kept = intersection::remove(&toks, c);
                 let shifted: Vec<_> = ranges
@@ -307,6 +308,7 @@ impl Parser {
         };
         let mut addr =
             ParsedAddress::empty(fields.joined(), InputKind::Fields, Some(fields.clone()));
+        let place_hit = tagged.place_hit.take();
         assemble(
             &mut addr,
             &toks,
@@ -315,7 +317,7 @@ impl Parser {
             self.default_state,
             &source,
         );
-        place::resolve(&mut addr, &self.lex, self.default_state);
+        place::resolve(&mut addr, &self.lex, self.default_state, place_hit.as_ref());
         addr.diagnostics.custom_layer = self.lex.layer();
         if country {
             addr.diagnostics.warn(Warning::CountryIgnored);
