@@ -19,8 +19,9 @@ crates/
     benches/                criterion benchmarks
   doorplate-cli/            the `doorplate` binary
   doorplate-py/             PyO3 bindings, the Python package, its tests
-  doorplate-wasm/           the core compiled to WebAssembly for the demo page (not published; shares
-                            the command-line tool's json.rs)
+  doorplate-wasm/           the core compiled to WebAssembly for the demo page and the npm package (not
+                            published itself; shares the command-line tool's json.rs)
+  doorplate-js/             the npm package: ES module loader, types, tests (`node --test`), README
 tests/corpus/               golden corpus (JSONL) and its baseline
 tests/external/usaddress/   usaddress's labeled test files (MIT, vendored)
 tools/                      corpus emitter expectations, usaddress comparison, place list, Pub 28 checks,
@@ -67,9 +68,9 @@ docs/                       the documentation (the source of the site)
   Publication 28 pages and runs every Appendix F example through the parser.
 - **CI**: `cargo fmt --check`, `clippy -D warnings`, `cargo test --workspace
   --all-features`, the corpus report, the emitter-expectation check, a package
-  build and a check of the license files, an sdist build in a clean environment, a short
+  build and a check of the license files, the npm package (Node 18, 20 and 22: tests, types and a packed-size limit), an sdist build in a clean environment, a short
   fuzz smoke run of each target, a line-coverage job (`cargo llvm-cov`, uploaded to Codecov; informational, `codecov.yml`), a parse-speed guard on pull requests (instructions per parse under callgrind against the base, fails above +1%; [Profiling the engine](running-benchmarks.md#profiling-the-engine)), the Python suite, the ingest, harness and review tools' tests and the wheel build. The benchmark
-  suite and the two release workflows run by hand or on a version tag; the Pages workflow
+  suite and the three release workflows (crates.io, PyPI, npm) run by hand or on a version tag; the Pages workflow
   runs when `site/` or the parser changes on `main`. CI also builds `doorplate-wasm` for
   `wasm32-unknown-unknown`, so a change to the core cannot break the demo.
 

@@ -74,10 +74,10 @@ to a Pub 28 table should be checked with `tools/pub28/verify.py`.
 
 ## Package pages and READMEs
 
-Four READMEs are shown on package pages and must not drift apart: `README.md` (GitHub), `crates/doorplate/README.md` and
-`crates/doorplate-cli/README.md` (crates.io), and `crates/doorplate-py/README.md` (PyPI). If your change affects the API, CLI options, install
+Five READMEs are shown on package pages and must not drift apart: `README.md` (GitHub), `crates/doorplate/README.md` and
+`crates/doorplate-cli/README.md` (crates.io), `crates/doorplate-py/README.md` (PyPI) and `crates/doorplate-js/README.md` (npm). If your change affects the API, CLI options, install
 steps, features, minimum Rust or Python versions, warning codes, the key format, figures, or the beta and help-wanted notices, update every README it
-touches in the same pull request. Links in the three crate READMEs are absolute (crates.io and PyPI do not resolve relative ones), and each keeps the
+touches in the same pull request. Links in the four package READMEs are absolute (crates.io, PyPI and npm do not resolve relative ones), and each keeps the
 Disclaimer section. They are short on purpose: the detail lives in the tours in
 `docs/`, and a README keeps its install lines, a quickstart and the "Accuracy and speed" table copied from [`docs/benchmarks.md`](docs/benchmarks.md): the parser showdown's figures, one run, three parsers.
 

@@ -83,6 +83,12 @@ cargo add doorplate                   # the library
 cargo install doorplate-cli           # the `doorplate` command
 ```
 
+**JavaScript** (Node 18 or later, or a browser through a bundler; WebAssembly, no dependencies):
+
+```sh
+npm install doorplate@next            # 0.7.2-dev; plain `npm install doorplate` once 0.7.2 is released
+```
+
 To build from source, see [Getting started](https://doorplate.readthedocs.io/en/latest/getting-started/#install).
 
 ## Accuracy and speed

@@ -2,9 +2,19 @@
 
 The `doorplate` npm package is the Rust parser compiled to WebAssembly (`crates/doorplate-wasm`, the same file
 the [live demo](https://jeremeybingham.github.io/doorplate/demo/) runs) with a small loader around it
-(`crates/doorplate-js`). It is not published to npm yet (#878); until then, build it from the repository.
+(`crates/doorplate-js`). It is on npm as [`doorplate`](https://www.npmjs.com/package/doorplate). Until 0.7.2 is released, only the
+pre-release `0.7.2-dev` exists, under the `next` tag.
 
-## Build and use
+## Install and use
+
+```sh
+npm install doorplate@next      # plain `npm install doorplate` once 0.7.2 is released
+```
+
+Node 18 or newer; ES modules only (`import`, not `require`, although Node 22 can `require()` an ES module). Nothing
+else is installed: the package has no dependencies and no install scripts.
+
+## Build from the repository
 
 ```sh
 cd crates/doorplate-js
@@ -43,5 +53,5 @@ package loads no third-party script; its only network use is fetching its own `.
 
 ## Not in this package yet
 
-The release workflow and npm publish, a CommonJS build, Python-parity helpers (key helpers, custom layers,
-`anonymize`) and a recipe for edge runtimes. They are follow-ups on #878.
+A CommonJS build, Python-parity helpers (key helpers, custom layers,
+`anonymize`) and a recipe for edge runtimes. They are follow-ups on #878. The release is `release-npm.yml` (trusted publishing, provenance), run by a `v*` tag with the other two release workflows.
