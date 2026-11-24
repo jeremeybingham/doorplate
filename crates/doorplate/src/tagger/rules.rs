@@ -514,12 +514,35 @@ impl Tagger<'_> {
         let min = if first_number { lo + 2 } else { lo };
         let mut best: Option<(usize, bool)> = None;
         let mut best_hit = None;
-        for k in min.max(hi.saturating_sub(MAX_PLACE_WORDS))..hi {
+        // The key of a run is the keys of its tokens in a row, and the runs share their last
+        // tokens: each token's key is built once, and a run's key is `STATE|` and the tail of
+        // `keys` from its first token (#875).
+        let first = min.max(hi.saturating_sub(MAX_PLACE_WORDS));
+        let mut keys = String::new();
+        let mut starts = [0usize; MAX_PLACE_WORDS];
+        for (n, t) in self
+            .toks
+            .get(first..hi)
+            .unwrap_or_default()
+            .iter()
+            .enumerate()
+        {
+            if let Some(s) = starts.get_mut(n) {
+                *s = keys.len();
+            }
+            self.lex.place_word_key(&t.text, &mut keys);
+        }
+        let mut run_key = String::new();
+        for k in first..hi {
             let run = &self.toks[k..hi];
             if run.iter().any(|t| has_digit(&t.text) || t.is_hash()) {
                 continue;
             }
-            let Some(hit) = self.lex.place(ctx.state, &join_ref(run)) else {
+            run_key.clear();
+            run_key.push_str(ctx.state);
+            run_key.push('|');
+            run_key.push_str(&keys[starts.get(k - first).copied().unwrap_or(0)..]);
+            let Some(hit) = self.lex.place_by_key(&run_key) else {
                 continue;
             };
             let agrees = ctx.zip.is_some_and(|z| z.contains(&hit.value));

@@ -13,6 +13,8 @@ change to what an input produces needs a new key version.
 
 ### Changed
 
+- **Slightly faster parsing, about 0.35% fewer instructions per parse** (callgrind, 20,000 parses). The place search builds each word's place key once for all the runs of words it tries, and `assemble` reuses the lookup of the state run that the address state already made. Keys, warnings and units are unchanged.
+
 - **Faster parsing, about 10.6% fewer instructions per parse** (callgrind, 20,000 parses). The tokenizer works out whether a state or ZIP follows a glued city only when a glued word needs it. An exact suffix test runs before the known-word lookup for glued words. A first-word gate skips the attention-word search on most tokens. Plain words take a shortcut when building the place key. Keys, warnings and units are unchanged on the seven sources.
 
 - **Faster parsing, about 0.46% fewer instructions per parse** (callgrind, 20,000 parses, #874). The tagger's place lookup for the city is reused by `place::resolve` when the assembled city is the same text, instead of being looked up again. Keys, warnings and units are unchanged.
