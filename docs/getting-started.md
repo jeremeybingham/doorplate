@@ -110,6 +110,7 @@ Only input with no address text at all is an error.
 | You have | Read |
 |---|---|
 | A script, in Python | [Python guide](python.md), then the [reference](python-api.md) |
+| A web page or Node script | [JavaScript guide](javascript.md) (WebAssembly; not on npm yet) |
 | A column, a table or a CSV file | [pandas, Polars and DuckDB](dataframes.md), or the [command line](command-line.md) |
 | Rust code | [Rust guide](rust.md) |
 | Addresses that misparse | [Custom layers](custom-layers.md); to report them safely, [Anonymizing data](anonymizing.md) |
