@@ -48,7 +48,7 @@ use std::cell::RefCell;
 #[derive(Default)]
 struct Vecs {
     pieces: Vec<(usize, usize, usize)>,
-    scan: Vec<(usize, bool, bool)>,
+    scan: Vec<usize>,
 }
 
 thread_local! {
@@ -184,28 +184,18 @@ pub(crate) fn tokenize<'a>(
         .map(|&(na, nb, _)| trim_to_alnum(&text[na..nb]))
         .collect();
     // Segments never go down from one piece to the next (`edge_groups` shifts a group and every
-    // segment after it by the same amount), so for each piece, one pass from the end gives the
-    // end of its segment (`seg_end`), whether the piece there is a state or a ZIP
-    // (`anchor_at`), and whether any piece from there on is one (`anchor_from`).
+    // segment after it by the same amount), so one pass from the end gives the end of each
+    // piece's segment. Whether a state or a ZIP follows is asked only when a glued city needs it
+    // (`later_flags`).
     debug_assert!(pieces.windows(2).all(|w| w[0].2 <= w[1].2));
-    // One vector for the three, so this costs one allocation: `(seg_end, anchor_at, anchor_from)`.
     let n = pieces.len();
-    scan.resize(n + 1, (n, false, false));
+    scan.resize(n + 1, n);
     for k in (0..n).rev() {
-        // A piece that starts with a digit is no state (unless a layer adds one): skip the lookup (#839).
-        let at = if !lex.state_may_start_with_digit()
-            && words[k].as_bytes().first().is_some_and(u8::is_ascii_digit)
-        {
-            zip_parts(words[k]).is_some()
-        } else {
-            lex.state(words[k]).is_some() || zip_parts(words[k]).is_some()
-        };
-        let seg_end = if k + 1 < n && pieces[k + 1].2 == pieces[k].2 {
-            scan[k + 1].0
+        scan[k] = if k + 1 < n && pieces[k + 1].2 == pieces[k].2 {
+            scan[k + 1]
         } else {
             k + 1
         };
-        scan[k] = (seg_end, at, at || scan[k + 1].2);
     }
     let mut out = Vec::with_capacity(pieces.len() + 2);
     let mut in_paren = false;
@@ -219,19 +209,17 @@ pub(crate) fn tokenize<'a>(
         });
         // The words after this piece in its segment, for a city glued to
         // the street.
-        let seg_end = scan[k].0;
+        let seg_end = scan[k];
         let after = &words[k + 1..seg_end];
         // The next segment starts with a state or a ZIP: the glued city's end.
-        let later_seg = scan[seg_end].1;
-        let later_anchor = scan[seg_end].2;
+        let later = &words[seg_end..];
         let first = out.len();
         let mut p = Piece {
             cleaned,
             field,
             seg,
             after,
-            later_seg,
-            later_anchor,
+            later,
             out: &mut out,
         };
         let raw = &text[a..b];
@@ -841,10 +829,8 @@ struct Piece<'a, 'o> {
     seg: usize,
     /// The words after this piece in its segment.
     after: &'o [&'o str],
-    /// Whether another segment follows this one.
-    later_seg: bool,
-    /// Whether a later segment holds a state or a ZIP.
-    later_anchor: bool,
+    /// The words of the later segments.
+    later: &'o [&'o str],
     out: &'o mut Vec<Token<'a>>,
 }
 
@@ -1043,8 +1029,7 @@ impl<'a> Piece<'a, '_> {
                     t,
                     self.before(),
                     self.after,
-                    self.later_seg,
-                    self.later_anchor,
+                    || later_flags(self.later, lex),
                     lex,
                 )
             });
@@ -1343,7 +1328,12 @@ fn glue_split(
             return Some(cut);
         }
     }
-    if alpha_lead == n && next_numeric && n >= 4 && !known_word(t, lex) {
+    if alpha_lead == n
+        && next_numeric
+        && n >= 4
+        && lex.suffix_prefix_up_to(t, n - 2)
+        && !known_word(t, lex)
+    {
         // CTAPT 107, DRUNIT 142: a suffix followed by a designator.
         for cut in 2..n - 1 {
             let (l, r) = t.split_at(cut);
@@ -1394,12 +1384,15 @@ fn glue_place<B: AsRef<str>>(
     t: &str,
     before: &[B],
     rest: &[&str],
-    later_seg: bool,
-    later_anchor: bool,
+    later: impl Fn() -> (bool, bool),
     lex: &Lexicons,
 ) -> Option<usize> {
     let n = t.len();
-    if n < 5 || !t.bytes().all(|c| c.is_ascii_alphabetic()) || known_word(t, lex) {
+    if n < 5
+        || !t.bytes().all(|c| c.is_ascii_alphabetic())
+        || !lex.suffix_prefix_up_to(t, n - 3)
+        || known_word(t, lex)
+    {
         return None;
     }
     let after = &rest[..rest.len().min(MAX_PLACE_WORDS)];
@@ -1408,6 +1401,7 @@ fn glue_place<B: AsRef<str>>(
     // first use.
     let ends_mask = std::cell::OnceCell::new();
     let ends_at = || -> u32 {
+        let (later_seg, later_anchor) = later();
         let mut mask = 0;
         for j in 0..=after.len().min(MAX_PLACE_WORDS - 1) {
             let ends = match after.get(j) {
@@ -1468,6 +1462,17 @@ fn glue_place<B: AsRef<str>>(
         return None;
     }
     Some(cut)
+}
+
+/// Whether the next segment starts with a state or a ZIP, and whether any later one holds one.
+fn later_flags(later: &[&str], lex: &Lexicons) -> (bool, bool) {
+    // A word that starts with a digit is no state (unless a layer adds one): skip the lookup (#839).
+    let digit_state = lex.state_may_start_with_digit();
+    let anchor = |w: &&str| {
+        let digit = w.as_bytes().first().is_some_and(u8::is_ascii_digit);
+        ((digit_state || !digit) && lex.state(w).is_some()) || zip_parts(w).is_some()
+    };
+    (later.first().is_some_and(anchor), later.iter().any(anchor))
 }
 
 /// A state code that is also a street suffix (`CT`, `KY`, `MT`, `WY`, `LA`) ends
@@ -1633,7 +1638,7 @@ mod tests {
             let (later_seg, later_anchor) = (next() % 2 == 0, next() % 4 == 0);
             let want =
                 glue_place_vetoes_first(&t, before.clone(), &rest, later_seg, later_anchor, &lex);
-            let got = glue_place(&t, &before, &rest, later_seg, later_anchor, &lex);
+            let got = glue_place(&t, &before, &rest, || (later_seg, later_anchor), &lex);
             assert_eq!(got, want, "{t} {rest:?}");
             if got.is_some() {
                 some += 1;

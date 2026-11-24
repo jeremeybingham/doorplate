@@ -660,6 +660,42 @@ impl Lexicons {
             || self.highway(s).is_some()
     }
 
+    /// Whether `t[..cut]` is a suffix for some `cut` from 2 to `max` (`t` ASCII letters): the
+    /// same answer as asking [`Self::suffix`] at every cut. Always true with a layer.
+    pub(crate) fn suffix_prefix_up_to(&self, t: &str, max: usize) -> bool {
+        // The all-letter keys, sorted, and for each upper-case pair of first letters the range of
+        // keys that start with it.
+        type Keys = (Vec<&'static str>, Vec<(u16, u16)>);
+        static KEYS: OnceLock<Keys> = OnceLock::new();
+        let [a, b, ..] = *t.as_bytes() else {
+            return false;
+        };
+        if self.layer.is_some() || !a.is_ascii_uppercase() || !b.is_ascii_uppercase() {
+            return true;
+        }
+        let (keys, ranges) = KEYS.get_or_init(|| {
+            let mut k: Vec<&'static str> = tables::SUFFIX_INDEX
+                .iter()
+                .map(|(k, _)| *k)
+                .filter(|k| k.len() >= 2 && k.bytes().all(|c| c.is_ascii_uppercase()))
+                .collect();
+            k.sort_unstable();
+            let mut r = vec![(0u16, 0u16); 26 * 26];
+            for (n, key) in k.iter().enumerate() {
+                let s = two_letter_slot(key.as_bytes()[0], key.as_bytes()[1]);
+                if r[s].1 == 0 {
+                    r[s].0 = n as u16;
+                }
+                r[s].1 = n as u16 + 1;
+            }
+            (k, r)
+        });
+        let (from, to) = ranges[two_letter_slot(a, b)];
+        keys[usize::from(from)..usize::from(to)]
+            .iter()
+            .any(|k| k.len() <= max && t.as_bytes().starts_with(k.as_bytes()))
+    }
+
     /// [`Self::suffix`] for a spelling that is already a key (see [`normalize_key`]).
     fn suffix_key(&self, key: &str) -> Option<Lookup<StreetSuffix>> {
         self.suffix_base(key)
@@ -851,6 +887,20 @@ impl Lexicons {
         self.layer.is_some()
             || may_start_any(&FIRST, first, || {
                 tables::SPECIAL_INDEX.iter().map(|(k, _)| *k).collect()
+            })
+    }
+
+    /// [`Self::special_may_occur`] for the attention words alone (`ATTN`, `C/O`): false means no
+    /// attention word starts here.
+    pub(crate) fn attention_may_occur(&self, first: &str) -> bool {
+        static FIRST: OnceLock<(Filter, Vec<&'static str>)> = OnceLock::new();
+        self.layer.is_some()
+            || may_start_any(&FIRST, first, || {
+                tables::SPECIAL_INDEX
+                    .iter()
+                    .filter(|(_, (v, _))| *v == Special::Attention)
+                    .map(|(k, _)| *k)
+                    .collect()
             })
     }
 
@@ -2381,6 +2431,49 @@ mod tests {
             }
         }
         assert!(checked > 10_000, "{checked}");
+    }
+
+    /// `suffix_prefix_up_to` says no only when no cut from 2 to `max` is a suffix: checked against
+    /// `suffix` at every cut, on every suffix key with letters appended and on random letter words.
+    #[test]
+    fn suffix_prefix_gate_matches_suffix_at_every_cut() {
+        let mut words: Vec<String> = tables::SUFFIX_INDEX
+            .iter()
+            .flat_map(|(k, _)| [k.to_string(), format!("{k}ABC"), format!("{k}VILLE")])
+            .filter(|w| w.bytes().all(|c| c.is_ascii_uppercase()))
+            .collect();
+        let mut x: u64 = 0x9E37_79B9_7F4A_7C15;
+        for _ in 0..50_000 {
+            x ^= x << 13;
+            x ^= x >> 7;
+            x ^= x << 17;
+            let n = 2 + (x % 10) as usize;
+            words.push(
+                (0..n)
+                    .map(|i| (b'A' + ((x >> (i * 5)) % 26) as u8) as char)
+                    .collect(),
+            );
+        }
+        for w in &words {
+            for max in 2..=w.len() {
+                let any = (2..=max).any(|cut| LEX.suffix(&w[..cut]).is_some());
+                if any {
+                    assert!(LEX.suffix_prefix_up_to(w, max), "{w} {max}");
+                }
+            }
+        }
+    }
+
+    /// `attention_may_occur` says yes to the first word of every attention key, in any case.
+    #[test]
+    fn attention_gate_admits_every_attention_key() {
+        for (k, (v, _)) in tables::SPECIAL_INDEX {
+            if *v == Special::Attention {
+                let first = k.split(' ').next().unwrap();
+                assert!(LEX.attention_may_occur(first), "{k}");
+                assert!(LEX.attention_may_occur(&first.to_lowercase()), "{k}");
+            }
+        }
     }
 
     /// The gate in `state_may_start_with_digit` is exact for the shipped table (#839).

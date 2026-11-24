@@ -36,14 +36,22 @@ where
 {
     for word in s.split(|c: char| c.is_whitespace() || c == '-' || c == '/') {
         let start = out.len();
-        for c in word.chars() {
-            // ASCII is the common case: its upper case is one byte, no iterator.
-            if c.is_ascii() {
-                if c.is_ascii_alphanumeric() {
-                    out.push(c.to_ascii_uppercase());
+        // A word of upper-case ASCII letters and digits (most of them) is its own key text.
+        if word
+            .bytes()
+            .all(|c| c.is_ascii_uppercase() || c.is_ascii_digit())
+        {
+            out.push_str(word);
+        } else {
+            for c in word.chars() {
+                // ASCII is the common case: its upper case is one byte, no iterator.
+                if c.is_ascii() {
+                    if c.is_ascii_alphanumeric() {
+                        out.push(c.to_ascii_uppercase());
+                    }
+                } else if c.is_alphanumeric() {
+                    out.extend(c.to_uppercase());
                 }
-            } else if c.is_alphanumeric() {
-                out.extend(c.to_uppercase());
             }
         }
         let replacement = match &out[start..] {

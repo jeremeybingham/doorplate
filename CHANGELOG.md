@@ -13,6 +13,8 @@ change to what an input produces needs a new key version.
 
 ### Changed
 
+- **Faster parsing, about 10.6% fewer instructions per parse** (callgrind, 20,000 parses). The tokenizer works out whether a state or ZIP follows a glued city only when a glued word needs it. An exact suffix test runs before the known-word lookup for glued words. A first-word gate skips the attention-word search on most tokens. Plain words take a shortcut when building the place key. Keys, warnings and units are unchanged on the seven sources.
+
 - **Figures from the showdown's second pinned run** (2026-11-23, doorplate 0.7.1, the rebuilt libpostal): the summary, the README tables and the speed page now quote its speed and memory (doorplate about 117,000 strings per second in one process, 13 times usaddress and 7.5 times libpostal); the Parser Score (91.8) is unchanged. `docs/benchmarks.md` adds libpostal to the benchmark suite (common labels), the geocode splits and a five-label paper table; `docs/speed-and-size.md` adds libpostal to the suite's `speed` table.
 
 ## [0.7.1] - 2026-11-22
