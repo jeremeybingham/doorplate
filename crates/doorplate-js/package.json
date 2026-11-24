@@ -26,7 +26,7 @@
   },
   "scripts": {
     "build:wasm": "cargo build -p doorplate-wasm --target wasm32-unknown-unknown --release && cp ../../target/wasm32-unknown-unknown/release/doorplate_wasm.wasm doorplate.wasm",
-    "test": "node --test test/",
+    "test": "node --test",
     "types": "tsc --noEmit -p test/tsconfig.json"
   },
   "devDependencies": {
